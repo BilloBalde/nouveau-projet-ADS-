@@ -1,0 +1,260 @@
+:root {
+    --primary: #0d6efd;
+    --dark: #0f172a;
+    --text: #475569;
+    --light: #f8fafc;
+    --border: #e2e8f0;
+    --shadow: 0 12px 35px rgba(15, 23, 42, 0.08);
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    color: var(--dark);
+    background: #fff;
+}
+
+.section {
+    padding: 80px 0;
+}
+
+.section-title h2 {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: var(--dark);
+    margin-bottom: 12px;
+}
+
+.section-title p {
+    color: var(--text);
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.hero-section {
+    position: relative;
+    min-height: 100vh;
+    overflow: hidden;
+    background: linear-gradient(135deg, rgba(15,23,42,.88), rgba(13,110,253,.55));
+    display: flex;
+    align-items: center;
+    padding: 120px 0 80px;
+}
+
+.hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(15,23,42,.3), rgba(15,23,42,.6));
+    z-index: 1;
+}
+
+.hero-section .container {
+    z-index: 2;
+}
+
+.hero-badge {
+    display: inline-block;
+    padding: 8px 16px;
+    border-radius: 999px;
+    background: rgba(255,255,255,.12);
+    border: 1px solid rgba(255,255,255,.2);
+    margin-bottom: 18px;
+    font-size: .9rem;
+    font-weight: 600;
+}
+
+.hero-title {
+    font-size: clamp(2.4rem, 5vw, 4.5rem);
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 18px;
+}
+
+.hero-text {
+    font-size: 1.1rem;
+    color: rgba(255,255,255,.88);
+    max-width: 700px;
+    margin: 0 auto 28px;
+}
+
+.hero-actions .btn {
+    border-radius: 12px;
+    padding: 12px 24px;
+    font-weight: 600;
+}
+
+.hero-carousel img {
+    width: 100%;
+    height: 520px;
+    object-fit: cover;
+    opacity: .28;
+}
+
+.about-card,
+.feature-card,
+.contact-box,
+.contact-form-wrap,
+.product-card {
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: var(--shadow);
+    border: 1px solid rgba(226,232,240,.7);
+}
+
+.about-card {
+    padding: 32px;
+}
+
+.about-year {
+    display: inline-block;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 12px;
+}
+
+.about-list {
+    list-style: none;
+    padding: 0;
+    margin: 20px 0 0;
+}
+
+.about-list li {
+    margin-bottom: 10px;
+    color: var(--text);
+}
+
+.about-list i {
+    color: var(--primary);
+    margin-right: 8px;
+}
+
+.product-card {
+    overflow: hidden;
+    transition: transform .3s ease, box-shadow .3s ease;
+}
+
+.product-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 18px 45px rgba(15, 23, 42, 0.12);
+}
+
+.product-image {
+    height: 260px;
+    overflow: hidden;
+    background: #f8fafc;
+}
+
+.product-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.product-body {
+    padding: 24px;
+}
+
+.product-body h5 {
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+.product-body p {
+    color: var(--text);
+    margin: 0;
+}
+
+.feature-tabs .nav-link {
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    color: var(--dark);
+    background: #fff;
+    font-weight: 600;
+    padding: 10px 18px;
+}
+
+.feature-tabs .nav-link.active {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+}
+
+.feature-card {
+    padding: 28px;
+}
+
+.contact-box {
+    padding: 28px;
+    text-align: center;
+    height: 100%;
+}
+
+.contact-box i {
+    font-size: 2rem;
+    color: var(--primary);
+    margin-bottom: 14px;
+}
+
+.contact-box h3 {
+    font-size: 1.2rem;
+    margin-bottom: 10px;
+}
+
+.contact-box p {
+    color: var(--text);
+    margin: 0;
+}
+
+.contact-form-wrap {
+    padding: 32px;
+}
+
+.contact-form .form-control {
+    height: 52px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    box-shadow: none;
+}
+
+.contact-form textarea.form-control {
+    height: auto;
+    min-height: 160px;
+}
+
+.contact-form .form-control:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 0.2rem rgba(13,110,253,.12);
+}
+
+.page-title {
+    padding: 90px 0 70px;
+    background: linear-gradient(135deg, #0f172a, #1d4ed8);
+    color: #fff;
+}
+
+.page-title h1 {
+    font-weight: 800;
+    margin-bottom: 10px;
+}
+
+.breadcrumbs a,
+.breadcrumbs .current {
+    color: rgba(255,255,255,.85);
+    text-decoration: none;
+}
+
+@media (max-width: 768px) {
+    .hero-carousel img {
+        height: 320px;
+    }
+
+    .section {
+        padding: 60px 0;
+    }
+
+    .about-card,
+    .feature-card,
+    .contact-form-wrap,
+    .product-body {
+        padding: 22px;
+    }
+}

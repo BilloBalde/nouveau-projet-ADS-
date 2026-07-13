@@ -1,0 +1,63 @@
+# Fichiers système et IDE
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+*.sublime-*
+.project
+.netrwhist
+
+# Dépendances PHP (installées via Composer)
+/vendor/
+/node_modules/
+/composer.phar
+
+# Dumps de base de données (données réelles, ne pas versionner)
+*.sql
+
+# Fichiers d'environnement (contenant des secrets)
+.env
+.env.*
+!.env.example
+.env.backup
+
+# Stockage local (logs, sessions, cache)
+/storage/*.key
+/storage/framework/cache/data/*
+/storage/framework/sessions/*
+/storage/framework/testing/*
+/storage/framework/views/*
+/storage/logs/*.log
+
+# Rapports de tests et couverture
+/.phpunit.result.cache
+/.phpunit.cache
+/coverage
+/coverage.xml
+/clover.xml
+/testdox.txt
+
+# Fichiers générés par Laravel
+/public/storage
+/public/hot
+/public/mix-manifest.json
+/public/css/*.css.map
+/public/js/*.js.map
+
+# Fichiers temporaires du projet
+/.vagrant
+Homestead.json
+Homestead.yaml
+/.env.backup
+/.phpcs-cache
+/.php-cs-fixer.cache
+
+# Fichiers spécifiques à certains packages
+/.php-version
+/.tool-versions
+
+# Fichiers de logs généraux
+*.log
+npm-debug.log
+yarn-error.log
