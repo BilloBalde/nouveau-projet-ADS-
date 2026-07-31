@@ -131,12 +131,23 @@
                                             <td>{{ $data->interet_total ?? 0 }}</td>
                                             <td>{{ $data->paiements->first()?->total_paye }}</td>
                                             <td>{{ $data->reste }}</td>
+                                            @php
+                                                $totalPaye = $data->paiements->sum('total_paye');
+                                                $montantTotal = $data->montant_total;
+                                            @endphp
                                             <td>
                                                 <span class="badge
-                                                    @if ($data->statut === 'payé') bg-success
+                                                    @if ($totalPaye >= $montantTotal) bg-success
+                                                    @elseif ($totalPaye > 0) bg-warning text-dark
                                                     @else bg-danger
                                                     @endif">
-                                                    {{ ucfirst($data->statut) }}
+                                                    @if ($totalPaye >= $montantTotal)
+                                                        Payé
+                                                    @elseif ($totalPaye > 0)
+                                                        Partiel
+                                                    @else
+                                                        Non payé
+                                                    @endif
                                                 </span>
                                             </td>
                                             <td>{{ $data->livraison }}</td>

@@ -13,13 +13,15 @@ class SmsService
      */
     public function sendOtp(string $phone, string $code): void
     {
+    
         $message = sprintf(config('sms.otp_message', 'Code : %s'), $code);
-        $driver = config('sms.driver', 'log');
-
+        $driver = config('sms.driver', 'whatsapp');
+       
         try {
             match ($driver) {
                 'twilio' => $this->sendTwilio($phone, $message),
                 'http' => $this->sendHttp($phone, $message),
+                'whatsapp' => $this->sendWhatsapp($phone, $message),
                 default => $this->sendLog($phone, $message),
             };
         } catch (\Throwable $e) {
@@ -120,5 +122,41 @@ class SmsService
         }
 
         return str_starts_with($phone, '+') ? $phone : '+'.$digits;
+    }
+
+    protected function sendWhatsapp(string $phone, string $message): void
+    {
+        $instance = env('ULTRAMSG_INSTANCE');
+        $token = env('ULTRAMSG_TOKEN');
+
+        if (!$instance || !$token) {
+            Log::warning('UltraMsg non configuré');
+            $this->sendLog($phone, $message);
+            return;
+        }
+
+        $response = Http::asForm()
+            ->timeout(20)
+            ->post(
+                "https://api.ultramsg.com/{$instance}/messages/chat",
+                [
+                    'token' => $token,
+                    'to' => str_replace('+', '', $phone),
+                    'body' => $message,
+                ]
+            );
+
+        Log::info('WhatsApp OTP Response', [
+            'phone' => $phone,
+            'status' => $response->status(),
+            'response' => $response->json(),
+        ]);
+
+
+        if (!$response->successful()) {
+            Log::error('Erreur WhatsApp UltraMsg', [
+                'body' => $response->body()
+            ]);
+        }
     }
 }

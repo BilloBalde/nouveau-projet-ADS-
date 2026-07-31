@@ -14,16 +14,28 @@
                 extend: {
                     colors: {
                         amber: {
-                            50:  '#faf6ef',
-                            100: '#f4ece1',
-                            200: '#e4d3b8',
-                            300: '#d9c3a3',
-                            400: '#c9986a',
-                            500: '#c1682f',
-                            600: '#a8532a',
-                            700: '#8a5a34',
-                            800: '#5a3820',
-                            900: '#2b1d14',
+                            50:  '#fff7ed',
+                            100: '#ffedd5',
+                            200: '#fed7aa',
+                            300: '#fdba74',
+                            400: '#fb923c',
+                            500: '#f97316',
+                            600: '#ea580c',
+                            700: '#c2410c',
+                            800: '#9a3412',
+                            900: '#431407',
+                        },
+                        navy: {
+                            50:  '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            300: '#93c5fd',
+                            400: '#3b82f6',
+                            500: '#2563eb',
+                            600: '#1d4ed8',
+                            700: '#1e40af',
+                            800: '#1e3a8a',
+                            900: '#0a0f1f',
                         },
                     },
                 },
@@ -41,9 +53,9 @@
         * { font-family: 'Poppins', sans-serif; }
         h1, h2, h3 { font-family: 'Fraunces', serif; }
 
-        /* ── Hero — palette bois/terracotta, cohérente avec le reste du site ── */
+        /* ── Hero — palette bleu / noir / orange ── */
         .hero-section {
-            background: linear-gradient(135deg, #2b1d14 0%, #4a2e1a 40%, #7a4222 70%, #a8532a 100%);
+            background: linear-gradient(135deg, #05070d 0%, #0a1a3c 35%, #1d4ed8 72%, #f97316 100%);
             min-height: 620px;
             position: relative;
             overflow: hidden;
@@ -52,7 +64,7 @@
             content: '';
             position: absolute; top: -80px; right: -80px;
             width: 520px; height: 520px;
-            background: radial-gradient(circle, rgba(255,180,110,0.22) 0%, transparent 70%);
+            background: radial-gradient(circle, rgba(249,115,22,0.28) 0%, transparent 70%);
             border-radius: 50%;
         }
         .hero-section::after {
@@ -162,7 +174,7 @@
 
         /* ── Misc helpers ── */
         .gradient-text {
-            background: linear-gradient(135deg, #c9986a, #c1682f);
+            background: linear-gradient(135deg, #1d4ed8, #f97316);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -175,7 +187,7 @@
         }
         .feature-icon {
             width: 60px; height: 60px;
-            background: linear-gradient(135deg, #c9986a, #a8532a);
+            background: linear-gradient(135deg, #1d4ed8, #0a0f1f);
             border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
             color: white; font-size: 28px;
@@ -200,9 +212,9 @@
             box-shadow: 0 2px 8px rgba(0,0,0,0.04);
         }
         .prod-card:hover {
-            border-color: #c1682f;
+            border-color: #f97316;
             transform: translateY(-4px);
-            box-shadow: 0 12px 28px rgba(193,104,47,0.15);
+            box-shadow: 0 12px 28px rgba(249,115,22,0.15);
         }
         .prod-img {
             height: 180px; display: flex; align-items: center;
@@ -219,7 +231,7 @@
             padding: 4px 10px; border-radius: 20px;
             backdrop-filter: blur(4px);
         }
-        .badge-promo { background: rgba(244,236,225,0.95); color: #7a3a19; }
+        .badge-promo { background: rgba(255,237,213,0.95); color: #c2410c; }
         .badge-best { background: rgba(209,250,229,0.95); color: #065f46; }
 
         .prod-info { padding: 14px 14px 16px; }
@@ -229,21 +241,21 @@
             display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
         }
         .prod-cat-tag {
-            font-size: 11px; color: #fff; background: #c1682f;
+            font-size: 11px; color: #fff; background: #1d4ed8;
             display: inline-block; padding: 2px 8px; border-radius: 20px;
             margin-bottom: 8px; font-weight: 500;
         }
-        .prod-stars { font-size: 12px; color: #c1682f; margin-bottom: 8px; }
+        .prod-stars { font-size: 12px; color: #f97316; margin-bottom: 8px; }
         .tier-table { margin-bottom: 10px; }
         .tier-label {
-            font-size: 10px; font-weight: 600; color: #a8532a;
+            font-size: 10px; font-weight: 600; color: #1d4ed8;
             text-transform: uppercase; letter-spacing: 0.03em;
             margin-bottom: 6px;
         }
         .tier-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
-        .tier-cell { background: #f4ece1; border-radius: 8px; padding: 4px 2px; text-align: center; }
-        .tier-qty { font-size: 10px; font-weight: 700; color: #7a3a19; }
-        .tier-price { font-size: 11px; font-weight: 600; color: #4a3220; }
+        .tier-cell { background: #eff6ff; border-radius: 8px; padding: 4px 2px; text-align: center; }
+        .tier-qty { font-size: 10px; font-weight: 700; color: #1e3a8a; }
+        .tier-price { font-size: 11px; font-weight: 600; color: #111827; }
         .tier-badge {
             display: inline-block; margin-top: 2px;
             font-size: 9px; font-weight: 700; color: #fff;
@@ -253,11 +265,11 @@
         .qty-btn {
             width: 24px; height: 24px; border-radius: 6px;
             border: 1.5px solid #e5e7eb; background: #fff;
-            color: #a8532a; font-weight: 700; cursor: pointer;
+            color: #1d4ed8; font-weight: 700; cursor: pointer;
             display: flex; align-items: center; justify-content: center;
             font-size: 14px; line-height: 1;
         }
-        .qty-btn:hover { background: #f4ece1; border-color: #c1682f; }
+        .qty-btn:hover { background: #eff6ff; border-color: #2563eb; }
         .qty-input {
             width: 40px; text-align: center; font-size: 13px;
             border: 1.5px solid #e5e7eb; border-radius: 6px;
@@ -267,7 +279,7 @@
             display: flex; align-items: baseline; gap: 6px;
             margin-bottom: 12px; flex-wrap: wrap;
         }
-        .prod-price { font-size: 17px; font-weight: 700; color: #a8532a; }
+        .prod-price { font-size: 17px; font-weight: 700; color: #ea580c; }
         .prod-price-old {
             font-size: 12px; color: #9ca3af;
             text-decoration: line-through;
@@ -276,7 +288,7 @@
         .prod-btn {
             flex: 1; padding: 9px 4px; font-size: 11px;
             font-weight: 600; text-align: center;
-            background: linear-gradient(135deg, #c9986a, #a8532a);
+            background: linear-gradient(135deg, #fb923c, #ea580c);
             color: #fff; border: none; border-radius: 10px; cursor: pointer;
             transition: opacity 0.2s, transform 0.1s;
             font-family: 'Poppins', sans-serif;
@@ -285,11 +297,11 @@
         .prod-btn-order {
             flex: 1; padding: 9px 4px; font-size: 11px;
             font-weight: 600; text-align: center;
-            background: none; color: #a8532a;
-            border: 2px solid #a8532a; border-radius: 10px; cursor: pointer;
+            background: none; color: #1d4ed8;
+            border: 2px solid #1d4ed8; border-radius: 10px; cursor: pointer;
             transition: all 0.2s; font-family: 'Poppins', sans-serif;
         }
-        .prod-btn-order:hover { background: #a8532a; color: #fff; transform: scale(1.02); }
+        .prod-btn-order:hover { background: #1d4ed8; color: #fff; transform: scale(1.02); }
 
         .empty-state {
             text-align: center; padding: 3rem 1rem;
@@ -375,10 +387,10 @@
                             <div class="hero-slide {{ $i === 0 ? 'active' : '' }}" data-index="{{ $i }}">
                                 @if($prod['image'])
                                     <img src="{{ $prod['image'] }}" alt="{{ $prod['name'] }}"
-                                         onerror="this.onerror=null;this.parentElement.style.background='linear-gradient(135deg,#c9986a,#c1682f)'">
+                                         onerror="this.onerror=null;this.parentElement.style.background='linear-gradient(135deg,#1d4ed8,#f97316)'">
                                 @else
                                     <div class="w-full h-full flex items-center justify-center"
-                                         style="background:linear-gradient(135deg,#f4ece1,#e4d3b8);">
+                                         style="background:linear-gradient(135deg,#dbeafe,#bfdbfe);">
                                         <img src="{{ asset('images/customers/logo.jpg') }}" alt="SMH" class="w-40 h-40 object-contain">
                                     </div>
                                 @endif
@@ -454,7 +466,7 @@
                     ['icon' => 'fa-headset',           'title' => 'Conseil personnalisé',     'text' => '+224 626 311 915'],
                 ] as $item)
                 <div class="flex items-center gap-3">
-                    <div class="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0" style="background:#f4ece1;color:#a8532a;">
+                    <div class="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0" style="background:#dbeafe;color:#1d4ed8;">
                         <i class="fas {{ $item['icon'] }}"></i>
                     </div>
                     <div>
@@ -484,13 +496,13 @@
             .cat-slide:hover { transform: translateY(-4px); }
             .cat-slide-img {
                 width: 120px; height: 120px; margin: 0 auto 10px; border-radius: 50%;
-                overflow: hidden; border: 3px solid #f4ece1; background: #faf6ef;
+                overflow: hidden; border: 3px solid #dbeafe; background: #eff6ff;
                 display: flex; align-items: center; justify-content: center;
                 transition: border-color .2s, box-shadow .2s;
             }
-            .cat-slide:hover .cat-slide-img { border-color: #c1682f; box-shadow: 0 8px 20px rgba(193,104,47,.18); }
+            .cat-slide:hover .cat-slide-img { border-color: #f97316; box-shadow: 0 8px 20px rgba(249,115,22,.18); }
             .cat-slide-img img { width: 100%; height: 100%; object-fit: cover; }
-            .cat-slide-img .cat-slide-icon { font-size: 36px; color: #c1682f; }
+            .cat-slide-img .cat-slide-icon { font-size: 36px; color: #1d4ed8; }
             .cat-slide-name {
                 font-size: 13px; font-weight: 700; color: #1f2937;
                 white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
@@ -498,11 +510,11 @@
             .cat-slide-count { font-size: 11px; color: #9ca3af; }
             .cat-progress { display: flex; justify-content: center; gap: 6px; margin-top: 10px; }
             .cat-progress-dot {
-                width: 22px; height: 4px; border-radius: 999px; background: #f4ece1;
+                width: 22px; height: 4px; border-radius: 999px; background: #dbeafe;
                 overflow: hidden; position: relative;
             }
             .cat-progress-dot.active::after {
-                content: ''; position: absolute; inset: 0; background: #c1682f; border-radius: 999px;
+                content: ''; position: absolute; inset: 0; background: #f97316; border-radius: 999px;
             }
         </style>
         <div class="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -618,7 +630,7 @@
                 <div class="text-center mt-10 flex flex-wrap justify-center gap-3">
                     <a href="{{ route('products.index') }}"
                        class="inline-flex items-center gap-2 px-8 py-3.5 rounded-full font-semibold text-sm text-white transition duration-200 hover:shadow-lg hover:scale-105"
-                       style="background:linear-gradient(135deg,#c9986a,#a8532a);">
+                       style="background:linear-gradient(135deg,#fb923c,#ea580c);">
                         <i class="fas fa-box-open"></i>
                         Voir tout le catalogue ({{ $totalProducts }} produits)
                     </a>
@@ -640,12 +652,12 @@
     <style>
         .prod-row {
             display: flex; gap: 18px; overflow-x: auto; padding: 8px 2px 16px;
-            -ms-overflow-style: none; scrollbar-width: thin; scrollbar-color: #e4d3b8 transparent;
+            -ms-overflow-style: none; scrollbar-width: thin; scrollbar-color: #bfdbfe transparent;
         }
         .prod-row .prod-card { flex: 0 0 262px; }
         .section-row-head { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
         .section-row-head .row-icon {
-            width: 44px; height: 44px; border-radius: 12px; background: #f4ece1; color: #a8532a;
+            width: 44px; height: 44px; border-radius: 12px; background: #dbeafe; color: #1d4ed8;
             display: inline-flex; align-items: center; justify-content: center; font-size: 19px;
         }
         .section-row-head h2 { font-size: 26px; font-weight: 800; color: #1f2937; }
@@ -720,7 +732,7 @@
                     ['icon' => 'fa-map',          'title' => 'Livraison en région',  'text' => 'Nous expédions dans toutes les régions de la Guinée via nos transporteurs partenaires.'],
                 ] as $mode)
                 <div class="bg-white rounded-2xl p-7 text-center border border-gray-100 shadow-sm hover:shadow-lg hover:border-amber-200 transition">
-                    <div class="w-14 h-14 mx-auto mb-4 rounded-full flex items-center justify-center" style="background:#f4ece1;color:#a8532a;font-size:22px;">
+                    <div class="w-14 h-14 mx-auto mb-4 rounded-full flex items-center justify-center" style="background:#dbeafe;color:#1d4ed8;font-size:22px;">
                         <i class="fas {{ $mode['icon'] }}"></i>
                     </div>
                     <h3 class="font-bold text-gray-800 mb-2">{{ $mode['title'] }}</h3>
@@ -773,7 +785,7 @@
                 </div>
                 <div class="flex justify-center">
                     <div class="relative w-full max-w-sm">
-                        <div class="bg-gradient-to-br from-amber-500 to-amber-600 rounded-3xl p-8 text-white text-center shadow-2xl">
+                        <div class="bg-gradient-to-br from-navy-700 to-navy-900 rounded-3xl p-8 text-white text-center shadow-2xl">
                             <div class="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-6">
                                 <i class="fas fa-couch text-white text-4xl"></i>
                             </div>
@@ -790,8 +802,8 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="absolute -top-4 -right-4 w-24 h-24 bg-amber-200 rounded-full opacity-40 -z-10"></div>
-                        <div class="absolute -bottom-4 -left-4 w-16 h-16 bg-amber-300 rounded-full opacity-30 -z-10"></div>
+                        <div class="absolute -top-4 -right-4 w-24 h-24 bg-navy-200 rounded-full opacity-40 -z-10"></div>
+                        <div class="absolute -bottom-4 -left-4 w-16 h-16 bg-amber-400 rounded-full opacity-30 -z-10"></div>
                     </div>
                 </div>
             </div>
@@ -1034,7 +1046,7 @@
 
             const icons = { success: '🛍️', error: '❌' };
             const colors = {
-                success: 'linear-gradient(135deg,#c9986a,#a8532a)',
+                success: 'linear-gradient(135deg,#fb923c,#ea580c)',
                 error:   'linear-gradient(135deg,#ef4444,#dc2626)'
             };
 

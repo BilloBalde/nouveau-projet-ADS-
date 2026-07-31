@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
+use App\Models\Partner;
 use App\Models\Facture;
 use App\Models\Category;
 use App\Models\Payment;
@@ -21,6 +22,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Exports\SalesExport;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\Schema;
 
 class SaleController extends Controller
 {
@@ -248,137 +250,129 @@ class SaleController extends Controller
      * @return \Illuminate\Http\Response
      */
 
+
+
     public function store(Request $request)
     {
         if (auth()->user()->role_id == 3 && empty($request->store_id)) {
-            $request->merge([
-                'store_id' => Store::where('user_id', auth()->user()->id)->value('id'),
-            ]);
+            $request->merge(['store_id' => Store::where('user_id', auth()->user()->id)->value('id')]);
         }
-        $request->validate([
-            'numeroFacture' => 'required|string',
-            'store_id' => 'required|exists:stores,id',
-            'customer_id' => 'required|exists:customers,id',
-            'avance' => 'nullable|numeric|min:0',
-        ]);
-        $salesData = $request->input('sales') ?? [];
-        $salesData = array_values(array_filter($salesData, function ($row) {
-            return is_array($row)
-                && isset($row['product_id'], $row['prix'], $row['quantity'])
-                && $row['product_id'] !== null
-                && $row['product_id'] !== '';
-        }));
-        $rules = [
-            'sales.*.numeroFacture' => 'required|string',
-            'sales.*.product_id' => 'required|exists:products,id',
-            'sales.*.prix' => 'required|numeric|min:0',
-            'sales.*.quantity' => 'required|integer|min:1',
-        ];
 
-        $validator = Validator::make(['sales' => $salesData], $rules);
-        if ($validator->fails()) {
-            // Handle validation failure
-            return redirect()->back()->withErrors($validator)->withInput();
-        }
+        $request->validate([
+            'numeroFacture' => 'required|string|unique:sales,numeroFacture',
+            'store_id'      => 'required|exists:stores,id',
+            'customer_id'   => 'required|exists:customers,id',
+            'avance'        => 'nullable|numeric|min:0',
+            'paid_by'       => 'nullable|string',
+            'notes'         => 'nullable|string',
+        ]);
+
+        $salesData = $request->input('sales') ?? [];
+        $salesData = array_values(array_filter($salesData, fn($row) => !empty($row['product_id'])));
+
         if (empty($salesData)) {
             return redirect()->back()->with('error', 'Veuillez ajouter au moins un produit.')->withInput();
         }
+
         DB::beginTransaction();
         try {
-            // Prepare the data for insertion
             $total_quantity = 0;
             $total_price = 0;
-            $i = 0;
-            //dd($salesData);
-            // Insert multiple rows
+
             foreach ($salesData as $data) {
-                //dd($request->store_id);
-                $data["prixTotal"]=$data['prix']*$data['quantity'];
-                // Atomic decrement to avoid overselling under concurrency
-                if (!$this->stock->decrementIfAvailable((int) $request->store_id, (int) $data['product_id'], (int) $data['quantity'])) {
-                    throw new \RuntimeException('Stock insuffisant pour ce produit.');
+                $isThirdParty = !empty($data['is_third_party']) && $data['is_third_party'] == "1";
+
+                $data['prixTotal'] = $data['prix'] * $data['quantity'];
+
+                if ($isThirdParty) {
+                    // ====================== VENTE TIERCE ======================
+                    if (empty($data['partner_id']) || empty($data['purchase_price_from_partner'])) {
+                        throw new \Exception('Pour une vente tierce, le partenaire et le prix d\'achat sont obligatoires.');
+                    }
+
+                    $prixAmi = (float) $data['purchase_price_from_partner'];
+                    $data['interet'] = ($data['prix'] - $prixAmi) * $data['quantity'];
+                    $data['is_third_party'] = true;
+
+                } else {
+                    // ====================== VENTE NORMALE ======================
+                    if (!$this->stock->decrementIfAvailable((int) $request->store_id, (int) $data['product_id'], (int) $data['quantity'])) {
+                        throw new \RuntimeException('Stock insuffisant pour le produit : ' . Product::find($data['product_id'])->libelle ?? 'Inconnu');
+                    }
+
+                    $product = Product::find($data['product_id']);
+                    $prix_achat = $this->resolveUnitCost($product);
+                    $data['interet'] = ($data['prix'] - $prix_achat) * $data['quantity'];
+                    $data['is_third_party'] = false;
                 }
 
-                //$prix_achat = Purchase::where('product_id', $data['product_id'])->first()->price;
-                //$dataItem->latestLigneCommande?->unit_price_sale
-                $product = Product::find($data['product_id']);
-                $prix_achat = $this->resolveUnitCost($product);
-                //dd($prix_achat);
-                $data["interet"] = ($data['prix'] - $prix_achat) * $data['quantity'];
                 $total_quantity += $data['quantity'];
                 $total_price += $data['prixTotal'];
-                Sale::create(
-                    [
-                        'numeroFacture' => $request->numeroFacture,
-                        'product_id' => $data['product_id'],
-                        'prix' => $data['prix'],
-                        'quantity' => $data['quantity'],
-                        'prixTotal' => $data['prixTotal'],
-                        'interet' => $data['interet'],
-                        'store_id' => $request->store_id,
-                        'user_id' => auth()->id(),
-                    ]
-                );
-                $i++;
+
+                Sale::create([
+                    'numeroFacture'               => $request->numeroFacture,
+                    'product_id'                  => $data['product_id'],
+                    'prix'                        => $data['prix'],
+                    'quantity'                    => $data['quantity'],
+                    'prixTotal'                   => $data['prixTotal'],
+                    'interet'                     => $data['interet'],
+                    'store_id'                    => $request->store_id,
+                    'user_id'                     => auth()->id(),
+                    'is_third_party'              => $data['is_third_party'],
+                    'partner_id'                  => $data['partner_id'] ?? null,
+                    'purchase_price_from_partner' => $data['purchase_price_from_partner'] ?? null,
+                ]);
             }
 
+            // ====================== FACTURE & PAIEMENT ======================
             if ($request->avance > $total_price) {
-                throw new \RuntimeException('Le montant de la commande est inférieur à l\'avance.');
-            }
-            $reste= $total_price - $request->avance;
-            if ($reste == 0) {
-                $facture = Facture::create([
-                    'numero_facture' => $request->numeroFacture,
-                    'store_id' => $request->store_id,
-                    'customer_id' => $request->customer_id,
-                    'montant_total' => $total_price,
-                    'quantity' => $total_quantity,
-                    'avance' => $request->avance,
-                    'notes' => $request->notes,
-                    'reste' => $reste,
-                    'statut' => 'payé',
-                    'livraison' => 'livré',
-                ]);
-            } elseif ($reste > 0) {
-                //dd($salesData);
-                $facture = Facture::create([
-                    'numero_facture' => $request->numeroFacture,
-                    'store_id' => $request->store_id,
-                    'customer_id' => $request->customer_id,
-                    'montant_total' => $total_price,
-                    'quantity' => $total_quantity,
-                    'avance' => $request->avance,
-                    'notes' => $request->notes,
-                    'reste' => $reste,
-                    'statut' => 'non payé',
-                    'livraison' => 'non livré',
-                ]);
+                throw new \RuntimeException('Le montant de l\'avance ne peut pas être supérieur au total.');
             }
 
+            $reste = $total_price - ($request->avance ?? 0);
+
+            $facture = Facture::create([
+                'numero_facture' => $request->numeroFacture,
+                'store_id'       => $request->store_id,
+                'customer_id'    => $request->customer_id,
+                'montant_total'  => $total_price,
+                'quantity'       => $total_quantity,
+                'avance'         => $request->avance ?? 0,
+                'notes'          => $request->notes,
+                'reste'          => $reste,
+                'statut'         => $reste == 0 ? 'payé' : 'non payé',
+                'livraison'      => $reste == 0 ? 'livré' : 'non livré',
+            ]);
+
+            // Payment
             $receiptNumber = generateReceiptNumber('RCF', (Payment::max('id') ?? 0) + 1);
             Payment::create([
-                'facture_id' => $facture->id,
-                'versement' => $facture->avance,
-                'total_paye' => $facture->avance,
-                'paid_by' => $request->paid_by,
-                'reste' => $reste,
-                'note' => "un premier versement de ".$facture->avance." effectué lors de l'emission de la facture comme avance.",
+                'facture_id'   => $facture->id,
+                'versement'    => $facture->avance,
+                'total_paye'   => $facture->avance,
+                'paid_by'      => $request->paid_by ?? 'cash',
+                'reste'        => $reste,
+                'note'         => "Premier versement effectué à l'émission de la facture.",
                 'receipt_number' => $receiptNumber,
             ]);
 
+            // Mise à jour Client
             $customer = Customer::find($request->customer_id);
             $customer->total_taken += $total_price;
-            $customer->total_repaid += $request->avance;
-            $customer->balance += $request->avance - $total_price;
+            $customer->total_repaid += $facture->avance;
+            $customer->balance += $facture->avance - $total_price;
             $customer->save();
 
             DB::commit();
 
-            // Redirect back with a success message
-            return redirect()->route('factures.index')->with('success', 'Vente créee, et stock mis à jour avec succès');
+            return redirect()->route('factures.index')
+                            ->with('success', 'Vente enregistrée avec succès !');
+
         } catch (\Throwable $th) {
             DB::rollBack();
-            return redirect()->back()->with('error', $th->getMessage())->withInput();
+            return redirect()->back()
+                            ->with('error', 'Erreur : ' . $th->getMessage())
+                            ->withInput();
         }
     }
 
@@ -408,9 +402,10 @@ class SaleController extends Controller
             : null;
         $boutiques = Store::all();
         $customers = Customer::all();
+        $partners = Partner::all();
         $countFactures = (Facture::max('id') ?? 0) + 1;
         $numeroFacture = date('Ym').''.sprintf("%04d", $countFactures);
-        return view('sales.pos', compact('produits', 'boutiques', 'customers', 'categories', 'userStoreId', 'numeroFacture'));
+        return view('sales.pos', compact('produits', 'boutiques', 'customers', 'categories', 'userStoreId', 'numeroFacture', 'partners'));
     }
 
     /**
@@ -556,5 +551,182 @@ class SaleController extends Controller
         }
 
         return (float) ($product->price_sale ?? 0.0);
+    }
+
+    /**
+     * Store a new partner via AJAX
+     */
+    public function storePartner(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'phone' => 'nullable|string|max:50',
+            'email' => 'nullable|email|max:255',
+        ]);
+
+        try {
+            $partner = Partner::create([
+                'name' => $request->name,
+                'phone' => $request->phone,
+                'email' => $request->email,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'partner' => $partner,
+                'message' => 'Partenaire créé avec succès'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Store a quick third-party sale with a new product
+     */
+    public function storeQuickThirdParty(Request $request)
+    {
+        $request->validate([
+            'libelle' => 'required|string|max:255',
+            'sku' => 'required|string|max:100',
+            'prix' => 'required|numeric|min:0',
+            'purchase_price_from_partner' => 'required|numeric|min:0',
+            'partner_id' => 'required|exists:partners,id',
+            'quantity' => 'required|integer|min:1',
+            'notes' => 'nullable|string',
+        ]);
+
+        DB::beginTransaction();
+        try {
+            // Créer ou récupérer le produit
+            $product = Product::where('sku', $request->sku)->first();
+            
+            if (!$product) {
+                // Récupérer tous les champs requis de la table products
+                $productData = [
+                    'libelle' => $request->libelle,
+                    'sku' => $request->sku,
+                    'code' => $request->sku, // Si code est requis et différent de sku
+                    'price' => $request->prix,
+                    'price_sale' => 0,
+                    'quantity' => 0,
+                    'stock_alert' => 0,
+                    'status' => 'active',
+                    'user_id' => auth()->id(),
+                    'description' => $request->libelle ?? 'Produit tierce', // ✅ Important
+                    'mark' => 'TIERCE', // Si le champ mark est requis
+                    'category_id' => null, // Si category_id peut être null
+                ];
+
+                // Ajouter d'autres champs s'ils sont requis
+                if (Schema::hasColumn('products', 'code')) {
+                    $productData['code'] = $request->sku;
+                }
+                if (Schema::hasColumn('products', 'description')) {
+                    $productData['description'] = $request->libelle;
+                }
+                if (Schema::hasColumn('products', 'mark')) {
+                    $productData['mark'] = 'TIERCE';
+                }
+                if (Schema::hasColumn('products', 'barcode')) {
+                    $productData['barcode'] = $request->sku;
+                }
+
+                $product = Product::create($productData);
+            }
+
+            // Générer un numéro de facture
+            $countFactures = (Facture::max('id') ?? 0) + 1;
+            $numeroFacture = date('Ym') . sprintf("%04d", $countFactures);
+
+            // Récupérer le magasin
+            $storeId = $request->store_id;
+            if (auth()->user()->role_id == 3 && empty($storeId)) {
+                $storeId = Store::where('user_id', auth()->user()->id)->value('id');
+            }
+            
+            // S'assurer qu'un store_id existe
+            if (empty($storeId)) {
+                $storeId = Store::first()->id ?? 1;
+            }
+
+            // S'assurer qu'un customer_id existe
+            $customerId = $request->customer_id;
+            if (empty($customerId)) {
+                // Utiliser un client par défaut ou le premier client
+                $defaultCustomer = Customer::first();
+                if ($defaultCustomer) {
+                    $customerId = $defaultCustomer->id;
+                } else {
+                    throw new \Exception('Aucun client trouvé. Veuillez d\'abord créer un client.');
+                }
+            }
+
+            $prixTotal = $request->prix * $request->quantity;
+            $interet = ($request->prix - $request->purchase_price_from_partner) * $request->quantity;
+
+            // Créer la vente
+            Sale::create([
+                'numeroFacture' => $numeroFacture,
+                'product_id' => $product->id,
+                'prix' => $request->prix,
+                'quantity' => $request->quantity,
+                'prixTotal' => $prixTotal,
+                'interet' => $interet,
+                'store_id' => $storeId,
+                'user_id' => auth()->id(),
+                'is_third_party' => true,
+                'partner_id' => $request->partner_id,
+                'purchase_price_from_partner' => $request->purchase_price_from_partner,
+            ]);
+
+            // Créer la facture
+            $avance = $request->avance ?? 0;
+            $reste = $prixTotal - $avance;
+            
+            $facture = Facture::create([
+                'numero_facture' => $numeroFacture,
+                'store_id' => $storeId,
+                'customer_id' => $customerId,
+                'montant_total' => $prixTotal,
+                'quantity' => $request->quantity,
+                'avance' => $avance,
+                'notes' => $request->notes,
+                'reste' => $reste,
+                'statut' => $reste == 0 ? 'payé' : 'non payé',
+                'livraison' => $reste == 0 ? 'livré' : 'non livré',
+            ]);
+
+            // Créer le paiement
+            $receiptNumber = generateReceiptNumber('RCF', (Payment::max('id') ?? 0) + 1);
+            Payment::create([
+                'facture_id' => $facture->id,
+                'versement' => $facture->avance,
+                'total_paye' => $facture->avance,
+                'paid_by' => $request->paid_by ?? 'cash',
+                'reste' => $reste,
+                'note' => "Vente tierce rapide - " . ($request->notes ?? ''),
+                'receipt_number' => $receiptNumber,
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Vente tierce enregistrée avec succès',
+                'redirect' => route('factures.index')
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Erreur vente tierce rapide: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur : ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

@@ -166,24 +166,31 @@
                                     <div class="form-group">
                                         <label>Devise de paiement</label>
                                         <select name="currency_code" id="currencyCode" class="form-control">
-                                            <option value="">Sélectionner</option>
+                                            <option value="">— GNF (Local) —</option>
                                             @foreach($currencies as $currency)
-                                                <option value="{{ $currency->currencyCode }}" data-rate="{{ $currency->rate_to_gnf }}">
+                                                <option value="{{ $currency->currencyCode }}" 
+                                                        data-rate="{{ $currency->rate_to_gnf }}">
                                                     {{ $currency->currencyName }} ({{ $currency->currencyCode }})
                                                 </option>
                                             @endforeach
                                         </select>
-                                        @error('currency_code') <span class="text-danger" data-error-for="currencyCode">{{ $message }}</span> @enderror
-                                        @if($currencies->isEmpty())
-                                            <span class="text-danger">Aucun taux configuré — <a href="{{ route('currencySetting.index') }}">configurez-les ici</a>.</span>
-                                        @endif
+                                        @error('currency_code') 
+                                            <span class="text-danger" data-error-for="currencyCode">{{ $message }}</span> 
+                                        @enderror
+                                        <small class="form-text text-muted">Laissez vide pour utiliser GNF directement</small>
                                     </div>
                                 </div>
                                 <div class="col-lg-4 col-sm-6 col-12">
                                     <div class="form-group">
                                         <label>Taux du jour (1 unité = X GNF)</label>
-                                        <input type="text" inputmode="decimal" name="exchange_rate_used" id="exchangeRate" class="form-control decimal-input" value="{{ old('exchange_rate_used') }}">
-                                        @error('exchange_rate_used') <span class="text-danger" data-error-for="exchangeRate">{{ $message }}</span> @enderror
+                                        <input type="text" inputmode="decimal" 
+                                            name="exchange_rate_used" 
+                                            id="exchangeRate" 
+                                            class="form-control decimal-input" 
+                                            value="{{ old('exchange_rate_used') }}">
+                                        @error('exchange_rate_used') 
+                                            <span class="text-danger" data-error-for="exchangeRate">{{ $message }}</span> 
+                                        @enderror
                                     </div>
                                 </div>
                             </div>
@@ -225,6 +232,7 @@
                         </div>
 
                         <div class="po-grand-total mb-3">
+                            <div>Prix total (HT) : <strong id="grandTotalPrice">0</strong> GNF</div>
                             <div>Volume total : <strong id="grandTotalCbm">0.000</strong> CBM</div>
                             <div>Coût de revient total estimé : <strong id="grandTotalCost">0</strong> GNF</div>
                         </div>
@@ -245,7 +253,7 @@
             <div class="po-line" data-line>
                 <button type="button" class="po-line-remove" data-remove-line title="Retirer"><i class="fa fa-trash"></i></button>
                 <div class="row">
-                    <div class="col-lg-4 col-sm-6 col-12">
+                    <div class="col-lg-3 col-sm-6 col-12">
                         <div class="form-group">
                             <label>Produit</label>
                             <select name="lines[__INDEX__][product_id]" class="form-control" data-field="product_id" required>
@@ -258,8 +266,20 @@
                     </div>
                     <div class="col-lg-2 col-sm-6 col-12">
                         <div class="form-group">
-                            <label>Quantité</label>
-                            <input type="number" min="1" name="lines[__INDEX__][quantity]" class="form-control" data-field="quantity" required>
+                            <label>Nombre de cartons</label>
+                            <input type="number" min="0" name="lines[__INDEX__][cartons]" class="form-control" data-field="cartons" value="0">
+                        </div>
+                    </div>
+                    <div class="col-lg-2 col-sm-6 col-12">
+                        <div class="form-group">
+                            <label>Pièces par carton</label>
+                            <input type="number" min="0" name="lines[__INDEX__][pieces_per_carton]" class="form-control" data-field="pieces_per_carton" value="0">
+                        </div>
+                    </div>
+                    <div class="col-lg-2 col-sm-6 col-12">
+                        <div class="form-group">
+                            <label>Quantité totale (pièces)</label>
+                            <input type="number" min="1" name="lines[__INDEX__][quantity]" class="form-control" data-field="quantity" readonly style="background:#f5f5f5" required>
                         </div>
                     </div>
                     <div class="col-lg-2 col-sm-6 col-12">
@@ -289,145 +309,197 @@
 
         @include('layouts.scripts')
         <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const linesContainer = document.getElementById('poLines');
-            const template = document.getElementById('poLineTemplate');
-            const addLineBtn = document.getElementById('addLineBtn');
-            let lineIndex = 0;
+            document.addEventListener('DOMContentLoaded', function () {
+                const linesContainer = document.getElementById('poLines');
+                const template = document.getElementById('poLineTemplate');
+                const addLineBtn = document.getElementById('addLineBtn');
+                let lineIndex = 0;
 
-            // Champs prix/CBM/taux : on tape librement (virgule ou point), on ne garde
-            // que les chiffres et un seul séparateur décimal (converti en point tout de
-            // suite) — évite les soucis des inputs type=number avec le clavier/locale française.
-            function sanitizeDecimal(el) {
-                let value = el.value.replace(/[^0-9.,]/g, '').replace(',', '.');
-                const firstDot = value.indexOf('.');
-                if (firstDot !== -1) {
-                    value = value.slice(0, firstDot + 1) + value.slice(firstDot + 1).replace(/\./g, '');
-                }
-                el.value = value;
-            }
-
-            function wireDecimalInput(el) {
-                el.addEventListener('input', function () {
-                    sanitizeDecimal(el);
-                    recompute();
-                });
-            }
-
-            [document.getElementById('exchangeRate'), document.getElementById('transportCost'), document.getElementById('customsCost'), document.getElementById('otherFees')].forEach(wireDecimalInput);
-
-            // Les messages d'erreur du serveur (ex: "Le taux de change est obligatoire")
-            // restent affichés tant qu'on n'a pas resoumis le formulaire — on les cache
-            // dès que l'utilisateur corrige le champ concerné, pour éviter la confusion.
-            function clearErrorFor(id) {
-                const span = document.querySelector('[data-error-for="' + id + '"]');
-                if (span) {
-                    span.style.display = 'none';
-                }
-            }
-            ['currencyCode', 'exchangeRate'].forEach(function (id) {
-                const el = document.getElementById(id);
-                if (!el) return;
-                const eventName = el.tagName === 'SELECT' ? 'change' : 'input';
-                el.addEventListener(eventName, function () {
-                    if (el.value) clearErrorFor(id);
-                });
-            });
-
-            function setOriginClass() {
-                const isChine = document.getElementById('originChine').checked;
-                document.body.classList.toggle('origin-chine', isChine);
-                document.querySelectorAll('.po-price-label').forEach(function (label) {
-                    label.textContent = isChine ? 'Prix unitaire (devise)' : 'Prix unitaire (GNF)';
-                });
-                recompute();
-            }
-
-            document.getElementById('originGuinee').addEventListener('change', setOriginClass);
-            document.getElementById('originChine').addEventListener('change', setOriginClass);
-
-            document.getElementById('currencyCode').addEventListener('change', function () {
-                const selected = this.options[this.selectedIndex];
-                const rate = selected ? selected.getAttribute('data-rate') : '';
-                if (rate) {
-                    document.getElementById('exchangeRate').value = rate;
-                }
-                recompute();
-            });
-
-            function addLine() {
-                const html = template.innerHTML.replaceAll('__INDEX__', lineIndex);
-                const wrapper = document.createElement('div');
-                wrapper.innerHTML = html;
-                const lineEl = wrapper.firstElementChild;
-                linesContainer.appendChild(lineEl);
-                lineIndex++;
-
-                lineEl.querySelector('[data-remove-line]').addEventListener('click', function () {
-                    if (linesContainer.querySelectorAll('[data-line]').length <= 1) {
-                        return; // garder au moins une ligne
+                // Champs prix/CBM/taux : on tape librement (virgule ou point), on ne garde
+                // que les chiffres et un seul séparateur décimal (converti en point tout de
+                // suite) — évite les soucis des inputs type=number avec le clavier/locale française.
+                function sanitizeDecimal(el) {
+                    let value = el.value.replace(/[^0-9.,]/g, '').replace(',', '.');
+                    const firstDot = value.indexOf('.');
+                    if (firstDot !== -1) {
+                        value = value.slice(0, firstDot + 1) + value.slice(firstDot + 1).replace(/\./g, '');
                     }
-                    lineEl.remove();
+                    el.value = value;
+                }
+
+                function wireDecimalInput(el) {
+                    el.addEventListener('input', function () {
+                        sanitizeDecimal(el);
+                        recompute();
+                    });
+                }
+
+                [document.getElementById('exchangeRate'), document.getElementById('transportCost'), document.getElementById('customsCost'), document.getElementById('otherFees')].forEach(wireDecimalInput);
+
+                // Les messages d'erreur du serveur restent affichés tant qu'on n'a pas resoumis
+                function clearErrorFor(id) {
+                    const span = document.querySelector('[data-error-for="' + id + '"]');
+                    if (span) {
+                        span.style.display = 'none';
+                    }
+                }
+                ['currencyCode', 'exchangeRate'].forEach(function (id) {
+                    const el = document.getElementById(id);
+                    if (!el) return;
+                    const eventName = el.tagName === 'SELECT' ? 'change' : 'input';
+                    el.addEventListener(eventName, function () {
+                        if (el.value) clearErrorFor(id);
+                    });
+                });
+
+                function setOriginClass() {
+                    const isChine = document.getElementById('originChine').checked;
+                    document.body.classList.toggle('origin-chine', isChine);
+                    document.querySelectorAll('.po-price-label').forEach(function (label) {
+                        label.textContent = isChine ? 'Prix unitaire (devise)' : 'Prix unitaire (GNF)';
+                    });
+                    recompute();
+                }
+
+                document.getElementById('originGuinee').addEventListener('change', setOriginClass);
+                document.getElementById('originChine').addEventListener('change', setOriginClass);
+
+                // Listener Devise amélioré
+                document.getElementById('currencyCode').addEventListener('change', function () {
+                    const selected = this.options[this.selectedIndex];
+                    
+                    if (this.value === "") {
+                        document.getElementById('exchangeRate').value = "1";
+                    } else if (selected && selected.getAttribute('data-rate')) {
+                        document.getElementById('exchangeRate').value = selected.getAttribute('data-rate');
+                    }
                     recompute();
                 });
 
-                lineEl.querySelectorAll('input, select').forEach(function (el) {
-                    if (el.classList.contains('decimal-input')) {
-                        wireDecimalInput(el);
+                function addLine() {
+                    const html = template.innerHTML.replaceAll('__INDEX__', lineIndex);
+                    const wrapper = document.createElement('div');
+                    wrapper.innerHTML = html;
+                    const lineEl = wrapper.firstElementChild;
+                    linesContainer.appendChild(lineEl);
+                    lineIndex++;
+
+                    lineEl.querySelector('[data-remove-line]').addEventListener('click', function () {
+                        if (linesContainer.querySelectorAll('[data-line]').length <= 1) {
+                            return;
+                        }
+                        lineEl.remove();
+                        recompute();
+                    });
+
+                    // ✅ Calcul automatique cartons × pièces = quantité
+                    const cartonsField = lineEl.querySelector('[data-field="cartons"]');
+                    const piecesField = lineEl.querySelector('[data-field="pieces_per_carton"]');
+                    const quantityField = lineEl.querySelector('[data-field="quantity"]');
+
+                    cartonsField.addEventListener('input', function () {
+                        const cartons = parseInt(this.value) || 0;
+                        const pieces = parseInt(piecesField.value) || 0;
+                        if (cartons > 0 && pieces > 0) {
+                            quantityField.value = cartons * pieces;
+                            recompute();
+                        }
+                    });
+
+                    piecesField.addEventListener('input', function () {
+                        const pieces = parseInt(this.value) || 0;
+                        const cartons = parseInt(cartonsField.value) || 0;
+                        if (cartons > 0 && pieces > 0) {
+                            quantityField.value = cartons * pieces;
+                            recompute();
+                        }
+                    });
+
+                    lineEl.querySelectorAll('input, select').forEach(function (el) {
+                        if (el.classList.contains('decimal-input')) {
+                            wireDecimalInput(el);
+                        } else {
+                            el.addEventListener('input', recompute);
+                        }
+                        el.addEventListener('change', recompute);
+                    });
+
+                    setOriginClass();
+                }
+
+                function recompute() {
+                    const isChine = document.getElementById('originChine').checked;
+                    const currencySelect = document.getElementById('currencyCode');
+                    let rate = 1;
+
+                    if (currencySelect && currencySelect.value !== "") {
+                        const selectedOption = currencySelect.options[currencySelect.selectedIndex];
+                        rate = parseFloat(selectedOption.getAttribute('data-rate')) || 
+                            parseFloat(document.getElementById('exchangeRate').value) || 1;
+                    }
+
+                    // Gestion du taux
+                    const exchangeRateInput = document.getElementById('exchangeRate');
+                    if (currencySelect.value === "") {
+                        exchangeRateInput.value = "1";
+                        exchangeRateInput.readOnly = true;
                     } else {
-                        el.addEventListener('input', recompute);
+                        exchangeRateInput.readOnly = false;
                     }
-                    el.addEventListener('change', recompute);
-                });
 
+                    const transport = parseFloat(document.getElementById('transportCost').value) || 0;
+                    const customs = isChine ? (parseFloat(document.getElementById('customsCost').value) || 0) : 0;
+                    const otherFees = parseFloat(document.getElementById('otherFees').value) || 0;
+
+                    const lines = Array.from(linesContainer.querySelectorAll('[data-line]'));
+                    let totalCbm = 0;
+                    let grandTotalPrice = 0;
+
+                    const computed = lines.map(function (lineEl) {
+                        const quantity = parseFloat(lineEl.querySelector('[data-field="quantity"]').value) || 0;
+                        const unitPriceForeign = parseFloat(lineEl.querySelector('[data-field="unit_price_foreign"]').value) || 0;
+                        const cbmPerUnit = isChine ? (parseFloat(lineEl.querySelector('[data-field="cbm_per_unit"]')?.value) || 0) : 0;
+                        
+                        const lineTotalCbm = cbmPerUnit * quantity;
+                        totalCbm += lineTotalCbm;
+
+                        const unitPriceGnf = unitPriceForeign * rate;
+                        const lineTotalPrice = unitPriceGnf * quantity;
+                        grandTotalPrice += lineTotalPrice;
+
+                        return { lineEl, quantity, unitPriceGnf, lineTotalCbm, lineTotalPrice };
+                    });
+
+                    let grandTotalCost = 0;
+
+                    computed.forEach(function (item) {
+                        const share = totalCbm > 0 ? (item.lineTotalCbm / totalCbm) : (1 / computed.length); // ← Correction importante
+
+                        const freightShare = transport * share;
+                        const customsShare = customs * share;
+                        const otherFeesShare = otherFees * share;
+
+                        const landedTotal = item.lineTotalPrice + freightShare + customsShare + otherFeesShare;
+                        grandTotalCost += landedTotal;
+                        
+                        const landedUnit = item.quantity > 0 ? landedTotal / item.quantity : 0;
+
+                        const preview = item.lineEl.querySelector('[data-preview-cost]');
+                        if (preview) {
+                            preview.textContent = new Intl.NumberFormat('fr-FR').format(Math.round(landedUnit));
+                        }
+                    });
+
+                    // Mise à jour des totaux
+                    document.getElementById('grandTotalCbm').textContent = totalCbm.toFixed(3);
+                    document.getElementById('grandTotalPrice').textContent = new Intl.NumberFormat('fr-FR').format(Math.round(grandTotalPrice));
+                    document.getElementById('grandTotalCost').textContent = new Intl.NumberFormat('fr-FR').format(Math.round(grandTotalCost));
+                }
+
+                addLineBtn.addEventListener('click', addLine);
+                addLine(); // au moins une ligne au chargement
                 setOriginClass();
-            }
-
-            function recompute() {
-                const isChine = document.getElementById('originChine').checked;
-                const rate = parseFloat(document.getElementById('exchangeRate').value) || (isChine ? 0 : 1);
-                const transport = parseFloat(document.getElementById('transportCost').value) || 0;
-                const customs = isChine ? (parseFloat(document.getElementById('customsCost').value) || 0) : 0;
-
-                const lines = Array.from(linesContainer.querySelectorAll('[data-line]'));
-                let totalCbm = 0;
-                const computed = lines.map(function (lineEl) {
-                    const quantity = parseFloat(lineEl.querySelector('[data-field="quantity"]').value) || 0;
-                    const unitPriceForeign = parseFloat(lineEl.querySelector('[data-field="unit_price_foreign"]').value) || 0;
-                    const cbmField = lineEl.querySelector('[data-field="cbm_per_unit"]');
-                    const cbmPerUnit = isChine ? (parseFloat(cbmField?.value) || 0) : 0;
-                    const lineTotalCbm = cbmPerUnit * quantity;
-                    totalCbm += lineTotalCbm;
-
-                    const unitPriceGnf = isChine ? unitPriceForeign * rate : unitPriceForeign;
-
-                    return { lineEl, quantity, unitPriceGnf, lineTotalCbm };
-                });
-
-                let grandTotalCost = 0;
-                computed.forEach(function (item) {
-                    const share = totalCbm > 0 ? (item.lineTotalCbm / totalCbm) : 0;
-                    const freightShare = transport * share;
-                    const customsShare = customs * share;
-                    const landedTotal = (item.unitPriceGnf * item.quantity) + freightShare + customsShare;
-                    const landedUnit = item.quantity > 0 ? landedTotal / item.quantity : 0;
-
-                    grandTotalCost += landedTotal;
-
-                    const preview = item.lineEl.querySelector('[data-preview-cost]');
-                    if (preview) {
-                        preview.textContent = new Intl.NumberFormat('fr-FR').format(Math.round(landedUnit));
-                    }
-                });
-
-                document.getElementById('grandTotalCbm').textContent = totalCbm.toFixed(3);
-                document.getElementById('grandTotalCost').textContent = new Intl.NumberFormat('fr-FR').format(Math.round(grandTotalCost));
-            }
-
-            addLineBtn.addEventListener('click', addLine);
-            addLine(); // au moins une ligne au chargement
-            setOriginClass();
-        });
+            });
         </script>
     </body>
 </html>

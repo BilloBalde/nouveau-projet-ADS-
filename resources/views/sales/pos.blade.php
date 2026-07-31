@@ -1,3 +1,6 @@
+Le problème principal est que votre code a perdu la fonctionnalité d'ajout de produits au panier. Voici le code complet corrigé :
+
+```html
 <!DOCTYPE html>
 <html lang="en">
     @include('layouts.head')
@@ -58,7 +61,6 @@
                 color: #fff;
             }
 
-            /* Stepper +/- pour la quantité */
             .qty-stepper {
                 display: flex;
                 align-items: center;
@@ -88,7 +90,6 @@
                 text-align: center;
             }
 
-            /* Panier vide */
             #emptyCartState {
                 text-align: center;
                 padding: 40px 10px;
@@ -102,7 +103,6 @@
                 display: block;
             }
 
-            /* Compteur d'articles dans l'entête du panier */
             #cartCountBadge {
                 background: #c1682f;
                 color: #fff;
@@ -113,7 +113,6 @@
                 vertical-align: middle;
             }
 
-            /* Pulse quand un produit est ajouté au panier */
             @keyframes addPulse {
                 0%   { box-shadow: 0 0 0 0 rgba(193, 104, 47, 0.55); }
                 100% { box-shadow: 0 0 0 16px rgba(193, 104, 47, 0); }
@@ -123,7 +122,6 @@
                 animation: addPulse .5s ease-out;
             }
 
-            /* Badge de stock */
             .stock-badge {
                 display: inline-block;
                 font-size: 11px;
@@ -149,7 +147,6 @@
                 font-size: 16px;
             }
 
-            /* Répartition du stock par magasin */
             .store-stock-breakdown {
                 margin-top: 6px;
                 display: flex;
@@ -167,7 +164,6 @@
                 white-space: nowrap;
             }
 
-            /* Pagination des produits (10 par page) */
             .pos-pagination {
                 display: flex;
                 justify-content: center;
@@ -203,14 +199,10 @@
                 cursor: not-allowed;
             }
 
-            /* Bootstrap's .d-flex utility is !important, so hiding a product
-               card (pagination/search) needs to win with the same weapon. */
             .product-item.pos-hidden {
                 display: none !important;
             }
 
-            /* Le thème d'origine de cette page utilisait un violet (#7367f0)
-               jamais retouché lors du passage au terracotta — on l'aligne ici. */
             .tabs_wrapper ul.tabs li.active,
             .productset .check-product {
                 background-color: #c1682f !important;
@@ -250,8 +242,6 @@
                 color: #c1682f !important;
             }
 
-            /* Étiquette catégorie : le thème de base la colorait en rouge "danger",
-               ce qui n'a jamais été voulu ici. Petit chip neutre à la place. */
             .cat-chip {
                 display: inline-block;
                 background: #f6ece0;
@@ -265,8 +255,6 @@
                 margin-bottom: 4px;
             }
 
-            /* Emplacement produit : fond doux + icône si l'image manque/échoue,
-               au lieu d'un rectangle blanc vide avec une icône cassée. */
             .productsetimg {
                 background: #fbf3ea;
                 border-radius: 8px;
@@ -291,8 +279,6 @@
                 color: #e3c8a8;
             }
 
-            /* Petite élévation au survol des cartes produit : plus vivant, retour
-               visuel immédiat que la carte est cliquable. */
             .productset {
                 transition: box-shadow .15s ease, transform .15s ease;
             }
@@ -302,7 +288,6 @@
                 box-shadow: 0 8px 18px rgba(193, 104, 47, 0.15) !important;
             }
 
-            /* Onglets catégories inactifs : le blanc plat manquait de relief. */
             .tab-item:not(.active) .product-details {
                 background: #fffaf5;
                 border: 1px solid #f0e0c8;
@@ -314,7 +299,6 @@
                 box-shadow: 0 2px 8px rgba(193, 104, 47, 0.1);
             }
 
-            /* Bouton "Add Customer" : vert par défaut, incohérent avec le thème. */
             .btn-adds {
                 border-color: #c1682f !important;
                 color: #c1682f !important;
@@ -325,10 +309,53 @@
                 color: #fff !important;
             }
 
-            /* Carte du panier : un peu plus de relief pour la détacher du fond. */
             .card-order {
                 border-radius: 12px;
                 box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+            }
+
+            .check-product {
+                display: none;
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                background-color: #c1682f;
+                color: white;
+                width: 20px;
+                height: 20px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 14px;
+                font-weight: bold;
+                animation: checkPop .2s ease;
+            }
+
+            @keyframes checkPop {
+                from { transform: scale(0); }
+                to   { transform: scale(1); }
+            }
+
+            .product-item.selected .check-product {
+                display: flex;
+            }
+            .qty-price-group {
+                display: flex;
+                flex-direction: row;
+                gap: 16px;
+                flex-wrap: wrap;
+            }
+
+            .qty-price-group .form-group {
+                flex: 1;
+                min-width: 120px;
+            }
+
+            @media (max-width: 768px) {
+                .qty-price-group {
+                    flex-direction: column;
+                }
             }
         </style>
         <div id="global-loader">
@@ -353,6 +380,11 @@
                                 <span id="clearSearchBtn" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); cursor:pointer; display:none;">
                                     <i class="fa fa-times-circle text-muted"></i>
                                 </span>
+                            </div>
+                            <div class="mb-3">
+                                <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#thirdPartyQuickModal">
+                                    <i class="fa fa-plus"></i> Vente Tierce Rapide
+                                </button>
                             </div>
                             @include('layouts.flash')
                             <ul class="tabs owl-carousel owl-theme owl-product border-0">
@@ -428,7 +460,6 @@
                                                 <li>
                                                     <h5>Autres Frais </h5>
                                                     <input type="text" id="tax" style="width: 60px" class="form-control" value="0">
-                                                    {{-- <h6><span id="tax">0.00$</span></h6> --}}
                                                 </li>
                                                 <li>
                                                     <h5>Total</h5>
@@ -444,7 +475,7 @@
                                                     <div class="select-split form-group">
                                                         <div class="select-group w-100">
                                                             <select name="customer_id" id="customer_id" class="form-control">
-                                                                <option value="">Sélectionner Client</option> <!-- Ajout d'une valeur vide -->
+                                                                <option value="">Sélectionner Client</option>
                                                                 @foreach ($customers as $item)
                                                                     <option value="{{ $item->id }}" {{ old('customer_id') == $item->id ? 'selected' : '' }}>
                                                                         {{ $item->customerName.' '.$item->mark }}
@@ -462,7 +493,7 @@
                                                     <div class="select-split form-group">
                                                         <div class="select-group w-100">
                                                             <select name="store_id" id="store_id" class="form-control">
-                                                                <option value="">Sélectionner Magasin</option> <!-- Ajout d'une valeur vide -->
+                                                                <option value="">Sélectionner Magasin</option>
                                                                 @if ($userStoreId)
                                                                     <option value="{{ $userStoreId }}" selected>{{ App\Models\Store::find($userStoreId)->store_name }}</option>
                                                                 @else
@@ -500,8 +531,7 @@
                                                 <textarea name="notes" id="notes" class="form-control"></textarea>
                                             </div>
                                             <div class="form-group">
-                                                <button type="submit" class="btn btn-primary form-control">Confirm Command
-                                                </button>
+                                                <button type="submit" class="btn btn-primary form-control">Confirm Command</button>
                                             </div>
                                         </div>
                                     </div>
@@ -512,6 +542,7 @@
                 </div>
             </div>
         </div>
+
         <div class="modal fade" id="create" tabindex="-1" aria-labelledby="create" aria-hidden="true">
             <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
                 <div class="modal-content">
@@ -523,7 +554,6 @@
                     </div>
                     <div class="modal-body">
                         <form id="addCustomerForm">
-                            <meta name="csrf-token" content="{{ csrf_token() }}">
                             <div class="row">
                                 <div class="col-lg-6 col-sm-12 col-12">
                                     <div class="form-group">
@@ -565,6 +595,7 @@
                 </div>
             </div>
         </div>
+
         <div class="modal fade" id="delete" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered" role="document">
                 <div class="modal-content">
@@ -589,53 +620,102 @@
                 </div>
             </div>
         </div>
-        <style>
-            .check-product {
-                display: none; /* Hide checkbox initially */
-                position: absolute;
-                top: 10px;
-                right: 10px;
-                background-color: #c1682f;
-                color: white;
-                width: 20px;
-                height: 20px;
-                border-radius: 50%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 14px;
-                font-weight: bold;
-                animation: checkPop .2s ease;
-            }
 
-            @keyframes checkPop {
-                from { transform: scale(0); }
-                to   { transform: scale(1); }
-            }
+        <div class="modal fade" id="thirdPartyQuickModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Vente Tierce Rapide - Nouveau Produit</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="quickThirdPartyForm">
+                            @csrf
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label>Libellé du Produit</label>
+                                    <input type="text" name="libelle" class="form-control" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label>SKU / Référence</label>
+                                    <input type="text" name="sku" class="form-control" required>
+                                </div>
+                                <div class="col-md-6 mt-3">
+                                    <label>Prix de Vente au Client</label>
+                                    <input type="number" step="0.01" name="prix" class="form-control" required>
+                                </div>
+                                <div class="col-md-6 mt-3">
+                                    <label>Prix donné par l'Ami</label>
+                                    <input type="number" step="0.01" name="purchase_price_from_partner" class="form-control" required>
+                                </div>
+                                <div class="col-md-6 mt-3">
+                                    <label>Partenaire / Ami</label>
+                                    <div class="d-flex" style="gap:6px;">
+                                        <select name="partner_id" class="form-control partner-select" style="flex:1;" required>
+                                            <option value="">Choisir un partenaire...</option>
+                                            @foreach($partners as $p)
+                                                <option value="{{ $p->id }}">{{ $p->name }} {{ $p->phone ? '('.$p->phone.')' : '' }}</option>
+                                            @endforeach
+                                        </select>
+                                        <button type="button" class="btn btn-sm btn-add-partner" style="background:#c1682f; color:#fff; white-space:nowrap;">
+                                            <i class="fa fa-plus"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mt-3">
+                                    <label>Quantité</label>
+                                    <input type="number" name="quantity" value="1" min="1" class="form-control" required>
+                                </div>
+                                <div class="col-12 mt-3">
+                                    <label>Notes</label>
+                                    <textarea name="notes" class="form-control" rows="2"></textarea>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                        <button type="button" id="saveQuickThirdParty" class="btn btn-primary">Enregistrer la Vente</button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-            .product-item.selected .check-product {
-                display: flex; /* Show checkbox when selected */
-            }
-            .qty-price-group {
-                display: flex;
-                flex-direction: row;
-                gap: 16px; /* space between Qty and Prix */
-                flex-wrap: wrap;
-            }
+        <div class="modal fade" id="quickPartnerModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-sm modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header" style="background: #fffaf5; border-bottom: 1px solid #f0e0c8;">
+                        <h6 class="modal-title" style="color: #c1682f;">
+                            <i class="fa fa-user-plus me-2"></i>Nouveau Partenaire
+                        </h6>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="quickPartnerForm">
+                            @csrf
+                            <div class="mb-3">
+                                <label class="form-label" style="font-size: 13px; font-weight: 600;">Nom du partenaire *</label>
+                                <input type="text" name="name" id="quickPartnerName" class="form-control" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label" style="font-size: 13px; font-weight: 600;">Téléphone</label>
+                                <input type="text" name="phone" id="quickPartnerPhone" class="form-control">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label" style="font-size: 13px; font-weight: 600;">Email</label>
+                                <input type="email" name="email" id="quickPartnerEmail" class="form-control">
+                            </div>
+                            <div class="text-danger" id="quickPartnerError" style="font-size: 12px; display:none;"></div>
+                        </form>
+                    </div>
+                    <div class="modal-footer" style="border-top: 1px solid #f0e0c8;">
+                        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                        <button type="button" class="btn btn-sm" id="saveQuickPartner" style="background: #c1682f; color: white;">Enregistrer</button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-            .qty-price-group .form-group {
-                flex: 1;
-                min-width: 120px;
-            }
-
-            /* Stack vertically on small screens */
-            @media (max-width: 768px) {
-                .qty-price-group {
-                    flex-direction: column;
-                }
-            }
-
-        </style>
         <script src="{{ asset('assets/js/jquery-3.6.0.min.js') }}"></script>
         <script src="{{ asset('assets/js/feather.min.js') }}"></script>
         <script src="{{ asset('assets/js/jquery.slimscroll.min.js') }}"></script>
@@ -648,19 +728,43 @@
         <script src="{{ asset('assets/plugins/apexchart/apexcharts.min.js') }}"></script>
         <script src="{{ asset('assets/plugins/apexchart/chart-data.js') }}"></script>
         <script src="{{ asset('assets/js/script.js') }}"></script>
+        <meta name="csrf-token" content="{{ csrf_token() }}">
+
         <script>
             document.addEventListener('DOMContentLoaded', function () {
-                const productList = document.getElementById('product-list'); // Reference to the product list
+                const productList = document.getElementById('product-list');
                 let i = 0;
+                let targetPartnerSelect = null;
+                const partnersList = @json($partners);
+                const quickPartnerModal = new bootstrap.Modal(document.getElementById('quickPartnerModal'));
+                const thirdPartyQuickModal = new bootstrap.Modal(document.getElementById('thirdPartyQuickModal'));
 
+                // Fonction pour peupler les selects de partenaires
+                function populatePartnerSelects() {
+                    document.querySelectorAll('.partner-select').forEach(select => {
+                        const currentValue = select.value;
+                        while (select.options.length > 1) {
+                            select.remove(1);
+                        }
+                        partnersList.forEach(partner => {
+                            const phoneText = partner.phone ? ' (' + partner.phone + ')' : '';
+                            const option = document.createElement('option');
+                            option.value = partner.id;
+                            option.textContent = partner.name + phoneText;
+                            select.appendChild(option);
+                        });
+                        if (currentValue) {
+                            select.value = currentValue;
+                        }
+                    });
+                }
+
+                // Gestion du clic sur les produits
                 document.addEventListener('click', function (event) {
                     const item = event.target.closest('.product-item');
-                    if (!item) {
-                        return;
-                    }
+                    if (!item) return;
 
                     i++;
-                    // Get the SKU and other details from the selected product
                     const sku = item.getAttribute('data-sku');
                     const product_id = item.getAttribute('data-id');
                     const numeroFacture = item.getAttribute('data-numeroFacture');
@@ -668,138 +772,176 @@
                     const libelle = item.querySelector('.productsetcontent h5').textContent;
                     const imageUrl = item.querySelector('.productsetimg img').src;
 
-                    // Check if the product is already in the product list
-                    const existingRow = document.querySelector(`#product-list li[data-sku="${sku}"]`);
-                    if (existingRow) {
-                        // If the product already exists, remove it
-                        existingRow.remove();
-                        item.classList.remove('selected');
-                        updateTotalPrice(); // Update total after removal
-                        updateTotalCheckout(); // Update total after removal after
-                        return; // Exit to avoid adding the product again
+                    if (document.querySelector('#product-list li[data-sku="' + sku + '"]')) {
+                        return;
                     }
 
-                    item.classList.add('selected');
-                    item.classList.add('just-added');
+                    item.classList.add('selected', 'just-added');
                     setTimeout(() => item.classList.remove('just-added'), 500);
 
-                    // Create a new row for the product list
+                    var partnerOptions = '<option value="">Choisir un partenaire...</option>';
+                    partnersList.forEach(function(partner) {
+                        var phoneText = partner.phone ? ' (' + partner.phone + ')' : '';
+                        partnerOptions += '<option value="' + partner.id + '">' + partner.name + phoneText + '</option>';
+                    });
+
                     const newRow = document.createElement('li');
                     newRow.classList.add('product-row');
-                    newRow.setAttribute('data-sku', sku); // Add SKU to the row for easy identification
-                    newRow.innerHTML = `
-                            <ul class="product-lists">
-                                <input type="hidden" name="sales[${i}][product_id]" value="${product_id}">
-                                <input type="hidden" name="sales[${i}][numeroFacture]" value="${numeroFacture}">
-                                <li>
-                                    <div class="productimg">
-                                        <div class="productimgs">
-                                            <img src="${imageUrl}" alt="img">
-                                        </div>
-                                        <div class="productcontet">
-                                            <h4>${libelle}</h4>
-                                            <div class="productlinkset">
-                                                <h5>${sku}</h5>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </li>
-                               <li class="qty-price-group">
-                                   <div class="quantity-set form-group">
-                                       <h6>Qty</h6>
-                                       <div class="qty-stepper">
-                                           <button type="button" class="qty-decrement">−</button>
-                                           <input type="number" min="1" name="sales[${i}][quantity]" value="1" class="quantity-field form-control">
-                                           <button type="button" class="qty-increment">+</button>
-                                       </div>
-                                   </div>
+                    newRow.setAttribute('data-sku', sku);
 
-                                   <div class="price form-group">
-                                       <h6>Prix</h6>
-                                       <input type="text" style="width:150px" name="sales[${i}][prix]" value="${productPrice}" class="price-field form-control">
-                                       <div class="text-danger price-error mt-1" style="font-size: 0.9rem; display: none;"></div>
-                                   </div>
-                               </li>
-                                <li>
-                                    <div class="row-total form-group">
-                                        <h6>Total</h6>
-                                        <input type="text" name="sales[${i}][total_price]" class="form-control row-total-price" readonly>
-                                    </div>
-                                </li>
-                                <li>
-                                    <button type="button" class="row-remove-btn" title="Retirer">
-                                        <i class="fa fa-trash"></i>
-                                    </button>
-                                </li>
-                            </ul>
-                        `;
+                    newRow.innerHTML = '<ul class="product-lists">' +
+                        '<input type="hidden" name="sales[' + i + '][product_id]" value="' + product_id + '">' +
+                        '<input type="hidden" name="sales[' + i + '][numeroFacture]" value="' + numeroFacture + '">' +
+                        '<input type="hidden" name="sales[' + i + '][is_third_party]" value="0" class="third-party-flag">' +
+                        '<li>' +
+                            '<div class="productimg">' +
+                                '<div class="productimgs">' +
+                                    '<img src="' + imageUrl + '" alt="img">' +
+                                '</div>' +
+                                '<div class="productcontet">' +
+                                    '<h4>' + libelle + '</h4>' +
+                                    '<div class="productlinkset">' +
+                                        '<h5>' + sku + '</h5>' +
+                                    '</div>' +
+                                '</div>' +
+                            '</div>' +
+                        '</li>' +
+                        '<li class="qty-price-group">' +
+                            '<div class="quantity-set form-group">' +
+                                '<h6>Qty</h6>' +
+                                '<div class="qty-stepper">' +
+                                    '<button type="button" class="qty-decrement">-</button>' +
+                                    '<input type="number" min="1" name="sales[' + i + '][quantity]" value="1" class="quantity-field form-control">' +
+                                    '<button type="button" class="qty-increment">+</button>' +
+                                '</div>' +
+                            '</div>' +
+                            '<div class="price form-group">' +
+                                '<h6>Prix de Vente</h6>' +
+                                '<input type="text" style="width:150px" name="sales[' + i + '][prix]" value="' + productPrice + '" class="price-field form-control">' +
+                                '<div class="text-danger price-error mt-1" style="font-size: 0.9rem; display: none;"></div>' +
+                            '</div>' +
+                        '</li>' +
+                        '<li style="width:100%; margin-top:8px;">' +
+                            '<label style="font-size:13px; cursor:pointer; display:flex; align-items:center;">' +
+                                '<input type="checkbox" class="third-party-check" style="margin-right:6px; accent-color:#c1682f;">' +
+                                'Vente pour un tiers (ami)' +
+                            '</label>' +
+                            '<div class="third-party-fields mt-2" style="display:none; background:#fffaf5; padding:10px; border-radius:8px; border:1px solid #f0e0c8;">' +
+                                '<div style="display:flex; gap:8px; margin-bottom:8px;">' +
+                                    '<select name="sales[' + i + '][partner_id]" class="form-control partner-select" style="flex:1;">' +
+                                        partnerOptions +
+                                    '</select>' +
+                                    '<button type="button" class="btn btn-sm btn-add-partner" style="background:#c1682f; color:#fff; white-space:nowrap;">' +
+                                        '<i class="fa fa-plus"></i>' +
+                                    '</button>' +
+                                '</div>' +
+                                '<input type="number" step="0.01" name="sales[' + i + '][purchase_price_from_partner]" placeholder="Prix donné par l ami (par unité)" class="form-control">' +
+                            '</div>' +
+                        '</li>' +
+                        '<li>' +
+                            '<div class="row-total form-group">' +
+                                '<h6>Total</h6>' +
+                                '<input type="text" name="sales[' + i + '][total_price]" class="form-control row-total-price" readonly>' +
+                            '</div>' +
+                        '</li>' +
+                        '<li>' +
+                            '<button type="button" class="row-remove-btn" title="Retirer">' +
+                                '<i class="fa fa-trash"></i>' +
+                            '</button>' +
+                        '</li>' +
+                    '</ul>';
 
-                    // Append the new row to the product list
                     productList.appendChild(newRow);
+                    initializeRowEvents(newRow, productPrice);
+                });
 
-                    // Update the total price when quantity or price changes
-                    const quantityField = newRow.querySelector('.quantity-field');
-                    const priceField = newRow.querySelector('.price-field');
-                    const priceError = newRow.querySelector('.price-error');
+                function initializeRowEvents(row, productPrice) {
+                    const quantityField = row.querySelector('.quantity-field');
+                    const priceField = row.querySelector('.price-field');
+                    const rowTotalField = row.querySelector('.row-total-price');
+                    const thirdPartyCheck = row.querySelector('.third-party-check');
+                    const thirdPartyFields = row.querySelector('.third-party-fields');
+                    const thirdPartyFlag = row.querySelector('.third-party-flag');
+                    const addPartnerBtn = row.querySelector('.btn-add-partner');
+                    const partnerSelect = row.querySelector('.partner-select');
 
-                    // Stepper +/-
-                    newRow.querySelector('.qty-increment').addEventListener('click', function () {
-                        quantityField.value = (parseInt(quantityField.value) || 0) + 1;
+                    if (thirdPartyCheck) {
+                        thirdPartyCheck.addEventListener('change', function() {
+                            if (this.checked) {
+                                thirdPartyFields.style.display = 'block';
+                                thirdPartyFlag.value = "1";
+                            } else {
+                                thirdPartyFields.style.display = 'none';
+                                thirdPartyFlag.value = "0";
+                                if (partnerSelect) partnerSelect.value = '';
+                                const purchasePrice = thirdPartyFields.querySelector('input[name*="purchase_price_from_partner"]');
+                                if (purchasePrice) purchasePrice.value = '';
+                            }
+                        });
+                    }
+
+                    if (addPartnerBtn) {
+                        addPartnerBtn.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            targetPartnerSelect = partnerSelect;
+                            document.getElementById('quickPartnerForm').reset();
+                            document.getElementById('quickPartnerError').style.display = 'none';
+                            quickPartnerModal.show();
+                        });
+                    }
+
+                    row.querySelector('.qty-increment').addEventListener('click', function() {
+                        quantityField.value = parseInt(quantityField.value) + 1;
                         updateRowTotal();
                     });
-                    newRow.querySelector('.qty-decrement').addEventListener('click', function () {
-                        const current = parseInt(quantityField.value) || 1;
-                        quantityField.value = Math.max(1, current - 1);
+                    row.querySelector('.qty-decrement').addEventListener('click', function() {
+                        quantityField.value = Math.max(1, parseInt(quantityField.value) - 1);
                         updateRowTotal();
                     });
 
-                    // Retirer directement depuis la ligne du panier
-                    newRow.querySelector('.row-remove-btn').addEventListener('click', function () {
-                        newRow.remove();
-                        item.classList.remove('selected');
+                    function updateRowTotal() {
+                        const qty = parseFloat(quantityField.value) || 0;
+                        const price = parseFloat(priceField.value) || 0;
+                        rowTotalField.value = (qty * price).toFixed(2);
+                        updateTotalPrice();
+                    }
+
+                    quantityField.addEventListener('input', updateRowTotal);
+                    priceField.addEventListener('input', function() {
+                        const enteredPrice = parseFloat(this.value) || 0;
+                        const priceError = row.querySelector('.price-error');
+                        if (enteredPrice < productPrice) {
+                            if (priceError) {
+                                priceError.textContent = 'Le prix ne peut pas être inférieur à ' + productPrice.toFixed(2) + ' GNF';
+                                priceError.style.display = 'block';
+                                this.classList.add('is-invalid');
+                            }
+                        } else {
+                            if (priceError) {
+                                priceError.style.display = 'none';
+                                this.classList.remove('is-invalid');
+                            }
+                        }
+                        updateRowTotal();
+                    });
+
+                    row.querySelector('.row-remove-btn').addEventListener('click', function() {
+                        row.remove();
                         updateTotalPrice();
                     });
 
-                    quantityField.addEventListener('input', updateRowTotal);
-                    priceField.addEventListener('input', function () {
-                        const enteredPrice = parseFloat(priceField.value) || 0;
-
-                        if (enteredPrice < productPrice) {
-                            priceError.textContent = `Le prix ne peut pas être inférieur à ${productPrice.toFixed(2)} GNF`;
-                            priceError.style.display = 'block';
-                            priceField.classList.add('is-invalid');
-                        } else {
-                            priceError.textContent = '';
-                            priceError.style.display = 'none';
-                            priceField.classList.remove('is-invalid');
-                        }
-
-                        updateRowTotal();
-                    });
-
-                    // Function to update the row total
-                    function updateRowTotal() {
-                        const quantity = parseFloat(quantityField.value) || 0;
-                        const price = parseFloat(priceField.value) || 0;
-                        const rowTotal = quantity * price;
-                        newRow.querySelector('.row-total-price').value = rowTotal.toFixed(2);
-                        updateTotalPrice(); // Recalculate total price whenever a value changes
-                    }
                     updateRowTotal();
-                    // Update total price after adding the product
-                    updateTotalPrice();
-                    //updateTotalCheckout();
-                });
-                // Function to update the total price, subtotal, and final price with tax
+                }
+
                 function updateTotalPrice() {
                     let subtotal = 0;
                     const rows = document.querySelectorAll('.product-row');
                     rows.forEach(row => {
-                        const rowTotal = parseFloat(row.querySelector('.row-total-price').value) || 0;
+                        const rowTotal = parseFloat(row.querySelector('.row-total-price')?.value) || 0;
                         subtotal += rowTotal;
                     });
 
-                    // État panier vide + compteur d'articles
                     const emptyState = document.getElementById('emptyCartState');
                     const cartCountBadge = document.getElementById('cartCountBadge');
                     if (emptyState) {
@@ -816,9 +958,8 @@
 
                     const subtotalElement = document.getElementById('subtotal');
                     const taxElement = document.getElementById('tax');
-
                     if (subtotalElement) {
-                        subtotalElement.textContent = `${subtotal.toFixed(2)}`;
+                        subtotalElement.textContent = subtotal.toFixed(2);
                         const taxAmount = parseFloat(taxElement?.value || 0) || 0;
                         const finalTotal = subtotal + taxAmount;
                         const finalTotalElement = document.getElementById('finalTotal');
@@ -831,37 +972,137 @@
                         }
                     }
                 }
+
                 const taxInput = document.getElementById('tax');
                 if (taxInput) {
                     taxInput.addEventListener('input', updateTotalPrice);
                 }
 
+                // Gestion création partenaire
+                document.getElementById('saveQuickPartner').addEventListener('click', function () {
+                    const form = document.getElementById('quickPartnerForm');
+                    const name = document.getElementById('quickPartnerName').value.trim();
+                    const errorBox = document.getElementById('quickPartnerError');
+
+                    if (!name) {
+                        errorBox.textContent = 'Le nom du partenaire est requis.';
+                        errorBox.style.display = 'block';
+                        return;
+                    }
+
+                    const formData = new FormData(form);
+                    const saveBtn = this;
+                    saveBtn.disabled = true;
+                    saveBtn.textContent = 'Enregistrement...';
+
+                    fetch('{{ route("pos.storePartner") }}', {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                            'Accept': 'application/json'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        saveBtn.disabled = false;
+                        saveBtn.textContent = 'Enregistrer';
+
+                        if (!data.success) {
+                            errorBox.textContent = data.message || "Erreur lors de la création du partenaire.";
+                            errorBox.style.display = 'block';
+                            return;
+                        }
+
+                        const newPartner = data.partner;
+                        document.querySelectorAll('.partner-select').forEach(select => {
+                            const phoneText = newPartner.phone ? ' (' + newPartner.phone + ')' : '';
+                            const option = document.createElement('option');
+                            option.value = newPartner.id;
+                            option.textContent = newPartner.name + phoneText;
+                            select.appendChild(option);
+                        });
+
+                        if (targetPartnerSelect) {
+                            targetPartnerSelect.value = newPartner.id;
+                        }
+
+                        quickPartnerModal.hide();
+                        form.reset();
+                    })
+                    .catch(error => {
+                        saveBtn.disabled = false;
+                        saveBtn.textContent = 'Enregistrer';
+                        errorBox.textContent = "Erreur réseau, veuillez réessayer.";
+                        errorBox.style.display = 'block';
+                        console.error('Erreur:', error);
+                    });
+                });
+
+                // Gestion vente tierce rapide
+                document.getElementById('saveQuickThirdParty').addEventListener('click', function () {
+                    const form = document.getElementById('quickThirdPartyForm');
+                    if (!form.checkValidity()) {
+                        form.reportValidity();
+                        return;
+                    }
+
+                    const formData = new FormData(form);
+                    formData.append('store_id', document.getElementById('store_id').value);
+                    formData.append('customer_id', document.getElementById('customer_id').value || '');
+                    
+                    const saveBtn = this;
+                    saveBtn.disabled = true;
+                    saveBtn.textContent = 'Enregistrement...';
+
+                    fetch('{{ route("pos.storeQuickThirdParty") }}', {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                            'Accept': 'application/json'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        saveBtn.disabled = false;
+                        saveBtn.textContent = 'Enregistrer la Vente';
+                        if (data.success) {
+                            alert(data.message);
+                            thirdPartyQuickModal.hide();
+                            form.reset();
+                            window.location.href = data.redirect;
+                        } else {
+                            alert(data.message || "Erreur lors de l'enregistrement de la vente.");
+                        }
+                    })
+                    .catch(error => {
+                        saveBtn.disabled = false;
+                        saveBtn.textContent = 'Enregistrer la Vente';
+                        console.error('Erreur:', error);
+                        alert("Erreur réseau, veuillez réessayer.");
+                    });
+                });
+
+                // Gestion client
                 const addCustomerButton = document.getElementById('addCustomerButton');
                 const selectCustomer = document.getElementById('customer_id');
 
-                // Vérifier au chargement
-                showHideCustomerButton();
-
-                // Ajouter un écouteur sur le changement de sélection
-                selectCustomer.addEventListener('change', function () {
-                    console.log('Sélection modifiée :', selectCustomer.value);
-                    showHideCustomerButton();
-                });
-
                 function showHideCustomerButton() {
-                    console.log('Vérification du bouton...');
-
                     if (!selectCustomer.value || selectCustomer.value === 'Selectionner Client') {
-                        addCustomerButton.style.display = 'block'; // Afficher le bouton
+                        addCustomerButton.style.display = 'block';
                     } else {
-                        addCustomerButton.style.display = 'none'; // Masquer le bouton
+                        addCustomerButton.style.display = 'none';
                     }
                 }
+
+                showHideCustomerButton();
+                selectCustomer.addEventListener('change', showHideCustomerButton);
+
                 const addCustomerModal = new bootstrap.Modal(document.getElementById('create'));
                 document.getElementById('addCustomerForm').addEventListener('submit', function (e) {
                     e.preventDefault();
                     let formData = new FormData(this);
-
                     fetch('{{ route("pos.storeCustomer") }}', {
                         method: 'POST',
                         body: formData,
@@ -874,201 +1115,160 @@
                     .then(data => {
                         if (data.success) {
                             const customerSelect = document.getElementById('customer_id');
-                            console.log(customerSelect);
-
                             let newOption = document.createElement('option');
                             newOption.value = data.customer.id;
-                            newOption.textContent = `${data.customer.customerName} ${data.customer.mark}`;
+                            newOption.textContent = data.customer.customerName + ' ' + data.customer.mark;
                             customerSelect.appendChild(newOption);
-
                             customerSelect.value = data.customer.id;
                             showHideCustomerButton();
-
-                            // Ferme le modal et reset le formulaire
                             addCustomerModal.hide();
                             document.getElementById('addCustomerForm').reset();
-                        } else {
-                            console.log('Erreur lors de l’ajout du client.');
                         }
                     })
                     .catch(error => console.error('Erreur:', error));
                 });
             });
         </script>
-      <script>
-          document.addEventListener('DOMContentLoaded', function () {
-              const searchInput = document.getElementById('posSearchInput');
-              const clearSearchBtn = document.getElementById('clearSearchBtn');
-              const tabContents = document.querySelectorAll('.tab_content');
-              const tabItems = document.querySelectorAll('.tab-item');
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const searchInput = document.getElementById('posSearchInput');
+                const clearSearchBtn = document.getElementById('clearSearchBtn');
+                const tabContents = document.querySelectorAll('.tab_content');
+                const tabItems = document.querySelectorAll('.tab-item');
 
-              // Raccourci clavier "/" pour aller directement à la recherche
-              document.addEventListener('keydown', function (e) {
-                  if (e.key === '/' && document.activeElement !== searchInput && document.activeElement.tagName !== 'TEXTAREA' && document.activeElement.tagName !== 'INPUT') {
-                      e.preventDefault();
-                      searchInput.focus();
-                  }
-              });
+                document.addEventListener('keydown', function (e) {
+                    if (e.key === '/' && document.activeElement !== searchInput && document.activeElement.tagName !== 'TEXTAREA' && document.activeElement.tagName !== 'INPUT') {
+                        e.preventDefault();
+                        searchInput.focus();
+                    }
+                });
 
-              // Fonction principale de réinitialisation
-              function resetToInitialState() {
-                  const savedTab = localStorage.getItem('activeTab');
+                function resetToInitialState() {
+                    const savedTab = localStorage.getItem('activeTab');
+                    tabItems.forEach(tab => tab.classList.remove('active'));
+                    tabContents.forEach(tab => {
+                        tab.classList.remove('active');
+                        tab.style.display = 'none';
+                    });
+                    let targetTab = tabItems[0];
+                    let targetContent = tabContents[0];
+                    if (savedTab) {
+                        const savedTabItem = document.querySelector('.tab-item[data-tab="' + savedTab + '"]');
+                        const savedContent = document.querySelector('.tab_content[data-tab="' + savedTab + '"]');
+                        if (savedTabItem && savedContent) {
+                            targetTab = savedTabItem;
+                            targetContent = savedContent;
+                        }
+                    }
+                    targetTab.classList.add('active');
+                    targetContent.classList.add('active');
+                    targetContent.style.display = 'block';
+                }
 
-                  tabItems.forEach(tab => tab.classList.remove('active'));
-                  tabContents.forEach(tab => {
-                      tab.classList.remove('active');
-                      tab.style.display = 'none';
-                  });
+                const PAGE_SIZE = 10;
+                const pageState = {};
 
-                  let targetTab = tabItems[0];
-                  let targetContent = tabContents[0];
+                function paginateTab(tabContent) {
+                    const slug = tabContent.getAttribute('data-tab');
+                    const pageContainer = tabContent.querySelector('.pos-pagination');
+                    const items = Array.from(tabContent.querySelectorAll('.product-item'));
+                    if (!items.length) {
+                        if (pageContainer) pageContainer.innerHTML = '';
+                        return;
+                    }
+                    const totalPages = Math.ceil(items.length / PAGE_SIZE);
+                    let current = pageState[slug] || 1;
+                    if (current > totalPages) current = totalPages;
+                    pageState[slug] = current;
+                    items.forEach((item, idx) => {
+                        const page = Math.floor(idx / PAGE_SIZE) + 1;
+                        item.classList.toggle('pos-hidden', page !== current);
+                    });
+                    if (!pageContainer) return;
+                    if (totalPages <= 1) {
+                        pageContainer.innerHTML = '';
+                        return;
+                    }
+                    let html = '<button type="button" data-page="prev" ' + (current === 1 ? 'disabled' : '') + '>&laquo;</button>';
+                    for (let p = 1; p <= totalPages; p++) {
+                        html += '<button type="button" data-page="' + p + '" class="' + (p === current ? 'active' : '') + '">' + p + '</button>';
+                    }
+                    html += '<button type="button" data-page="next" ' + (current === totalPages ? 'disabled' : '') + '>&raquo;</button>';
+                    pageContainer.innerHTML = html;
+                    pageContainer.querySelectorAll('button').forEach(btn => {
+                        btn.addEventListener('click', function () {
+                            const val = this.getAttribute('data-page');
+                            if (val === 'prev') pageState[slug] = Math.max(1, current - 1);
+                            else if (val === 'next') pageState[slug] = Math.min(totalPages, current + 1);
+                            else pageState[slug] = parseInt(val);
+                            paginateTab(tabContent);
+                        });
+                    });
+                }
 
-                  if (savedTab) {
-                      const savedTabItem = document.querySelector(`.tab-item[data-tab="${savedTab}"]`);
-                      const savedContent = document.querySelector(`.tab_content[data-tab="${savedTab}"]`);
-                      if (savedTabItem && savedContent) {
-                          targetTab = savedTabItem;
-                          targetContent = savedContent;
-                      }
-                  }
+                function paginateAllTabs() {
+                    tabContents.forEach(paginateTab);
+                }
 
-                  targetTab.classList.add('active');
-                  targetContent.classList.add('active');
-                  targetContent.style.display = 'block';
-              }
+                searchInput.addEventListener('input', function () {
+                    const searchTerm = this.value.toLowerCase();
+                    clearSearchBtn.style.display = searchTerm ? 'inline' : 'none';
+                    if (!searchTerm) {
+                        resetToInitialState();
+                        paginateAllTabs();
+                        return;
+                    }
+                    tabContents.forEach(tab => {
+                        let hasVisibleProducts = false;
+                        const products = tab.querySelectorAll('.product-item');
+                        const pageContainer = tab.querySelector('.pos-pagination');
+                        if (pageContainer) pageContainer.innerHTML = '';
+                        products.forEach(product => {
+                            const libelle = product.querySelector('.productsetcontent h5')?.textContent.toLowerCase() || '';
+                            const sku = product.getAttribute('data-sku')?.toLowerCase() || '';
+                            const cat = product.querySelector('.productsetcontent h6')?.textContent.toLowerCase() || '';
+                            const match = libelle.includes(searchTerm) || sku.includes(searchTerm) || cat.includes(searchTerm);
+                            product.classList.toggle('pos-hidden', !match);
+                            if (match) hasVisibleProducts = true;
+                        });
+                        tab.style.display = hasVisibleProducts ? 'block' : 'none';
+                        tab.classList.remove('active');
+                    });
+                    tabItems.forEach(tab => tab.classList.remove('active'));
+                });
 
-              // --- Pagination des produits (10 par page, par onglet) ---
-              const PAGE_SIZE = 10;
-              const pageState = {};
+                clearSearchBtn.addEventListener('click', function () {
+                    searchInput.value = '';
+                    clearSearchBtn.style.display = 'none';
+                    resetToInitialState();
+                    paginateAllTabs();
+                    searchInput.focus();
+                });
 
-              function paginateTab(tabContent) {
-                  const slug = tabContent.getAttribute('data-tab');
-                  const pageContainer = tabContent.querySelector('.pos-pagination');
-                  const items = Array.from(tabContent.querySelectorAll('.product-item'));
+                tabItems.forEach(tab => {
+                    tab.addEventListener('click', () => {
+                        const target = tab.getAttribute('data-tab');
+                        localStorage.setItem('activeTab', target);
+                        tabItems.forEach(t => t.classList.remove('active'));
+                        tabContents.forEach(c => {
+                            c.classList.remove('active');
+                            c.style.display = 'none';
+                        });
+                        tab.classList.add('active');
+                        const contentToShow = document.querySelector('.tab_content[data-tab="' + target + '"]');
+                        if (contentToShow) {
+                            contentToShow.classList.add('active');
+                            contentToShow.style.display = 'block';
+                        }
+                    });
+                });
 
-                  if (!items.length) {
-                      if (pageContainer) pageContainer.innerHTML = '';
-                      return;
-                  }
-
-                  const totalPages = Math.ceil(items.length / PAGE_SIZE);
-                  let current = pageState[slug] || 1;
-                  if (current > totalPages) current = totalPages;
-                  pageState[slug] = current;
-
-                  items.forEach((item, idx) => {
-                      const page = Math.floor(idx / PAGE_SIZE) + 1;
-                      item.classList.toggle('pos-hidden', page !== current);
-                  });
-
-                  if (!pageContainer) return;
-
-                  if (totalPages <= 1) {
-                      pageContainer.innerHTML = '';
-                      return;
-                  }
-
-                  let html = `<button type="button" data-page="prev" ${current === 1 ? 'disabled' : ''}>&laquo;</button>`;
-                  for (let p = 1; p <= totalPages; p++) {
-                      html += `<button type="button" data-page="${p}" class="${p === current ? 'active' : ''}">${p}</button>`;
-                  }
-                  html += `<button type="button" data-page="next" ${current === totalPages ? 'disabled' : ''}>&raquo;</button>`;
-                  pageContainer.innerHTML = html;
-
-                  pageContainer.querySelectorAll('button').forEach(btn => {
-                      btn.addEventListener('click', function () {
-                          const val = this.getAttribute('data-page');
-                          if (val === 'prev') pageState[slug] = Math.max(1, current - 1);
-                          else if (val === 'next') pageState[slug] = Math.min(totalPages, current + 1);
-                          else pageState[slug] = parseInt(val);
-                          paginateTab(tabContent);
-                      });
-                  });
-              }
-
-              function paginateAllTabs() {
-                  tabContents.forEach(paginateTab);
-              }
-
-              // Gestion de la recherche (la pagination ne s'applique pas pendant une recherche)
-              searchInput.addEventListener('input', function () {
-                  const searchTerm = this.value.toLowerCase();
-
-                  clearSearchBtn.style.display = searchTerm ? 'inline' : 'none';
-
-                  if (!searchTerm) {
-                      resetToInitialState();
-                      paginateAllTabs();
-                      return;
-                  }
-
-                  tabContents.forEach(tab => {
-                      let hasVisibleProducts = false;
-                      const products = tab.querySelectorAll('.product-item');
-                      const pageContainer = tab.querySelector('.pos-pagination');
-                      if (pageContainer) pageContainer.innerHTML = '';
-
-                      products.forEach(product => {
-                          const libelle = product.querySelector('.productsetcontent h5')?.textContent.toLowerCase() || '';
-                          const sku = product.getAttribute('data-sku')?.toLowerCase() || '';
-                          const cat = product.querySelector('.productsetcontent h6')?.textContent.toLowerCase() || '';
-
-                          const match = libelle.includes(searchTerm) || sku.includes(searchTerm) || cat.includes(searchTerm);
-                          product.classList.toggle('pos-hidden', !match);
-                          if (match) hasVisibleProducts = true;
-                      });
-
-                      tab.style.display = hasVisibleProducts ? 'block' : 'none';
-                      tab.classList.remove('active');
-                  });
-
-                  // On enlève la classe active des onglets pour empêcher l'affichage par défaut
-                  tabItems.forEach(tab => tab.classList.remove('active'));
-              });
-
-              // Bouton pour vider la recherche
-              clearSearchBtn.addEventListener('click', function () {
-                  searchInput.value = '';
-                  clearSearchBtn.style.display = 'none';
-                  resetToInitialState();
-                  paginateAllTabs();
-                  searchInput.focus();
-              });
-
-              // Gestion du clic sur les onglets (catégories)
-              tabItems.forEach(tab => {
-                  tab.addEventListener('click', () => {
-                      const target = tab.getAttribute('data-tab');
-
-                      // Sauvegarde de l'onglet actif
-                      localStorage.setItem('activeTab', target);
-
-                      // Réinitialisation des classes
-                      tabItems.forEach(t => t.classList.remove('active'));
-                      tabContents.forEach(c => {
-                          c.classList.remove('active');
-                          c.style.display = 'none';
-                      });
-
-                      // Activation du bon onglet
-                      tab.classList.add('active');
-                      const contentToShow = document.querySelector(`.tab_content[data-tab="${target}"]`);
-                      if (contentToShow) {
-                          contentToShow.classList.add('active');
-                          contentToShow.style.display = 'block';
-                      }
-                  });
-              });
-
-              // Initialisation
-              resetToInitialState();
-              paginateAllTabs();
-          });
-      </script>
-        <!-- Owl Carousel -->
+                resetToInitialState();
+                paginateAllTabs();
+            });
+        </script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/owl.carousel.min.js"></script>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.carousel.min.css">
-
         <script>
             $(document).ready(function() {
                 $(".owl-carousel").owlCarousel({

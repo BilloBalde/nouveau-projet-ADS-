@@ -59,8 +59,10 @@ class PurchaseOrderController extends Controller
             'reference' => 'required|string|unique:purchase_orders,reference',
             'store_id' => 'required|exists:stores,id',
             'origin' => 'required|in:chine,guinee',
-            'currency_code' => 'nullable|required_if:origin,chine|string',
-            'exchange_rate_used' => 'nullable|required_if:origin,chine|numeric|min:0',
+            //'currency_code' => 'nullable|required_if:origin,chine|string',
+            //'exchange_rate_used' => 'nullable|required_if:origin,chine|numeric|min:0',
+            'currency_code' => 'nullable|string|exists:currencies,currencyCode', // supprimé required_if
+            'exchange_rate_used' => 'nullable|numeric|min:0',                    // supprimé required_if
             'transport_cost_gnf' => 'nullable|numeric|min:0',
             'customs_cost_gnf' => 'nullable|numeric|min:0',
             'other_fees_gnf' => 'nullable|numeric|min:0',
@@ -69,14 +71,16 @@ class PurchaseOrderController extends Controller
             'notes' => 'nullable|string',
             'lines' => 'required|array|min:1',
             'lines.*.product_id' => 'required|exists:products,id',
-            'lines.*.quantity' => 'required|integer|min:1',
             'lines.*.unit_price_foreign' => 'nullable|numeric|min:0',
             'lines.*.cbm_per_unit' => 'nullable|numeric|min:0',
             'lines.*.description' => 'nullable|string',
+            'lines.*.cartons' => 'nullable|integer|min:0',
+            'lines.*.pieces_per_carton' => 'nullable|integer|min:0',
+            'lines.*.quantity' => 'required|integer|min:1',
         ], [
             'reference.unique' => 'Cette référence existe déjà.',
-            'currency_code.required_if' => 'La devise est obligatoire pour un achat en Chine.',
-            'exchange_rate_used.required_if' => 'Le taux de change est obligatoire pour un achat en Chine.',
+            //'currency_code.required_if' => 'La devise est obligatoire pour un achat en Chine.',
+            //'exchange_rate_used.required_if' => 'Le taux de change est obligatoire pour un achat en Chine.',
         ]);
 
         $order = PurchaseOrder::create([
@@ -84,7 +88,8 @@ class PurchaseOrderController extends Controller
             'store_id' => $validated['store_id'],
             'origin' => $validated['origin'],
             'currency_code' => $validated['origin'] === 'chine' ? $validated['currency_code'] : null,
-            'exchange_rate_used' => $validated['origin'] === 'chine' ? $validated['exchange_rate_used'] : null,
+            // 'exchange_rate_used' => $validated['origin'] === 'chine' ? $validated['exchange_rate_used'] : null,
+            'exchange_rate_used' => $validated['exchange_rate_used'] ?? 1,   // taux par défaut 1
             'transport_cost_gnf' => $validated['transport_cost_gnf'] ?? 0,
             'customs_cost_gnf' => $validated['customs_cost_gnf'] ?? 0,
             'other_fees_gnf' => $validated['other_fees_gnf'] ?? 0,
@@ -128,8 +133,10 @@ class PurchaseOrderController extends Controller
         $validated = $request->validate([
             'store_id' => 'required|exists:stores,id',
             'origin' => 'required|in:chine,guinee',
-            'currency_code' => 'nullable|required_if:origin,chine|string',
-            'exchange_rate_used' => 'nullable|required_if:origin,chine|numeric|min:0',
+            //'currency_code' => 'nullable|required_if:origin,chine|string',
+           // 'exchange_rate_used' => 'nullable|required_if:origin,chine|numeric|min:0',
+            'currency_code' => 'nullable|string|exists:currencies,currencyCode',
+            'exchange_rate_used' => 'nullable|numeric|min:0',
             'transport_cost_gnf' => 'nullable|numeric|min:0',
             'customs_cost_gnf' => 'nullable|numeric|min:0',
             'other_fees_gnf' => 'nullable|numeric|min:0',
@@ -148,7 +155,8 @@ class PurchaseOrderController extends Controller
             'store_id' => $validated['store_id'],
             'origin' => $validated['origin'],
             'currency_code' => $validated['origin'] === 'chine' ? $validated['currency_code'] : null,
-            'exchange_rate_used' => $validated['origin'] === 'chine' ? $validated['exchange_rate_used'] : null,
+            ///'exchange_rate_used' => $validated['origin'] === 'chine' ? $validated['exchange_rate_used'] : null,
+            'exchange_rate_used' => $validated['exchange_rate_used'] ?? 1,
             'transport_cost_gnf' => $validated['transport_cost_gnf'] ?? 0,
             'customs_cost_gnf' => $validated['customs_cost_gnf'] ?? 0,
             'other_fees_gnf' => $validated['other_fees_gnf'] ?? 0,

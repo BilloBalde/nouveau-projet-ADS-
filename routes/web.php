@@ -482,7 +482,9 @@ Route::post('/journalier/paiement', [JournalierController::class, 'paySubmit'])-
 
 Route::get('pos', [SaleController::class, 'pos'])->middleware('auth.check')->name('pos');
 Route::post('pos/storeCustomer', [SaleController::class, 'storeCustomer'])->middleware('auth.check')->name('pos.storeCustomer');
-
+// Routes pour les partenaires et ventes tierces
+Route::post('/pos/store-partner', [SaleController::class, 'storePartner'])->name('pos.storePartner');
+Route::post('/pos/quick-third-party', [SaleController::class, 'storeQuickThirdParty'])->name('pos.storeQuickThirdParty');
 // =============================================
 // 30. ROUTES EXPORTS (Combinées)
 // =============================================

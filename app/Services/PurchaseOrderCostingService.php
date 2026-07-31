@@ -11,17 +11,12 @@ use Illuminate\Support\Facades\DB;
 class PurchaseOrderCostingService
 {
     /**
-     * Calcule le coût de revient réel de chaque ligne d'un achat (conversion devise,
-     * répartition du transport/douane au prorata du CBM), met à jour le stock et
-     * le prix de revient (price_sale) de chaque produit concerné.
-     *
-     * @param  array<int, array{product_id:int, quantity:int, unit_price_foreign?:float|null, cbm_per_unit?:float|null, description?:string|null}>  $lines
+     * @param  array<int, array{product_id:int, quantity:int, cartons?:int|null, pieces_per_carton?:int|null, unit_price_foreign?:float|null, cbm_per_unit?:float|null, description?:string|null}>  $lines
      */
     public function costOrder(PurchaseOrder $order, array $lines): void
     {
         DB::transaction(function () use ($order, $lines) {
-            // Si l'achat a déjà des lignes (modification), on annule d'abord leur effet
-            // sur le stock avant de recalculer, pour ne pas compter la quantité en double.
+            
             foreach ($order->items as $existingItem) {
                 StoreProduct::where('store_id', $order->store_id)
                     ->where('product_id', $existingItem->product_id)
@@ -32,24 +27,25 @@ class PurchaseOrderCostingService
             $isChine = $order->origin === 'chine';
             $rate = $isChine ? (float) ($order->exchange_rate_used ?? 1) : 1.0;
 
-            // Étape 1 : prix en GNF + CBM total par ligne, avant répartition des frais.
             $prepared = [];
             $totalCbm = 0.0;
+            $grandTotalPrice = 0;
 
             foreach ($lines as $line) {
                 $quantity = (int) $line['quantity'];
-                $unitPriceForeign = $line['unit_price_foreign'] ?? null;
-                $unitPriceGnf = $isChine
-                    ? round(((float) $unitPriceForeign) * $rate, 2)
-                    : (float) $unitPriceForeign;
-
+                $cartons = isset($line['cartons']) ? (int) $line['cartons'] : null;
+                $piecesPerCarton = isset($line['pieces_per_carton']) ? (int) $line['pieces_per_carton'] : null;
+                $unitPriceForeign = (float) ($line['unit_price_foreign'] ?? 0);
+                $unitPriceGnf = $isChine ? round($unitPriceForeign * $rate, 2) : $unitPriceForeign;
                 $cbmPerUnit = $isChine ? (float) ($line['cbm_per_unit'] ?? 0) : 0.0;
                 $lineTotalCbm = round($cbmPerUnit * $quantity, 3);
                 $totalCbm += $lineTotalCbm;
-
+                $grandTotalPrice += $unitPriceGnf * $quantity;
                 $prepared[] = [
                     'product_id' => $line['product_id'],
                     'quantity' => $quantity,
+                    'cartons' => $cartons,
+                    'pieces_per_carton' => $piecesPerCarton,
                     'unit_price_foreign' => $isChine ? $unitPriceForeign : null,
                     'unit_price_gnf' => $unitPriceGnf,
                     'cbm_per_unit' => $isChine ? $cbmPerUnit : null,
@@ -58,32 +54,52 @@ class PurchaseOrderCostingService
                 ];
             }
 
-            // Étape 2 : répartition du transport et de la douane au prorata du CBM.
-            // Si aucun CBM (achat Guinée typique), rien à répartir — les frais restent à 0 par ligne.
+                $totalLandedCost =
+                    $grandTotalPrice
+                    + $order->transport_cost_gnf
+                    + $order->customs_cost_gnf
+                    + $order->other_fees_gnf;
+
+
             foreach ($prepared as &$item) {
-                $share = $totalCbm > 0 ? ($item['line_total_cbm'] ?? 0) / $totalCbm : 0;
-                $item['allocated_freight_gnf'] = round($order->transport_cost_gnf * $share, 2);
-                $item['allocated_customs_gnf'] = round($order->customs_cost_gnf * $share, 2);
+                $share = $totalCbm > 0
+                    ? ($item['line_total_cbm'] ?? 0) / $totalCbm
+                    : 0;
+
+                $freightShare = round($order->transport_cost_gnf * $share, 2);
+                $customsShare = round($order->customs_cost_gnf * $share, 2);
+                $otherFeesShare = round($order->other_fees_gnf * $share, 2);
 
                 $item['landed_unit_cost_gnf'] = round(
                     (
-                        $item['unit_price_gnf'] * $item['quantity']
-                        + $item['allocated_freight_gnf']
-                        + $item['allocated_customs_gnf']
+                        ($item['unit_price_gnf'] * $item['quantity'])
+                        + $freightShare
+                        + $customsShare
+                        + $otherFeesShare
                     ) / max(1, $item['quantity']),
                     2
                 );
             }
             unset($item);
 
-            $order->total_cbm = $totalCbm > 0 ? $totalCbm : null;
-            $order->save();
+            $order->update([
+                'total_cbm' => $totalCbm > 0 ? $totalCbm : null,
+                'total_landed_cost_gnf' => $totalLandedCost,
+            ]);
 
-            // Étape 3 : persiste les lignes, met à jour le prix de revient produit et le stock.
             foreach ($prepared as $item) {
-                PurchaseOrderItem::create(array_merge($item, [
+                PurchaseOrderItem::create([
                     'purchase_order_id' => $order->id,
-                ]));
+                    'product_id' => $item['product_id'],
+                    'quantity' => $item['quantity'],
+                    'cartons' => $item['cartons'],
+                    'pieces_per_carton' => $item['pieces_per_carton'],
+                    'unit_price_foreign' => $item['unit_price_foreign'],
+                    'unit_price_gnf' => $item['unit_price_gnf'],
+                    'cbm_per_unit' => $item['cbm_per_unit'],
+                    'description' => $item['description'],
+                    'landed_unit_cost_gnf' => $item['landed_unit_cost_gnf'],
+                ]);
 
                 Product::where('id', $item['product_id'])->update([
                     'price_sale' => $item['landed_unit_cost_gnf'],

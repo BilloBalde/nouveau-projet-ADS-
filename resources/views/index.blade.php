@@ -200,6 +200,17 @@
             </a>
         </div>
         <div class="col-md-3">
+        <a href="#" class="dash-count das1 text-decoration-none metric-card quick-action" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
+            <div class="dash-counts">
+                <h4 class="mb-1">{{ numberDelimiter($total_third_party_interest) }} FG</h4>
+                <h5 class="opacity-75">Intérêts Ventes Tierces</h5>
+            </div>
+            <div class="dash-imgs">
+                <i class="fas fa-handshake"></i>
+            </div>
+        </a>
+        </div>
+        <div class="col-md-3">
             <a href="{{ route('movements.index') }}" class="dash-count das4 text-decoration-none metric-card quick-action">
                 <div class="dash-counts">
                     <h4 class="mb-1">Mouvements</h4>

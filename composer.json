@@ -12,6 +12,7 @@
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.7",
         "maatwebsite/excel": "^3.1",
+        "propaganistas/laravel-phone": "^6.0",
         "spatie/laravel-flash": "^1.10",
         "yajra/laravel-datatables-oracle": "^11.0"
     },

@@ -54,6 +54,7 @@ class IndexController extends Controller
             $total_quantities = StoreProduct::where('store_id', $store_id)->sum('quantity');
             $total_purchase_invoices = Achat::where('store_id', $store_id)->count();
             $total_sales_invoices = Facture::where('store_id', $store_id)->count();
+            $total_third_party_interest = Sale::where('is_third_party', true)->where('store_id', $store_id)->sum('interet');
             $latestPurchases = Achat::where('store_id', $store_id)->select('achats.*')
             ->join(DB::raw('(SELECT MAX(id) as id FROM achats) as latest_purchases'), 'achats.id', '=', 'latest_purchases.id')
             ->orderBy('achats.created_at', 'desc')
@@ -78,14 +79,13 @@ class IndexController extends Controller
                 ->toArray();
             $gains = Sale::where('store_id', $store_id)->sum('interet');
             $total_gains_all = $gains;
-            // Get data for each month
             $months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
             $sales = [];
             $purchases = [];
 
             foreach (range(1, 12) as $month) {
                 $sales[] = $salesData[$month] ?? 0;
-                $purchases[] = -($purchasesData[$month] ?? 0); // Negate purchase values for the chart
+                $purchases[] = -($purchasesData[$month] ?? 0);
             }
         }else{
             $total_credits = Customer::where('balance', '>', 0)->sum('balance');
@@ -101,6 +101,7 @@ class IndexController extends Controller
             $total_quantities = StoreProduct::sum('quantity');
             $total_purchase_invoices = Achat::count();
             $total_sales_invoices = Facture::count();
+            $total_third_party_interest = Sale::where('is_third_party', true)->sum('interet');
             $latestPurchases = Achat::select('achats.*')
             ->join(DB::raw('(SELECT MAX(id) as id FROM achats) as latest_purchases'), 'achats.id', '=', 'latest_purchases.id')
             ->orderBy('achats.created_at', 'desc')
@@ -123,14 +124,13 @@ class IndexController extends Controller
                 ->toArray();
             $gains = Sale::sum('interet');
             $total_gains_all = $gains;
-            // Get data for each month
             $months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
             $sales = [];
             $purchases = [];
 
             foreach (range(1, 12) as $month) {
                 $sales[] = $salesData[$month] ?? 0;
-                $purchases[] = -($purchasesData[$month] ?? 0); // Negate purchase values for the chart
+                $purchases[] = -($purchasesData[$month] ?? 0);
             }
         }
         $customers = Customer::all();
@@ -150,7 +150,6 @@ class IndexController extends Controller
         
         $factures = $query->with('paiements')->get();
 
-        // Group by customer + date (as Y-m-d)
         $grouped = $factures->groupBy(function ($facture) {
             return $facture->customer_id . '|' . $facture->created_at->format('Y-m-d');
         });
@@ -177,14 +176,12 @@ class IndexController extends Controller
             ->with('product:id,libelle')
             ->get();
 
-        // pcs est le total de stock synchronisé sur tous les magasins — les alertes
-        // restent globales (pas de scope par boutique) pour rester simples à lire.
         $stockAlerts = Product::whereNotNull('pcs')
             ->where('pcs', '<=', 100)
             ->orderBy('pcs')
             ->take(100)
             ->get(['id', 'libelle', 'pcs']);
 
-        return view('index', compact('latestPurchases', 'latestSales', 'total_purchases', 'total_sales', 'total_sales_paid', 'solde_orange_money', 'solde_cash', 'total_expenses', 'total_customers', 'total_quantities', 'total_purchase_invoices', 'total_sales_invoices', 'total_credits', 'gains', 'total_gains_all', 'sales', 'purchases', 'months', 'grouped', 'customers', 'topProducts', 'topProductsByRevenue', 'stockAlerts'));
+        return view('index', compact('latestPurchases', 'latestSales', 'total_purchases', 'total_sales', 'total_sales_paid', 'solde_orange_money', 'solde_cash', 'total_expenses', 'total_customers', 'total_quantities', 'total_purchase_invoices', 'total_sales_invoices', 'total_credits', 'gains', 'total_gains_all', 'sales', 'purchases', 'months', 'grouped', 'customers', 'topProducts', 'topProductsByRevenue', 'stockAlerts', 'total_third_party_interest'));
     }
 }

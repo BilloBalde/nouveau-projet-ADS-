@@ -422,7 +422,9 @@
                             <div class="po-grand-total-label">
                                 <i class="fas fa-hand-holding-usd"></i> Coût de revient total de l'arrivage
                             </div>
-                            <div class="po-grand-total-value">{{ number_format($grandTotal, 0, ',', ' ') }} GNF</div>
+                            <div class="po-grand-total-value">
+                                {{ number_format($order->total_landed_cost_gnf ?? 0, 0, ',', ' ') }} GNF
+                            </div>
                         </div>
                     </div>
                 </div>
