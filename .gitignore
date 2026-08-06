@@ -8,6 +8,12 @@ desktop.ini
 .project
 .netrwhist
 
+# Métadonnées d'extraction ZIP macOS (pas du code projet)
+__MACOSX/
+
+# Copies de travail des sessions d'agents Claude Code (pas du code projet)
+.claude/worktrees/
+
 # Dépendances PHP (installées via Composer)
 /vendor/
 /node_modules/
