@@ -74,13 +74,19 @@ class VisitController extends Controller
         $getCategoryName = fn($p) => $p->categories->first()?->category_type ?? 'Sans catégorie';
 
         $mapProduct = function ($p) use ($getCategoryName) {
+            // Vérifier si le produit est en promotion active
+            $isPromo = $p->is_promo 
+                && !is_null($p->promo_price)
+                && (is_null($p->promo_start_date) || $p->promo_start_date <= now())
+                && (is_null($p->promo_end_date) || $p->promo_end_date >= now());
+            
             return [
                 'id'            => $p->id,
                 'name'          => $p->libelle ?? $p->name,
                 'category_name' => $getCategoryName($p),
-                'price'         => (float) $p->price,
-                'old_price'     => null,
-                'discount'      => null,
+                'price'         => (float) ($isPromo ? $p->promo_price : $p->price),
+                'old_price'     => $isPromo ? (float) $p->price : null,
+                'discount'      => $isPromo ? round((1 - $p->promo_price / $p->price) * 100) : 0,
                 'rating'        => (float) ($p->rating ?? 4.5),
                 'image'         => $p->image ? asset('products/' . $p->image) : null,
             ];
@@ -99,64 +105,66 @@ class VisitController extends Controller
             ];
         };
 
+        // ... le reste de votre code ...
+
         $categories      = $this->groupedCategories();
-        $totalCategories = $categories->count();
-        $totalProducts   = Product::count();
+            $totalCategories = $categories->count();
+            $totalProducts   = Product::count();
 
-        $stores = Store::with('manager')->get()->map(function ($s) {
-            return (object)[
-                'id'          => $s->id,
-                'name'        => $s->store_name,
-                'address'     => $s->address,
-                'description' => $s->description,
-                'image_url'   => $s->store_picture ? asset('stores/' . $s->store_picture) : null,
-                'manager'     => $s->manager?->name,
-                'phone'       => $s->phone ?? $s->manager?->phone,
-            ];
-        })->values();
+            $stores = Store::with('manager')->get()->map(function ($s) {
+                return (object)[
+                    'id'          => $s->id,
+                    'name'        => $s->store_name,
+                    'address'     => $s->address,
+                    'description' => $s->description,
+                    'image_url'   => $s->store_picture ? asset('stores/' . $s->store_picture) : null,
+                    'manager'     => $s->manager?->name,
+                    'phone'       => $s->phone ?? $s->manager?->phone,
+                ];
+            })->values();
 
-        // Meilleures ventes réelles (somme des quantités vendues, table sales)
-        $bestSellerIds = \App\Models\Sale::select('product_id')
-            ->selectRaw('SUM(quantity) as qty_sold')
-            ->groupBy('product_id')
-            ->orderByDesc('qty_sold')
-            ->limit(10)
-            ->pluck('product_id');
+            // Meilleures ventes réelles (somme des quantités vendues, table sales)
+            $bestSellerIds = \App\Models\Sale::select('product_id')
+                ->selectRaw('SUM(quantity) as qty_sold')
+                ->groupBy('product_id')
+                ->orderByDesc('qty_sold')
+                ->limit(10)
+                ->pluck('product_id');
 
-        $bestSellers = Product::with('categories')
-            ->whereIn('id', $bestSellerIds)
-            ->get()
-            ->sortBy(fn ($p) => $bestSellerIds->search($p->id))
-            ->map($mapProduct)
-            ->values();
-
-        // Tendances : meilleures ventes des 30 derniers jours, fallback nouveautés
-        $trendingIds = \App\Models\Sale::select('product_id')
-            ->selectRaw('SUM(quantity) as qty_sold')
-            ->where('created_at', '>=', now()->subDays(30))
-            ->groupBy('product_id')
-            ->orderByDesc('qty_sold')
-            ->limit(10)
-            ->pluck('product_id');
-
-        $trending = $trendingIds->isNotEmpty()
-            ? Product::with('categories')
-                ->whereIn('id', $trendingIds)
+            $bestSellers = Product::with('categories')
+                ->whereIn('id', $bestSellerIds)
                 ->get()
-                ->sortBy(fn ($p) => $trendingIds->search($p->id))
+                ->sortBy(fn ($p) => $bestSellerIds->search($p->id))
                 ->map($mapProduct)
-                ->values()
-            : Product::with('categories')->latest()->limit(10)->get()->map($mapProduct)->values();
+                ->values();
+
+            // Tendances : meilleures ventes des 30 derniers jours, fallback nouveautés
+            $trendingIds = \App\Models\Sale::select('product_id')
+                ->selectRaw('SUM(quantity) as qty_sold')
+                ->where('created_at', '>=', now()->subDays(30))
+                ->groupBy('product_id')
+                ->orderByDesc('qty_sold')
+                ->limit(10)
+                ->pluck('product_id');
+
+            $trending = $trendingIds->isNotEmpty()
+                ? Product::with('categories')
+                    ->whereIn('id', $trendingIds)
+                    ->get()
+                    ->sortBy(fn ($p) => $trendingIds->search($p->id))
+                    ->map($mapProduct)
+                    ->values()
+                : Product::with('categories')->latest()->limit(10)->get()->map($mapProduct)->values();
+
 
         return [
             'categories'      => $categories,
             'totalCategories' => $totalCategories,
             'totalProducts'   => $totalProducts,
             'stores'          => $stores,
-            // La page d'accueil n'affiche que les 10 dernières arrivées (+ 6 images pour
-            // le carrousel du hero) — inutile de sérialiser tout le catalogue dans la page.
-            'allProducts'  => Product::with('categories')->latest()->limit(12)->get()->map($mapProduct)->values(),
-            'promoProducts'=> Product::with('categories')
+            'allProducts'     => Product::with('categories')->latest()->get()->map($mapProduct)->values(),
+            'bestProducts'    => Product::with('categories')->orderByDesc('rating')->get()->map($mapProduct)->values(),
+            'promoProducts'   => Product::with('categories')
                 ->where('is_promo', true)
                 ->whereNotNull('promo_price')
                 ->where(fn ($q) => $q->whereNull('promo_start_date')->orWhereDate('promo_start_date', '<=', now()))

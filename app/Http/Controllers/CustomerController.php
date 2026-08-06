@@ -87,18 +87,14 @@ class CustomerController extends Controller
 
     public function validation(Request $request){
         $request->validate([
-            'customerName'=>'required|max:250',
-            'tel'=>'required|max:18',
-            'mark' => 'required',
-            'address' => 'required|string',
+            'customerName'=>'nullable|max:250',
+            'tel'=>'nullable|max:18',
+            'mark' => 'nullable',
+            'address' => 'nullable|string',
             'email' => 'nullable|email',
         ],[
-            'customerName.required' => 'champ nom doit etre rempli.',
             'customerName.max' => 'champ nom prend maximum 250 charactere.',
-            'tel.require' => 'champ tel doit etre rempli.',
             'tel.max' => 'champ tel prend maximum 18 caracteres.',
-            'mark.require' => 'champ mark doit etre rempli.',
-            'address.require' => 'champ address doit etre rempli.',
             'address.string' => 'champ address prend que des caracteres.',
             'email.email' => 'Le champ email doit être un email valide.',
         ]);
@@ -110,11 +106,11 @@ class CustomerController extends Controller
         try {
             DB::beginTransaction();
             Customer::updateOrCreate(['id' => $request->id], [
-                'customerName' => $request->customerName,
-                'tel' => $request->tel,
-                'address' => $request->address,
-                'mark' => $request->mark,
-                'email' => $request->email,
+                'customerName' => $request->customerName ?? 'Client sans nom',  // Valeur par défaut
+                'tel' => $request->tel ?? 'Non renseigné',
+                'address' => $request->address ?? 'Non renseignée',
+                'mark' => $request->mark ?? 'N/A',
+                'email' => $request->email ?? '',
             ]);
             DB::commit();
             return redirect()->route('customers.index')->with('success', 'Client ajouté avec succès.');
