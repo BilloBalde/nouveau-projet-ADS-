@@ -9,6 +9,16 @@
             .dataTables_paginate, .dataTables_info {
                 display: none !important;
             }
+            .period-field {
+                display: none;
+            }
+            /* Le thème masque #filter_inputs par défaut partout (voir style.css :
+               "#filter_inputs{display:none}"), révélé seulement en cliquant la petite
+               icône entonnoir — trop facile à manquer. Le filtre doit être visible
+               d'emblée sur cette page. */
+            #filter_inputs {
+                display: block !important;
+            }
         </style>
         <div id="global-loader">
             <div class="whirly-loader"> </div>
@@ -55,10 +65,10 @@
                                 <div class="wordset">
                                     <ul>
                                         <li>
-                                            <a href="{{ route('sales.export-pdf') }}" 
-                                            data-bs-toggle="tooltip" 
-                                            data-bs-placement="top" 
-                                            title="PDF (mois en cours, ou filtres appliqués)"
+                                            <a href="{{ route('sales.export-current-pdf', request()->query()) }}"
+                                            data-bs-toggle="tooltip"
+                                            data-bs-placement="top"
+                                            title="PDF (filtres actifs ci-dessous, ou mois en cours si aucun filtre)"
                                             class="btn btn-sm btn-danger"
                                             style="padding: 5px 10px;">
                                                 <img src="{{ asset('assets/img/icons/pdf.svg') }}" alt="pdf" style="width: 16px; height: 16px;">
@@ -66,10 +76,10 @@
                                             </a>
                                         </li>
                                         <li>
-                                            <a href="{{ route('sales.export-excel') }}" 
-                                            data-bs-toggle="tooltip" 
-                                            data-bs-placement="top" 
-                                            title="Excel (Toutes les ventes)"
+                                            <a href="{{ route('sales.export-current-excel', request()->query()) }}"
+                                            data-bs-toggle="tooltip"
+                                            data-bs-placement="top"
+                                            title="Excel (filtres actifs ci-dessous, ou tout l'historique si aucun filtre)"
                                             class="btn btn-sm btn-success"
                                             style="padding: 5px 10px;">
                                                 <img src="{{ asset('assets/img/icons/excel.svg') }}" alt="excel" style="width: 16px; height: 16px;">
@@ -101,11 +111,6 @@
                                             </div>
                                             <div class="col-lg-3 col-sm-6 col-12">
                                                 <div class="form-group">
-                                                    <input type="date" name="created_at" value="{{ request('created_at') }}" placeholder="date creation" class="form-control">
-                                                </div>
-                                            </div>
-                                            <div class="col-lg-3 col-sm-6 col-12">
-                                                <div class="form-group">
                                                     <select name="user_id" id="user_id" class="form-control">
                                                         <option value="">Selectionner Employé</option>
                                                         @foreach ($employees as $employee)
@@ -114,6 +119,88 @@
                                                     </select>
                                                 </div>
                                             </div>
+
+                                            <!-- Filtre période -->
+                                            <div class="col-lg-3 col-sm-6 col-12">
+                                                <div class="form-group">
+                                                    <label for="period" class="mb-1" style="font-size:12px;color:#6b7280;">Période</label>
+                                                    <select id="period" name="period" class="form-control">
+                                                        <option value="">Toutes (mois en cours si vide)</option>
+                                                        <option value="daily" {{ request('period') == 'daily' ? 'selected' : '' }}>Jour</option>
+                                                        <option value="weekly" {{ request('period') == 'weekly' ? 'selected' : '' }}>Semaine</option>
+                                                        <option value="monthly" {{ request('period') == 'monthly' ? 'selected' : '' }}>Mois</option>
+                                                        <option value="quarterly" {{ request('period') == 'quarterly' ? 'selected' : '' }}>Trimestre</option>
+                                                        <option value="semestral" {{ request('period') == 'semestral' ? 'selected' : '' }}>Semestre</option>
+                                                        <option value="yearly" {{ request('period') == 'yearly' ? 'selected' : '' }}>Année</option>
+                                                        <option value="custom" {{ request('period') == 'custom' ? 'selected' : '' }}>Personnalisé</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+
+                                            <!-- Champs dynamiques selon la période -->
+                                            <div class="col-lg-3 col-sm-6 col-12 period-field" data-period="daily">
+                                                <div class="form-group">
+                                                    <label for="date">Jour</label>
+                                                    <input type="date" id="date" name="date" value="{{ request('date', date('Y-m-d')) }}" class="form-control">
+                                                </div>
+                                            </div>
+
+                                            <div class="col-lg-3 col-sm-6 col-12 period-field" data-period="weekly">
+                                                <div class="form-group">
+                                                    <label for="week_start">Semaine de début</label>
+                                                    <input type="date" id="week_start" name="week_start" value="{{ request('week_start', \Carbon\Carbon::now()->startOfWeek()->toDateString()) }}" class="form-control">
+                                                </div>
+                                            </div>
+
+                                            <div class="col-lg-3 col-sm-6 col-12 period-field" data-period="monthly">
+                                                <div class="form-group">
+                                                    <label for="month">Mois</label>
+                                                    <input type="month" id="month" name="month" value="{{ request('month', date('Y-m')) }}" class="form-control">
+                                                </div>
+                                            </div>
+
+                                            <div class="col-lg-3 col-sm-6 col-12 period-field" data-period="quarterly">
+                                                <div class="form-group">
+                                                    <label for="quarter">Trimestre</label>
+                                                    <select id="quarter" name="quarter" class="form-control">
+                                                        @for ($q = 1; $q <= 4; $q++)
+                                                            <option value="{{ $q }}" {{ (int) request('quarter', ceil(now()->month / 3)) === $q ? 'selected' : '' }}>Q{{ $q }}</option>
+                                                        @endfor
+                                                    </select>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-lg-3 col-sm-6 col-12 period-field" data-period="semestral">
+                                                <div class="form-group">
+                                                    <label for="semester">Semestre</label>
+                                                    <select id="semester" name="semester" class="form-control">
+                                                        <option value="1" {{ (int) request('semester', now()->month <= 6 ? 1 : 2) === 1 ? 'selected' : '' }}>S1</option>
+                                                        <option value="2" {{ (int) request('semester', now()->month <= 6 ? 1 : 2) === 2 ? 'selected' : '' }}>S2</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-lg-3 col-sm-6 col-12 period-field" data-period="quarterly,semestral,yearly">
+                                                <div class="form-group">
+                                                    <label for="year">Année</label>
+                                                    <input type="number" id="year" name="year" class="form-control" value="{{ request('year', now()->year) }}" min="2020" max="2100">
+                                                </div>
+                                            </div>
+
+                                            <div class="col-lg-3 col-sm-6 col-12 period-field" data-period="custom">
+                                                <div class="form-group">
+                                                    <label for="start_date">Date de début</label>
+                                                    <input type="date" id="start_date" name="start_date" value="{{ request('start_date', date('Y-m-d')) }}" class="form-control">
+                                                </div>
+                                            </div>
+
+                                            <div class="col-lg-3 col-sm-6 col-12 period-field" data-period="custom">
+                                                <div class="form-group">
+                                                    <label for="end_date">Date de fin</label>
+                                                    <input type="date" id="end_date" name="end_date" value="{{ request('end_date', date('Y-m-d')) }}" class="form-control">
+                                                </div>
+                                            </div>
+
                                             <div class="col-lg-3 col-sm-6 col-12 d-flex align-items-center">
                                                 <div class="form-group d-flex">
                                                     <button type="submit" class="btn btn-filters me-2"><img src="assets/img/icons/search-whites.svg" alt="img"></button>
@@ -215,6 +302,18 @@
                     $('.datanew').DataTable().order([7, 'desc']).draw();
                 }
             });
+        </script>
+        <script>
+            function togglePeriodFields() {
+                const period = document.getElementById('period').value;
+                document.querySelectorAll('.period-field').forEach(function (field) {
+                    const periods = field.dataset.period.split(',');
+                    field.style.display = periods.includes(period) ? 'block' : 'none';
+                });
+            }
+
+            document.getElementById('period').addEventListener('change', togglePeriodFields);
+            window.addEventListener('load', togglePeriodFields);
         </script>
         <script>
         function showProductDetails(productId) {

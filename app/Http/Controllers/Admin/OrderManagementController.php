@@ -36,19 +36,47 @@ class OrderManagementController extends Controller
     {
         $order->load('items.product');
 
+        $storeId = $request->input('store_id');
+
+        $stores = \App\Models\Store::orderBy('store_name')->get(['id', 'store_name']);
+        $productIds = $order->items->pluck('product_id');
+
+        // Une seule requête pour tous les produits/boutiques plutôt que N×M requêtes.
+        $stockRows = DB::table('store_products')
+            ->whereIn('product_id', $productIds)
+            ->get(['store_id', 'product_id', 'quantity'])
+            ->groupBy('product_id');
+
         $items = [];
         $allOk = true;
 
         foreach ($order->items as $item) {
             $product   = $item->product;
-            $available = $this->stock->totalAvailable($item->product_id);
+            // Le stock qui compte est celui de la boutique qui va réellement livrer la
+            // commande, pas un total global toutes boutiques confondues — sinon l'aperçu
+            // peut dire "OK" pour une boutique qui n'a en réalité rien en stock.
+            $available = $storeId
+                ? $this->stock->availableInStore((int) $storeId, $item->product_id)
+                : $this->stock->totalAvailable($item->product_id);
             $ok        = $available >= $item->quantity;
+
+            $rowsForProduct = $stockRows->get($item->product_id, collect());
+            $perStore = $stores->map(function ($store) use ($rowsForProduct) {
+                $row = $rowsForProduct->firstWhere('store_id', $store->id);
+
+                return [
+                    'store_id'   => $store->id,
+                    'store_name' => $store->store_name,
+                    'available'  => (int) ($row->quantity ?? 0),
+                ];
+            })->values();
 
             $items[] = [
                 'name'      => $product->libelle ?? 'Produit #' . $product->id,
                 'requested' => $item->quantity,
                 'available' => $available,
                 'ok'        => $ok,
+                'per_store' => $perStore,
             ];
             if (!$ok) $allOk = false;
         }
@@ -130,10 +158,13 @@ class OrderManagementController extends Controller
                 $qty = $item->quantity;
                 $product = $item->product ?? \App\Models\Product::find($item->product_id);
 
-                if (! $this->stock->decrementProductStockIfAvailable($item->product_id, $qty)) {
-                    $available = $this->stock->totalAvailable($item->product_id);
+                // Décrémente le stock de la boutique choisie (et le compteur global avec) —
+                // avant, seul le compteur global était touché, donc le stock réel de la
+                // boutique n'était jamais mis à jour par une vente e-commerce.
+                if (! $this->stock->decrementIfAvailable((int) $storeId, $item->product_id, $qty)) {
+                    $available = $this->stock->availableInStore((int) $storeId, $item->product_id);
                     throw new \Exception(
-                        "Stock insuffisant pour « {$product?->libelle} » (dispo: {$available}, demandé: {$qty})"
+                        "Stock insuffisant pour « {$product?->libelle} » dans cette boutique (dispo: {$available}, demandé: {$qty})"
                     );
                 }
 

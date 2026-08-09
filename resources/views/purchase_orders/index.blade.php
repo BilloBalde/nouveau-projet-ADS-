@@ -110,6 +110,7 @@
                                             <th>Lignes</th>
                                             <th>CBM total</th>
                                             <th>Frais (transport+douane+divers)</th>
+                                            <th>Prix de revient total</th>
                                             <th>Statut</th>
                                             <th>Date émission</th>
                                             <th class="text-end">Action</th>
@@ -128,6 +129,7 @@
                                             <td>{{ $order->items->count() }}</td>
                                             <td>{{ $order->total_cbm ? number_format($order->total_cbm, 3) : '—' }}</td>
                                             <td>{{ number_format($order->transport_cost_gnf + $order->customs_cost_gnf + $order->other_fees_gnf, 0, ',', ' ') }} GNF</td>
+                                            <td><strong>{{ number_format($order->total_landed_cost_gnf ?? 0, 0, ',', ' ') }} GNF</strong></td>
                                             <td>
                                                 @php
                                                     $statusLabels = ['pending' => 'En attente', 'received' => 'Reçu', 'cancelled' => 'Annulé'];
@@ -155,7 +157,7 @@
                                         </tr>
                                         @empty
                                         <tr>
-                                            <td colspan="9" class="text-center">Aucun achat enregistré pour le moment.</td>
+                                            <td colspan="10" class="text-center">Aucun achat enregistré pour le moment.</td>
                                         </tr>
                                         @endforelse
                                     </tbody>
@@ -173,7 +175,7 @@
         <script>
             $(document).ready(function () {
                 if ($.fn.DataTable.isDataTable('.datanew')) {
-                    $('.datanew').DataTable().order([7, 'desc']).draw();
+                    $('.datanew').DataTable().order([8, 'desc']).draw();
                 }
             });
         </script>

@@ -75,6 +75,12 @@ class ExpenseController extends Controller
      */
     public function store(Request $request)
     {
+        // 🔒 Un non-admin ne peut créer une dépense que pour sa propre boutique
+        // (edit/update/destroy appliquaient déjà cette règle, pas store()).
+        if (! $this->isAdmin()) {
+            $request->merge(['store_id' => auth()->user()->store_id]);
+        }
+
         $request->validate([
             'reference' => 'required|string|max:255|unique:expenses,reference',
             'expense_categories_id' => 'required|exists:expense_categories,id',

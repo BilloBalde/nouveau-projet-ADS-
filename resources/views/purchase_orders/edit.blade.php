@@ -83,6 +83,39 @@
                 border-color: #c1682f;
                 background: #fbf3ea;
             }
+            .po-field-with-add {
+                display: flex;
+                gap: 6px;
+                align-items: stretch;
+            }
+            .po-field-with-add select {
+                flex: 1;
+            }
+            /* Select2 remplace le <select> par un span.select2-container qui n'hérite
+               pas de la règle ci-dessus : sans ça, il ne s'étire pas et chevauche le
+               bouton "+" (cf. sélecteur de produit). Le !important est nécessaire car
+               public/assets/css/style.css force globalement
+               ".select2-container{min-width:100%!important}", ce qui l'empêche sinon
+               de rétrécir pour laisser la place au bouton. */
+            .po-field-with-add .select2-container {
+                flex: 1 1 0% !important;
+                min-width: 0 !important;
+                width: auto !important;
+            }
+            .po-add-btn {
+                flex-shrink: 0;
+                width: 38px;
+                border: 1px solid #e3d3c2;
+                background: #fdf6ec;
+                color: #c1682f;
+                border-radius: 6px;
+                font-size: 14px;
+                cursor: pointer;
+            }
+            .po-add-btn:hover {
+                background: #c1682f;
+                color: #fff;
+            }
         </style>
         <div id="global-loader">
             <div class="whirly-loader"> </div>
@@ -116,11 +149,16 @@
                                 <div class="col-lg-3 col-sm-6 col-12">
                                     <div class="form-group">
                                         <label>Magasin de destination</label>
-                                        <select name="store_id" class="form-control" required>
-                                            @foreach($stores as $store)
-                                                <option value="{{ $store->id }}" {{ old('store_id', $order->store_id) == $store->id ? 'selected' : '' }}>{{ $store->store_name ?? $store->name }}</option>
-                                            @endforeach
-                                        </select>
+                                        <div class="po-field-with-add">
+                                            <select name="store_id" id="storeSelect" class="form-control" required>
+                                                @foreach($stores as $store)
+                                                    <option value="{{ $store->id }}" {{ old('store_id', $order->store_id) == $store->id ? 'selected' : '' }}>{{ $store->store_name ?? $store->name }}</option>
+                                                @endforeach
+                                            </select>
+                                            <button type="button" class="po-add-btn" data-bs-toggle="modal" data-bs-target="#newStoreModal" title="Ajouter une boutique">
+                                                <i class="fa fa-plus"></i>
+                                            </button>
+                                        </div>
                                         @error('store_id') <span class="text-danger">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
@@ -164,7 +202,7 @@
                                         <select name="currency_code" id="currencyCode" class="form-control">
                                             <option value="">Sélectionner</option>
                                             @foreach($currencies as $currency)
-                                                <option value="{{ $currency->currencyCode }}" data-rate="{{ $currency->rate_to_gnf }}" {{ old('currency_code', $order->currency_code) == $currency->currencyCode ? 'selected' : '' }}>
+                                                <option value="{{ $currency->currencyCode }}" data-rate="{{ $currency->rate_to_gnf }}" data-updated="{{ $currency->updated_at?->format('d/m/Y') }}" {{ old('currency_code', $order->currency_code) == $currency->currencyCode ? 'selected' : '' }}>
                                                     {{ $currency->currencyName }} ({{ $currency->currencyCode }})
                                                 </option>
                                             @endforeach
@@ -180,6 +218,7 @@
                                     </div>
                                 </div>
                             </div>
+                            <p class="text-muted" style="font-size:13px;" id="rateReference"></p>
                         </div>
 
                         <div class="po-section">
@@ -238,21 +277,38 @@
             <div class="po-line" data-line>
                 <button type="button" class="po-line-remove" data-remove-line title="Retirer"><i class="fa fa-trash"></i></button>
                 <div class="row">
-                    <div class="col-lg-4 col-sm-6 col-12">
+                    <div class="col-lg-3 col-sm-6 col-12">
                         <div class="form-group">
                             <label>Produit</label>
-                            <select name="lines[__INDEX__][product_id]" class="form-control" data-field="product_id" required>
-                                <option value="">Sélectionner le produit</option>
-                                @foreach($products as $product)
-                                    <option value="{{ $product->id }}">{{ $product->libelle }} ({{ $product->sku }})</option>
-                                @endforeach
-                            </select>
+                            <div class="po-field-with-add">
+                                <select name="lines[__INDEX__][product_id]" class="form-control" data-field="product_id" required>
+                                    <option value="">Sélectionner le produit</option>
+                                    @foreach($products as $product)
+                                        <option value="{{ $product->id }}">{{ $product->libelle }} ({{ $product->sku }})</option>
+                                    @endforeach
+                                </select>
+                                <button type="button" class="po-add-btn" data-bs-toggle="modal" data-bs-target="#newProductModal" title="Ajouter un produit">
+                                    <i class="fa fa-plus"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
                     <div class="col-lg-2 col-sm-6 col-12">
                         <div class="form-group">
-                            <label>Quantité</label>
-                            <input type="number" min="1" name="lines[__INDEX__][quantity]" class="form-control" data-field="quantity" required>
+                            <label>Nombre de cartons</label>
+                            <input type="number" min="0" name="lines[__INDEX__][cartons]" class="form-control" data-field="cartons" value="0">
+                        </div>
+                    </div>
+                    <div class="col-lg-2 col-sm-6 col-12">
+                        <div class="form-group">
+                            <label>Pièces par carton</label>
+                            <input type="number" min="0" name="lines[__INDEX__][pieces_per_carton]" class="form-control" data-field="pieces_per_carton" value="0">
+                        </div>
+                    </div>
+                    <div class="col-lg-2 col-sm-6 col-12">
+                        <div class="form-group">
+                            <label>Quantité totale (pièces)</label>
+                            <input type="number" min="1" name="lines[__INDEX__][quantity]" class="form-control" data-field="quantity" readonly style="background:#f5f5f5" required>
                         </div>
                     </div>
                     <div class="col-lg-2 col-sm-6 col-12">
@@ -263,8 +319,14 @@
                     </div>
                     <div class="col-lg-2 col-sm-6 col-12 po-import-only">
                         <div class="form-group">
-                            <label>CBM / unité</label>
-                            <input type="text" inputmode="decimal" name="lines[__INDEX__][cbm_per_unit]" class="form-control decimal-input" data-field="cbm_per_unit">
+                            <label>CBM / carton</label>
+                            <input type="text" inputmode="decimal" name="lines[__INDEX__][cbm_per_carton]" class="form-control decimal-input" data-field="cbm_per_carton" placeholder="Ex : 0.085">
+                        </div>
+                    </div>
+                    <div class="col-lg-2 col-sm-6 col-12 po-import-only">
+                        <div class="form-group">
+                            <label>CBM / unité (calculé)</label>
+                            <input type="text" class="form-control" data-field="cbm_per_unit_display" readonly style="background:#f5f5f5">
                         </div>
                     </div>
                     <div class="col-lg-2 col-sm-6 col-12">
@@ -280,14 +342,97 @@
             </div>
         </template>
 
+        <!-- Modale : nouvelle boutique -->
+        <div class="modal fade" id="newStoreModal" tabindex="-1" role="dialog">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Nouvelle boutique</h5>
+                        <button type="button" class="close" data-bs-dismiss="modal"><span>&times;</span></button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="newStoreError" class="alert alert-danger" style="display:none;"></div>
+                        <div class="form-group">
+                            <label>Nom de la boutique</label>
+                            <input type="text" id="newStoreName" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>Ville</label>
+                            <select id="newStorePlace" class="form-control">
+                                <option value="">Sélectionner</option>
+                                @foreach($places as $place)
+                                    <option value="{{ $place->id }}">{{ $place->placeName }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Responsable</label>
+                            <select id="newStoreManager" class="form-control">
+                                <option value="">Sélectionner</option>
+                                @foreach($storeManagers as $manager)
+                                    <option value="{{ $manager->id }}">{{ $manager->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-cancel" data-bs-dismiss="modal">Annuler</button>
+                        <button type="button" class="btn btn-submit" id="newStoreSubmit">Créer la boutique</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modale : nouveau produit -->
+        <div class="modal fade" id="newProductModal" tabindex="-1" role="dialog">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Nouveau produit</h5>
+                        <button type="button" class="close" data-bs-dismiss="modal"><span>&times;</span></button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="newProductError" class="alert alert-danger" style="display:none;"></div>
+                        <div class="form-group">
+                            <label>Nom du produit</label>
+                            <input type="text" id="newProductLibelle" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>SKU</label>
+                            <input type="text" id="newProductSku" class="form-control">
+                        </div>
+                        <p class="text-muted" style="font-size:13px;">
+                            Le prix de revient n'est pas demandé ici : il sera calculé automatiquement
+                            (avec le prix de vente, +30%) une fois cet achat enregistré.
+                        </p>
+                        <div class="form-group">
+                            <label>Catégorie</label>
+                            <select id="newProductCategory" class="form-control">
+                                <option value="">Sélectionner</option>
+                                @foreach($categories as $category)
+                                    <option value="{{ $category->id }}">{{ $category->category_type }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-cancel" data-bs-dismiss="modal">Annuler</button>
+                        <button type="button" class="btn btn-submit" id="newProductSubmit">Créer le produit</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         @php
             $existingLinesData = $order->items->map(function ($item) {
                 return [
                     'product_id' => $item->product_id,
                     'quantity' => $item->quantity,
+                    'cartons' => $item->cartons,
+                    'pieces_per_carton' => $item->pieces_per_carton,
                     'unit_price_foreign' => $item->unit_price_foreign,
                     'unit_price_gnf' => $item->unit_price_gnf,
-                    'cbm_per_unit' => $item->cbm_per_unit,
+                    'cbm_per_carton' => $item->cbm_per_carton,
                     'description' => $item->description,
                 ];
             })->all();
@@ -301,6 +446,127 @@
             let lineIndex = 0;
 
             const existingLines = @json($existingLinesData);
+
+            $('#newProductCategory').select2({
+                width: '100%',
+                placeholder: 'Rechercher une catégorie…',
+                dropdownParent: $('#newProductModal'),
+            });
+
+            // ============================================================
+            // Modales "Nouvelle boutique" / "Nouveau produit"
+            // ============================================================
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+
+            function postJson(url, payload) {
+                return fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                    },
+                    body: JSON.stringify(payload),
+                }).then(function (res) {
+                    return res.json().then(function (data) {
+                        return { ok: res.ok, data: data };
+                    });
+                });
+            }
+
+            function showModalError(elId, message) {
+                const el = document.getElementById(elId);
+                el.textContent = message;
+                el.style.display = 'block';
+            }
+
+            function hideModalError(elId) {
+                document.getElementById(elId).style.display = 'none';
+            }
+
+            const newStoreModalEl = document.getElementById('newStoreModal');
+            const newStoreModal = bootstrap.Modal.getOrCreateInstance(newStoreModalEl);
+            const newProductModalEl = document.getElementById('newProductModal');
+            const newProductModal = bootstrap.Modal.getOrCreateInstance(newProductModalEl);
+
+            // --- Nouvelle boutique ---
+            document.getElementById('newStoreSubmit').addEventListener('click', function () {
+                hideModalError('newStoreError');
+                postJson('{{ route('boutiques.quickCreate') }}', {
+                    store_name: document.getElementById('newStoreName').value,
+                    place_id: document.getElementById('newStorePlace').value,
+                    user_id: document.getElementById('newStoreManager').value,
+                }).then(function (result) {
+                    if (!result.ok || !result.data.success) {
+                        const errors = result.data.errors
+                            ? Object.values(result.data.errors).flat().join(' ')
+                            : (result.data.message || 'Erreur lors de la création.');
+                        showModalError('newStoreError', errors);
+                        return;
+                    }
+
+                    const store = result.data.store;
+                    const storeSelect = document.getElementById('storeSelect');
+                    const option = new Option(store.store_name, store.id, true, true);
+                    storeSelect.add(option);
+                    storeSelect.dispatchEvent(new Event('change', { bubbles: true }));
+
+                    document.getElementById('newStoreName').value = '';
+                    document.getElementById('newStorePlace').value = '';
+                    document.getElementById('newStoreManager').value = '';
+                    newStoreModal.hide();
+                }).catch(function () {
+                    showModalError('newStoreError', 'Erreur réseau, réessayez.');
+                });
+            });
+
+            // --- Nouveau produit ---
+            let activeProductSelect = null;
+
+            newProductModalEl.addEventListener('show.bs.modal', function (event) {
+                const opener = event.relatedTarget;
+                const line = opener ? opener.closest('[data-line]') : null;
+                activeProductSelect = line ? line.querySelector('[data-field="product_id"]') : null;
+            });
+
+            document.getElementById('newProductSubmit').addEventListener('click', function () {
+                hideModalError('newProductError');
+                postJson('{{ route('produits.quickCreate') }}', {
+                    libelle: document.getElementById('newProductLibelle').value,
+                    sku: document.getElementById('newProductSku').value,
+                    category_id: document.getElementById('newProductCategory').value,
+                }).then(function (result) {
+                    if (!result.ok || !result.data.success) {
+                        const errors = result.data.errors
+                            ? Object.values(result.data.errors).flat().join(' ')
+                            : (result.data.message || 'Erreur lors de la création.');
+                        showModalError('newProductError', errors);
+                        return;
+                    }
+
+                    const product = result.data.product;
+                    const label = product.libelle + ' (' + product.sku + ')';
+
+                    document.querySelectorAll('[data-field="product_id"]').forEach(function (select) {
+                        select.add(new Option(label, product.id));
+                    });
+                    template.content.querySelectorAll('[data-field="product_id"]').forEach(function (select) {
+                        select.add(new Option(label, product.id));
+                    });
+
+                    if (activeProductSelect) {
+                        activeProductSelect.value = product.id;
+                        activeProductSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+
+                    document.getElementById('newProductLibelle').value = '';
+                    document.getElementById('newProductSku').value = '';
+                    document.getElementById('newProductCategory').value = '';
+                    newProductModal.hide();
+                }).catch(function () {
+                    showModalError('newProductError', 'Erreur réseau, réessayez.');
+                });
+            });
 
             // Champs prix/CBM/taux : on tape librement (virgule ou point), on ne garde
             // que les chiffres et un seul séparateur décimal (converti en point tout de
@@ -353,12 +619,40 @@
             document.getElementById('originGuinee').addEventListener('change', setOriginClass);
             document.getElementById('originChine').addEventListener('change', setOriginClass);
 
-            document.getElementById('currencyCode').addEventListener('change', function () {
-                const selected = this.options[this.selectedIndex];
-                const rate = selected ? selected.getAttribute('data-rate') : '';
-                if (rate) {
-                    document.getElementById('exchangeRate').value = rate;
+            // Rappel du taux de référence enregistré (CurrencySettingController) : reste
+            // affiché même si l'utilisateur saisit un taux du jour différent au-dessus.
+            function updateRateReference() {
+                const select = document.getElementById('currencyCode');
+                const ref = document.getElementById('rateReference');
+                const selected = select.options[select.selectedIndex];
+                const rate = selected ? selected.getAttribute('data-rate') : null;
+                const updated = selected ? selected.getAttribute('data-updated') : null;
+
+                if (!select.value || !rate) {
+                    ref.textContent = '';
+                    return;
                 }
+
+                const formattedRate = new Intl.NumberFormat('fr-FR').format(parseFloat(rate));
+                ref.textContent = '💡 Taux de référence enregistré : 1 ' + select.value + ' = ' + formattedRate + ' GNF'
+                    + (updated ? ' (mis à jour le ' + updated + ')' : '')
+                    + '. Vous pouvez saisir un taux du jour différent ci-dessus si besoin.';
+            }
+
+            // On ne pré-remplit plus le taux avec la valeur de référence enregistrée —
+            // l'utilisateur doit saisir lui-même le taux du jour (le rappel affiché en
+            // dessous lui sert juste de repère).
+            document.getElementById('currencyCode').addEventListener('change', function () {
+                const rateInput = document.getElementById('exchangeRate');
+
+                if (this.value === "") {
+                    rateInput.value = "1";
+                    rateInput.required = false;
+                } else {
+                    rateInput.value = "";
+                    rateInput.required = true;
+                }
+                updateRateReference();
                 recompute();
             });
 
@@ -374,6 +668,12 @@
                 if (data.product_id) {
                     lineEl.querySelector('[data-field="product_id"]').value = data.product_id;
                 }
+                if (data.cartons) {
+                    lineEl.querySelector('[data-field="cartons"]').value = data.cartons;
+                }
+                if (data.pieces_per_carton) {
+                    lineEl.querySelector('[data-field="pieces_per_carton"]').value = data.pieces_per_carton;
+                }
                 if (data.quantity) {
                     lineEl.querySelector('[data-field="quantity"]').value = data.quantity;
                 }
@@ -384,8 +684,8 @@
                 } else if (data.unit_price_gnf) {
                     priceField.value = data.unit_price_gnf;
                 }
-                if (data.cbm_per_unit) {
-                    lineEl.querySelector('[data-field="cbm_per_unit"]').value = data.cbm_per_unit;
+                if (data.cbm_per_carton) {
+                    lineEl.querySelector('[data-field="cbm_per_carton"]').value = data.cbm_per_carton;
                 }
                 if (data.description) {
                     lineEl.querySelector('[data-field="description"]').value = data.description;
@@ -399,6 +699,22 @@
                     recompute();
                 });
 
+                // Calcul automatique cartons × pièces = quantité (comme à la création).
+                const cartonsField = lineEl.querySelector('[data-field="cartons"]');
+                const piecesField = lineEl.querySelector('[data-field="pieces_per_carton"]');
+                const quantityField = lineEl.querySelector('[data-field="quantity"]');
+
+                function recalcQuantity() {
+                    const cartons = parseInt(cartonsField.value) || 0;
+                    const pieces = parseInt(piecesField.value) || 0;
+                    if (cartons > 0 && pieces > 0) {
+                        quantityField.value = cartons * pieces;
+                        recompute();
+                    }
+                }
+                cartonsField.addEventListener('input', recalcQuantity);
+                piecesField.addEventListener('input', recalcQuantity);
+
                 lineEl.querySelectorAll('input, select').forEach(function (el) {
                     if (el.classList.contains('decimal-input')) {
                         wireDecimalInput(el);
@@ -407,35 +723,63 @@
                     }
                     el.addEventListener('change', recompute);
                 });
+
+                // Sélecteur de produit avec recherche — initialisé après avoir positionné
+                // la valeur ci-dessus, pour que le produit déjà sélectionné s'affiche bien.
+                $(lineEl).find('[data-field="product_id"]').select2({
+                    width: '100%',
+                    placeholder: 'Sélectionner le produit'
+                });
             }
 
             function recompute() {
                 const isChine = document.getElementById('originChine').checked;
-                const rate = parseFloat(document.getElementById('exchangeRate').value) || (isChine ? 0 : 1);
+                const currencySelect = document.getElementById('currencyCode');
+                let rate = 1;
+                if (currencySelect && currencySelect.value !== '') {
+                    rate = parseFloat(document.getElementById('exchangeRate').value) || 1;
+                }
+
                 const transport = parseFloat(document.getElementById('transportCost').value) || 0;
                 const customs = isChine ? (parseFloat(document.getElementById('customsCost').value) || 0) : 0;
+                const otherFees = parseFloat(document.getElementById('otherFees').value) || 0;
 
                 const lines = Array.from(linesContainer.querySelectorAll('[data-line]'));
                 let totalCbm = 0;
+                let grandTotalPrice = 0;
+
                 const computed = lines.map(function (lineEl) {
                     const quantity = parseFloat(lineEl.querySelector('[data-field="quantity"]').value) || 0;
                     const unitPriceForeign = parseFloat(lineEl.querySelector('[data-field="unit_price_foreign"]').value) || 0;
-                    const cbmField = lineEl.querySelector('[data-field="cbm_per_unit"]');
-                    const cbmPerUnit = isChine ? (parseFloat(cbmField?.value) || 0) : 0;
+
+                    // CBM saisi par carton, divisé par le nombre de pièces du carton pour
+                    // obtenir le CBM exact d'une seule unité.
+                    const piecesPerCarton = parseInt(lineEl.querySelector('[data-field="pieces_per_carton"]')?.value) || 0;
+                    const cbmPerCarton = isChine ? (parseFloat(lineEl.querySelector('[data-field="cbm_per_carton"]')?.value) || 0) : 0;
+                    const cbmPerUnit = (isChine && piecesPerCarton > 0) ? (cbmPerCarton / piecesPerCarton) : 0;
+
+                    const cbmDisplay = lineEl.querySelector('[data-field="cbm_per_unit_display"]');
+                    if (cbmDisplay) {
+                        cbmDisplay.value = cbmPerUnit > 0 ? cbmPerUnit.toFixed(6) : '';
+                    }
+
                     const lineTotalCbm = cbmPerUnit * quantity;
                     totalCbm += lineTotalCbm;
 
                     const unitPriceGnf = isChine ? unitPriceForeign * rate : unitPriceForeign;
+                    const lineTotalPrice = unitPriceGnf * quantity;
+                    grandTotalPrice += lineTotalPrice;
 
-                    return { lineEl, quantity, unitPriceGnf, lineTotalCbm };
+                    return { lineEl, quantity, unitPriceGnf, lineTotalCbm, lineTotalPrice };
                 });
 
                 let grandTotalCost = 0;
                 computed.forEach(function (item) {
-                    const share = totalCbm > 0 ? (item.lineTotalCbm / totalCbm) : 0;
+                    const share = totalCbm > 0 ? (item.lineTotalCbm / totalCbm) : (1 / computed.length);
                     const freightShare = transport * share;
                     const customsShare = customs * share;
-                    const landedTotal = (item.unitPriceGnf * item.quantity) + freightShare + customsShare;
+                    const otherFeesShare = otherFees * share;
+                    const landedTotal = item.lineTotalPrice + freightShare + customsShare + otherFeesShare;
                     const landedUnit = item.quantity > 0 ? landedTotal / item.quantity : 0;
 
                     grandTotalCost += landedTotal;
@@ -453,6 +797,8 @@
             addLineBtn.addEventListener('click', function () { addLine(); });
 
             setOriginClass();
+            updateRateReference();
+            document.getElementById('exchangeRate').required = document.getElementById('currencyCode').value !== "";
             if (existingLines.length > 0) {
                 existingLines.forEach(function (line) { addLine(line); });
             } else {

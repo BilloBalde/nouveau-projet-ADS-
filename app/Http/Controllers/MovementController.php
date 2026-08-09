@@ -4,9 +4,10 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Models\Achat;
 use App\Models\Company; // en haut du fichier
 use App\Models\Expense;
+use App\Models\Purchase;
+use App\Models\PurchaseOrder;
 use App\Models\Sale;
 use App\Models\Store;
 
@@ -19,6 +20,82 @@ class MovementController extends Controller
     public function __construct()
     {
         $this->middleware('auth.check');
+    }
+
+    /**
+     * Les "achats" de cette page venaient uniquement du modèle `Achat`
+     * (LigneCommande/Proforma), dont la table est vide dans ce projet — aucun achat
+     * n'apparaissait jamais. Les vrais achats sont dans `purchases` (ancien flux
+     * simple, un produit par ligne) et `purchase_orders` (module Achat actuel,
+     * plusieurs produits par commande, coût de revient atterri) : on combine les deux,
+     * normalisés dans la même forme que les lignes "Vente"/"Dépense".
+     */
+    private function achatMovements(bool $isAdmin, $user, Request $request)
+    {
+        $purchaseQuery = Purchase::with(['product', 'store'])
+            ->when(!$isAdmin, fn ($q) => $q->where('store_id', $user->store_id));
+
+        $orderQuery = PurchaseOrder::with(['items.product', 'store'])
+            ->where('status', '!=', 'cancelled')
+            ->when(!$isAdmin, fn ($q) => $q->where('store_id', $user->store_id));
+
+        if ($isAdmin && $request->filled('store_id')) {
+            $purchaseQuery->where('store_id', $request->store_id);
+            $orderQuery->where('store_id', $request->store_id);
+        }
+        if ($request->filled('date_debut')) {
+            $purchaseQuery->whereDate('created_at', '>=', $request->date_debut);
+            $orderQuery->whereDate('created_at', '>=', $request->date_debut);
+        }
+        if ($request->filled('date_fin')) {
+            $purchaseQuery->whereDate('created_at', '<=', $request->date_fin);
+            $orderQuery->whereDate('created_at', '<=', $request->date_fin);
+        }
+        if ($request->filled('reference')) {
+            $ref = $request->reference;
+            $purchaseQuery->where('numeroPurchase', 'like', "%{$ref}%");
+            $orderQuery->where('reference', 'like', "%{$ref}%");
+        }
+
+        $fromPurchases = $purchaseQuery->get()->map(fn ($purchase) => [
+            'id'          => $purchase->id,
+            'type'        => 'Achat',
+            'type_code'   => 'purchase',
+            'reference'   => $purchase->numeroPurchase ?? 'ACH_' . $purchase->id,
+            'date'        => $purchase->created_at,
+            'montant'     => (float) $purchase->price * (int) $purchase->quantity,
+            'produit_nom' => $purchase->product->libelle ?? 'Produit inconnu',
+            'produit_qte' => $purchase->quantity ?? 0,
+            'details'     => 'Qté: ' . ($purchase->quantity ?? 0),
+            'store_id'    => $purchase->store_id,
+            'store_name'  => $purchase->store->store_name ?? $purchase->store->name ?? 'N/A',
+            'can_edit'    => $isAdmin || ($user->store_id == $purchase->store_id),
+        ]);
+
+        $fromOrders = $orderQuery->get()->map(function ($order) use ($isAdmin, $user) {
+            $itemCount = $order->items->count();
+            $productName = $itemCount === 1
+                ? ($order->items->first()->product->libelle ?? 'Produit inconnu')
+                : 'Achat multiple (' . $itemCount . ' produits)';
+            $quantity = $order->items->sum('quantity');
+
+            return [
+                'id'          => $order->id,
+                'type'        => 'Achat',
+                'type_code'   => 'purchase',
+                'reference'   => $order->reference,
+                'date'        => $order->created_at,
+                'montant'     => (float) $order->total_landed_cost_gnf,
+                'produit_nom' => $productName,
+                'produit_qte' => $quantity,
+                'details'     => 'Qté totale: ' . $quantity,
+                'store_id'    => $order->store_id,
+                'store_name'  => $order->store->store_name ?? $order->store->name ?? 'N/A',
+                'can_edit'    => $isAdmin || ($user->store_id == $order->store_id),
+            ];
+        });
+
+        return $fromPurchases->concat($fromOrders);
     }
 
     public function index(Request $request)
@@ -36,16 +113,10 @@ class MovementController extends Controller
             ->when(!$isAdmin, fn($q) => $q->where('store_id', $user->store_id)); // Les vendeurs voient leur propre boutique uniquement
 
         // ------------------------------------------------------------
-        // 2. ACHATS
+        // 2. ACHATS — voir achatMovements() : combine `purchases` + `purchase_orders`
+        //    (filtres store_id/date/reference appliqués à l'intérieur de la méthode).
         // ------------------------------------------------------------
-        $achatsQuery = Achat::with(['store']);
-        if (method_exists(Achat::class, 'product')) {
-            $achatsQuery->with('product');
-        }
-        if (method_exists(Achat::class, 'products')) {
-            $achatsQuery->with('products');
-        }
-        $achatsQuery->when(!$isAdmin, fn($q) => $q->where('store_id', $user->store_id)); // Idem pour les achats
+        $includeAchats = true;
 
         // ------------------------------------------------------------
         // 3. DÉPENSES
@@ -57,7 +128,7 @@ class MovementController extends Controller
         if ($request->filled('type')) {
             switch ($request->type) {
                 case 'sale':
-                    $achatsQuery->whereRaw('1=0');
+                    $includeAchats = false;
                     $expensesQuery->whereRaw('1=0');
                     break;
                 case 'purchase':
@@ -66,7 +137,7 @@ class MovementController extends Controller
                     break;
                 case 'expense':
                     $salesQuery->whereRaw('1=0');
-                    $achatsQuery->whereRaw('1=0');
+                    $includeAchats = false;
                     break;
             }
         }
@@ -74,31 +145,21 @@ class MovementController extends Controller
         if ($isAdmin && $request->filled('store_id')) {
             // Si l'utilisateur est admin, il peut voir toutes les boutiques
             $salesQuery->where('store_id', $request->store_id);
-            $achatsQuery->where('store_id', $request->store_id);
-            $expensesQuery->where('store_id', $request->store_id);
-        }
-
-        if ($isAdmin && $request->filled('store_id')) {
-            $salesQuery->where('store_id', $request->store_id);
-            $achatsQuery->where('store_id', $request->store_id);
             $expensesQuery->where('store_id', $request->store_id);
         }
 
         if ($request->filled('date_debut')) {
             $salesQuery->whereDate('created_at', '>=', $request->date_debut);
-            $achatsQuery->whereDate('created_at', '>=', $request->date_debut);
             $expensesQuery->whereDate('created_at', '>=', $request->date_debut);
         }
         if ($request->filled('date_fin')) {
             $salesQuery->whereDate('created_at', '<=', $request->date_fin);
-            $achatsQuery->whereDate('created_at', '<=', $request->date_fin);
             $expensesQuery->whereDate('created_at', '<=', $request->date_fin);
         }
 
         if ($request->filled('reference')) {
             $ref = $request->reference;
             $salesQuery->where('numeroFacture', 'like', "%{$ref}%");
-            $achatsQuery->where('identifier', 'like', "%{$ref}%");
             $expensesQuery->where('reference', 'like', "%{$ref}%");
         }
 
@@ -120,36 +181,9 @@ class MovementController extends Controller
             'can_edit'    => $isAdmin || ($user->store_id == $sale->store_id),
         ]);
 
-        $achats = $achatsQuery->get()->map(function ($achat) use ($isAdmin, $user) { // ✅ USE ici
-            $productName = 'Achat global';
-            $quantity    = $achat->total_pcs ?? 1;
-            $details     = 'Qté: '.($achat->total_pcs ?? '');
-
-            if (method_exists($achat, 'product') && $achat->product) {
-                $productName = $achat->product->libelle ?? $achat->product->name ?? 'Produit inconnu';
-                $quantity    = $achat->quantity ?? 1;
-                $details     = 'Qté: '.($achat->quantity ?? 1);
-            } elseif (method_exists($achat, 'products') && $achat->products && $achat->products->isNotEmpty()) {
-                $productName = 'Achat multiple ('.count($achat->products).' produits)';
-                $quantity    = $achat->products->sum('pivot.quantity');
-                $details     = 'Qté totale: '.$quantity;
-            }
-
-            return [
-                'id'          => $achat->id,
-                'type'        => 'Achat',
-                'type_code'   => 'purchase',
-                'reference'   => $achat->identifier ?? 'ACH_'.$achat->id,
-                'date'        => $achat->created_at,
-                'montant'     => $achat->grand_total ?? 0,
-                'produit_nom' => $productName,
-                'produit_qte' => $quantity,
-                'details'     => $details,
-                'store_id'    => $achat->store_id,
-                'store_name'  => $achat->store->store_name ?? $achat->store->name ?? 'N/A',
-                'can_edit'    => $isAdmin || ($user->store_id == $achat->store_id),
-            ];
-        });
+        $achats = $includeAchats
+            ? $this->achatMovements($isAdmin, $user, $request)
+            : collect();
 
         $expenses = $expensesQuery->get()->map(function ($expense) use ($isAdmin, $user) { // ✅ USE ici
             return [
@@ -233,15 +267,8 @@ class MovementController extends Controller
         $salesQuery = Sale::with(['product', 'store'])
             ->when(!$isAdmin, fn($q) => $q->where('store_id', $user->store_id)); // Filtrer les ventes pour les vendeurs
 
-        // 2. ACHATS
-        $achatsQuery = Achat::with(['store']);
-        if (method_exists(Achat::class, 'product')) {
-            $achatsQuery->with('product');
-        }
-        if (method_exists(Achat::class, 'products')) {
-            $achatsQuery->with('products');
-        }
-        $achatsQuery->when(!$isAdmin, fn($q) => $q->where('store_id', $user->store_id)); // Filtrer les achats pour les vendeurs
+        // 2. ACHATS — voir achatMovements() : combine `purchases` + `purchase_orders`.
+        $includeAchats = !$request->filled('type') || $request->type === 'purchase';
 
         // 3. DÉPENSES
         $expensesQuery = Expense::with(['category', 'store'])
@@ -250,23 +277,19 @@ class MovementController extends Controller
         // 🔍 FILTRES
         if ($request->filled('date_debut')) {
             $salesQuery->whereDate('created_at', '>=', $request->date_debut);
-            $achatsQuery->whereDate('created_at', '>=', $request->date_debut);
             $expensesQuery->whereDate('created_at', '>=', $request->date_debut);
         }
         if ($request->filled('date_fin')) {
             $salesQuery->whereDate('created_at', '<=', $request->date_fin);
-            $achatsQuery->whereDate('created_at', '<=', $request->date_fin);
             $expensesQuery->whereDate('created_at', '<=', $request->date_fin);
         }
         if ($request->filled('type')) {
             if ($request->type != 'sale')     $salesQuery->whereRaw('1=0');
-            if ($request->type != 'purchase') $achatsQuery->whereRaw('1=0');
             if ($request->type != 'expense')  $expensesQuery->whereRaw('1=0');
         }
         if ($request->filled('reference')) {
             $search = $request->reference;
             $salesQuery->where('numeroFacture', 'like', "%$search%");
-            $achatsQuery->where('identifier', 'like', "%$search%");
             $expensesQuery->where('reference', 'like', "%$search%");
         }
 
@@ -299,35 +322,9 @@ class MovementController extends Controller
             ];
 
         // ACHATS
-        $achats = $achatsQuery->get()->map(function ($achat) {
-            $productName = 'Achat global';
-            $quantity    = $achat->total_pcs ?? 1;
-            $details     = 'Qté: '.($achat->total_pcs ?? '');
-
-            if (method_exists($achat, 'product') && $achat->product) {
-                $productName = $achat->product->libelle ?? 'Produit inconnu';
-                $quantity    = $achat->quantity ?? 1;
-                $details     = 'Qté: '.($achat->quantity ?? 1);
-            } elseif (method_exists($achat, 'products') && $achat->products && $achat->products->isNotEmpty()) {
-                $productName = 'Achat multiple';
-                $quantity    = $achat->products->sum('pivot.quantity');
-                $details     = 'Qté totale: '.$quantity;
-            }
-
-            return [
-                'id'          => $achat->id,
-                'type'        => 'Achat',
-                'type_code'   => 'purchase',
-                'reference'   => $achat->identifier ?? 'ACH_'.$achat->id,
-                'date'        => $achat->created_at, // ✅ clé date définie
-                'montant'     => $achat->grand_total ?? 0,
-                'produit_nom' => $productName,
-                'produit_qte' => $quantity,
-                'details'     => $details,
-                'store_id'    => $achat->store_id,
-                'store_name'  => $achat->store->store_name ?? 'N/A',
-            ];
-        });
+        $achats = $includeAchats
+            ? $this->achatMovements($isAdmin, $user, $request)
+            : collect();
 
         // DÉPENSES
         $expenses = $expensesQuery->get()->map(fn($expense) => [

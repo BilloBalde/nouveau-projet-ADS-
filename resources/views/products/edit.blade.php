@@ -138,7 +138,7 @@
                                                     @foreach ($categories as $category)
                                                     <option value="{{ $category->id }}"
                                                         {{ in_array($category->id, $product->categories->pluck('id')->toArray()) ? 'selected' : '' }}>
-                                                        {{ $category->slug }}
+                                                        {{ $category->category_type }}
                                                     </option>
                                                     @endforeach
                                                 </select>
@@ -308,6 +308,11 @@
         @include('layouts.scripts')
         <script>
             document.addEventListener('DOMContentLoaded', function () {
+                $('#categories').select2({
+                    width: '100%',
+                    placeholder: 'Rechercher une catégorie…',
+                });
+
                 // Preloaded per-store quantities from controller
                 const perStore = @json($perStoreQuantities);
                 const storeSelect = document.getElementById('store_id');

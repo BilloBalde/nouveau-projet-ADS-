@@ -114,9 +114,9 @@
                                                 <div class="form-group">
                                                     <label for="period">Période</label>
                                                     <select id="period" name="period" class="form-control">
-                                                        <option value="daily" {{ request('period', 'daily') == 'daily' ? 'selected' : '' }}>Jour</option>
+                                                        <option value="daily" {{ request('period') == 'daily' ? 'selected' : '' }}>Jour</option>
                                                         <option value="weekly" {{ request('period') == 'weekly' ? 'selected' : '' }}>Semaine</option>
-                                                        <option value="monthly" {{ request('period') == 'monthly' ? 'selected' : '' }}>Mois</option>
+                                                        <option value="monthly" {{ request('period', 'monthly') == 'monthly' ? 'selected' : '' }}>Mois</option>
                                                         <option value="quarterly" {{ request('period') == 'quarterly' ? 'selected' : '' }}>Trimestre</option>
                                                         <option value="semestral" {{ request('period') == 'semestral' ? 'selected' : '' }}>Semestre</option>
                                                         <option value="yearly" {{ request('period') == 'yearly' ? 'selected' : '' }}>Année</option>

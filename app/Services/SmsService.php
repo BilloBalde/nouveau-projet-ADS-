@@ -13,38 +13,52 @@ class SmsService
      */
     public function sendOtp(string $phone, string $code): void
     {
-    
         $message = sprintf(config('sms.otp_message', 'Code : %s'), $code);
+        $this->send($phone, $message);
+    }
+
+    /**
+     * Envoie un SMS à contenu libre (ex : rappel de dette) via le pilote configuré.
+     * Retourne true si l'envoi a réussi, pour permettre un retour immédiat à
+     * l'utilisateur qui déclenche l'envoi manuellement (contrairement à l'OTP,
+     * envoyé en fire-and-forget).
+     */
+    public function send(string $phone, string $message): bool
+    {
         $driver = config('sms.driver', 'whatsapp');
-       
+
         try {
-            match ($driver) {
+            return match ($driver) {
                 'twilio' => $this->sendTwilio($phone, $message),
                 'http' => $this->sendHttp($phone, $message),
                 'whatsapp' => $this->sendWhatsapp($phone, $message),
+                'nimba' => $this->sendNimba($phone, $message),
                 default => $this->sendLog($phone, $message),
             };
         } catch (\Throwable $e) {
-            Log::error('SMS OTP échec', ['phone' => $phone, 'error' => $e->getMessage()]);
+            Log::error('SMS échec', ['phone' => $phone, 'error' => $e->getMessage()]);
+
+            return false;
         }
     }
 
-    protected function sendLog(string $phone, string $message): void
+    protected function sendLog(string $phone, string $message): bool
     {
-        Log::channel('single')->info('[SMS OTP — mode log, aucun envoi réel]', [
+        Log::channel('single')->info('[SMS — mode log, aucun envoi réel]', [
             'phone' => $phone,
             'message' => $message,
         ]);
+
+        return true;
     }
 
-    protected function sendHttp(string $phone, string $message): void
+    protected function sendHttp(string $phone, string $message): bool
     {
         $url = config('sms.http.url');
         if (empty($url)) {
             Log::warning('SMS_HTTP_URL manquant, fallback log.');
-            $this->sendLog($phone, $message);
 
-            return;
+            return $this->sendLog($phone, $message);
         }
 
         $body = config('sms.http.body_template', []);
@@ -75,9 +89,11 @@ class SmsService
                 'body' => $response->body(),
             ]);
         }
+
+        return $response->successful();
     }
 
-    protected function sendTwilio(string $phone, string $message): void
+    protected function sendTwilio(string $phone, string $message): bool
     {
         $sid = config('sms.twilio.sid');
         $token = config('sms.twilio.token');
@@ -85,9 +101,8 @@ class SmsService
 
         if (empty($sid) || empty($token) || empty($from)) {
             Log::warning('Twilio non configuré (TWILIO_*), fallback log.');
-            $this->sendLog($phone, $message);
 
-            return;
+            return $this->sendLog($phone, $message);
         }
 
         $to = $this->normalizeE164($phone);
@@ -106,6 +121,8 @@ class SmsService
         if (! $response->successful()) {
             Log::error('Twilio SMS erreur', ['body' => $response->body()]);
         }
+
+        return $response->successful();
     }
 
     /**
@@ -124,15 +141,55 @@ class SmsService
         return str_starts_with($phone, '+') ? $phone : '+'.$digits;
     }
 
-    protected function sendWhatsapp(string $phone, string $message): void
+    /**
+     * Nimba SMS (api.nimbasms.com) : Basic Auth (service_id, secret_token),
+     * POST /v1/messages en form-urlencoded — même contrat que le SDK officiel.
+     */
+    protected function sendNimba(string $phone, string $message): bool
+    {
+        $serviceId = config('sms.nimba.service_id');
+        $secretToken = config('sms.nimba.secret_token');
+        $senderName = config('sms.nimba.sender_name');
+
+        if (!$serviceId || !$secretToken || !$senderName) {
+            Log::warning('Nimba SMS non configuré (NIMBA_SERVICE_ID/NIMBA_SECRET_TOKEN/NIMBA_SENDER_NAME).');
+
+            return $this->sendLog($phone, $message);
+        }
+
+        $to = $this->normalizeE164($phone);
+
+        $response = Http::withBasicAuth($serviceId, $secretToken)
+            ->asForm()
+            ->timeout(20)
+            ->post('https://api.nimbasms.com/v1/messages', [
+                'to' => [$to],
+                'sender_name' => $senderName,
+                'message' => $message,
+            ]);
+
+        Log::info('Nimba SMS Response', [
+            'phone' => $to,
+            'status' => $response->status(),
+            'response' => $response->json() ?? $response->body(),
+        ]);
+
+        if (! $response->successful()) {
+            Log::error('Erreur Nimba SMS', ['body' => $response->body()]);
+        }
+
+        return $response->successful();
+    }
+
+    protected function sendWhatsapp(string $phone, string $message): bool
     {
         $instance = env('ULTRAMSG_INSTANCE');
         $token = env('ULTRAMSG_TOKEN');
 
         if (!$instance || !$token) {
             Log::warning('UltraMsg non configuré');
-            $this->sendLog($phone, $message);
-            return;
+
+            return $this->sendLog($phone, $message);
         }
 
         $response = Http::asForm()
@@ -158,5 +215,7 @@ class SmsService
                 'body' => $response->body()
             ]);
         }
+
+        return $response->successful();
     }
 }

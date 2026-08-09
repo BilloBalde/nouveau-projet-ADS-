@@ -595,7 +595,7 @@
             <div class="summary-card tone-4">
                 <h3>Achats</h3>
                 <div class="value">{{ number_format($totalAchats, 0, '.', ' ') }} FG</div>
-                <div class="sub-label">Total achats (grand_total)</div>
+                <div class="sub-label">Total achats (achats simples + commandes)</div>
             </div>
             <div class="summary-card tone-5">
                 <h3>Dépenses</h3>

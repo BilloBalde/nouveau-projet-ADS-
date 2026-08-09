@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\View;
 
 use App\Models\Sale;
 use App\Models\Expense;
-use App\Models\Achat;
+use App\Models\PurchaseOrder;
 use App\Observers\StockObserver;
 
 class AppServiceProvider extends ServiceProvider
@@ -52,7 +52,7 @@ class AppServiceProvider extends ServiceProvider
 
         Sale::observe(StockObserver::class);
         Expense::observe(StockObserver::class);
-        Achat::observe(StockObserver::class);
+        PurchaseOrder::observe(StockObserver::class);
 
         // Directive @permission('sales.view') ... @endpermission
         Blade::if('permission', function (string $slug) {

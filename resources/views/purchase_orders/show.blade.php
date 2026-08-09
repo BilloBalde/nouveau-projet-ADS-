@@ -386,9 +386,11 @@
                                         @endif
                                         <th>Prix unitaire (GNF)</th>
                                         @if($order->origin === 'chine')
+                                        <th>CBM / carton</th>
                                         <th>CBM ligne</th>
                                         <th>Fret alloué</th>
                                         <th>Douane allouée</th>
+                                        <th>Frais divers alloués</th>
                                         @endif
                                         <th>Coût de revient / unité</th>
                                     </tr>
@@ -408,9 +410,11 @@
                                         @endif
                                         <td>{{ number_format($item->unit_price_gnf, 0, ',', ' ') }}</td>
                                         @if($order->origin === 'chine')
+                                        <td>{{ $item->cbm_per_carton ? number_format($item->cbm_per_carton, 4) : '—' }}</td>
                                         <td><span class="po-cbm-badge">{{ number_format($item->line_total_cbm, 3) }}</span></td>
                                         <td>{{ number_format($item->allocated_freight_gnf, 0, ',', ' ') }}</td>
                                         <td>{{ number_format($item->allocated_customs_gnf, 0, ',', ' ') }}</td>
+                                        <td>{{ number_format($item->allocated_other_fees_gnf, 0, ',', ' ') }}</td>
                                         @endif
                                         <td><span class="po-landed-cost">{{ number_format($item->landed_unit_cost_gnf, 0, ',', ' ') }} GNF</span></td>
                                     </tr>

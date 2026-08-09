@@ -62,6 +62,13 @@
                                                    class="btn btn-sm" style="background:#25D366;color:#fff;">
                                                     <i class="fab fa-whatsapp me-1"></i>WhatsApp
                                                 </a>
+                                                <form method="POST" action="{{ route('admin.debt-reminders.send-sms', $r->customer?->id) }}" class="d-inline"
+                                                      onsubmit="return confirm('Envoyer un SMS de rappel à {{ $r->customer?->customerName }} ? (consomme un crédit Nimba SMS)');">
+                                                    @csrf
+                                                    <button type="submit" class="btn btn-sm" style="background:#c1682f;color:#fff;">
+                                                        <i class="fas fa-sms me-1"></i>SMS
+                                                    </button>
+                                                </form>
                                                 @else
                                                 <span class="badge bg-secondary" title="Numéro invalide">Tél. invalide</span>
                                                 @endif

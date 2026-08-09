@@ -52,8 +52,11 @@ class SalesExport implements FromView, WithTitle, WithEvents, ShouldAutoSize
                 if ($this->request->filled('product_id')) {
                     $query->where('product_id', $this->request->product_id);
                 }
-                if ($this->request->filled('created_at')) {
-                    $query->whereDate('created_at', $this->request->created_at);
+                if ($this->request->filled('date_from')) {
+                    $query->whereDate('created_at', '>=', $this->request->date_from);
+                }
+                if ($this->request->filled('date_to')) {
+                    $query->whereDate('created_at', '<=', $this->request->date_to);
                 }
             }
 

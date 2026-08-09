@@ -178,6 +178,18 @@
                             </select>
                         </div>
 
+                        {{-- Stock disponible par boutique (toujours affiché, avant même de choisir) --}}
+                        <div id="stockByStoreZone" style="display:none;" class="mb-4">
+                            <p class="fw-semibold mb-2" style="font-size:13px;">
+                                <i class="fas fa-warehouse me-1 text-warning"></i> Stock disponible par boutique
+                            </p>
+                            <div id="stockByStoreList"></div>
+                        </div>
+                        <div id="stockByStoreLoading" style="display:none;" class="text-center py-2 text-muted mb-3">
+                            <div class="spinner-border spinner-border-sm me-2"></div>
+                            Chargement du stock par boutique…
+                        </div>
+
                         {{-- Zone vérification stock --}}
                         <div id="stockCheckZone" style="display:none;">
                             <p class="fw-semibold mb-2" style="font-size:13px;">
@@ -269,7 +281,47 @@ $(document).on('click', '.btn-reject', function() {
                 $('#confirmApproveBtn').prop('disabled', true);
                 stockOk = false;
 
+                $('#stockByStoreZone').hide();
+                $('#stockByStoreList').html('');
+                $('#stockByStoreLoading').show();
+
                 $('#approveModal').modal('show');
+
+                // Stock par boutique : affiché tout de suite, indépendamment du choix
+                // de la boutique de livraison, pour aider à décider laquelle choisir.
+                $.ajax({
+                    url: currentCheckUrl,
+                    timeout: 15000,
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    success: function (data) {
+                        $('#stockByStoreLoading').hide();
+
+                        var html = '';
+                        $.each(data.items, function (i, item) {
+                            html += '<div class="mb-2 pb-2" style="border-bottom:1px solid #f3f4f6;">' +
+                                        '<div style="font-size:13px;font-weight:600;">' + item.name +
+                                            ' <em class="text-muted fw-normal">× ' + item.requested + ' demandé</em></div>' +
+                                        '<div class="d-flex flex-wrap gap-2 mt-1">';
+                            $.each(item.per_store, function (j, s) {
+                                var enough = s.available >= item.requested;
+                                html += '<span class="badge" style="font-size:12px;background:' +
+                                            (enough ? '#f0fdf4' : '#fef2f2') + ';color:' + (enough ? '#166534' : '#991b1b') +
+                                            ';border:1px solid ' + (enough ? '#bbf7d0' : '#fecaca') + ';">' +
+                                            s.store_name + ' : ' + s.available +
+                                        '</span>';
+                            });
+                            html += '</div></div>';
+                        });
+
+                        $('#stockByStoreList').html(html);
+                        $('#stockByStoreZone').show();
+                    },
+                    error: function () {
+                        $('#stockByStoreLoading').hide();
+                        $('#stockByStoreList').html('<div class="alert alert-warning py-2" style="font-size:13px;">Impossible de charger le stock par boutique.</div>');
+                        $('#stockByStoreZone').show();
+                    }
+                });
             });
             // Fermeture manuelle de la modale
             $('#approveModal .close, #approveModal button[data-bs-dismiss="modal"]').on('click', function(e) {

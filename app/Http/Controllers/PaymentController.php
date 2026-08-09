@@ -12,6 +12,7 @@ use App\Models\TransactionFacture;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -76,7 +77,7 @@ class PaymentController extends Controller
         }
 
         // Filtrage par période
-        $period = $request->get('period', 'daily');
+        $period = $request->get('period', 'monthly');
         $startDate = null;
         $endDate = null;
 
@@ -150,7 +151,7 @@ class PaymentController extends Controller
         }
 
         // Filtrage par période (identique à index)
-        $period = $request->get('period', 'daily');
+        $period = $request->get('period', 'monthly');
         $startDate = null;
         $endDate = null;
 
@@ -209,8 +210,23 @@ class PaymentController extends Controller
     public function exportPdf(Request $request)
     {
         $payments = $this->getFilteredPayments($request);
+
+        // Même garde-fou que pour l'export ventes : Dompdf devient peu fiable
+        // (lent, gourmand en RAM) sur de gros volumes. L'Excel n'a pas cette limite.
+        if ($payments->count() > 1500) {
+            return back()->with(
+                'error',
+                "Cette période contient {$payments->count()} paiements — trop pour générer un PDF de façon fiable. "
+                . 'Réduisez la période, ou utilisez l\'export Excel qui ne connaît pas cette limite.'
+            );
+        }
+
         $company = \App\Models\Company::latest()->first();
         $pdf = Pdf::loadView('payments.payments_pdf', compact('payments', 'company'));
+        // isPhpEnabled : nécessaire pour le bloc <script type="text/php"> du template,
+        // qui affiche "Page X / Y" — la vue est un template interne fixe (pas de
+        // contenu utilisateur), donc sans risque ici.
+        $pdf->setOptions(['isPhpEnabled' => true]);
         return $pdf->download('paiements.pdf');
     }
 
@@ -306,71 +322,79 @@ class PaymentController extends Controller
                 return redirect()->back()->with('error', 'Ce client n\'a aucune facture impayée.');
             }
 
-            $remainingPayment = $versement;
-            $nextReceiptId = (Payment::max('id') ?? 0) + 1;
-            $lastPaidInvoiceNumber = null;
-            
-            foreach ($unpaidInvoices as $invoice) {
-                if ($remainingPayment <= 0) {
-                    break;
+            // Écritures multiples (paiements par facture + transaction + solde client) :
+            // encadrées dans une transaction DB pour rester atomiques. Une exception à
+            // n'importe quelle étape annule tout, au lieu de laisser certaines factures
+            // soldées et le solde client désynchronisé.
+            [$remainingPayment, $lastPaidInvoiceNumber] = DB::transaction(function () use ($customer, $versement, $unpaidInvoices, $request) {
+                $remainingPayment = $versement;
+                $nextReceiptId = (Payment::max('id') ?? 0) + 1;
+                $lastPaidInvoiceNumber = null;
+
+                foreach ($unpaidInvoices as $invoice) {
+                    if ($remainingPayment <= 0) {
+                        break;
+                    }
+
+                    // Get last payment for this invoice
+                    $oldPayment = Payment::where('facture_id', $invoice->id)
+                                        ->orderBy('id', 'DESC')
+                                        ->first();
+
+                    $previousTotal = $oldPayment ? $oldPayment->total_paye : 0;
+                    $previousReste = $oldPayment ? $oldPayment->reste : $invoice->montant_total;
+
+                    // Calculate how much we can apply to this invoice
+                    $amountToApply = min($remainingPayment, $previousReste);
+
+                    // Calculate new totals for this invoice
+                    $newTotalPaid = $previousTotal + $amountToApply;
+                    $newReste = $previousReste - $amountToApply;
+
+                    // Create payment record for this invoice
+                    $receiptNumber = generateReceiptNumber('RCF', $nextReceiptId);
+                    $nextReceiptId++;
+
+                    Payment::create([
+                        'facture_id' => $invoice->id,
+                        'versement' => $amountToApply,
+                        'paid_by' => $request->paid_by,
+                        'note' => $request->note,
+                        'total_paye' => $newTotalPaid,
+                        'reste' => $newReste,
+                        'receipt_number' => $receiptNumber,
+                    ]);
+                    $lastPaidInvoiceNumber = $invoice->numero_facture;
+
+                    // Update invoice status
+                    $statut = $newReste == 0 ? 'payé' : 'non payé';
+                    $invoice->update([
+                        'statut' => $statut,
+                        'reste' => $newReste
+                    ]);
+
+                    // Deduct from remaining payment
+                    $remainingPayment -= $amountToApply;
                 }
-
-                // Get last payment for this invoice
-                $oldPayment = Payment::where('facture_id', $invoice->id)
-                                    ->orderBy('id', 'DESC')
-                                    ->first();
-
-                $previousTotal = $oldPayment ? $oldPayment->total_paye : 0;
-                $previousReste = $oldPayment ? $oldPayment->reste : $invoice->montant_total;
-
-                // Calculate how much we can apply to this invoice
-                $amountToApply = min($remainingPayment, $previousReste);
-                
-                // Calculate new totals for this invoice
-                $newTotalPaid = $previousTotal + $amountToApply;
-                $newReste = $previousReste - $amountToApply;
-
-                // Create payment record for this invoice
-                $receiptNumber = generateReceiptNumber('RCF', $nextReceiptId);
-                $nextReceiptId++;
-
-                Payment::create([
-                    'facture_id' => $invoice->id,
-                    'versement' => $amountToApply,
-                    'paid_by' => $request->paid_by,
+                // Record the transaction
+                $transactionReceiptNumber = generateReceiptNumber('RCC', (TransactionFacture::max('id') ?? 0) + 1);
+                TransactionFacture::create([
+                    'customer_id' => $customer->id,
+                    'versement' => $versement,
+                    'balance' => $customer->balance,
                     'note' => $request->note,
-                    'total_paye' => $newTotalPaid,
-                    'reste' => $newReste,
-                    'receipt_number' => $receiptNumber,
-                ]);
-                $lastPaidInvoiceNumber = $invoice->numero_facture;
-
-                // Update invoice status
-                $statut = $newReste == 0 ? 'payé' : 'non payé';
-                $invoice->update([
-                    'statut' => $statut,
-                    'reste' => $newReste
+                    'paid_by' => $request->paid_by,
+                    'receipt_number' => $transactionReceiptNumber,
                 ]);
 
-                // Deduct from remaining payment
-                $remainingPayment -= $amountToApply;
-            }
-            // Record the transaction
-            $transactionReceiptNumber = generateReceiptNumber('RCC', (TransactionFacture::max('id') ?? 0) + 1);
-            $transaction = TransactionFacture::create([
-                'customer_id' => $customer->id,
-                'versement' => $versement,
-                'balance' => $customer->balance,
-                'note' => $request->note,
-                'paid_by' => $request->paid_by,
-                'receipt_number' => $transactionReceiptNumber,
-            ]);
+                // Update customer's overall balance
+                $customer->update([
+                    'total_repaid' => $customer->total_repaid + $versement,
+                    'balance' => $customer->balance - $versement
+                ]);
 
-            // Update customer's overall balance
-            $customer->update([
-                'total_repaid' => $customer->total_repaid + $versement,
-                'balance' => $customer->balance - $versement
-            ]);
+                return [$remainingPayment, $lastPaidInvoiceNumber];
+            });
 
             // Success message
             $sms = "Un versement de {$versement} FG a été effectué pour le client {$customer->customerName}. ";
@@ -416,61 +440,65 @@ class PaymentController extends Controller
         }
 
         try {
-            $facture = Facture::findOrFail($request->facture_id);
+            // Écritures multiples (paiement + facture + solde client) encadrées dans une
+            // transaction DB pour rester atomiques.
+            return DB::transaction(function () use ($request) {
+                $facture = Facture::findOrFail($request->facture_id);
 
-            // Dernier paiement
-            $oldPayment = Payment::where('facture_id', $request->facture_id)
-                                ->orderBy('id', 'DESC')
-                                ->first();
+                // Dernier paiement
+                $oldPayment = Payment::where('facture_id', $request->facture_id)
+                                    ->orderBy('id', 'DESC')
+                                    ->first();
 
-            $previousTotal = $oldPayment ? $oldPayment->total_paye : 0;
-            $previousReste = $oldPayment ? $oldPayment->reste : $facture->montant_total;
+                $previousTotal = $oldPayment ? $oldPayment->total_paye : 0;
+                $previousReste = $oldPayment ? $oldPayment->reste : $facture->montant_total;
 
-            $versement = $request->versement;
+                $versement = $request->versement;
 
-            // Calcul du nouveau total payé et reste
-            $total_paye = $previousTotal + $versement;
-            $reste = $previousReste - $versement;
+                // Calcul du nouveau total payé et reste
+                $total_paye = $previousTotal + $versement;
+                $reste = $previousReste - $versement;
 
-            if ($reste < 0) {
-                return redirect()->back()->with('error', 'Le montant versé dépasse le montant restant à payer.');
-            }
+                if ($reste < 0) {
+                    return redirect()->back()->with('error', 'Le montant versé dépasse le montant restant à payer.');
+                }
 
-            $receiptNumber = generateReceiptNumber('RCF', (Payment::max('id') ?? 0) + 1);
+                $receiptNumber = generateReceiptNumber('RCF', (Payment::max('id') ?? 0) + 1);
 
-            // Création du paiement
-            $payment = Payment::create([
-                'facture_id' => $facture->id,
-                'versement' => $versement,
-                'paid_by' => $request->paid_by,
-                'note' => $request->note,
-                'total_paye' => $total_paye,
-                'reste' => $reste,
-                'receipt_number' => $receiptNumber,
-            ]);
-
-            // Mise à jour du statut de la facture
-            $statut = $reste == 0 ? 'payé' : 'non payé';
-            $facture->update([
-                'statut' => $statut,
-                'reste' => $reste
-            ]);
-
-            // Message de confirmation
-            $client = Customer::find($facture->customer_id);
-            if ($client) {
-                $client->update([
-                    'total_repaid' => $client->total_repaid + $versement,
-                    'balance' => $client->balance - $versement
+                // Création du paiement
+                Payment::create([
+                    'facture_id' => $facture->id,
+                    'versement' => $versement,
+                    'paid_by' => $request->paid_by,
+                    'note' => $request->note,
+                    'total_paye' => $total_paye,
+                    'reste' => $reste,
+                    'receipt_number' => $receiptNumber,
                 ]);
-            }
-            $sms = $reste == 0
-                ? "Facture {$facture->numero_facture} entièrement payée. Merci au client {$client->customerName}."
-                : "Le montant de {$versement} a été versé pour la facture {$facture->numero_facture}. Montant restant: {$reste}.";
 
-            session(['success' => $sms]);
-            // Après paiement, rediriger vers la facture (détails de vente)
-            return redirect()->route('factures.show', $facture->numero_facture);
+                // Mise à jour du statut de la facture
+                $statut = $reste == 0 ? 'payé' : 'non payé';
+                $facture->update([
+                    'statut' => $statut,
+                    'reste' => $reste
+                ]);
+
+                // Message de confirmation
+                $client = Customer::find($facture->customer_id);
+                if ($client) {
+                    $client->update([
+                        'total_repaid' => $client->total_repaid + $versement,
+                        'balance' => $client->balance - $versement
+                    ]);
+                }
+                $sms = $reste == 0
+                    ? "Facture {$facture->numero_facture} entièrement payée. Merci au client {$client?->customerName}."
+                    : "Le montant de {$versement} a été versé pour la facture {$facture->numero_facture}. Montant restant: {$reste}.";
+
+                session(['success' => $sms]);
+                // Après paiement, rediriger vers la facture (détails de vente)
+                return redirect()->route('factures.show', $facture->numero_facture);
+            });
 
         } catch (\Throwable $th) {
             return back()->with('fail', 'Une erreur est survenue : ' . $th->getMessage());

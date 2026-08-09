@@ -131,9 +131,9 @@
                                         <div class="col-lg-6 col-sm-6 col-12">
                                             <div class="form-group">
                                                 <label for="categories">Categories:</label>
-                                                <select name="categories[]" multiple required class="form-control">
+                                                <select name="categories[]" id="categories" multiple required class="form-control">
                                                     @foreach ($categories as $category)
-                                                    <option value="{{ $category->id }}">{{ $category->slug }}</option>
+                                                    <option value="{{ $category->id }}">{{ $category->category_type }}</option>
                                                     @endforeach
                                                 </select>
                                                 @error('categories')
@@ -181,18 +181,18 @@
                                     <div class="row">
                                         <div class="col-lg-6 col-sm-6 col-12">
                                             <div class="form-group">
-                                                <label for="price">Prix de Vente(FG)</label>
-                                                <input type="text" id="price" name="price" class="form-control" value="{{ old('price') }}">
-                                                @error('price')
+                                                <label for="price_sale">Prix de Revient (FG)</label>
+                                                <input type="text" inputmode="decimal" id="price_sale" name="price_sale" class="form-control" value="{{ old('price_sale') }}" required>
+                                                @error('price_sale')
                                                 <span class="text-danger">{{ $message }}</span>
                                                 @enderror
                                             </div>
                                         </div>
                                         <div class="col-lg-6 col-sm-6 col-12">
                                             <div class="form-group">
-                                                <label for="price_sale">Prix de Revient(FG)</label>
-                                                <input type="text" id="price_sale" name="price_sale" class="form-control" value="{{ old('price_sale') }}">
-                                                @error('price_sale')
+                                                <label for="price">Prix de Vente (FG) <small class="text-muted">— calculé automatiquement (+30%)</small></label>
+                                                <input type="text" id="price" name="price" class="form-control" value="{{ old('price') }}" readonly style="background:#f5f5f5">
+                                                @error('price')
                                                 <span class="text-danger">{{ $message }}</span>
                                                 @enderror
                                             </div>
@@ -271,11 +271,26 @@
         @include('layouts.scripts')
         <script>
             document.addEventListener('DOMContentLoaded', function () {
+                $('#categories').select2({
+                    width: '100%',
+                    placeholder: 'Rechercher une catégorie…',
+                });
+
                 const isPromoCheckbox = document.getElementById('is_promo');
                 const promoFields = document.getElementById('promoFields');
                 const promoPreview = document.getElementById('promoPreview');
                 const priceInput = document.getElementById('price');
+                const priceSaleInput = document.getElementById('price_sale');
                 const percentInput = document.getElementById('promo_percent');
+
+                // Prix de vente = prix de revient + 30% de marge (même règle que pour
+                // le calcul du coût de revient à l'achat).
+                function recomputeSalePrice() {
+                    const priceSale = parseFloat(priceSaleInput.value) || 0;
+                    priceInput.value = priceSale > 0 ? Math.round(priceSale * 1.3) : '';
+                    updatePromoUI();
+                }
+                priceSaleInput.addEventListener('input', recomputeSalePrice);
 
                 function formatGNF(value) {
                     return new Intl.NumberFormat('fr-FR').format(Math.round(value)) + ' FG';
@@ -300,9 +315,8 @@
                 }
 
                 isPromoCheckbox.addEventListener('change', updatePromoUI);
-                priceInput.addEventListener('input', updatePromoUI);
                 percentInput.addEventListener('input', updatePromoUI);
-                updatePromoUI();
+                recomputeSalePrice();
             });
         </script>
     </body>

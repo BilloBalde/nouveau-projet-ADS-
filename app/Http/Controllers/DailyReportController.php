@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Achat;
 use App\Models\Expense;
 use App\Models\Facture;
 use App\Models\Payment;
+use App\Models\Purchase;
+use App\Models\PurchaseOrder;
 use App\Models\Store;
 use Barryvdh\DomPDF\Facade\Pdf as PDF;
 use Carbon\Carbon;
@@ -91,6 +92,54 @@ class DailyReportController extends Controller
         return $pdf->download($filename);
     }
 
+    /**
+     * Total des achats sur une période, toutes sources confondues : la table `achats`
+     * (module Proforma/LigneCommande) est vide dans ce projet — les achats réels sont
+     * dans `purchases` (ancien flux simple) et `purchase_orders` (module Achat actuel,
+     * coût de revient atterri). Achat::sum('grand_total') donnait donc toujours 0.
+     */
+    private function achatsTotal(Carbon $start, Carbon $end, ?int $storeId = null): float
+    {
+        $fromPurchases = Purchase::whereBetween('created_at', [$start, $end])
+            ->when($storeId, fn ($q) => $q->where('store_id', $storeId))
+            ->selectRaw('SUM(price * quantity) as total')
+            ->value('total');
+
+        $fromOrders = PurchaseOrder::whereBetween('created_at', [$start, $end])
+            ->where('status', '!=', 'cancelled')
+            ->when($storeId, fn ($q) => $q->where('store_id', $storeId))
+            ->sum('total_landed_cost_gnf');
+
+        return (float) $fromPurchases + (float) $fromOrders;
+    }
+
+    /**
+     * Même total que achatsTotal(), réparti par boutique pour le tableau détaillé.
+     * Retourne une collection keyBy(store_id) avec ->total_achats, comme l'ancienne
+     * requête Achat::...->keyBy('store_id') qu'elle remplace.
+     */
+    private function achatsByStore(Carbon $start, Carbon $end, array $storeIds)
+    {
+        $fromPurchases = Purchase::whereBetween('created_at', [$start, $end])
+            ->whereIn('store_id', $storeIds)
+            ->selectRaw('store_id, SUM(price * quantity) as total')
+            ->groupBy('store_id')
+            ->pluck('total', 'store_id');
+
+        $fromOrders = PurchaseOrder::whereBetween('created_at', [$start, $end])
+            ->where('status', '!=', 'cancelled')
+            ->whereIn('store_id', $storeIds)
+            ->selectRaw('store_id, SUM(total_landed_cost_gnf) as total')
+            ->groupBy('store_id')
+            ->pluck('total', 'store_id');
+
+        return collect($storeIds)->mapWithKeys(fn ($sid) => [
+            $sid => (object) [
+                'total_achats' => (float) ($fromPurchases[$sid] ?? 0) + (float) ($fromOrders[$sid] ?? 0),
+            ],
+        ]);
+    }
+
     private function getReportData(Request $request): array
     {
         $period = $request->input('period', 'daily');
@@ -117,15 +166,13 @@ class DailyReportController extends Controller
         [$start, $end, $label] = $this->resolvePeriod($period, $request, $now);
 
         // --- Totals (optionally filtered by store) ---
-        $achatsQuery = Achat::query()->whereBetween('created_at', [$start, $end]);
         $facturesQuery = Facture::query()->whereBetween('created_at', [$start, $end]);
 
         if (!empty($storeId)) {
-            $achatsQuery->where('store_id', $storeId);
             $facturesQuery->where('store_id', $storeId);
         }
 
-        $totalAchats = (float) $achatsQuery->sum('grand_total');
+        $totalAchats = $this->achatsTotal($start, $end, !empty($storeId) ? (int) $storeId : null);
         $totalVentes = (float) $facturesQuery->sum('montant_total');
         $totalReste = (float) $facturesQuery->sum('reste');
         $totalPayesVentes = (float) $facturesQuery->where('statut', 'payé')->sum('montant_total');
@@ -173,16 +220,7 @@ class DailyReportController extends Controller
             ->get()
             ->keyBy('store_id');
 
-        $achatsByStore = Achat::query()
-            ->whereBetween('created_at', [$start, $end])
-            ->whereIn('store_id', $storeIds)
-            ->select([
-                'store_id',
-                DB::raw('COALESCE(SUM(grand_total),0) as total_achats'),
-            ])
-            ->groupBy('store_id')
-            ->get()
-            ->keyBy('store_id');
+        $achatsByStore = $this->achatsByStore($start, $end, $storeIds);
 
         $paymentsByStore = Payment::query()
             ->whereBetween('payments.created_at', [$start, $end])

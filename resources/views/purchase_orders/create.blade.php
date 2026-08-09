@@ -86,6 +86,39 @@
                 border-color: #c1682f;
                 background: #fbf3ea;
             }
+            .po-field-with-add {
+                display: flex;
+                gap: 6px;
+                align-items: stretch;
+            }
+            .po-field-with-add select {
+                flex: 1;
+            }
+            /* Select2 remplace le <select> par un span.select2-container qui n'hérite
+               pas de la règle ci-dessus : sans ça, il ne s'étire pas et chevauche le
+               bouton "+" (cf. sélecteur de produit). Le !important est nécessaire car
+               public/assets/css/style.css force globalement
+               ".select2-container{min-width:100%!important}", ce qui l'empêche sinon
+               de rétrécir pour laisser la place au bouton. */
+            .po-field-with-add .select2-container {
+                flex: 1 1 0% !important;
+                min-width: 0 !important;
+                width: auto !important;
+            }
+            .po-add-btn {
+                flex-shrink: 0;
+                width: 38px;
+                border: 1px solid #e3d3c2;
+                background: #fdf6ec;
+                color: #c1682f;
+                border-radius: 6px;
+                font-size: 14px;
+                cursor: pointer;
+            }
+            .po-add-btn:hover {
+                background: #c1682f;
+                color: #fff;
+            }
         </style>
         <div id="global-loader">
             <div class="whirly-loader"> </div>
@@ -119,12 +152,17 @@
                                 <div class="col-lg-3 col-sm-6 col-12">
                                     <div class="form-group">
                                         <label>Magasin de destination</label>
-                                        <select name="store_id" class="form-control" required>
-                                            <option value="">Sélectionner</option>
-                                            @foreach($stores as $store)
-                                                <option value="{{ $store->id }}">{{ $store->store_name ?? $store->name }}</option>
-                                            @endforeach
-                                        </select>
+                                        <div class="po-field-with-add">
+                                            <select name="store_id" id="storeSelect" class="form-control" required>
+                                                <option value="">Sélectionner</option>
+                                                @foreach($stores as $store)
+                                                    <option value="{{ $store->id }}">{{ $store->store_name ?? $store->name }}</option>
+                                                @endforeach
+                                            </select>
+                                            <button type="button" class="po-add-btn" data-bs-toggle="modal" data-bs-target="#newStoreModal" title="Ajouter une boutique">
+                                                <i class="fa fa-plus"></i>
+                                            </button>
+                                        </div>
                                         @error('store_id') <span class="text-danger">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
@@ -168,8 +206,9 @@
                                         <select name="currency_code" id="currencyCode" class="form-control">
                                             <option value="">— GNF (Local) —</option>
                                             @foreach($currencies as $currency)
-                                                <option value="{{ $currency->currencyCode }}" 
-                                                        data-rate="{{ $currency->rate_to_gnf }}">
+                                                <option value="{{ $currency->currencyCode }}"
+                                                        data-rate="{{ $currency->rate_to_gnf }}"
+                                                        data-updated="{{ $currency->updated_at?->format('d/m/Y') }}">
                                                     {{ $currency->currencyName }} ({{ $currency->currencyCode }})
                                                 </option>
                                             @endforeach
@@ -183,17 +222,18 @@
                                 <div class="col-lg-4 col-sm-6 col-12">
                                     <div class="form-group">
                                         <label>Taux du jour (1 unité = X GNF)</label>
-                                        <input type="text" inputmode="decimal" 
-                                            name="exchange_rate_used" 
-                                            id="exchangeRate" 
-                                            class="form-control decimal-input" 
+                                        <input type="text" inputmode="decimal"
+                                            name="exchange_rate_used"
+                                            id="exchangeRate"
+                                            class="form-control decimal-input"
                                             value="{{ old('exchange_rate_used') }}">
-                                        @error('exchange_rate_used') 
-                                            <span class="text-danger" data-error-for="exchangeRate">{{ $message }}</span> 
+                                        @error('exchange_rate_used')
+                                            <span class="text-danger" data-error-for="exchangeRate">{{ $message }}</span>
                                         @enderror
                                     </div>
                                 </div>
                             </div>
+                            <p class="text-muted" style="font-size:13px;" id="rateReference"></p>
                         </div>
 
                         <div class="po-section">
@@ -256,12 +296,17 @@
                     <div class="col-lg-3 col-sm-6 col-12">
                         <div class="form-group">
                             <label>Produit</label>
-                            <select name="lines[__INDEX__][product_id]" class="form-control" data-field="product_id" required>
-                                <option value="">Sélectionner le produit</option>
-                                @foreach($products as $product)
-                                    <option value="{{ $product->id }}">{{ $product->libelle }} ({{ $product->sku }})</option>
-                                @endforeach
-                            </select>
+                            <div class="po-field-with-add">
+                                <select name="lines[__INDEX__][product_id]" class="form-control" data-field="product_id" required>
+                                    <option value="">Sélectionner le produit</option>
+                                    @foreach($products as $product)
+                                        <option value="{{ $product->id }}">{{ $product->libelle }} ({{ $product->sku }})</option>
+                                    @endforeach
+                                </select>
+                                <button type="button" class="po-add-btn" data-bs-toggle="modal" data-bs-target="#newProductModal" title="Ajouter un produit">
+                                    <i class="fa fa-plus"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
                     <div class="col-lg-2 col-sm-6 col-12">
@@ -290,8 +335,14 @@
                     </div>
                     <div class="col-lg-2 col-sm-6 col-12 po-import-only">
                         <div class="form-group">
-                            <label>CBM / unité</label>
-                            <input type="text" inputmode="decimal" name="lines[__INDEX__][cbm_per_unit]" class="form-control decimal-input" data-field="cbm_per_unit">
+                            <label>CBM / carton</label>
+                            <input type="text" inputmode="decimal" name="lines[__INDEX__][cbm_per_carton]" class="form-control decimal-input" data-field="cbm_per_carton" placeholder="Ex : 0.085">
+                        </div>
+                    </div>
+                    <div class="col-lg-2 col-sm-6 col-12 po-import-only">
+                        <div class="form-group">
+                            <label>CBM / unité (calculé)</label>
+                            <input type="text" class="form-control" data-field="cbm_per_unit_display" readonly style="background:#f5f5f5">
                         </div>
                     </div>
                     <div class="col-lg-2 col-sm-6 col-12">
@@ -307,6 +358,87 @@
             </div>
         </template>
 
+        <!-- Modale : nouvelle boutique -->
+        <div class="modal fade" id="newStoreModal" tabindex="-1" role="dialog">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Nouvelle boutique</h5>
+                        <button type="button" class="close" data-bs-dismiss="modal"><span>&times;</span></button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="newStoreError" class="alert alert-danger" style="display:none;"></div>
+                        <div class="form-group">
+                            <label>Nom de la boutique</label>
+                            <input type="text" id="newStoreName" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>Ville</label>
+                            <select id="newStorePlace" class="form-control">
+                                <option value="">Sélectionner</option>
+                                @foreach($places as $place)
+                                    <option value="{{ $place->id }}">{{ $place->placeName }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Responsable</label>
+                            <select id="newStoreManager" class="form-control">
+                                <option value="">Sélectionner</option>
+                                @foreach($storeManagers as $manager)
+                                    <option value="{{ $manager->id }}">{{ $manager->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-cancel" data-bs-dismiss="modal">Annuler</button>
+                        <button type="button" class="btn btn-submit" id="newStoreSubmit">Créer la boutique</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modale : nouveau produit -->
+        <div class="modal fade" id="newProductModal" tabindex="-1" role="dialog">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Nouveau produit</h5>
+                        <button type="button" class="close" data-bs-dismiss="modal"><span>&times;</span></button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="newProductError" class="alert alert-danger" style="display:none;"></div>
+                        <div class="form-group">
+                            <label>Nom du produit</label>
+                            <input type="text" id="newProductLibelle" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>SKU</label>
+                            <input type="text" id="newProductSku" class="form-control">
+                        </div>
+                        <p class="text-muted" style="font-size:13px;">
+                            Le prix de revient n'est pas demandé ici : il sera calculé automatiquement
+                            (avec le prix de vente, +30%) une fois cet achat enregistré.
+                        </p>
+                        <div class="form-group">
+                            <label>Catégorie</label>
+                            <select id="newProductCategory" class="form-control">
+                                <option value="">Sélectionner</option>
+                                @foreach($categories as $category)
+                                    <option value="{{ $category->id }}">{{ $category->category_type }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-cancel" data-bs-dismiss="modal">Annuler</button>
+                        <button type="button" class="btn btn-submit" id="newProductSubmit">Créer le produit</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         @include('layouts.scripts')
         <script>
             document.addEventListener('DOMContentLoaded', function () {
@@ -314,6 +446,133 @@
                 const template = document.getElementById('poLineTemplate');
                 const addLineBtn = document.getElementById('addLineBtn');
                 let lineIndex = 0;
+
+                $('#newProductCategory').select2({
+                    width: '100%',
+                    placeholder: 'Rechercher une catégorie…',
+                    dropdownParent: $('#newProductModal'),
+                });
+
+                // ============================================================
+                // Modales "Nouvelle boutique" / "Nouveau produit"
+                // ============================================================
+                const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+
+                function postJson(url, payload) {
+                    return fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken,
+                        },
+                        body: JSON.stringify(payload),
+                    }).then(function (res) {
+                        return res.json().then(function (data) {
+                            return { ok: res.ok, data: data };
+                        });
+                    });
+                }
+
+                function showModalError(elId, message) {
+                    const el = document.getElementById(elId);
+                    el.textContent = message;
+                    el.style.display = 'block';
+                }
+
+                function hideModalError(elId) {
+                    document.getElementById(elId).style.display = 'none';
+                }
+
+                const newStoreModalEl = document.getElementById('newStoreModal');
+                const newStoreModal = bootstrap.Modal.getOrCreateInstance(newStoreModalEl);
+                const newProductModalEl = document.getElementById('newProductModal');
+                const newProductModal = bootstrap.Modal.getOrCreateInstance(newProductModalEl);
+
+                // --- Nouvelle boutique ---
+                document.getElementById('newStoreSubmit').addEventListener('click', function () {
+                    hideModalError('newStoreError');
+                    postJson('{{ route('boutiques.quickCreate') }}', {
+                        store_name: document.getElementById('newStoreName').value,
+                        place_id: document.getElementById('newStorePlace').value,
+                        user_id: document.getElementById('newStoreManager').value,
+                    }).then(function (result) {
+                        if (!result.ok || !result.data.success) {
+                            const errors = result.data.errors
+                                ? Object.values(result.data.errors).flat().join(' ')
+                                : (result.data.message || 'Erreur lors de la création.');
+                            showModalError('newStoreError', errors);
+                            return;
+                        }
+
+                        const store = result.data.store;
+                        const storeSelect = document.getElementById('storeSelect');
+                        const option = new Option(store.store_name, store.id, true, true);
+                        storeSelect.add(option);
+                        storeSelect.dispatchEvent(new Event('change', { bubbles: true }));
+
+                        document.getElementById('newStoreName').value = '';
+                        document.getElementById('newStorePlace').value = '';
+                        document.getElementById('newStoreManager').value = '';
+                        newStoreModal.hide();
+                    }).catch(function () {
+                        showModalError('newStoreError', 'Erreur réseau, réessayez.');
+                    });
+                });
+
+                // --- Nouveau produit ---
+                // Le bouton "+" de la ligne qui a ouvert la modale (data-bs-toggle),
+                // pour savoir dans quel select injecter le nouveau produit.
+                let activeProductSelect = null;
+
+                newProductModalEl.addEventListener('show.bs.modal', function (event) {
+                    const opener = event.relatedTarget;
+                    const line = opener ? opener.closest('[data-line]') : null;
+                    activeProductSelect = line ? line.querySelector('[data-field="product_id"]') : null;
+                });
+
+                document.getElementById('newProductSubmit').addEventListener('click', function () {
+                    hideModalError('newProductError');
+                    postJson('{{ route('produits.quickCreate') }}', {
+                        libelle: document.getElementById('newProductLibelle').value,
+                        sku: document.getElementById('newProductSku').value,
+                        category_id: document.getElementById('newProductCategory').value,
+                    }).then(function (result) {
+                        if (!result.ok || !result.data.success) {
+                            const errors = result.data.errors
+                                ? Object.values(result.data.errors).flat().join(' ')
+                                : (result.data.message || 'Erreur lors de la création.');
+                            showModalError('newProductError', errors);
+                            return;
+                        }
+
+                        const product = result.data.product;
+                        const label = product.libelle + ' (' + product.sku + ')';
+
+                        // Ajoutée à toutes les lignes déjà affichées...
+                        document.querySelectorAll('[data-field="product_id"]').forEach(function (select) {
+                            select.add(new Option(label, product.id));
+                        });
+                        // ...et au template, pour que les prochaines lignes ajoutées l'aient aussi.
+                        template.content
+                            ? template.content.querySelectorAll('[data-field="product_id"]').forEach(function (select) {
+                                select.add(new Option(label, product.id));
+                            })
+                            : null;
+
+                        if (activeProductSelect) {
+                            activeProductSelect.value = product.id;
+                            activeProductSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                        }
+
+                        document.getElementById('newProductLibelle').value = '';
+                        document.getElementById('newProductSku').value = '';
+                        document.getElementById('newProductCategory').value = '';
+                        newProductModal.hide();
+                    }).catch(function () {
+                        showModalError('newProductError', 'Erreur réseau, réessayez.');
+                    });
+                });
 
                 // Champs prix/CBM/taux : on tape librement (virgule ou point), on ne garde
                 // que les chiffres et un seul séparateur décimal (converti en point tout de
@@ -364,15 +623,43 @@
                 document.getElementById('originGuinee').addEventListener('change', setOriginClass);
                 document.getElementById('originChine').addEventListener('change', setOriginClass);
 
-                // Listener Devise amélioré
-                document.getElementById('currencyCode').addEventListener('change', function () {
-                    const selected = this.options[this.selectedIndex];
-                    
-                    if (this.value === "") {
-                        document.getElementById('exchangeRate').value = "1";
-                    } else if (selected && selected.getAttribute('data-rate')) {
-                        document.getElementById('exchangeRate').value = selected.getAttribute('data-rate');
+                // Rappel du taux de référence enregistré (CurrencySettingController) :
+                // reste affiché même si l'utilisateur saisit un taux du jour différent
+                // dans le champ ci-dessus, pour qu'il garde toujours une base de
+                // comparaison sous les yeux.
+                function updateRateReference() {
+                    const select = document.getElementById('currencyCode');
+                    const ref = document.getElementById('rateReference');
+                    const selected = select.options[select.selectedIndex];
+                    const rate = selected ? selected.getAttribute('data-rate') : null;
+                    const updated = selected ? selected.getAttribute('data-updated') : null;
+
+                    if (!select.value || !rate) {
+                        ref.textContent = '';
+                        return;
                     }
+
+                    const formattedRate = new Intl.NumberFormat('fr-FR').format(parseFloat(rate));
+                    ref.textContent = '💡 Taux de référence enregistré : 1 ' + select.value + ' = ' + formattedRate + ' GNF'
+                        + (updated ? ' (mis à jour le ' + updated + ')' : '')
+                        + '. Vous pouvez saisir un taux du jour différent ci-dessus si besoin.';
+                }
+
+                // Listener Devise : on ne pré-remplit PLUS le taux avec la valeur de
+                // référence enregistrée — l'utilisateur doit saisir lui-même le taux du
+                // jour (le rappel affiché en dessous lui sert juste de repère). Seul le
+                // cas GNF/local reste automatique (taux = 1, champ verrouillé).
+                document.getElementById('currencyCode').addEventListener('change', function () {
+                    const rateInput = document.getElementById('exchangeRate');
+
+                    if (this.value === "") {
+                        rateInput.value = "1";
+                        rateInput.required = false;
+                    } else {
+                        rateInput.value = "";
+                        rateInput.required = true;
+                    }
+                    updateRateReference();
                     recompute();
                 });
 
@@ -424,22 +711,29 @@
                         el.addEventListener('change', recompute);
                     });
 
+                    // Sélecteur de produit avec recherche (196 produits — impossible à
+                    // parcourir dans un <select> simple).
+                    $(lineEl).find('[data-field="product_id"]').select2({
+                        width: '100%',
+                        placeholder: 'Sélectionner le produit'
+                    });
+
                     setOriginClass();
                 }
 
                 function recompute() {
                     const isChine = document.getElementById('originChine').checked;
                     const currencySelect = document.getElementById('currencyCode');
+                    const exchangeRateInput = document.getElementById('exchangeRate');
                     let rate = 1;
 
+                    // Le taux vient TOUJOURS de ce que l'utilisateur a saisi dans le champ
+                    // (jamais du taux de référence enregistré) — c'est lui qui fait foi.
                     if (currencySelect && currencySelect.value !== "") {
-                        const selectedOption = currencySelect.options[currencySelect.selectedIndex];
-                        rate = parseFloat(selectedOption.getAttribute('data-rate')) || 
-                            parseFloat(document.getElementById('exchangeRate').value) || 1;
+                        rate = parseFloat(exchangeRateInput.value) || 0;
                     }
 
                     // Gestion du taux
-                    const exchangeRateInput = document.getElementById('exchangeRate');
                     if (currencySelect.value === "") {
                         exchangeRateInput.value = "1";
                         exchangeRateInput.readOnly = true;
@@ -458,8 +752,18 @@
                     const computed = lines.map(function (lineEl) {
                         const quantity = parseFloat(lineEl.querySelector('[data-field="quantity"]').value) || 0;
                         const unitPriceForeign = parseFloat(lineEl.querySelector('[data-field="unit_price_foreign"]').value) || 0;
-                        const cbmPerUnit = isChine ? (parseFloat(lineEl.querySelector('[data-field="cbm_per_unit"]')?.value) || 0) : 0;
-                        
+
+                        // CBM saisi par carton, divisé par le nombre de pièces du carton
+                        // pour obtenir le CBM exact d'une seule unité.
+                        const piecesPerCarton = parseInt(lineEl.querySelector('[data-field="pieces_per_carton"]')?.value) || 0;
+                        const cbmPerCarton = isChine ? (parseFloat(lineEl.querySelector('[data-field="cbm_per_carton"]')?.value) || 0) : 0;
+                        const cbmPerUnit = (isChine && piecesPerCarton > 0) ? (cbmPerCarton / piecesPerCarton) : 0;
+
+                        const cbmDisplay = lineEl.querySelector('[data-field="cbm_per_unit_display"]');
+                        if (cbmDisplay) {
+                            cbmDisplay.value = cbmPerUnit > 0 ? cbmPerUnit.toFixed(6) : '';
+                        }
+
                         const lineTotalCbm = cbmPerUnit * quantity;
                         totalCbm += lineTotalCbm;
 
@@ -499,6 +803,8 @@
                 addLineBtn.addEventListener('click', addLine);
                 addLine(); // au moins une ligne au chargement
                 setOriginClass();
+                updateRateReference();
+                document.getElementById('exchangeRate').required = document.getElementById('currencyCode').value !== "";
             });
         </script>
     </body>

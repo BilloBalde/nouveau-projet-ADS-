@@ -10,6 +10,11 @@ use Illuminate\Support\Facades\DB;
 
 class JournalierController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth.check');
+    }
+
     public function index(Request $request)
     {
         $query = Journalier::query();
@@ -147,7 +152,10 @@ class JournalierController extends Controller
             $resteAvant     = round($montant - $totalPaidSoFar, 2);
 
             if ($resteAvant <= 0) {
-                return redirect()->route('journaliers.show', $journalier->id)
+                // 'journaliers.show' n'existe pas dans routes/web.php (ça produisait une
+                // RouteNotFoundException / 500) — 'journaliers.paymentVoir' est la route
+                // utilisée par le reste de ce contrôleur pour afficher une dette.
+                return redirect()->route('journaliers.paymentVoir', $journalier->id)
                     ->with('error', 'Cette dette est déjà soldée.');
             }
 

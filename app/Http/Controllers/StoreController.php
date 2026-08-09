@@ -75,6 +75,43 @@ class StoreController extends Controller
     }
 
     /**
+     * Création rapide d'une boutique en AJAX (ex : depuis le formulaire Achat, pour ne
+     * pas obliger l'utilisateur à quitter la page en cours). Retourne du JSON, pas de
+     * upload de photo ni de champs annexes — la fiche complète reste modifiable ensuite
+     * depuis Boutique List.
+     */
+    public function quickStore(Request $request)
+    {
+        $request->validate([
+            'store_name' => 'required|string|max:255',
+            'place_id' => 'required|exists:places,id',
+            'user_id' => 'required|exists:users,id',
+        ], [
+            'store_name.required' => 'Le nom de la boutique est requis.',
+            'place_id.required' => 'La ville est requise.',
+            'user_id.required' => 'Le responsable est requis.',
+        ]);
+
+        try {
+            $store = Store::create([
+                'store_name' => $request->store_name,
+                'place_id' => $request->place_id,
+                'user_id' => $request->user_id,
+                'status' => 1,
+                'store_picture' => '',
+                'description' => $request->store_name,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'store' => ['id' => $store->id, 'store_name' => $store->store_name],
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
      * Display the specified resource.
      *
      * @param  int  $id

@@ -3,7 +3,6 @@
 namespace App\Console\Commands;
 
 use App\Models\DebtReminder;
-use App\Models\Dette;
 use App\Models\Facture;
 use App\Models\User;
 use App\Notifications\DebtReminderDigestNotification;
@@ -18,27 +17,20 @@ class SendDebtReminders extends Command
 
     public function handle(): int
     {
-        // 1. Marquer résolus les rappels dont la dette/facture est désormais soldée
+        // 1. Marquer résolus les rappels dont la facture est désormais soldée
         $resolved = 0;
         DebtReminder::where('status', '!=', 'resolved')
-            ->with(['dette', 'facture'])
+            ->with('facture')
             ->get()
             ->each(function (DebtReminder $reminder) use (&$resolved) {
-                $detteOk   = $reminder->dette_id && ($reminder->dette === null || $reminder->dette->reste <= 0 || $reminder->dette->status === 'paid');
                 $factureOk = $reminder->facture_id && ($reminder->facture === null || $reminder->facture->reste <= 0 || $reminder->facture->statut === 'payé');
-                if ($detteOk || $factureOk) {
+                if ($factureOk) {
                     $reminder->update(['status' => 'resolved']);
                     $resolved++;
                 }
             });
 
-        // 2. Dettes impayées (module dettes)
-        $dettes = Dette::with('customer')
-            ->where('status', 'pending')
-            ->where('reste', '>', 0)
-            ->get();
-
-        // 3. Factures impayées ou partielles
+        // 2. Factures impayées ou partielles
         $factures = Facture::with('customer')
             ->whereIn('statut', ['non payé', 'partiel'])
             ->where('reste', '>', 0)
@@ -56,11 +48,6 @@ class SendDebtReminders extends Command
 
             $customers[$keys['customer_id']] = ($customers[$keys['customer_id']] ?? 0) + $reste;
         };
-
-        foreach ($dettes as $dette) {
-            if (! $dette->customer) continue;
-            $touch(['customer_id' => $dette->customer_id, 'dette_id' => $dette->id], (float) $dette->reste);
-        }
 
         foreach ($factures as $facture) {
             if (! $facture->customer) continue;

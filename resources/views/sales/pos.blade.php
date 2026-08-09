@@ -737,7 +737,24 @@ Le problème principal est que votre code a perdu la fonctionnalité d'ajout de 
                 let targetPartnerSelect = null;
                 const partnersList = @json($partners);
                 const quickPartnerModal = new bootstrap.Modal(document.getElementById('quickPartnerModal'));
-                const thirdPartyQuickModal = new bootstrap.Modal(document.getElementById('thirdPartyQuickModal'));
+                const thirdPartyQuickModalEl = document.getElementById('thirdPartyQuickModal');
+                const thirdPartyQuickModal = new bootstrap.Modal(thirdPartyQuickModalEl);
+
+                // Bouton "+" à côté de "Partenaire / Ami" dans la modale "Vente Tierce
+                // Rapide" : contrairement à celui des lignes de vente normales (câblé
+                // dans initializeRowEvents pour chaque ligne ajoutée dynamiquement),
+                // celui-ci est statique dans le HTML et n'avait jamais d'écouteur.
+                const thirdPartyQuickAddPartnerBtn = thirdPartyQuickModalEl.querySelector('.btn-add-partner');
+                if (thirdPartyQuickAddPartnerBtn) {
+                    thirdPartyQuickAddPartnerBtn.addEventListener('click', function (e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        targetPartnerSelect = thirdPartyQuickModalEl.querySelector('.partner-select');
+                        document.getElementById('quickPartnerForm').reset();
+                        document.getElementById('quickPartnerError').style.display = 'none';
+                        quickPartnerModal.show();
+                    });
+                }
 
                 // Fonction pour peupler les selects de partenaires
                 function populatePartnerSelects() {

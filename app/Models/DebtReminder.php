@@ -20,11 +20,6 @@ class DebtReminder extends Model
         return $this->belongsTo(Customer::class);
     }
 
-    public function dette()
-    {
-        return $this->belongsTo(Dette::class);
-    }
-
     public function facture()
     {
         return $this->belongsTo(Facture::class);

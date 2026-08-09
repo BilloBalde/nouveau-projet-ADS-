@@ -14,10 +14,6 @@ class Customer extends Model
     protected $dates = ['deleted_at'];
     protected $guarded = ['id'];
     
-    public function dettes(){
-        return $this->hasMany(Dette::class);
-    }
-
     public function transaction_factures(){
         return $this->hasMany(TransactionFacture::class);
     }

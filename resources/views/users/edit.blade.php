@@ -33,7 +33,7 @@
                     <div class="col-lg-4 col-sm-6 col-12">
                         <div class="form-group">
                             <label>Nom</label>
-                            <input type="text" name="name" value="{{ $user->name }}">
+                            <input type="text" name="name" value="{{ old('name', $user->name) }}">
                         </div>
                         @error('name')
                         <span class="text-danger">{{ $message }}</span>
@@ -42,7 +42,7 @@
                     <div class="col-lg-4 col-sm-6 col-12">
                         <div class="form-group">
                             <label>Nom Utilisateur</label>
-                            <input type="text" name="username" value="{{ $user->username }}">
+                            <input type="text" name="username" value="{{ old('username', $user->username) }}">
                         </div>
                         @error('username')
                         <span class="text-danger">{{ $message }}</span>
@@ -51,7 +51,7 @@
                     <div class="col-lg-4 col-sm-6 col-12">
                         <div class="form-group">
                             <label>Téléphone</label>
-                            <input type="text" name="phone" value="{{ $user->phone }}">
+                            <input type="text" name="phone" value="{{ old('phone', $user->phone) }}">
                         </div>
                         @error('phone')
                         <span class="text-danger">{{ $message }}</span>
@@ -60,7 +60,7 @@
                     <div class="col-lg-4 col-sm-6 col-12">
                         <div class="form-group">
                             <label>Email</label>
-                            <input type="text" name="email" value="{{ $user->email }}">
+                            <input type="text" name="email" value="{{ old('email', $user->email) }}">
                         </div>
                         @error('email')
                         <span class="text-danger">{{ $message }}</span>

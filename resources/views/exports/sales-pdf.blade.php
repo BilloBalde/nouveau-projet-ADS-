@@ -227,13 +227,24 @@
         $totalQuantity = $sales->sum('quantity');
     @endphp
 
+    @php
+        // Dompdf résout mal les chemins Windows passés tels quels à public_path()
+        // (mélange de \ et /, caractères non-ASCII dans le chemin utilisateur) — le
+        // logo n'apparaissait pas dans le PDF. Encodage base64 pour s'affranchir
+        // totalement de la résolution de chemin par Dompdf.
+        $logoPath = ($company && $company->logo && file_exists(public_path('companies/'.$company->logo)))
+            ? public_path('companies/'.$company->logo)
+            : (file_exists(public_path('images/customers/logo.jpg')) ? public_path('images/customers/logo.jpg') : null);
+        $logoDataUri = $logoPath
+            ? 'data:'.mime_content_type($logoPath).';base64,'.base64_encode(file_get_contents($logoPath))
+            : null;
+    @endphp
+
     <!-- Header -->
     <div class="bon-header">
         <div class="document-logo">
-            @if($company && $company->logo && file_exists(public_path('companies/'.$company->logo)))
-                <img src="{{ public_path('companies/'.$company->logo) }}" alt="{{ $company->name ?? 'Logo' }}">
-            @else
-                <img src="{{ public_path('images/customers/logo.jpg') }}" alt="Logo">
+            @if($logoDataUri)
+                <img src="{{ $logoDataUri }}" alt="{{ $company->name ?? 'Logo' }}">
             @endif
             <div class="document-title">
                 <h1>RAPPORT DES VENTES</h1>

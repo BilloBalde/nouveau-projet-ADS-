@@ -1,9 +1,5 @@
 <?php
 
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-
 use App\Exports\ProductsExport;
 use App\Exports\PurchasesExport;
 use App\Http\Controllers\Admin\OrderManagementController;
@@ -33,8 +29,6 @@ use App\Http\Controllers\PhoneAuthController;
 use App\Http\Controllers\PlaceController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\ProformaController;
-use App\Http\Controllers\LigneCommandeController;
 use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\ReceiptController;
 use App\Http\Controllers\RoleController;
@@ -89,6 +83,7 @@ Route::put('/updateUser/{id}', [Authentification::class, 'update'])->middleware(
 Route::get('/edit/{user}', [Authentification::class, 'edit'])->middleware(['auth', 'permission:users.edit'])->name('editUser');
 // Pointé vers UserController@destroy : Authentification n'a jamais eu de méthode destroy (500 garanti avant)
 Route::delete('/deleteUser/{id}', [UserController::class, 'destroy'])->middleware(['auth', 'permission:users.delete'])->name('deleteUser');
+Route::post('/users/{id}/toggle-status', [UserController::class, 'toggleStatus'])->middleware(['auth', 'permission:users.edit'])->name('users.toggleStatus');
 Route::get('/forgotPass', [Authentification::class, 'forgotPass'])->name('forgotPass');
 Route::get('/registration/verification/{token}/{email}', [Authentification::class, 'registration_verify'])->name('verification');
 Route::post('/register', [Authentification::class, 'create'])->middleware(['auth', 'permission:users.create'])->name('enregistrer');
@@ -97,8 +92,8 @@ Route::post('/passwordRecovery', [Authentification::class, 'passwordRecovery'])-
 Route::post('/sendEmail', [Authentification::class, 'sendEmail'])->name('sendEmail');
 
 // Authentification par téléphone
-Route::post('/send-verification-code', [PhoneAuthController::class, 'sendCode'])->name('send.code');
-Route::post('/verify-and-login', [PhoneAuthController::class, 'verifyAndLogin'])->name('verify.login');
+Route::post('/send-verification-code', [PhoneAuthController::class, 'sendCode'])->middleware('throttle:5,1')->name('send.code');
+Route::post('/verify-and-login', [PhoneAuthController::class, 'verifyAndLogin'])->middleware('throttle:10,1')->name('verify.login');
 Route::post('/logout', [PhoneAuthController::class, 'logout'])->name('shop.logout.post');
 
 // Mot de passe oublié
@@ -167,11 +162,11 @@ Route::get('/cart/remove/{id}', [CartController::class, 'remove'])->name('cart.r
 Route::prefix('shop')->group(function () {
     // Authentification OTP
     Route::get('/register', [AuthOtpController::class, 'showRegister'])->name('otp.register');
-    Route::post('/register', [AuthOtpController::class, 'register'])->name('otp.register_submit');
+    Route::post('/register', [AuthOtpController::class, 'register'])->middleware('throttle:5,1')->name('otp.register_submit');
     Route::get('/login', [AuthOtpController::class, 'showLogin'])->name('otp.login');
-    Route::post('/login', [AuthOtpController::class, 'login'])->name('otp.login_submit');
+    Route::post('/login', [AuthOtpController::class, 'login'])->middleware('throttle:5,1')->name('otp.login_submit');
     Route::get('/verify', [AuthOtpController::class, 'showVerify'])->name('otp.verify');
-    Route::post('/verify-otp', [AuthOtpController::class, 'verify'])->name('otp.verify_submit');
+    Route::post('/verify-otp', [AuthOtpController::class, 'verify'])->middleware('throttle:10,1')->name('otp.verify_submit');
     Route::post('/logout', [AuthOtpController::class, 'logout'])->name('shop.logout');
 
     // Routes client connecté
@@ -227,22 +222,10 @@ Route::middleware(['auth', 'superuser'])->prefix('admin')->group(function () {
     Route::get('/orders/facture/{facture}/items', [OrderManagementController::class, 'getFactureItems'])->name('admin.orders.facture.items');
     Route::post('/orders/facture/{facture}/deliver', [OrderManagementController::class, 'partialDeliver'])->middleware('permission:orders.deliver')->name('admin.orders.facture.deliver');
 
-    // Rappels de dettes (digest hebdomadaire + envoi WhatsApp manuel)
+    // Rappels de dettes (digest hebdomadaire + envoi WhatsApp/SMS manuel)
     Route::get('/debt-reminders', [\App\Http\Controllers\Admin\DebtReminderController::class, 'index'])->name('admin.debt-reminders.index');
     Route::post('/debt-reminders/{customerId}/resolve', [\App\Http\Controllers\Admin\DebtReminderController::class, 'resolve'])->name('admin.debt-reminders.resolve');
-});
-
-// =============================================
-// MODULE DETTES (jamais branché auparavant)
-// =============================================
-
-Route::middleware(['auth', 'superuser'])->group(function () {
-    Route::get('/dettes', [\App\Http\Controllers\DetteController::class, 'index'])->name('dettes.index');
-    Route::get('/dettes/create', [\App\Http\Controllers\DetteController::class, 'create'])->name('dettes.create');
-    Route::post('/dettes', [\App\Http\Controllers\DetteController::class, 'store'])->name('dettes.store');
-    Route::get('/dettes/{dette}/edit', [\App\Http\Controllers\DetteController::class, 'edit'])->name('dettes.edit');
-    Route::put('/dettes/{dette}', [\App\Http\Controllers\DetteController::class, 'update'])->name('dettes.update');
-    Route::post('/dettes/{dette}/pay', [\App\Http\Controllers\DetteController::class, 'pay'])->name('dettes.pay');
+    Route::post('/debt-reminders/{customerId}/send-sms', [\App\Http\Controllers\Admin\DebtReminderController::class, 'sendSms'])->name('admin.debt-reminders.send-sms');
 });
 
 // =============================================
@@ -263,7 +246,10 @@ Route::post('/password', [ProfileController::class, 'passwordupdate'])->name('pa
 Route::post('/compagnie', [ProfileController::class, 'companyCreate'])->name('companyCreate');
 
 // Gestion des utilisateurs
-Route::resource('users', UserController::class);
+// destroy est exclu : la suppression passe uniquement par /deleteUser/{id}, qui exige
+// permission:users.delete (cette route resource ne vérifiait qu'auth.check, donc
+// n'importe quel employé connecté pouvait supprimer n'importe quel compte).
+Route::resource('users', UserController::class)->except(['destroy']);
 Route::get('/admin/assign-store', [UserController::class, 'showAssignStoreForm'])->middleware('auth.check')->name('admin.showAssignStoreForm');
 Route::post('/admin/assign-store', [UserController::class, 'assignStore'])->middleware('auth.check')->name('admin.assignStore');
 
@@ -280,6 +266,7 @@ Route::resource('roles', RoleController::class);
 // =============================================
 
 Route::resource('boutiques', StoreController::class);
+Route::post('/boutiques/quick-create', [StoreController::class, 'quickStore'])->middleware('auth.check')->name('boutiques.quickCreate');
 
 Route::get('/places', [PlaceController::class, 'index'])->name('places.index');
 Route::get('/places/{place}', [PlaceController::class, 'edit'])->name('places.edit');
@@ -311,6 +298,7 @@ Route::post('/customers/quick-add', [CustomerController::class, 'quickAdd'])->na
 
 Route::resource('categories', CategoryController::class);
 Route::resource('produits', ProductController::class);
+Route::post('/produits/quick-create', [ProductController::class, 'quickStore'])->middleware('auth.check')->name('produits.quickCreate');
 Route::get('/products/{id}', [ProductController::class, 'show'])->name('products.show');
 Route::get('/fetch-product-details', [ProductController::class, 'fetchProductDetails'])->middleware('auth.check');
 Route::get('/fetch-product-details-suggestion', [ProductController::class, 'fetchProductDetailsSuggestion'])->middleware('auth.check');
@@ -405,21 +393,10 @@ Route::get('/logistics/export-pdf', [LogisticController::class, 'exportPDF'])->m
 Route::resource('transfers', StoreProductController::class);
 
 // =============================================
-// 23. ROUTES PROFORMAS & LIGNES COMMANDE
+// 23. (ancien module Proformas/LigneCommande — retiré, remplacé par le module
+//     Achat / PurchaseOrder ci-dessus, section "ROUTES BOUTIQUES & LIEUX" /
+//     purchase-orders.*)
 // =============================================
-
-Route::resource('proformas', ProformaController::class);
-Route::get('/proformas/invoice/{id}', [ProformaController::class, 'addInvoice'])->name('proformas.addInvoice');
-Route::get('/proformas/editInvoice/{id}', [ProformaController::class, 'editInvoice'])->name('proformas.editInvoice');
-Route::post('/proformas/customerAdd', [ProformaController::class, 'storeCustomer'])->name('proformas.storeCustomer');
-Route::post('/proformas/add', [ProformaController::class, 'creation'])->name('proformas.creation');
-
-Route::resource('ligneCommandes', LigneCommandeController::class);
-Route::post('/proformas', [LigneCommandeController::class, 'store'])->name('commandes.store');
-Route::post('/proformas/updating/{id}', [LigneCommandeController::class, 'updateInvoice'])->name('commandes.updateInvoice');
-Route::post('/proformas/rajout/{id}', [LigneCommandeController::class, 'addInvoice'])->name('commandes.addInvoice');
-Route::post('/commandes/confirmer/proforma', [LigneCommandeController::class, 'confirmation'])->name('ligneCommandes.confirmer');
-Route::get('/lesCommandes/add', [LigneCommandeController::class, 'addLines'])->name('ligneCommandes.addLines');
 
 // =============================================
 // 24. ROUTES DEVIS
@@ -623,128 +600,7 @@ Route::get('/clear-cache', function() {
 })->middleware('auth.check')->name('clear-cache');
 
 // =============================================
-// 34. ROUTES DE TEST / DEBUG
-// =============================================
-
-Route::get('/ping', function() {
-    return 'pong';
-});
-
-Route::get('/test-route', function() {
-    return "Route de test fonctionne";
-});
-
-Route::get('/debug-export-crash', function() {
-    $logFile = public_path('debug_crash.txt');
-    file_put_contents($logFile, date('Y-m-d H:i:s') . " - Route appelée\n", FILE_APPEND);
-    
-    echo "Début du debug...<br>";
-    flush();
-    ob_flush();
-    
-    echo "Mémoire actuelle: " . memory_get_usage() / 1024 / 1024 . " MB<br>";
-    echo "Limite mémoire: " . ini_get('memory_limit') . "<br>";
-    echo "Temps max: " . ini_get('max_execution_time') . " secondes<br>";
-    
-    $count = Product::count();
-    echo "Nombre de produits: $count<br>";
-    
-    try {
-        $products = Product::with('categories', 'stores')->get();
-        echo "Produits chargés: " . $products->count() . "<br>";
-        echo "Mémoire après chargement: " . memory_get_usage() / 1024 / 1024 . " MB<br>";
-    } catch (\Exception $e) {
-        echo "Erreur: " . $e->getMessage();
-        file_put_contents($logFile, date('Y-m-d H:i:s') . " - ERREUR: " . $e->getMessage() . "\n", FILE_APPEND);
-    }
-    
-    file_put_contents($logFile, date('Y-m-d H:i:s') . " - Fin du debug\n", FILE_APPEND);
-    
-    return "Debug terminé, vérifiez le fichier " . $logFile;
-});
-
-Route::get('/debug-exports', function() {
-    $results = [];
-    $results['route_exists'] = 'OK';
-    $results['user_authenticated'] = auth()->check() ? 'Oui' : 'Non';
-    
-    if (auth()->check()) {
-        $results['user_id'] = auth()->id();
-        $results['user_role'] = auth()->user()->role_id;
-    }
-    
-    $results['excel_installed'] = class_exists('Maatwebsite\Excel\Excel') ? 'Oui' : 'Non';
-    $results['dompdf_installed'] = class_exists('Barryvdh\DomPDF\Facade\Pdf') ? 'Oui' : 'Non';
-    
-    try {
-        $testExport = new ProductsExport();
-        $results['excel_class_ok'] = 'Oui';
-    } catch (\Exception $e) {
-        $results['excel_class_error'] = $e->getMessage();
-    }
-    
-    try {
-        $dataTable = Product::with('categories', 'stores')->get();
-        $results['products_count'] = $dataTable->count();
-    } catch (\Exception $e) {
-        $results['products_error'] = $e->getMessage();
-    }
-    
-    echo "<h1>Debug Exports</h1>";
-    echo "<pre>";
-    print_r($results);
-    echo "</pre>";
-    
-    echo "<h2>Routes disponibles</h2>";
-    $routes = collect(Route::getRoutes())->map(function($route) {
-        return [
-            'uri' => $route->uri(),
-            'name' => $route->getName(),
-            'methods' => implode('|', $route->methods()),
-        ];
-    })->filter(function($route) {
-        return str_contains($route['uri'], 'product') || str_contains($route['uri'], 'export');
-    })->values();
-    
-    echo "<pre>";
-    print_r($routes->toArray());
-    echo "</pre>";
-    
-    return;
-});
-
-Route::get('/test-export-direct', function() {
-    echo "<h1>Test Export Direct</h1>";
-    
-    try {
-        echo "<p>Étape 1: Vérification de la classe ProductsExport...</p>";
-        if (!class_exists('App\Exports\ProductsExport')) {
-            throw new Exception("Classe ProductsExport non trouvée");
-        }
-        echo "<p style='color:green'>✓ OK</p>";
-        
-        echo "<p>Étape 2: Création de l'instance...</p>";
-        $export = new ProductsExport();
-        echo "<p style='color:green'>✓ OK</p>";
-        
-        echo "<p>Étape 3: Tentative de téléchargement...</p>";
-        return Excel::download($export, 'products.xlsx');
-        
-    } catch (\Exception $e) {
-        echo "<div style='color:red; border:1px solid red; padding:10px; margin:10px;'>";
-        echo "<h3>ERREUR</h3>";
-        echo "<p><strong>Message:</strong> " . $e->getMessage() . "</p>";
-        echo "<p><strong>Fichier:</strong> " . $e->getFile() . "</p>";
-        echo "<p><strong>Ligne:</strong> " . $e->getLine() . "</p>";
-        echo "<p><strong>Code:</strong> " . $e->getCode() . "</p>";
-        echo "<p><strong>Trace:</strong></p>";
-        echo "<pre>" . $e->getTraceAsString() . "</pre>";
-        echo "</div>";
-    }
-});
-
-// =============================================
-// 35. ROUTES DE REDIRECTION
+// 34. ROUTES DE REDIRECTION
 // =============================================
 
 Route::get('/home-redirect', function () {

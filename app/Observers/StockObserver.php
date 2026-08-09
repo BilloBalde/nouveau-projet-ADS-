@@ -61,15 +61,17 @@ class StockObserver
                         break;
 
                     // -------------------------------------------------
-                    // ACHATS
+                    // ACHATS (module PurchaseOrder — remplace l'ancien Achat)
                     // -------------------------------------------------
-                    case 'App\Models\Achat':   // ou 'App\Models\Purchase' selon votre modèle
+                    case 'App\Models\PurchaseOrder':
                         $type = 'purchase';
                         $sign = -1;  // un achat diminue la trésorerie
-                        // Utilisez le champ qui représente le montant réellement payé
-                        // Ici on prend 'grand_total' comme montant total de l'achat
-                        $currentAmount = $model->grand_total ?? 0;
-                        $originalAmount = $model->getOriginal('grand_total') ?? 0;
+                        // total_landed_cost_gnf n'est renseigné qu'après le calcul du coût
+                        // de revient (PurchaseOrderCostingService::costOrder, appelé juste
+                        // après la création) — c'est donc l'événement 'updated' qui capture
+                        // le montant initial la première fois, pas 'created'.
+                        $currentAmount = (float) ($model->total_landed_cost_gnf ?? 0);
+                        $originalAmount = (float) ($model->getOriginal('total_landed_cost_gnf') ?? 0);
                         break;
 
                     // -------------------------------------------------

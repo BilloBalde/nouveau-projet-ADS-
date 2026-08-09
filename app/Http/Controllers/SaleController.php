@@ -33,6 +33,69 @@ class SaleController extends Controller
         $this->middleware('auth.check');
         $this->stock = $stock;
     }
+
+    /**
+     * Résout la période choisie (jour/semaine/mois/trimestre/semestre/année/
+     * personnalisé) en une plage [début, fin] — même logique que
+     * PaymentController::getFilteredPayments(), pour un comportement cohérent
+     * entre les pages Ventes et Paiements. Retourne [null, null] si aucun
+     * filtre de période n'est fourni (pas de plage imposée par défaut).
+     */
+    private function resolvePeriodRange(Request $request): array
+    {
+        if (! $request->filled('period')) {
+            return [null, null];
+        }
+
+        $period = $request->get('period');
+        $startDate = null;
+        $endDate = null;
+
+        switch ($period) {
+            case 'daily':
+                $date = $request->get('date', now()->toDateString());
+                $startDate = \Illuminate\Support\Carbon::parse($date)->startOfDay();
+                $endDate = \Illuminate\Support\Carbon::parse($date)->endOfDay();
+                break;
+            case 'weekly':
+                $weekStart = $request->get('week_start', now()->startOfWeek()->toDateString());
+                $startDate = \Illuminate\Support\Carbon::parse($weekStart)->startOfWeek();
+                $endDate = $startDate->copy()->endOfWeek();
+                break;
+            case 'monthly':
+                $month = $request->get('month', now()->format('Y-m'));
+                $startDate = \Illuminate\Support\Carbon::parse($month)->startOfMonth();
+                $endDate = \Illuminate\Support\Carbon::parse($month)->endOfMonth();
+                break;
+            case 'quarterly':
+                $quarter = (int) $request->get('quarter', ceil(now()->month / 3));
+                $year = (int) $request->get('year', now()->year);
+                $startMonth = ($quarter - 1) * 3 + 1;
+                $startDate = \Illuminate\Support\Carbon::create($year, $startMonth, 1)->startOfMonth();
+                $endDate = $startDate->copy()->addMonths(3)->subDay()->endOfDay();
+                break;
+            case 'semestral':
+                $semester = (int) $request->get('semester', now()->month <= 6 ? 1 : 2);
+                $year = (int) $request->get('year', now()->year);
+                $startMonth = $semester == 1 ? 1 : 7;
+                $startDate = \Illuminate\Support\Carbon::create($year, $startMonth, 1)->startOfMonth();
+                $endDate = $startMonth == 1
+                    ? \Illuminate\Support\Carbon::create($year, 6, 30)->endOfDay()
+                    : \Illuminate\Support\Carbon::create($year, 12, 31)->endOfDay();
+                break;
+            case 'yearly':
+                $year = (int) $request->get('year', now()->year);
+                $startDate = \Illuminate\Support\Carbon::create($year, 1, 1)->startOfDay();
+                $endDate = \Illuminate\Support\Carbon::create($year, 12, 31)->endOfDay();
+                break;
+            case 'custom':
+                $startDate = $request->filled('start_date') ? \Illuminate\Support\Carbon::parse($request->start_date)->startOfDay() : null;
+                $endDate = $request->filled('end_date') ? \Illuminate\Support\Carbon::parse($request->end_date)->endOfDay() : null;
+                break;
+        }
+
+        return [$startDate, $endDate];
+    }
     /**
      * Display a listing of the resource.
      *
@@ -59,8 +122,9 @@ class SaleController extends Controller
             $query->where('product_id', 'like', '%' . $request->input('product_id') . '%');
         }
 
-        if ($request->filled('created_at')) {
-            $query->where('created_at', $request->input('created_at'));
+        [$startDate, $endDate] = $this->resolvePeriodRange($request);
+        if ($startDate && $endDate) {
+            $query->whereBetween('created_at', [$startDate, $endDate]);
         }
 
         if ($request->filled('user_id')) {
@@ -147,8 +211,9 @@ class SaleController extends Controller
         if ($request->filled('product_id')) {
             $query->where('product_id', $request->product_id);
         }
-        if ($request->filled('created_at')) {
-            $query->whereDate('created_at', $request->created_at);
+        [$startDate, $endDate] = $this->resolvePeriodRange($request);
+        if ($startDate && $endDate) {
+            $query->whereBetween('created_at', [$startDate, $endDate]);
         }
 
         // Role-based filtering
@@ -183,15 +248,18 @@ class SaleController extends Controller
         if ($request->filled('product_id')) {
             $query->where('product_id', $request->product_id);
         }
-        if ($request->filled('created_at')) {
-            $query->whereDate('created_at', $request->created_at);
+        [$startDate, $endDate] = $this->resolvePeriodRange($request);
+        if ($startDate && $endDate) {
+            $query->whereBetween('created_at', [$startDate, $endDate]);
         }
 
         // Sans aucun filtre, se limiter au mois en cours : Dompdf ne peut pas
         // rendre de façon fiable un tableau de plusieurs milliers de ventes
         // (testé : ~1.5 Go de RAM pour l'historique complet, quelle que soit
         // la limite mémoire). Pour l'historique complet, utiliser l'export Excel.
-        if (!$request->anyFilled(['numeroFacture', 'product_id', 'created_at'])) {
+        // L'utilisateur peut choisir sa propre période via le filtre en haut de
+        // l'index — ce repli ne s'applique que si aucun filtre n'est actif.
+        if (!$request->anyFilled(['numeroFacture', 'product_id', 'period'])) {
             $query->whereDate('created_at', '>=', now()->startOfMonth())
                   ->whereDate('created_at', '<=', now()->endOfMonth());
         }
@@ -200,6 +268,19 @@ class SaleController extends Controller
         if (auth()->user()->role_id == 3) {
             $storeId = Store::where('user_id', auth()->user()->id)->value('id');
             $query->where('store_id', $storeId);
+        }
+
+        // Garde-fou : au-delà de ce volume, Dompdf devient trop lent/gourmand en
+        // RAM (testé : une année complète peut bloquer le serveur plusieurs
+        // minutes). On préfère refuser proprement plutôt que de faire planter
+        // la requête — l'Excel n'a pas cette limite.
+        $count = (clone $query)->count();
+        if ($count > 1500) {
+            return back()->with(
+                'error',
+                "Cette période contient {$count} ventes — trop pour générer un PDF de façon fiable. "
+                . 'Réduisez la période (ex : un mois au lieu d\'une année), ou utilisez l\'export Excel qui ne connaît pas cette limite.'
+            );
         }
 
         $sales = $query->orderBy('created_at', 'desc')->get();
@@ -254,8 +335,8 @@ class SaleController extends Controller
 
     public function store(Request $request)
     {
-        if (auth()->user()->role_id == 3 && empty($request->store_id)) {
-            $request->merge(['store_id' => Store::where('user_id', auth()->user()->id)->value('id')]);
+        if ($storeId = $this->ownStoreIdOverride()) {
+            $request->merge(['store_id' => $storeId]);
         }
 
         $request->validate([

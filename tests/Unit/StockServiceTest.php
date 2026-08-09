@@ -61,4 +61,35 @@ class StockServiceTest extends TestCase
         $this->assertSame(7, DB::table('store_products')->where('product_id', 1)->where('store_id', 7)->value('quantity'));
         $this->assertSame(7, DB::table('products')->where('id', 1)->value('pcs'));
     }
+
+    public function test_decrement_if_available_refuses_and_leaves_stock_untouched_when_insufficient(): void
+    {
+        DB::table('products')->insert(['id' => 1, 'pcs' => 5]);
+        DB::table('store_products')->insert([
+            'id' => 1,
+            'store_id' => 7,
+            'product_id' => 1,
+            'quantity' => 5,
+        ]);
+
+        $service = new StockService();
+
+        $this->assertFalse($service->decrementIfAvailable(7, 1, 6));
+        // Aucune écriture ne doit avoir eu lieu, ni au niveau boutique ni au global.
+        $this->assertSame(5, DB::table('store_products')->where('product_id', 1)->where('store_id', 7)->value('quantity'));
+        $this->assertSame(5, DB::table('products')->where('id', 1)->value('pcs'));
+    }
+
+    public function test_increment_creates_row_when_missing_and_updates_global_stock(): void
+    {
+        DB::table('products')->insert(['id' => 1, 'pcs' => 2]);
+
+        $service = new StockService();
+
+        // Aucune ligne store_products pour (store 9, product 1) au départ.
+        $service->increment(9, 1, 4);
+
+        $this->assertSame(4, DB::table('store_products')->where('product_id', 1)->where('store_id', 9)->value('quantity'));
+        $this->assertSame(6, DB::table('products')->where('id', 1)->value('pcs'));
+    }
 }

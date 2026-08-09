@@ -79,7 +79,7 @@
                                                 <select name="category_id" id="category_id" class="form-control">
                                                     <option value="">Selectionner Category</option>
                                                     @foreach ($categories as $item)
-                                                    <option value="{{ $item->id }}" {{ request('category_id') == $item->id ? 'selected' : '' }}>{{ $item->slug }} </option>
+                                                    <option value="{{ $item->id }}" {{ request('category_id') == $item->id ? 'selected' : '' }}>{{ $item->category_type }}</option>
                                                     @endforeach
                                                 </select>
                                             </div>
@@ -165,5 +165,13 @@
         @include('layouts.scripts')
         @include('layouts.delete')
         @include('products.delete')
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                $('#category_id').select2({
+                    width: '100%',
+                    placeholder: 'Rechercher une catégorie…',
+                });
+            });
+        </script>
     </body>
 </html>

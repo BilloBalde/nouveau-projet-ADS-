@@ -34,7 +34,6 @@
                         <li><a href="{{ route('factures.index') }}">Facture List</a></li>
                         @permission('payments.view')
                         <li><a href="{{ route('payments.index') }}">Paiement List</a></li>
-                        <li><a href="{{ route('dettes.index') }}">Dettes</a></li>
                         <li><a href="{{ route('admin.debt-reminders.index') }}">Rappels de dettes</a></li>
                         @endpermission
                   </ul>

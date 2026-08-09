@@ -20,6 +20,16 @@ use Illuminate\Support\Facades\DB;
 
 class BaseDonneeController extends Controller
 {
+    /**
+     * Seules ces tables peuvent être vidées depuis cet écran — évite qu'un {id}
+     * arbitraire dans l'URL ne truncate n'importe quelle table de la base.
+     */
+    private const TRUNCATABLE_TABLES = [
+        'category_products', 'products', 'purchases', 'factures', 'expenses',
+        'logistics', 'payments', 'sales', 'customers', 'stock_transfers',
+        'store_products', 'paiement_journaliers', 'journaliers',
+    ];
+
     public function __construct()
     {
         $this->middleware('auth.check');
@@ -57,7 +67,14 @@ class BaseDonneeController extends Controller
         return view('baseDonne.index', compact('listTables'));
     }
     public function delete($id){
-        //dd($id);
+        if ((int) auth()->user()->role_id !== 1) {
+            abort(403, 'Seul un administrateur peut vider une table.');
+        }
+
+        if (! in_array($id, self::TRUNCATABLE_TABLES, true)) {
+            return redirect()->back()->with('error', 'Table invalide.');
+        }
+
         try {
             DB::statement('SET FOREIGN_KEY_CHECKS=0;'); // Disable foreign key constraints
             DB::table($id)->truncate();

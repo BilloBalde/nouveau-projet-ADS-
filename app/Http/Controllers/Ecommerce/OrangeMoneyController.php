@@ -147,45 +147,34 @@ class OrangeMoneyController extends Controller
 
         $payToken  = $data['pay_token']  ?? $data['token']    ?? null;
         $reference = $data['reference']  ?? $data['order_id'] ?? null;
-        $paidAmount = null;
-        $status = ['success' => false, 'completed' => false, 'status' => 'unknown'];
 
         if (empty($payToken) && !empty($reference)) {
             $payToken = $this->resolvePayTokenFromReference($reference);
         }
 
-        // ── Vérification via API (plus sûr que de faire confiance aux données brutes) ──
-        if ($payToken) {
-            $status = $this->orangeMoney->getPaymentStatus($payToken);
-
-            if (!$status['success']) {
-                Log::error('[OrangeMoney] Impossible de vérifier le statut via API', [
-                    'pay_token' => $payToken,
-                ]);
-                // On accepte quand même le webhook pour éviter les retries Orange
-                // On utilisera le status du webhook en fallback
-            }
-
-            if ($status['success'] && !$status['completed']) {
-                Log::info('[OrangeMoney] Paiement non complété selon API', ['status' => $status['status']]);
-                return response()->json(['status' => 'not_completed'], 200);
-            }
-
-            if ($status['success']) {
-                $reference  = $status['reference'] ?: $reference;
-                $paidAmount = $status['amount'];
-            }
+        // Un webhook n'est jamais accepté sur la seule foi de ses champs bruts
+        // (status/amount) : ce sont des valeurs postées par l'appelant, donc
+        // falsifiables. Le paiement doit systématiquement être re-vérifié auprès
+        // de l'API Orange Money avant de marquer une commande comme payée.
+        if (!$payToken) {
+            Log::warning('[OrangeMoney] Webhook rejeté : transaction non initiée/introuvable', ['data' => $data]);
+            return response()->json(['error' => 'Transaction introuvable ou non initiée.'], 400);
         }
 
-        // ── Fallback : vérifier le champ status du webhook ──
-        if (!$payToken || empty($status['success'])) {
-            $webhookStatus = $data['status'] ?? '';
-            if ($webhookStatus !== 'SUCCESS') {
-                Log::info('[OrangeMoney] Webhook ignoré (status non SUCCESS)', ['status' => $webhookStatus]);
-                return response()->json(['status' => 'ignored'], 200);
-            }
-            $paidAmount = (int) ($data['amount'] ?? 0);
+        $status = $this->orangeMoney->getPaymentStatus($payToken);
+
+        if (!$status['success']) {
+            Log::error('[OrangeMoney] Vérification API impossible — webhook rejeté', ['pay_token' => $payToken]);
+            return response()->json(['error' => 'Vérification du paiement impossible.'], 502);
         }
+
+        if (!$status['completed']) {
+            Log::info('[OrangeMoney] Paiement non complété selon API', ['status' => $status['status']]);
+            return response()->json(['status' => 'not_completed'], 200);
+        }
+
+        $reference  = $status['reference'] ?: $reference;
+        $paidAmount = $status['amount'];
 
         if (!$reference) {
             Log::warning('[OrangeMoney] Webhook sans référence commande', ['data' => $data]);

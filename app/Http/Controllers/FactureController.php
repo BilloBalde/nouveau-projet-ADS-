@@ -198,6 +198,11 @@ class FactureController extends Controller
     }
         
     public function facturationStore(Request $request){
+        // Un gérant de boutique ne peut facturer que pour sa propre boutique.
+        if ($storeId = $this->ownStoreIdOverride()) {
+            $request->merge(['store_id' => $storeId]);
+        }
+
         $validatedData = $request->validate([
             'numeroFacture' => 'required',
             'avance' => 'required|numeric',

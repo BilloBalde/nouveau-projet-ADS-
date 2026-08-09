@@ -128,6 +128,28 @@ class UserController extends Controller
     }
 
 
+    /**
+     * Active/suspend un compte utilisateur en un clic. Un compte suspendu ne peut plus
+     * se connecter (Authentification::login_submit rejette tout statut différent de
+     * "Active"), mais reste dans la liste et peut être réactivé à tout moment.
+     */
+    public function toggleStatus($id)
+    {
+        $user = User::findOrFail($id);
+
+        if ((int) $user->role_id === User::ROLE_ADMIN) {
+            return back()->with('error', 'Le compte administrateur ne peut pas être suspendu.');
+        }
+
+        $isActive = strtolower((string) $user->status) === 'active';
+        $user->status = $isActive ? 'Inactive' : 'Active';
+        $user->save();
+
+        return back()->with('success', $isActive
+            ? "Compte de {$user->name} suspendu."
+            : "Compte de {$user->name} activé.");
+    }
+
     public function assignStore(Request $request)
     {
         $request->validate([

@@ -179,7 +179,7 @@
             <div>
                 <div class="label">Achats</div>
                 <p class="value">{{ numberDelimiter($totalAchats) }} FG</p>
-                <div class="sub">Total achats (grand_total)</div>
+                <div class="sub">Total achats (achats simples + commandes)</div>
             </div>
             <i data-feather="shopping-cart"></i>
         </div>

@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class Authentification extends Controller
 {
@@ -126,8 +127,8 @@ class Authentification extends Controller
     public function create(Request $request)
     {
         $request->validate([
-            'email' => 'required|email',
-            'username' => 'required|string',
+            'email' => 'required|email|unique:users,email',
+            'username' => 'required|string|unique:users,username',
             'password' => 'required|string|min:8|max:15|confirmed',
             'phone' => 'required|string|max:20',
             'name' => 'required|string|max:255',
@@ -137,8 +138,10 @@ class Authentification extends Controller
         ],[
             'email.required' => 'Vous devez remplir le champ email',
             'email.email' => 'Le champ email doit contenir un @ et .',
+            'email.unique' => 'Cet email est déjà utilisé par un autre compte.',
             'username.required' => 'Vous devez remplir le champ username',
             'username.string' => 'Le champ username ne prend que des chaines de caracteres',
+            'username.unique' => 'Ce nom d\'utilisateur est déjà pris.',
             'password.required' => 'Vous devez remplir le champ password',
             'password.string' => 'Le champ password ne prend que des chaines de caracteres',
             'password.min' => 'Le champ password doit contenir au moins 8 caracteres',
@@ -176,7 +179,10 @@ class Authentification extends Controller
                 'role_id' => (int) $request->role_id,
                 'email' => $request->email,
                 'profilePic' => '1725478994.png',
-                'status' => 'pending',
+                // Créé par un admin/manager depuis l'espace interne : le compte est actif
+                // immédiatement, pas besoin de cliquer un lien de confirmation par email
+                // (ça reste utile pour l'inscription libre côté client, pas ici).
+                'status' => 'Active',
                 'token' => $token,
                 'description' => $request->description ?? 'user',
                 'password' => Hash::make($request->password),
@@ -188,29 +194,46 @@ class Authentification extends Controller
             // modifications futures du rôle s'appliquent automatiquement).
             // Sinon, on stocke les grants explicites qui priment sur le rôle.
             $this->syncUserPermissions($user, $request->input('permissions', []));
+        }
+        catch(\Exception $e) {
+            return back()->withInput()->with('fall', 'une erreur lors de lajout, voici le message : '.$e->getMessage());
+        }
 
+        // Le compte est déjà actif (cf. status => 'Active' ci-dessus) : cet email est
+        // juste une notification de bienvenue, pas une étape bloquante. Une panne SMTP
+        // ne doit pas faire croire à l'admin que la création a échoué alors que le
+        // compte existe bel et bien.
+        try {
             $verification_link = url('registration/verification/'.$token.'/'.$request->email);
             $subject = 'Confirmation de compte - SMH';
-    
-            // Create a clean verification link without HTML for the email body
             $message = $verification_link;
 
             Mail::to($request->email)->send(new UserMail($subject, $message, $request->name));
-            return back()->with('success', 'Utilisateur crée avec succès. Un email de confirmation a été envoyé.');
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning('Echec envoi email de bienvenue utilisateur: '.$e->getMessage());
+            return redirect()->route('users.index')->with('success', 'Utilisateur créé avec succès. (L\'email de notification n\'a pas pu être envoyé — vérifiez la configuration SMTP.)');
+        }
 
-        }
-        catch(\Exception $e) {
-            return back()->with('fall', 'une erreur lors de lajout, voici le message : '.$e->getMessage());
-        }
+        return redirect()->route('users.index')->with('success', 'Utilisateur crée avec succès. Un email de confirmation a été envoyé.');
     }
 
     public function update(Request $request, $id)
     {
-        $user = User::find($id);
-        
+        $user = User::findOrFail($id);
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'username' => ['required', 'string', Rule::unique('users', 'username')->ignore($user->id)],
+            'phone' => 'required|string|max:20',
+            'email' => ['required', 'email', Rule::unique('users', 'email')->ignore($user->id)],
+        ], [
+            'email.unique' => 'Cet email est déjà utilisé par un autre compte.',
+            'username.unique' => 'Ce nom d\'utilisateur est déjà pris.',
+        ]);
+
         // Store whether this is the current user BEFORE any changes
         $isCurrentUser = Auth::check() && Auth::id() == $user->id;
-        
+
         $user->name = $request->name;
         $user->username = $request->username;
         $user->phone = $request->phone;
@@ -227,43 +250,65 @@ class Authentification extends Controller
             $this->syncUserPermissions($user, $request->input('permissions', []));
         }
 
-        if ($request->password != NULL) {
+        // Le champ "Mot de Passe" du formulaire est pré-rempli avec le mot de passe
+        // actuel (motdepasse) pour que l'admin puisse le consulter en éditant — il
+        // est donc soumis tel quel à chaque modification, même anodine (téléphone,
+        // nom...). On ne traite ça comme un VRAI changement que si la valeur diffère
+        // de celle stockée, sinon ça déclencherait un rehash inutile, un email de
+        // notification à chaque édition, et une déconnexion forcée si l'admin édite
+        // son propre profil sans toucher au mot de passe.
+        $passwordChanged = $request->filled('password') && $request->password !== $user->motdepasse;
+        if ($passwordChanged) {
+            // La contrainte de longueur ne s'applique qu'ici, sur un VRAI changement —
+            // pas dans le validate() ci-dessus, sinon les comptes dont le mot de passe
+            // actuel dépasse 15 caractères (créés avant cette règle) bloqueraient toute
+            // modification du profil, même sans toucher au mot de passe.
+            $request->validate([
+                'password' => 'string|min:8|max:15|confirmed',
+            ], [
+                'password.min' => 'Le champ password doit contenir au moins 8 caracteres',
+                'password.max' => 'Le champ password ne doit pas depasser 15 caracteres',
+                'password.confirmed' => 'Le champ password confirmation ne correspond pas',
+            ]);
+
             $user->password = Hash::make($request->password);
-            $passwordChanged = true;
-        } else {
-            $passwordChanged = false;
+            $user->motdepasse = $request->password;
         }
-        
+
         try {
-            $user->update();
-            
-            // Get user name for personalization
-            $userName = $user->name ?? $user->username ?? 'Utilisateur';
-            
-            // Send password change notification
-            if (!empty($user->email) && $passwordChanged) {
+            $user->save();
+        } catch (\Exception $e) {
+            return redirect()->back()->withInput()->with('error', 'Une erreur est survenue: '.$e->getMessage());
+        }
+
+        // Notification de changement de mot de passe : un échec SMTP ne doit pas
+        // faire croire que la modification a échoué alors qu'elle a bien été
+        // enregistrée (même correctif que pour la création de compte).
+        if ($passwordChanged && !empty($user->email)) {
+            try {
+                $userName = $user->name ?? $user->username ?? 'Utilisateur';
                 Mail::to($user->email)->send(new PasswordMail(
                     '🔐 Modification de votre mot de passe - SMH',
                     'Votre mot de passe a été modifié avec succès.',
                     $userName,
                     'changed'
                 ));
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::warning('Echec envoi email de notification mot de passe: '.$e->getMessage());
             }
-            
-            // If this is the current user and password was changed, logout
-            if ($isCurrentUser && $passwordChanged) {
-                Auth::logout();
-                $request->session()->invalidate();
-                $request->session()->regenerateToken();
-                return redirect()->route('accueil')->with('success', 'Votre profil a été mis à jour. Veuillez vous reconnecter.');
-            }
-            
-            // Otherwise just redirect back with success
-            return redirect()->back()->with('success', 'Utilisateur modifié avec succès.');
-            
-        } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Une erreur est survenue: '.$e->getMessage());
         }
+
+        // Si l'admin modifie son propre mot de passe, on le déconnecte pour qu'il
+        // se reconnecte avec le nouveau (mesure de sécurité standard) — uniquement
+        // si le mot de passe a réellement changé, pas sur toute édition.
+        if ($isCurrentUser && $passwordChanged) {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+            return redirect()->route('accueil')->with('success', 'Votre profil a été mis à jour. Veuillez vous reconnecter.');
+        }
+
+        return redirect()->route('users.index')->with('success', 'Utilisateur modifié avec succès.');
     }
 
     public function registration_verify($token, $email){

@@ -2,7 +2,18 @@
      Attend : $roles, $permissionModules, $rolePresets, et optionnellement $user + $userPermissions (édition). --}}
 @php
     $selectedRole = old('role_id', isset($user) ? $user->role_id : '');
-    $checked = collect(old('permissions', $userPermissions ?? []))->map(fn ($v) => (int) $v)->all();
+
+    if (session()->hasOldInput()) {
+        // Après une erreur de validation : on réaffiche exactement ce qui a été soumis.
+        $checked = collect(old('permissions', []))->map(fn ($v) => (int) $v)->all();
+    } else {
+        // Chargement initial : $userPermissions ne contient que les dérogations
+        // explicites (cf. syncUserPermissions — si l'utilisateur suit simplement le
+        // preset de son rôle, rien n'est stocké en base). On retombe donc sur le
+        // preset du rôle actuel pour afficher les permissions réellement effectives.
+        $effective = ! empty($userPermissions ?? []) ? $userPermissions : ($rolePresets[$selectedRole] ?? []);
+        $checked = collect($effective)->map(fn ($v) => (int) $v)->all();
+    }
 @endphp
 
 <div class="col-lg-4 col-sm-6 col-12">

@@ -31,30 +31,25 @@ class StockService
     }
 
     /**
-     * Total stock of a product, as tracked on the product record itself (products.pcs),
-     * independent of any specific store's inventory.
+     * Stock total d'un produit, toutes boutiques confondues. Calculé à la volée à partir
+     * de store_products (la seule table alimentée de façon fiable par ventes/achats/
+     * transferts) plutôt que lu depuis products.pcs, qui n'est pas gardé synchronisé par
+     * les achats et dérive donc de la réalité au fil du temps.
      */
     public function totalAvailable(int $productId): int
     {
-        return (int) DB::table('products')->where('id', $productId)->value('pcs');
+        return (int) DB::table('store_products')->where('product_id', $productId)->sum('quantity');
     }
 
     /**
-     * Atomically decrement the product's total stock (products.pcs) if available.
-     * Does not touch any store's per-store inventory.
+     * Stock d'un produit dans une boutique précise.
      */
-    public function decrementProductStockIfAvailable(int $productId, int $quantity): bool
+    public function availableInStore(int $storeId, int $productId): int
     {
-        if ($quantity <= 0) {
-            return true;
-        }
-
-        $affected = DB::table('products')
-            ->where('id', $productId)
-            ->where('pcs', '>=', $quantity)
-            ->decrement('pcs', $quantity);
-
-        return $affected > 0;
+        return (int) DB::table('store_products')
+            ->where('store_id', $storeId)
+            ->where('product_id', $productId)
+            ->value('quantity');
     }
 
     public function increment(int $storeId, int $productId, int $quantity): void

@@ -123,8 +123,7 @@ class ProductController extends Controller
             'libelle' => 'required|string|max:225',
             'sku' => 'required|string|max:225',
             'description' => 'required|string',
-            'price' => 'required|numeric',
-            'price_sale' => 'nullable|numeric',
+            'price_sale' => 'required|numeric|min:0',
             'stock_initial' => 'required|integer|min:0',
             'store_id' => 'required|exists:stores,id',
             'image' => 'image',
@@ -140,8 +139,8 @@ class ProductController extends Controller
             'sku.required' => 'champ sku doit être rempli',
             'sku.string' => 'champ sku prend au maximum 225 caractères',
             'description.required' => 'champ description doit être rempli avec une chaine de caractere',
-            'price.required' => 'champ Prix doit être rempli avec une valeure numérique',
-            'price_sale.numeric' => 'champ Prix Vente doit être rempli avec une valeure numérique',
+            'price_sale.required' => 'champ Prix de Revient doit être rempli avec une valeure numérique',
+            'price_sale.numeric' => 'champ Prix de Revient doit être rempli avec une valeure numérique',
             'stock_initial.required' => 'champ Stock initial doit être rempli',
             'stock_initial.integer' => 'champ Stock initial doit être un nombre entier',
             'stock_initial.min' => 'champ Stock initial doit être positif',
@@ -165,6 +164,46 @@ class ProductController extends Controller
         return round($price * (1 - ((float) $request->promo_percent / 100)), 2);
     }
 
+    /**
+     * Création rapide d'un produit en AJAX (ex : depuis le formulaire Achat, pour ne pas
+     * obliger l'utilisateur à quitter la page en cours). Pas de prix ici : le prix de
+     * revient n'est connu qu'une fois l'achat complet soumis (transport/douane/frais
+     * divers répartis) — c'est PurchaseOrderCostingService qui le renseignera, avec le
+     * prix de vente calculé automatiquement à ce moment-là (cf. costOrder()). Pas
+     * d'image ni de stock initial non plus — le stock est ajouté par la ligne d'achat
+     * qui suit la création. La fiche complète reste modifiable ensuite depuis Produit
+     * List.
+     */
+    public function quickStore(Request $request)
+    {
+        $request->validate([
+            'libelle' => 'required|string|max:225',
+            'sku' => 'required|string|max:225',
+            'category_id' => 'required|exists:categories,id',
+        ], [
+            'libelle.required' => 'Le nom du produit est requis.',
+            'sku.required' => 'Le SKU est requis.',
+            'category_id.required' => 'La catégorie est requise.',
+        ]);
+
+        try {
+            $product = Product::create([
+                'libelle' => $request->libelle,
+                'sku' => $request->sku,
+                'description' => $request->libelle,
+            ]);
+
+            $product->categories()->attach($request->category_id);
+
+            return response()->json([
+                'success' => true,
+                'product' => ['id' => $product->id, 'libelle' => $product->libelle, 'sku' => $product->sku],
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
     public function store(Request $request)
     {
         $this->validation($request);
@@ -173,17 +212,23 @@ class ProductController extends Controller
             request()->image->move(public_path('products'), $productName);
         }
         try {
+            // Prix de vente = prix de revient + 30% de marge, calculé ici (jamais fait
+            // confiance au champ "price" du formulaire, en lecture seule côté client)
+            // pour garantir la cohérence même si le JS est désactivé ou contourné.
+            $priceSale = (float) $request->price_sale;
+            $price = round($priceSale * 1.3, 2);
+
             $product = Product::create([
                 'libelle' => $request->libelle,
                 'sku' => $request->sku,
                 'description' => $request->description,
                 'pcs' => $request->stock_initial, // stock global e-commerce, initialisé au stock du premier magasin
-                'price' => $request->price,
-                'price_sale' => $request->price_sale ?? NULL,
+                'price' => $price,
+                'price_sale' => $priceSale,
                 'image' => $productName ?? 'ib profile.jpg',
                 'is_promo' => $request->boolean('is_promo'),
                 'promo_percent' => $request->promo_percent ?? null,
-                'promo_price' => $this->computePromoPrice($request, (float) $request->price),
+                'promo_price' => $this->computePromoPrice($request, $price),
                 'promo_start_date' => $request->promo_start_date ?? null,
                 'promo_end_date' => $request->promo_end_date ?? null,
             ]);

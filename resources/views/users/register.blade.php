@@ -17,7 +17,7 @@
                     <div class="col-lg-4 col-sm-6 col-12">
                         <div class="form-group">
                             <label>Nom</label>
-                            <input type="text" name="name">
+                            <input type="text" name="name" value="{{ old('name') }}">
                         </div>
                         @error('name')
                         <span class="text-danger">{{ $message }}</span>
@@ -26,7 +26,7 @@
                     <div class="col-lg-4 col-sm-6 col-12">
                         <div class="form-group">
                             <label>Nom Utilisateur</label>
-                            <input type="text" name="username">
+                            <input type="text" name="username" value="{{ old('username') }}">
                         </div>
                         @error('username')
                         <span class="text-danger">{{ $message }}</span>
@@ -60,7 +60,7 @@
                     <div class="col-lg-4 col-sm-6 col-12">
                         <div class="form-group">
                             <label>Phone</label>
-                            <input type="text" name="phone">
+                            <input type="text" name="phone" value="{{ old('phone') }}">
                         </div>
                         @error('phone')
                         <span class="text-danger">{{ $message }}</span>
@@ -69,7 +69,7 @@
                     <div class="col-lg-4 col-sm-6 col-12">
                         <div class="form-group">
                             <label>Email</label>
-                            <input type="text" name="email">
+                            <input type="text" name="email" value="{{ old('email') }}">
                         </div>
                         @error('email')
                         <span class="text-danger">{{ $message }}</span>
@@ -78,7 +78,7 @@
                     <div class="col-12">
                         <div class="form-group">
                             <label for="description">Description</label>
-                            <textarea name="description" id="description" cols="30" rows="10"></textarea>
+                            <textarea name="description" id="description" cols="30" rows="10">{{ old('description') }}</textarea>
                         </div>
                         @error('description')
                         <span class="text-danger">{{ $message }}</span>

@@ -24,15 +24,8 @@ class Purchase extends Model
         return $this->belongsTo(Product::class);
     }
 
-    public function fromStore()
+    public function store()
     {
-        return $this->belongsTo(Store::class, 'from_store_id');
+        return $this->belongsTo(Store::class);
     }
-
-    public function toStore()
-    {
-        return $this->belongsTo(Store::class, 'to_store_id');
-    }
-
-    
 }

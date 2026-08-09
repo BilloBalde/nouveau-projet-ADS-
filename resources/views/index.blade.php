@@ -11,7 +11,12 @@
         </div>
         
         @php
-        $total_purchases = App\Models\Achat::where('store_id', $item->id)->selectRaw('SUM(grand_total) as total')->value('total');
+        // Achat::sum('grand_total') donnait toujours 0 : la table `achats` (module
+        // Proforma/LigneCommande) est vide dans ce projet. Les vrais achats sont dans
+        // `purchases` (ancien flux simple) et `purchase_orders` (module Achat actuel,
+        // coût de revient atterri) — on additionne les deux.
+        $total_purchases = (float) App\Models\Purchase::where('store_id', $item->id)->selectRaw('SUM(price * quantity) as total')->value('total')
+            + (float) App\Models\PurchaseOrder::where('store_id', $item->id)->where('status', '!=', 'cancelled')->sum('total_landed_cost_gnf');
         $total_sales = App\Models\Facture::where('store_id', $item->id)->sum('montant_total');
         $total_expenses = App\Models\Expense::where('store_id', $item->id)->sum('amount');
         $gains = App\Models\Sale::where('store_id', $item->id)->sum('interet');
@@ -19,6 +24,10 @@
         $total_quantities_store = App\Models\StoreProduct::where('store_id', $item->id)->sum('quantity');
         $solde_orange_money_store = App\Models\Payment::whereHas('facture', fn($q) => $q->where('store_id', $item->id))->where('paid_by', 'orange money')->sum('versement');
         $solde_cash_store = App\Models\Payment::whereHas('facture', fn($q) => $q->where('store_id', $item->id))->where('paid_by', 'cash')->sum('versement');
+        // Balance = total ventes - total achats - total dépenses de la boutique.
+        // Calculée à la volée à chaque affichage, donc toujours à jour dès qu'une
+        // vente, un achat ou une dépense est enregistré.
+        $balance_store = $total_sales - $total_purchases - $total_expenses;
         @endphp
         
         <div class="store-metrics-grid">
@@ -99,6 +108,19 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Balance (revenus - dépenses) -->
+            <div class="metric-card metric-card-7">
+                <div class="dash-count" style="background: linear-gradient(135deg, {{ $balance_store >= 0 ? '#0f766e, #115e59' : '#b91c1c, #7f1d1d' }});">
+                    <div class="dash-counts">
+                        <h4 class="mb-1">{{ numberDelimiter($balance_store) }} FG</h4>
+                        <h5 class="opacity-75">Balance (revenus - dépenses)</h5>
+                    </div>
+                    <div class="dash-imgs">
+                        <i class="fas fa-balance-scale"></i>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     @endforeach
@@ -167,6 +189,19 @@
                     </div>
                     <div class="dash-imgs">
                         <i class="fas fa-money-bill-wave"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Balance (revenus - dépenses) -->
+            <div class="metric-card metric-card-7">
+                <div class="dash-count" style="background: linear-gradient(135deg, {{ $store_balance >= 0 ? '#0f766e, #115e59' : '#b91c1c, #7f1d1d' }});">
+                    <div class="dash-counts">
+                        <h4 class="mb-1">{{ numberDelimiter($store_balance) }} FG</h4>
+                        <h5 class="opacity-75">Balance (revenus - dépenses)</h5>
+                    </div>
+                    <div class="dash-imgs">
+                        <i class="fas fa-balance-scale"></i>
                     </div>
                 </div>
             </div>

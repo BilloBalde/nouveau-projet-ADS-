@@ -227,26 +227,6 @@
                                             <td>{{ $mvt['store_name'] }}</td>
                                         @endif
                                         <td class="text-center">
-                                            @php
-                                                $editRoute = null;
-                                                $deleteRoute = null;
-                                                switch($mvt['type_code']) {
-                                                    case 'sale':
-                                                        $editRoute = route('sales.edit', $mvt['id']);
-                                                        $deleteRoute = route('sales.destroy', $mvt['id']);
-                                                        break;
-                                                    case 'purchase':
-                                                        $editRoute = route('proformas.edit', $mvt['id']);
-                                                        $deleteRoute = route('proformas.destroy', $mvt['id']);
-                                                        break;
-                                                    case 'expense':
-                                                        $editRoute = route('expenses.edit', $mvt['id']);
-                                                        $deleteRoute = route('expenses.destroy', $mvt['id']);
-                                                        break;
-                                                }
-                                            @endphp
-                                          
-                                          
                                         </td>
                                     </tr>
                                     @empty

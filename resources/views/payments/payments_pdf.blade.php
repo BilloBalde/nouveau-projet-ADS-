@@ -15,248 +15,253 @@
             font-family: 'DejaVu Sans', 'Helvetica', 'Arial', sans-serif;
             font-size: 11px;
             line-height: 1.5;
-            color: #2c3e50;
+            color: #2b2118;
             background: #fff;
             margin: 1.5cm;
         }
 
-        /* ===== TYPOGRAPHY ===== */
-        h1 {
-            font-size: 24px;
-            font-weight: 600;
-            color: #1a3e60;
-            margin-bottom: 4px;
-        }
-
-        h2 {
-            font-size: 18px;
-            font-weight: 500;
-            color: #2c3e50;
-            border-left: 4px solid #2c7da0;
-            padding-left: 12px;
-            margin: 20px 0 15px 0;
-        }
-
-        /* ===== HEADER ===== */
+        /* ===== EN-TÊTE ===== */
+        /* Table plutôt que flexbox : le support flex de Dompdf est partiel/peu
+           fiable selon les versions — une table garantit un rendu identique
+           partout. */
         .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            border-bottom: 2px solid #d0dee5;
-            padding-bottom: 12px;
-            margin-bottom: 20px;
+            width: 100%;
+            border-collapse: collapse;
+            border-bottom: 3px solid #c1682f;
+            padding-bottom: 14px;
+            margin-bottom: 18px;
         }
 
-        .company-info {
-            flex: 1;
+        .header td {
+            border: none;
+            padding: 0;
+            vertical-align: middle;
+        }
+
+        .invoice-head-logo {
+            width: 64px;
+            height: 64px;
+            max-width: 64px;
+            max-height: 64px;
+            object-fit: contain;
         }
 
         .company-name {
-            font-size: 22px;
+            font-size: 20px;
             font-weight: bold;
-            color: #1a3e60;
-            letter-spacing: -0.5px;
+            color: #c1682f;
+            letter-spacing: -0.3px;
         }
 
         .company-details {
             font-size: 9px;
-            color: #6c86a3;
-            margin-top: 5px;
+            color: #9a8a78;
+            margin-top: 4px;
         }
 
-        .logo-placeholder {
-            width: 80px;
-            height: 80px;
-            background: #f0f4f8;
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 10px;
-            color: #7f8c8d;
-            text-align: center;
-            border: 1px solid #e0e7ed;
-        }
-
-        /* ===== REPORT META ===== */
+        /* ===== TITRE / MÉTA DU RAPPORT ===== */
         .report-meta {
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-            margin-bottom: 20px;
-            font-size: 9px;
-            color: #5b7a9a;
-            border-bottom: 1px dashed #e0e7ed;
-            padding-bottom: 8px;
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 16px;
+        }
+
+        .report-meta td {
+            border: none;
+            padding: 0;
+            vertical-align: bottom;
         }
 
         .report-title {
-            font-size: 16px;
-            font-weight: 600;
-            color: #1a3e60;
-            margin: 0;
+            font-size: 17px;
+            font-weight: 700;
+            color: #2b2118;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        .report-generated {
+            font-size: 9px;
+            color: #9a8a78;
         }
 
         .filters {
-            background: #f8fafc;
-            padding: 8px 12px;
-            border-radius: 4px;
-            margin-bottom: 20px;
-            font-size: 9px;
-            color: #2c3e50;
-            border-left: 3px solid #2c7da0;
+            background: #fdfaf6;
+            padding: 8px 14px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+            font-size: 9.5px;
+            color: #6b5c4c;
+            border-left: 3px solid #c1682f;
         }
 
-        /* ===== TABLE ===== */
-        table {
+        /* ===== TABLEAU ===== */
+        table.data {
             width: 100%;
             border-collapse: collapse;
-            margin: 20px 0;
+            margin: 12px 0;
             font-size: 10px;
         }
 
-        th {
-            background-color: #1a3e60;
+        table.data th {
+            background-color: #c1682f;
             color: white;
-            padding: 10px 8px;
+            padding: 9px 8px;
             text-align: left;
             font-weight: 600;
-            border: 1px solid #1a3e60;
+            font-size: 9.5px;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+            border: 1px solid #c1682f;
         }
 
-        td {
-            padding: 8px;
-            border: 1px solid #e2e8f0;
+        table.data td {
+            padding: 7px 8px;
+            border: 1px solid #eee1d3;
             vertical-align: top;
         }
 
-        /* Zebra striping for readability */
-        tr:nth-child(even) {
-            background-color: #f9fcff;
+        table.data tr:nth-child(even) td {
+            background-color: #fdfaf6;
         }
 
-        /* Hover effect (optional, works in some PDF viewers) */
-        tr:hover {
-            background-color: #f1f5f9;
-        }
-
-        /* Numeric columns */
         .amount {
             text-align: right;
             font-family: 'DejaVu Sans', monospace;
         }
 
-        /* Note column – wrap long text */
         .note-cell {
             max-width: 180px;
             word-wrap: break-word;
             white-space: normal;
         }
 
-        /* ===== SUMMARY ===== */
+        /* Évite de couper une ligne entre deux pages */
+        table.data tr {
+            page-break-inside: avoid;
+        }
+
+        /* ===== RÉSUMÉ ===== */
         .summary {
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 6px;
-            padding: 16px 20px;
-            margin-top: 25px;
+            background: #fdfaf6;
+            border: 1px solid #e5d5c3;
+            border-radius: 8px;
+            padding: 14px 20px;
+            margin-top: 18px;
             width: 100%;
-            max-width: 350px;
+            max-width: 340px;
             margin-left: auto;
-            text-align: right;
         }
 
-        .summary p {
-            margin: 4px 0;
+        .summary-row {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .summary-row td {
+            border: none;
+            padding: 3px 0;
             font-size: 11px;
-            font-weight: 500;
         }
 
-        .summary .total-label {
-            font-weight: 600;
-            color: #1a3e60;
+        .summary-row .total-label {
+            color: #6b5c4c;
         }
 
-        .summary .total-value {
+        .summary-row .total-value {
+            text-align: right;
             font-weight: 700;
-            color: #2c7da0;
+            color: #2b2118;
         }
 
-        /* ===== FOOTER ===== */
+        .summary-row.grand-total td {
+            border-top: 2px solid #c1682f;
+            padding-top: 8px;
+            font-size: 13px;
+        }
+
+        .summary-row.grand-total .total-label {
+            font-weight: 700;
+            color: #2b2118;
+        }
+
+        .summary-row.grand-total .total-value {
+            color: #c1682f;
+        }
+
+        /* ===== PIED DE PAGE ===== */
         .footer {
             position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
             font-size: 8px;
-            color: #8aa4c2;
+            color: #9a8a78;
             text-align: center;
-            border-top: 1px solid #e2e8f0;
+            border-top: 1px solid #eee1d3;
             padding-top: 8px;
             margin-top: 20px;
             background: white;
         }
 
-        /* Page break handling */
-        .page-break {
-            page-break-before: always;
-        }
-
-        /* Avoid breaking rows across pages */
-        tr {
-            page-break-inside: avoid;
-        }
-
-        /* ===== PRINT / PDF OPTIMIZATION ===== */
         @page {
             margin: 1.5cm;
-            @bottom-center {
-                content: "SMH - Document confidentiel";
-                font-size: 8px;
-                color: #8aa4c2;
-            }
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <div class="company-info">
-            <div class="company-name">{{ $company->name ?? 'SMH' }}</div>
-            <div class="company-details">
-                {{ $company->address ?? 'Centre Faloulay, 1er étage B30, Madina route Niger — T6, en face de la station Star, Sonfonia' }}<br>
-                Tél: +224 626 311 915 | Email: saikououmar47@gmail.com
-            </div>
-        </div>
+        @php
+            // Dompdf résout mal les chemins Windows passés tels quels à public_path()
+            // (mélange de \ et /, caractères non-ASCII dans le chemin utilisateur) —
+            // le logo n'apparaissait pas dans le PDF. On l'encode en base64 pour
+            // s'affranchir totalement de la résolution de chemin par Dompdf.
+            $logoPath = ($company && $company->logo && file_exists(public_path('companies/'.$company->logo)))
+                ? public_path('companies/'.$company->logo)
+                : (file_exists(public_path('images/customers/logo.jpg')) ? public_path('images/customers/logo.jpg') : null);
+            $logoDataUri = $logoPath
+                ? 'data:'.mime_content_type($logoPath).';base64,'.base64_encode(file_get_contents($logoPath))
+                : null;
+        @endphp
+    <table class="header">
+        <tr>
+            <td style="width:74px;">
+                @if($logoDataUri)
+                    <img src="{{ $logoDataUri }}" alt="{{ $company->name ?? 'Logo' }}" class="invoice-head-logo">
+                @endif
+            </td>
+            <td>
+                <div class="company-name">{{ $company->name ?? 'SMH' }}</div>
+                <div class="company-details">
+                    {{ $company->address ?? 'Centre Faloulay, 1er étage B30, Madina route Niger — T6, en face de la station Star, Sonfonia' }}<br>
+                    Tél: {{ $company->phone ?? '+224 626 311 915' }} | Email: {{ $company->email ?? 'saikououmar47@gmail.com' }}
+                </div>
+            </td>
+        </tr>
+    </table>
 
-        @if($company && $company->logo && file_exists(public_path('companies/'.$company->logo)))
-            <img src="{{ public_path('companies/'.$company->logo) }}" alt="{{ $company->name ?? 'Logo' }}" class="invoice-head-logo">
-        @elseif(file_exists(public_path('images/customers/logo.jpg')))
-            <img src="{{ public_path('images/customers/logo.jpg') }}" alt="Logo" class="invoice-head-logo">
-        @endif
-    </div>
+    <table class="report-meta">
+        <tr>
+            <td class="report-title">Liste des paiements</td>
+            <td class="report-generated" style="text-align:right;">Généré le {{ \Carbon\Carbon::now()->format('d/m/Y à H:i') }}<br>par {{ auth()->user()->name ?? 'Système' }}</td>
+        </tr>
+    </table>
 
-    <div class="report-meta">
-        <div class="report-title">Liste des paiements</div>
-        <div>Généré le : {{ \Carbon\Carbon::now()->format('d/m/Y H:i') }}</div>
-    </div>
-
-    @if(request('facture_id') || request('paid_by') || request('date_from') || request('date_to'))
+    @if(request('facture_id') || request('paid_by') || request('period'))
         <div class="filters">
             <strong>Filtres appliqués :</strong>
-            @if(request('facture_id')) Facture ID: {{ request('facture_id') }} | @endif
-            @if(request('paid_by')) Moyen de paiement: {{ request('paid_by') }} | @endif
-            @if(request('date_from')) Du: {{ request('date_from') }} | @endif
-            @if(request('date_to')) Au: {{ request('date_to') }} | @endif
+            @if(request('facture_id')) Facture ID : {{ request('facture_id') }} &nbsp;|&nbsp; @endif
+            @if(request('paid_by')) Moyen de paiement : {{ request('paid_by') }} &nbsp;|&nbsp; @endif
+            @if(request('period')) Période : {{ ucfirst(request('period')) }} @endif
         </div>
     @endif
 
-    <table>
+    <table class="data">
         <thead>
             <tr>
                 <th>Facture N°</th>
-                <th>Versement (FG)</th>
-                <th>Total payé (FG)</th>
-                <th>Reste à payer (FG)</th>
+                <th>Versement (GNF)</th>
+                <th>Total payé (GNF)</th>
+                <th>Reste à payer (GNF)</th>
                 <th>Payé par</th>
                 <th>Note</th>
                 <th>Date paiement</th>
@@ -268,7 +273,7 @@
                 $totalPaye = 0;
                 $totalReste = 0;
             @endphp
-            @foreach($payments as $item)
+            @forelse($payments as $item)
                 @php
                     $totalVersement += $item->versement;
                     $totalPaye += $item->total_paye;
@@ -283,18 +288,47 @@
                     <td class="note-cell">{{ $item->note ?? '-' }}</td>
                     <td>{{ \Carbon\Carbon::parse($item->created_at)->format('d/m/Y H:i') }}</td>
                 </tr>
-            @endforeach
+            @empty
+                <tr>
+                    <td colspan="7" style="text-align:center;color:#9a8a78;padding:20px;">Aucun paiement pour cette sélection.</td>
+                </tr>
+            @endforelse
         </tbody>
     </table>
 
     <div class="summary">
-        <p><span class="total-label">Total des versements :</span> <span class="total-value">{{ number_format($totalVersement, 0, ',', ' ') }} FG</span></p>
-        <p><span class="total-label">Total payé :</span> <span class="total-value">{{ number_format($totalPaye, 0, ',', ' ') }} FG</span></p>
-        <p><span class="total-label">Total restant dû :</span> <span class="total-value">{{ number_format($totalReste, 0, ',', ' ') }} FG</span></p>
+        <table class="summary-row">
+            <tr>
+                <td class="total-label">Total des versements</td>
+                <td class="total-value">{{ number_format($totalVersement, 0, ',', ' ') }} GNF</td>
+            </tr>
+            <tr>
+                <td class="total-label">Total restant dû</td>
+                <td class="total-value">{{ number_format($totalReste, 0, ',', ' ') }} GNF</td>
+            </tr>
+        </table>
+        <table class="summary-row">
+            <tr class="grand-total">
+                <td class="total-label">Total payé</td>
+                <td class="total-value">{{ number_format($totalPaye, 0, ',', ' ') }} GNF</td>
+            </tr>
+        </table>
     </div>
 
     <div class="footer">
-        Document généré par {{ auth()->user()->name ?? 'Système' }} | SMH – Rapport de paiements | Page <span class="pageNumber"></span> / <span class="totalPages"></span>
+        {{ $company->name ?? 'SMH' }} — Rapport de paiements — Document confidentiel
     </div>
+
+    <script type="text/php">
+        if (isset($pdf)) {
+            $font = $fontMetrics->getFont('DejaVu Sans', 'normal');
+            $size = 8;
+            $text = "Page {PAGE_NUM} / {PAGE_COUNT}";
+            $width = $fontMetrics->getTextWidth($text, $font, $size);
+            $x = $pdf->get_width() - $width - 42;
+            $y = $pdf->get_height() - 34;
+            $pdf->page_text($x, $y, $text, $font, $size, array(0.6, 0.54, 0.47));
+        }
+    </script>
 </body>
 </html>

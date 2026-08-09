@@ -80,12 +80,23 @@ class PurchaseController extends Controller
             'purchases.*.price' => 'required|numeric|min:0',
             'purchases.*.quantity' => 'required|integer|min:1',
             'purchases.*.description' => 'nullable|string',
+            'purchases.*.store_id' => 'required|exists:stores,id',
         ], [
             'purchases.*.product_id.required' => 'Le produit est requis.',
             'purchases.*.price.required' => 'Le prix est requis.',
             'purchases.*.quantity.required' => 'La quantité est requise.',
             'purchases.*.quantity.min' => 'La quantité doit être supérieure à zéro.',
+            'purchases.*.store_id.required' => 'La boutique est requise.',
         ]);
+
+        // Un gérant de boutique ne peut acheter que pour sa propre boutique, quel que
+        // soit le store_id envoyé par le formulaire pour chaque ligne.
+        if ($storeId = $this->ownStoreIdOverride()) {
+            foreach ($purchasesData as &$row) {
+                $row['store_id'] = $storeId;
+            }
+            unset($row);
+        }
 
         //dd($purchasesData);
         // Insert multiple rows
