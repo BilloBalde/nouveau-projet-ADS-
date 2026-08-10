@@ -14,6 +14,14 @@ class ProductController extends Controller
     public function __construct()
     {
         $this->middleware('auth.check');
+        // Route::resource('produits', ...) n'appliquait aucune permission : tout
+        // rôle connecté pouvait créer/modifier/supprimer des produits, alors que
+        // le preset PermissionSeeder réserve products.create/.edit/.delete à
+        // admin/manager (vendeur et achats n'ont que products.view).
+        $this->middleware('permission:products.view')->only(['index', 'show']);
+        $this->middleware('permission:products.create')->only(['create', 'store']);
+        $this->middleware('permission:products.edit')->only(['edit', 'update']);
+        $this->middleware('permission:products.delete')->only(['destroy']);
     }
 
     public function index(Request $request)

@@ -15,6 +15,13 @@ class PurchaseController extends Controller
     public function __construct()
     {
         $this->middleware('auth.check');
+        // Route::resource('purchases', ...) n'appliquait aucune permission : un
+        // vendeur ou un comptable pouvait créer/modifier/supprimer des achats,
+        // alors que seuls admin/manager/achats devraient (cf. PermissionSeeder).
+        $this->middleware('permission:purchases.view')->only(['index', 'show']);
+        $this->middleware('permission:purchases.create')->only(['create', 'store']);
+        $this->middleware('permission:purchases.edit')->only(['edit', 'update']);
+        $this->middleware('permission:purchases.delete')->only(['destroy']);
     }
     /**
      * Display a listing of the resource.

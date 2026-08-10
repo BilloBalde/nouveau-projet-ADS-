@@ -13,6 +13,13 @@ class UserController extends Controller
     public function __construct()
     {
         $this->middleware('auth.check');
+        // Route::resource('users', ...) n'appliquait aucune permission : n'importe
+        // quel rôle connecté (vendeur, comptable, achats) pouvait voir/créer/
+        // modifier des comptes utilisateurs, alors que seuls admin/manager le
+        // devraient (cf. presets PermissionSeeder).
+        $this->middleware('permission:users.view')->only(['index', 'show']);
+        $this->middleware('permission:users.create')->only(['create', 'store']);
+        $this->middleware('permission:users.edit')->only(['edit', 'update']);
     }
     /**
      * Display a listing of the resource.

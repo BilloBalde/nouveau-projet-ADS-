@@ -13,6 +13,14 @@ class StoreController extends Controller
     public function __construct()
     {
         $this->middleware('auth.check');
+        // Route::resource('boutiques', ...) n'appliquait aucune permission : un
+        // vendeur ou un comptable pouvait créer/modifier/supprimer des boutiques,
+        // alors que le preset PermissionSeeder ne le prévoit que pour admin/manager
+        // (et la vue seule pour "achat").
+        $this->middleware('permission:stores.view')->only(['index', 'show']);
+        $this->middleware('permission:stores.create')->only(['create', 'store']);
+        $this->middleware('permission:stores.edit')->only(['edit', 'update']);
+        $this->middleware('permission:stores.delete')->only(['destroy']);
     }
     /**
      * Display a listing of the resource.

@@ -18,7 +18,6 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class PaymentController extends Controller
 {
-
     public function updateCustomerTotals()
     {
         try {
@@ -65,6 +64,14 @@ class PaymentController extends Controller
     public function __construct()
     {
         $this->middleware('auth.check');
+        // Route::resource('payments', ...) n'appliquait aucune permission : un
+        // responsable achats (sans aucun payments.* dans son preset) pouvait
+        // enregistrer des paiements, alors que seuls admin/manager/comptable
+        // (et vendeur en lecture+création) le devraient.
+        $this->middleware('permission:payments.view')->only(['index', 'show']);
+        $this->middleware('permission:payments.create')->only(['create', 'store']);
+        $this->middleware('permission:payments.edit')->only(['edit', 'update']);
+        $this->middleware('permission:payments.delete')->only(['destroy']);
     }
 
     public function index(Request $request)

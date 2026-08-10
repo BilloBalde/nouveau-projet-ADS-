@@ -33,6 +33,25 @@
                         @enderror
                     </div>
                     @include('users.partials.permission-picker')
+                    <div class="col-lg-4 col-sm-6 col-12" id="store-field" style="display:none;">
+                        <div class="form-group">
+                            <label>Boutique affectée</label>
+                            <select name="store_id" id="store-select" class="form-control">
+                                <option value="">— Aucune (à affecter plus tard) —</option>
+                                @foreach($stores as $store)
+                                <option value="{{ $store->id }}" {{ (string) old('store_id') === (string) $store->id ? 'selected' : '' }}>
+                                    {{ $store->store_name }}{{ $store->manager ? ' (actuellement : '.$store->manager->name.')' : '' }}
+                                </option>
+                                @endforeach
+                            </select>
+                            <p class="text-muted" style="font-size:12px;margin-top:4px;">
+                                Un vendeur ne peut être responsable que d'une seule boutique. La sélectionner ici retire la boutique à son responsable actuel, le cas échéant.
+                            </p>
+                        </div>
+                        @error('store_id')
+                        <span class="text-danger">{{ $message }}</span>
+                        @enderror
+                    </div>
                     <div class="col-lg-4 col-sm-6 col-12">
                         <div class="form-group">
                             <label>Mot de Passe</label>
@@ -93,4 +112,18 @@
         </div>
     </div>
 </div>
+<script>
+    (function () {
+        const vendeurRoleId = '{{ $roles->firstWhere('slug', 'user')?->id }}';
+        const roleSelect = document.getElementById('role-select');
+        const storeField = document.getElementById('store-field');
+
+        function toggleStoreField() {
+            storeField.style.display = (roleSelect.value === vendeurRoleId) ? '' : 'none';
+        }
+
+        roleSelect.addEventListener('change', toggleStoreField);
+        toggleStoreField();
+    })();
+</script>
 @endsection

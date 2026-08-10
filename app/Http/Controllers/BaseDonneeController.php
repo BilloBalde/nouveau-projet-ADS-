@@ -33,6 +33,10 @@ class BaseDonneeController extends Controller
     public function __construct()
     {
         $this->middleware('auth.check');
+        // "Gestion DB" est une page Paramètres : n'importe quel employé connecté
+        // pouvait la voir (nombre de lignes par table + bouton de vidage, même si
+        // le vidage lui-même était déjà réservé à l'admin ci-dessous).
+        $this->middleware('permission:settings.view');
     }
     public function index(){
         $category_products = CategoryProduct::count();

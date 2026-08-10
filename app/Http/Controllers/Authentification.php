@@ -32,7 +32,9 @@ class Authentification extends Controller
         $user = User::find($id);
         [$roles, $permissionModules, $rolePresets] = $this->permissionFormData();
         $userPermissions = $user->permissions()->pluck('permissions.id')->all();
-        return view('users.edit', compact('user', 'roles', 'permissionModules', 'rolePresets', 'userPermissions'));
+        $stores = \App\Models\Store::with('manager')->orderBy('store_name')->get();
+        $currentStoreId = \App\Models\Store::where('user_id', $user->id)->value('id');
+        return view('users.edit', compact('user', 'roles', 'permissionModules', 'rolePresets', 'userPermissions', 'stores', 'currentStoreId'));
     }
 
     /**
@@ -121,7 +123,8 @@ class Authentification extends Controller
 
     public function register(){
         [$roles, $permissionModules, $rolePresets] = $this->permissionFormData();
-        return view('users.register', compact('roles', 'permissionModules', 'rolePresets'));
+        $stores = \App\Models\Store::with('manager')->orderBy('store_name')->get();
+        return view('users.register', compact('roles', 'permissionModules', 'rolePresets', 'stores'));
     }
 
     public function create(Request $request)
@@ -135,6 +138,7 @@ class Authentification extends Controller
             'role_id' => 'required|integer|exists:roles,id',
             'permissions' => 'nullable|array',
             'permissions.*' => 'integer|exists:permissions,id',
+            'store_id' => 'nullable|exists:stores,id',
         ],[
             'email.required' => 'Vous devez remplir le champ email',
             'email.email' => 'Le champ email doit contenir un @ et .',
@@ -194,6 +198,14 @@ class Authentification extends Controller
             // modifications futures du rôle s'appliquent automatiquement).
             // Sinon, on stocke les grants explicites qui priment sur le rôle.
             $this->syncUserPermissions($user, $request->input('permissions', []));
+
+            // Un vendeur n'est rattaché à une boutique que via Store.user_id (pas
+            // l'inverse) — cf. IndexController qui résout la boutique du vendeur par
+            // Store::where('user_id', ...). On répercute donc le choix fait ici sur
+            // la boutique sélectionnée, qui perd son ancien responsable le cas échéant.
+            if ($role?->slug === 'user' && $request->filled('store_id')) {
+                \App\Models\Store::where('id', $request->store_id)->update(['user_id' => $user->id]);
+            }
         }
         catch(\Exception $e) {
             return back()->withInput()->with('fall', 'une erreur lors de lajout, voici le message : '.$e->getMessage());
@@ -226,6 +238,7 @@ class Authentification extends Controller
             'username' => ['required', 'string', Rule::unique('users', 'username')->ignore($user->id)],
             'phone' => 'required|string|max:20',
             'email' => ['required', 'email', Rule::unique('users', 'email')->ignore($user->id)],
+            'store_id' => 'nullable|exists:stores,id',
         ], [
             'email.unique' => 'Cet email est déjà utilisé par un autre compte.',
             'username.unique' => 'Ce nom d\'utilisateur est déjà pris.',
@@ -248,6 +261,17 @@ class Authentification extends Controller
         }
         if ($request->boolean('sync_permissions')) {
             $this->syncUserPermissions($user, $request->input('permissions', []));
+        }
+
+        // Idem création : le rattachement vendeur/boutique vit sur Store.user_id, pas
+        // sur l'utilisateur (cf. IndexController). On ne touche à l'affectation que si
+        // le rôle EFFECTIF (après le changement éventuel ci-dessus) est Vendeur et
+        // qu'une boutique a été choisie — laisser le champ vide ne change rien : la
+        // colonne stores.user_id est NOT NULL, donc "retirer" un vendeur suppose de
+        // donner sa boutique à quelqu'un d'autre (via Boutiques > Modifier), pas de la
+        // laisser vacante.
+        if ($request->filled('store_id') && \App\Models\Role::find($user->role_id)?->slug === 'user') {
+            \App\Models\Store::where('id', $request->store_id)->update(['user_id' => $user->id]);
         }
 
         // Le champ "Mot de Passe" du formulaire est pré-rempli avec le mot de passe

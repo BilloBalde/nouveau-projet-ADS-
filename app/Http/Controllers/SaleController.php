@@ -31,6 +31,14 @@ class SaleController extends Controller
     public function __construct(StockService $stock)
     {
         $this->middleware('auth.check');
+        // Route::resource('sales', ...) n'appliquait aucune permission : un
+        // comptable ou un responsable achats (sans aucun sales.* dans son preset)
+        // pouvait créer/modifier des ventes, alors que seuls admin/manager/vendeur
+        // le devraient (comptable n'a que sales.view en lecture).
+        $this->middleware('permission:sales.view')->only(['index', 'show']);
+        $this->middleware('permission:sales.create')->only(['create', 'store']);
+        $this->middleware('permission:sales.edit')->only(['edit', 'update']);
+        $this->middleware('permission:sales.delete')->only(['destroy']);
         $this->stock = $stock;
     }
 

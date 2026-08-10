@@ -257,9 +257,14 @@ Route::post('/admin/assign-store', [UserController::class, 'assignStore'])->midd
 // 9. ROUTES PARAMÈTRES
 // =============================================
 
-Route::resource('paymentSetting', PaymentSettingController::class);
-Route::resource('currencySetting', CurrencySettingController::class);
-Route::resource('roles', RoleController::class);
+// Ces routes n'avaient aucun middleware (ni auth, ni permission) : accessibles
+// même sans être connecté. Découvert en testant le rôle Manager, qui doit
+// justement ne PAS avoir accès aux paramètres.
+Route::middleware(['auth', 'permission:settings.view'])->group(function () {
+    Route::resource('paymentSetting', PaymentSettingController::class);
+    Route::resource('currencySetting', CurrencySettingController::class);
+    Route::resource('roles', RoleController::class);
+});
 
 // =============================================
 // 10. ROUTES BOUTIQUES & LIEUX
