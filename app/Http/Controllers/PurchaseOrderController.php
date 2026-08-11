@@ -65,6 +65,21 @@ class PurchaseOrderController extends Controller
         return $prefix . str_pad((string) ($lastNumber + 1), 4, '0', STR_PAD_LEFT);
     }
 
+    /**
+     * "reçu" seulement si la date de réception est passée (ou aujourd'hui) — avant,
+     * le statut était figé à "received" dès la création, même quand la marchandise
+     * n'était pas encore arrivée. Recalculé aussi à la modification, pour rester
+     * cohérent quand la date de réception change.
+     */
+    private function resolveStatus(?string $dateRecu): string
+    {
+        if (! $dateRecu) {
+            return 'pending';
+        }
+
+        return Carbon::parse($dateRecu)->lte(Carbon::today()) ? 'received' : 'pending';
+    }
+
     public function create()
     {
         $stores = Store::all();
@@ -121,7 +136,7 @@ class PurchaseOrderController extends Controller
             'transport_cost_gnf' => $validated['transport_cost_gnf'] ?? 0,
             'customs_cost_gnf' => $validated['customs_cost_gnf'] ?? 0,
             'other_fees_gnf' => $validated['other_fees_gnf'] ?? 0,
-            'status' => 'received',
+            'status' => $this->resolveStatus($validated['date_recu'] ?? null),
             'date_emis' => $validated['date_emis'],
             'date_recu' => $validated['date_recu'] ?? null,
             'notes' => $validated['notes'] ?? null,
@@ -198,6 +213,7 @@ class PurchaseOrderController extends Controller
             'other_fees_gnf' => $validated['other_fees_gnf'] ?? 0,
             'date_emis' => $validated['date_emis'],
             'date_recu' => $validated['date_recu'] ?? null,
+            'status' => $this->resolveStatus($validated['date_recu'] ?? null),
             'notes' => $validated['notes'] ?? null,
         ]);
 

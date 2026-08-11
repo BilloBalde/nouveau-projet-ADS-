@@ -20,6 +20,14 @@ class Kernel extends ConsoleKernel
         $schedule->command('debt:send-reminders')
             ->weeklyOn(6, '18:00')
             ->timezone('Africa/Conakry');
+
+        // Bascule quotidienne des achats "en attente" dont la date de réception est
+        // arrivée vers "reçu" — sans ça, un achat créé avec une date future reste
+        // affiché "en attente" indéfiniment si personne ne rouvre la fiche pour la
+        // modifier.
+        $schedule->command('purchase-orders:refresh-status')
+            ->dailyAt('00:10')
+            ->timezone('Africa/Conakry');
     }
 
     /**
