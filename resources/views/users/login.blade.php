@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SMH — Connexion Manager</title>
+    <title>Coleah Bandeya & Fils — Connexion Manager</title>
 
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -295,17 +295,17 @@
     {{-- ── Panneau gauche (branding) ── --}}
     <div class="left-panel">
         <div class="floating-icons">
-            <div class="fi"><i class="fas fa-print"></i></div>
-            <div class="fi"><i class="fas fa-file-alt"></i></div>
-            <div class="fi"><i class="fas fa-fill-drip"></i></div>
+            <div class="fi"><i class="fas fa-toolbox"></i></div>
+            <div class="fi"><i class="fas fa-paint-roller"></i></div>
+            <div class="fi"><i class="fas fa-screwdriver-wrench"></i></div>
         </div>
 
         {{-- Logo --}}
         <div class="brand">
-            <img src="{{ asset('images/customers/logo.jpg') }}" alt="SMH"
+            <img src="{{ asset('companies/ADK.jpg') }}" alt="Coleah Bandeya & Fils"
                  style="filter: none;">
             <div>
-                <div class="brand-name">SMH</div>
+                <div class="brand-name">Coleah Bandeya & Fils</div>
                 <div class="brand-sub">Espace Manager</div>
             </div>
         </div>
@@ -318,11 +318,11 @@
             </div>
             <h1 class="left-title">
                 Gérez votre<br>
-                activité <em>d'ameublement</em><br>
+                activité de <em>quincaillerie</em><br>
                 en toute simplicité
             </h1>
             <p class="left-desc">
-                Pilotez vos stocks, ventes, livraisons et commandes de meubles depuis un seul espace sécurisé.
+                Pilotez vos stocks, ventes, livraisons et commandes de quincaillerie depuis un seul espace sécurisé.
             </p>
             <div class="left-stats">
                 <div class="stat-box">
@@ -341,7 +341,7 @@
         </div>
 
         <div class="left-footer">
-            &copy; {{ date('Y') }} SMH — 1er adresse: centre faloulay 1er étage B30 Madina route Niger
+            &copy; {{ date('Y') }} Coleah Bandeya & Fils — Madina, Ecole Gare Routière Dabola Camion, Conakry
         </div>
     </div>
 

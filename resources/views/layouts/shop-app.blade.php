@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <meta name="description" content="Boutique en ligne SMH">
-    <title>@yield('title', 'Espace client') — SMH</title>
+    <meta name="description" content="Boutique en ligne Coleah Bandeya & Fils">
+    <title>@yield('title', 'Espace client') — Coleah Bandeya & Fils</title>
     <script src="https://cdn.tailwindcss.com"></script>
     @include('partials.theme-head')
     {{-- Chargée en asynchrone : un CDN externe lent/injoignable ne doit jamais

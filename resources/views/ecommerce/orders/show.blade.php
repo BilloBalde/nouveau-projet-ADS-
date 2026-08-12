@@ -272,7 +272,7 @@
                     <svg class="w-6 h-6 text-amber-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636L9.172 14.828l-3.536-3.536m0 0L2.1 14.928l4.243 4.243L21.192 5.636l-3.536-3.536L9.172 14.828z"/></svg>
                     <div>
                         <h3 class="font-semibold text-gray-800">Besoin d'aide ?</h3>
-                        <p class="text-sm text-gray-600 mt-1">Contactez notre service client via <a href="mailto:saikououmar47@gmail.com" class="text-amber-700 underline">saikououmar47@gmail.com</a> ou appelez le <strong>+224 626 311 915</strong>.</p>
+                        <p class="text-sm text-gray-600 mt-1">Contactez notre service client via <a href="mailto:abdulghadirybalde@gmail.com" class="text-amber-700 underline">abdulghadirybalde@gmail.com</a> ou appelez le <strong>625 45 35 45</strong>.</p>
                     </div>
                 </div>
             </div>

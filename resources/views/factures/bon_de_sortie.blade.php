@@ -477,7 +477,7 @@
                                     @endif
                                     <div class="document-title">
                                         <h1>BON DE SORTIE</h1>
-                                        <h3>{{ $company?->name ?? 'SMH' }}</h3>
+                                        <h3>{{ $company?->name ?? 'Coleah Bandeya & Fils' }}</h3>
                                     </div>
                                 </div>
                             </div>
@@ -579,7 +579,7 @@
                                     <!-- Entreprise -->
                                     <div style="width: 220px; text-align: center;">
                                         <div style="border-top: 1px solid black; margin-bottom: 8px;"></div>
-                                        <strong style="font-size: 12px;">Pour {{ $company?->name ?? 'SMH' }}</strong><br>
+                                        <strong style="font-size: 12px;">Pour {{ $company?->name ?? 'Coleah Bandeya & Fils' }}</strong><br>
                                         <span style="font-size: 10px; color: #666;">Responsable magasin / Livreur</span>
                                     </div>
                                 </div>
@@ -587,8 +587,8 @@
                                 <!-- Pied de page -->
                                 <div class="page-footer">
                                     <p>Document généré le {{ \Carbon\Carbon::now()->format('d/m/Y H:i:s') }}</p>
-                                    <p>{{ $company?->address ?? '' }} - Tél: {{ $company?->phone ?? '+224 626 311 915' }}</p>
-                                    <p>Email: {{ $company?->email ?? 'saikououmar47@gmail.com' }}</p>
+                                    <p>{{ $company?->address ?? '' }} - Tél: {{ $company?->phone ?? '625 45 35 45' }}</p>
+                                    <p>Email: {{ $company?->email ?? 'abdulghadirybalde@gmail.com' }}</p>
                                     <p>Ce document atteste de la sortie des marchandises de nos stocks</p>
                                 </div>
                             </div>

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Contact — SMH</title>
+    <title>Contact — Coleah Bandeya & Fils</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
     @include('partials.theme-head')
@@ -74,7 +74,7 @@
     <div class="pt-20 bg-gradient-to-r from-amber-500 to-amber-600">
         <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-14 text-center">
             <h1 class="text-4xl md:text-5xl font-bold text-white mb-3">Contactez-nous</h1>
-            <p class="text-white/85 text-lg">Chez SMH, au-delà de la qualité des autres. Nous sommes à votre écoute, réponse sous 24h.</p>
+            <p class="text-white/85 text-lg">Chez Coleah Bandeya & Fils, au-delà de la qualité des autres. Nous sommes à votre écoute, réponse sous 24h.</p>
         </div>
     </div>
 
@@ -100,24 +100,24 @@
                 <div class="info-icon"><i class="fas fa-map-marker-alt"></i></div>
                 <h3 class="text-lg font-bold text-gray-800 mb-2">Adresse</h3>
                 <p class="text-gray-500 text-sm leading-relaxed">
-                    1<sup>er</sup> adresse : Centre Faloulay, 1<sup>er</sup> étage B30, Madina route Niger<br>
-                    2<sup>e</sup> adresse : T6, en face de la station Star, en partant pour Sonfonia
+                    Madina, Ecole Gare Routière Dabola Camion, Conakry
                 </p>
             </div>
             <div class="info-card">
                 <div class="info-icon"><i class="fas fa-phone-alt"></i></div>
                 <h3 class="text-lg font-bold text-gray-800 mb-2">Téléphone</h3>
                 <p class="text-gray-500 text-sm leading-relaxed">
-                    <a href="tel:+224626311915" class="hover:text-amber-600 transition block">+224 626 311 915</a>
-                    <a href="tel:+224626314400" class="hover:text-amber-600 transition block">+224 626 31 44 00</a>
+                    <a href="tel:+224625453545" class="hover:text-amber-600 transition block">625 45 35 45</a>
+                    <a href="tel:+224628593110" class="hover:text-amber-600 transition block">628 59 31 10</a>
+                    <a href="tel:+224628801895" class="hover:text-amber-600 transition block">628 80 18 95</a>
                 </p>
             </div>
             <div class="info-card">
                 <div class="info-icon"><i class="fas fa-envelope"></i></div>
                 <h3 class="text-lg font-bold text-gray-800 mb-2">Email</h3>
                 <p class="text-gray-500 text-sm leading-relaxed">
-                    <a href="mailto:saikououmar47@gmail.com" class="hover:text-amber-600 transition break-all">
-                        saikououmar47@gmail.com
+                    <a href="mailto:abdulghadirybalde@gmail.com" class="hover:text-amber-600 transition break-all">
+                        abdulghadirybalde@gmail.com
                     </a>
                 </p>
             </div>

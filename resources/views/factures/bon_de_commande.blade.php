@@ -371,7 +371,7 @@
                                     @endif
                                     <div class="document-title">
                                         <h1>BON DE COMMANDE</h1>
-                                        <h3>{{ $company?->name ?? 'SMH' }}</h3>
+                                        <h3>{{ $company?->name ?? 'Coleah Bandeya & Fils' }}</h3>
                                     </div>
                                 </div>
                             </div>
@@ -487,7 +487,7 @@
                                 </div>
                                 <div class="bon-signature">
                                     <div class="bon-signature-line">
-                                        <strong>Pour {{ $company?->name ?? 'SMH' }}</strong><br>
+                                        <strong>Pour {{ $company?->name ?? 'Coleah Bandeya & Fils' }}</strong><br>
                                         <small>{{ auth()->user()->name }}</small>
                                     </div>
                                 </div>
@@ -495,7 +495,7 @@
 
                             <!-- Pied de page -->
                             <div class="bon-footer-text">
-                                <p>Document généré le {{ \Carbon\Carbon::now()->format('d/m/Y H:i:s') }} - {{ $company?->address ?? '' }} - Tél: {{ $company?->phone ?? '+224 626 311 915' }} | Email: {{ $company?->email ?? 'saikououmar47@gmail.com' }}</p>
+                                <p>Document généré le {{ \Carbon\Carbon::now()->format('d/m/Y H:i:s') }} - {{ $company?->address ?? '' }} - Tél: {{ $company?->phone ?? '625 45 35 45' }} | Email: {{ $company?->email ?? 'abdulghadirybalde@gmail.com' }}</p>
                             </div>
                         </div>
                     </div>

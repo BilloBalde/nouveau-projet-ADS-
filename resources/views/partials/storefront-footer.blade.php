@@ -3,10 +3,10 @@
         <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
             <div>
                 <div class="flex items-center space-x-2 mb-4">
-                    <img src="{{ asset('images/customers/logo.jpg') }}" alt="SMH" class="h-8 w-auto object-contain">
-                    <span class="font-bold text-white">SMH</span>
+                    <img src="{{ asset('companies/ADK.jpg') }}" alt="Coleah Bandeya & Fils" class="h-8 w-auto object-contain">
+                    <span class="font-bold text-white">Coleah Bandeya & Fils</span>
                 </div>
-                <p class="text-sm text-gray-400">Spécialiste en ameublement — salons, chambres, salles à manger, bureaux et décoration — basé à Conakry, Guinée.</p>
+                <p class="text-sm text-gray-400">Quincaillerie générale — peinture, outillage, serrurerie, plomberie et électricité — basée à Conakry, Guinée.</p>
             </div>
             <div>
                 <h4 class="font-bold text-white mb-4">Liens utiles</h4>
@@ -37,8 +37,8 @@
             </div>
         </div>
         <div class="border-t border-gray-800 pt-8 text-center text-sm text-gray-400">
-            <p>&copy; {{ date('Y') }} SMH. Tous droits réservés. Conakry, Guinée.</p>
-            <p class="mt-2">Chez SMH, au-delà de la qualité des autres.</p>
+            <p>&copy; {{ date('Y') }} Coleah Bandeya & Fils. Tous droits réservés. Conakry, Guinée.</p>
+            <p class="mt-2">Chez Coleah Bandeya & Fils, au-delà de la qualité des autres.</p>
         </div>
     </div>
 </footer>

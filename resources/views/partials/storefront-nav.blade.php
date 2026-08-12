@@ -9,8 +9,8 @@
         <div class="flex items-center justify-between h-20 gap-6">
             <!-- Logo -->
             <a href="{{ route('accueil') }}" class="flex items-center gap-2.5 shrink-0">
-                <img src="{{ asset('images/customers/logo.jpg') }}" alt="SMH" class="h-11 w-auto object-contain">
-                <span class="text-xl font-bold text-gray-800 hidden sm:inline tracking-tight">SMH</span>
+                <img src="{{ asset('companies/ADK.jpg') }}" alt="Coleah Bandeya & Fils" class="h-11 w-auto object-contain">
+                <span class="text-xl font-bold text-gray-800 hidden sm:inline tracking-tight">Coleah Bandeya & Fils</span>
             </a>
 
             <!-- Menu (centré dans l'espace restant) -->

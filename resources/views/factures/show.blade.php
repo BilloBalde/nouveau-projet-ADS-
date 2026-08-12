@@ -47,7 +47,7 @@
         }
 
         /* ============================= */
-        /* FACTURE — design SMH           */
+        /* FACTURE — design Coleah Bandeya & Fils */
         /* ============================= */
         #invoiceContent {
             position: relative;
@@ -423,19 +423,19 @@
 
                         <div id="invoiceContent">
                             <div class="invoice-watermark" aria-hidden="true">
-                                <img class="watermark-logo" src="{{ asset('images/customers/logo.jpg') }}" alt="">
+                                <img class="watermark-logo" src="{{ asset('companies/' . ($company?->logo ?? 'ADK.jpg')) }}" alt="">
                             </div>
 
                             <div class="facture-inner">
                                 <!-- En-tête -->
                                 <div class="facture-header">
                                     <div class="facture-brand">
-                                        <img src="{{ asset('images/customers/logo.jpg') }}" alt="{{ $company?->name ?? 'SMH' }}">
+                                        <img src="{{ asset('companies/' . ($company?->logo ?? 'ADK.jpg')) }}" alt="{{ $company?->name ?? 'Coleah Bandeya & Fils' }}">
                                         <div>
-                                            <div class="facture-brand-name">{{ $company?->name ?? 'SMH' }}</div>
+                                            <div class="facture-brand-name">{{ $company?->name ?? 'Coleah Bandeya & Fils' }}</div>
                                             <div class="facture-brand-sub">
                                                 @if(!empty($company?->address)) {{ $company->address }}<br>@endif
-                                                Tél: {{ $company?->phone ?? '+224 626 311 915' }}
+                                                Tél: {{ $company?->phone ?? '625 45 35 45' }}
                                             </div>
                                         </div>
                                     </div>
@@ -511,15 +511,15 @@
                                     </div>
                                     <div class="signature-box">
                                         <div class="signature-line"></div>
-                                        <p>Pour {{ strtoupper($company?->name ?? 'SMH') }}</p>
+                                        <p>Pour {{ strtoupper($company?->name ?? 'Coleah Bandeya & Fils') }}</p>
                                     </div>
                                 </div>
 
                                 <!-- Pied de page -->
                                 <div class="company-info">
-                                    <h4>{{ $company?->name ?? 'SMH' }}</h4>
+                                    <h4>{{ $company?->name ?? 'Coleah Bandeya & Fils' }}</h4>
                                     <p>{{ $company?->address ?? '' }}</p>
-                                    <p>Tél: {{ $company?->phone ?? '+224 626 311 915' }} | Email: {{ $company?->email ?? 'saikououmar47@gmail.com' }}</p>
+                                    <p>Tél: {{ $company?->phone ?? '625 45 35 45' }} | Email: {{ $company?->email ?? 'abdulghadirybalde@gmail.com' }}</p>
                                     <p>Facture générée le {{ \Carbon\Carbon::now()->format('d/m/Y H:i') }}</p>
                                 </div>
                             </div>

@@ -44,7 +44,7 @@
                                                 'Bonjour ' . ($r->customer?->customerName ?? 'cher client')
                                                 . ', vous avez une facture impayée de '
                                                 . number_format($r->total, 0, ',', ' ')
-                                                . ' GNF chez SMH. Veuillez régler votre dette avant lundi. Merci de votre confiance.'
+                                                . ' GNF chez Coleah Bandeya & Fils. Veuillez régler votre dette avant lundi. Merci de votre confiance.'
                                             );
                                         @endphp
                                         <tr>

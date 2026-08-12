@@ -525,7 +525,7 @@
                     Nous avons bien reçu votre message et vous remercions de nous avoir contactés.<br>
                     Notre équipe va étudier votre demande et vous répondra dans les plus brefs délais.<br><br>
                     Cordialement,<br>
-                    L'équipe SMH
+                    L'équipe Coleah Bandeya & Fils
                 </div>
             </div>
         </div>
@@ -533,17 +533,17 @@
         <!-- Footer -->
         <div class="email-footer">
             <div class="company-name">
-                ⚡ SMH
+                ⚡ Coleah Bandeya & Fils
             </div>
             
             <div class="contact-info">
                 <span>
                     <i class="fas fa-phone-alt"></i>
-                    +224 626 311 915
+                    625 45 35 45
                 </span>
                 <span>
                     <i class="fas fa-envelope"></i>
-                    saikououmar47@gmail.com
+                    abdulghadirybalde@gmail.com
                 </span>
                 <span>
                     <i class="fas fa-map-marker-alt"></i>
@@ -565,8 +565,8 @@
             </div>
             
             <div class="copyright">
-                © {{ $year ?? date('Y') }} SMH. Tous droits réservés.<br>
-                Ce message est confidentiel et destiné uniquement à l'équipe SMH.
+                © {{ $year ?? date('Y') }} Coleah Bandeya & Fils. Tous droits réservés.<br>
+                Ce message est confidentiel et destiné uniquement à l'équipe Coleah Bandeya & Fils.
             </div>
         </div>
     </div>

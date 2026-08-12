@@ -13,24 +13,31 @@ class CategoryProductsSeeder extends Seeder
         $products = DB::table('products')->pluck('id', 'sku');
 
         $links = [
-            ['sku' => 'SKU-CLAV-001', 'slug' => 'bureau'],
-            ['sku' => 'SKU-SOURIS-001', 'slug' => 'bureau'],
-            ['sku' => 'SKU-IMPR-001', 'slug' => 'bureau'],
-            ['sku' => 'SKU-CHAISE-001', 'slug' => 'maison'],
-            ['sku' => 'SKU-LAMPE-001', 'slug' => 'maison'],
+            'peinture' => ['CBF-PNT-001', 'CBF-PNT-002', 'CBF-PNC-001'],
+            'outillage' => ['CBF-MRT-001', 'CBF-PEL-001', 'CBF-PIO-001', 'CBF-SCI-001'],
+            'serrurerie' => ['CBF-CAD-001', 'CBF-SER-001', 'CBF-VER-001'],
+            'plomberie' => ['CBF-TUY-001', 'CBF-ROB-001', 'CBF-RAC-001'],
+            'electricite' => ['CBF-FIL-001', 'CBF-AMP-001', 'CBF-DIS-001'],
+            'quincaillerie-generale' => ['CBF-CLO-001', 'CBF-VIS-001', 'CBF-BRW-001'],
         ];
 
-        foreach ($links as $link) {
-            $productId = $products[$link['sku']] ?? null;
-            $categoryId = $categories[$link['slug']] ?? null;
-            if (!$productId || !$categoryId) {
+        foreach ($links as $slug => $skus) {
+            $categoryId = $categories[$slug] ?? null;
+            if (!$categoryId) {
                 continue;
             }
 
-            DB::table('category_products')->updateOrInsert(
-                ['product_id' => $productId, 'category_id' => $categoryId],
-                ['product_id' => $productId, 'category_id' => $categoryId]
-            );
+            foreach ($skus as $sku) {
+                $productId = $products[$sku] ?? null;
+                if (!$productId) {
+                    continue;
+                }
+
+                DB::table('category_products')->updateOrInsert(
+                    ['product_id' => $productId, 'category_id' => $categoryId],
+                    ['product_id' => $productId, 'category_id' => $categoryId]
+                );
+            }
         }
     }
 }

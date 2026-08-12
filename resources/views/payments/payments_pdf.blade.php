@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Liste des paiements - SMH</title>
+    <title>Liste des paiements - Coleah Bandeya & Fils</title>
     <style>
         /* ===== RESET & BASE ===== */
         * {
@@ -230,10 +230,10 @@
                 @endif
             </td>
             <td>
-                <div class="company-name">{{ $company->name ?? 'SMH' }}</div>
+                <div class="company-name">{{ $company->name ?? 'Coleah Bandeya & Fils' }}</div>
                 <div class="company-details">
-                    {{ $company->address ?? 'Centre Faloulay, 1er étage B30, Madina route Niger — T6, en face de la station Star, Sonfonia' }}<br>
-                    Tél: {{ $company->phone ?? '+224 626 311 915' }} | Email: {{ $company->email ?? 'saikououmar47@gmail.com' }}
+                    {{ $company->address ?? 'Madina, Ecole Gare Routière Dabola Camion, Conakry' }}<br>
+                    Tél: {{ $company->phone ?? '625 45 35 45' }} | Email: {{ $company->email ?? 'abdulghadirybalde@gmail.com' }}
                 </div>
             </td>
         </tr>
@@ -316,7 +316,7 @@
     </div>
 
     <div class="footer">
-        {{ $company->name ?? 'SMH' }} — Rapport de paiements — Document confidentiel
+        {{ $company->name ?? 'Coleah Bandeya & Fils' }} — Rapport de paiements — Document confidentiel
     </div>
 
     <script type="text/php">

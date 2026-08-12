@@ -90,11 +90,11 @@
             
             <div class="warning">
                 <strong>⚠️ Vous n'avez pas demandé ce changement ?</strong><br>
-                Contactez immédiatement un administrateur à saikououmar47@gmail.com
+                Contactez immédiatement un administrateur à abdulghadirybalde@gmail.com
             </div>
         </div>
         <div class="footer">
-            © {{ date('Y') }} SMH - Tous droits réservés
+            © {{ date('Y') }} Coleah Bandeya & Fils - Tous droits réservés
         </div>
     </div>
 </body>

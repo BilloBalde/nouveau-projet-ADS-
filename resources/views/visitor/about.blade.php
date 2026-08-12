@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>À propos — SMH</title>
+    <title>À propos — Coleah Bandeya & Fils</title>
     <script src="https://cdn.tailwindcss.com"></script>
     @include('partials.theme-head')
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -17,9 +17,9 @@
     <!-- Hero -->
     <section class="pt-24 pb-16 bg-gradient-to-br from-amber-50 to-orange-100">
         <div class="max-w-4xl mx-auto px-4 text-center">
-            <h1 class="text-4xl font-black text-gray-900 mb-4">À propos de <span class="text-amber-500">SMH</span></h1>
+            <h1 class="text-4xl font-black text-gray-900 mb-4">À propos de <span class="text-amber-500">Coleah Bandeya & Fils</span></h1>
             <p class="text-lg text-gray-600 leading-relaxed">
-                Chez SMH, au-delà de la qualité des autres — votre partenaire de confiance pour l'ameublement en Guinée.
+                Chez Coleah Bandeya & Fils, au-delà de la qualité des autres — votre quincaillerie générale de confiance à Conakry.
             </p>
         </div>
     </section>
@@ -31,18 +31,18 @@
                 <div>
                     <h2 class="text-2xl font-bold text-gray-900 mb-4">Notre mission</h2>
                     <p class="text-gray-600 leading-relaxed mb-4">
-                        SMH est une entreprise guinéenne spécialisée dans l'ameublement : salons, chambres,
-                        salles à manger, bureaux et pièces sur mesure. Nous mettons à disposition de nos clients
-                        des meubles adaptés à leurs besoins, avec un accompagnement fiable et des standards élevés.
+                        Coleah Bandeya & Fils est une quincaillerie générale guinéenne à Conakry : peinture, outillage,
+                        serrurerie, plomberie et électricité. Nous mettons à disposition de nos clients des articles
+                        adaptés à leurs travaux, avec un accompagnement fiable et des standards élevés.
                     </p>
                     <p class="text-gray-600 leading-relaxed">
-                        Notre équipe expérimentée vous conseille selon votre espace et votre budget, pour des meubles
-                        qui reflètent votre style et transforment durablement votre intérieur.
+                        Notre équipe expérimentée vous conseille selon votre chantier et votre budget, pour des articles
+                        de quincaillerie solides et adaptés à vos besoins.
                     </p>
                 </div>
                 <div class="bg-amber-50 rounded-2xl p-8 text-center">
-                    <div class="text-6xl text-amber-400 mb-4"><i class="fas fa-couch"></i></div>
-                    <div class="text-3xl font-black text-gray-900">SMH</div>
+                    <div class="text-6xl text-amber-400 mb-4"><i class="fas fa-toolbox"></i></div>
+                    <div class="text-3xl font-black text-gray-900">Coleah Bandeya & Fils</div>
                     <div class="text-amber-600 font-semibold mt-1">Qualité & Service</div>
                 </div>
             </div>
@@ -50,7 +50,7 @@
             <!-- Valeurs -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
                 @foreach([
-                    ['icon' => 'fa-star', 'title' => 'Qualité', 'text' => 'Bois massif, finitions soignées et assemblage solide, pour des meubles conçus pour durer.'],
+                    ['icon' => 'fa-star', 'title' => 'Qualité', 'text' => 'Articles solides et fiables, sélectionnés pour durer sur vos chantiers.'],
                     ['icon' => 'fa-bolt', 'title' => 'Rapidité', 'text' => 'Délais de livraison optimisés partout en Guinée, en 24 à 48h.'],
                     ['icon' => 'fa-handshake', 'title' => 'Fiabilité', 'text' => 'Un service client à votre écoute du lundi au samedi.'],
                 ] as $val)
@@ -70,15 +70,15 @@
                     <div class="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center mb-4">
                         <i class="fas fa-map-marker-alt text-amber-500"></i>
                     </div>
-                    <h3 class="font-bold text-gray-900 mb-1">1<sup>ère</sup> adresse</h3>
-                    <p class="text-gray-500 text-sm">Centre Faloulay, 1<sup>er</sup> étage B30, Madina route Niger</p>
+                    <h3 class="font-bold text-gray-900 mb-1">Quincaillerie Madina</h3>
+                    <p class="text-gray-500 text-sm">Madina, Ecole Gare Routière Dabola Camion, Conakry</p>
                 </div>
                 <div class="bg-white rounded-2xl p-6 shadow-sm">
                     <div class="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center mb-4">
                         <i class="fas fa-map-marker-alt text-amber-500"></i>
                     </div>
-                    <h3 class="font-bold text-gray-900 mb-1">2<sup>e</sup> adresse</h3>
-                    <p class="text-gray-500 text-sm">T6, en face de la station Star, en partant pour Sonfonia</p>
+                    <h3 class="font-bold text-gray-900 mb-1">Dépôt Madina</h3>
+                    <p class="text-gray-500 text-sm">Madina, Conakry (réapprovisionnement)</p>
                 </div>
             </div>
 

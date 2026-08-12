@@ -13,6 +13,8 @@ use Database\Seeders\CustomersSeeder;
 use Database\Seeders\CategoriesSeeder;
 use Database\Seeders\StoreProductsSeeder;
 use Database\Seeders\CategoryProductsSeeder;
+use Database\Seeders\SalesDemoSeeder;
+use Database\Seeders\PurchasesDemoSeeder;
 
 class DatabaseSeeder extends Seeder
 {
@@ -34,6 +36,8 @@ class DatabaseSeeder extends Seeder
             CategoryProductsSeeder::class,
             StoreProductsSeeder::class,
             CustomersSeeder::class,
+            SalesDemoSeeder::class,
+            PurchasesDemoSeeder::class,
         ]);
     }
 }

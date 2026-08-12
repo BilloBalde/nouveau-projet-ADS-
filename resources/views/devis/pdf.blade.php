@@ -376,7 +376,7 @@
                                     @endif
                                     <div class="document-title">
                                         <h1>DEVIS</h1>
-                                        <h3>{{ $company?->name ?? 'SMH' }}</h3>
+                                        <h3>{{ $company?->name ?? 'Coleah Bandeya & Fils' }}</h3>
                                     </div>
                                 </div>
                             </div>
@@ -484,14 +484,14 @@
                                 </div>
                                 <div class="signature-box">
                                     <div class="signature-line"></div>
-                                    <strong>Pour {{ $company?->name ?? 'SMH' }}</strong><br>
+                                    <strong>Pour {{ $company?->name ?? 'Coleah Bandeya & Fils' }}</strong><br>
                                     <small>{{ $devis->createdBy?->name ?? auth()->user()->name }}</small>
                                 </div>
                             </div>
 
                             <!-- Pied de page -->
                             <div style="margin-top: 30px; text-align: center; font-size: 11px; color: #999 !important; border-top: 1px solid #eee; padding-top: 10px;">
-                                <p>Document généré le {{ \Carbon\Carbon::now()->format('d/m/Y H:i:s') }} - {{ $company?->address ?? '' }} - Tél: {{ $company?->phone ?? '+224 626 311 915' }} | Email: {{ $company?->email ?? 'saikououmar47@gmail.com' }}</p>
+                                <p>Document généré le {{ \Carbon\Carbon::now()->format('d/m/Y H:i:s') }} - {{ $company?->address ?? '' }} - Tél: {{ $company?->phone ?? '625 45 35 45' }} | Email: {{ $company?->email ?? 'abdulghadirybalde@gmail.com' }}</p>
                             </div>
                         </div>
                     </div>

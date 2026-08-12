@@ -113,16 +113,16 @@
 
                                 <div class="signature-box">
                                     <div class="signature-line"></div>
-                                    <p><strong>POUR {{ strtoupper($company?->name ?? 'SMH') }}</strong></p>
+                                    <p><strong>POUR {{ strtoupper($company?->name ?? 'Coleah Bandeya & Fils') }}</strong></p>
                                     <p>Le Gérant / Signature autorisée</p>
                                     <p>Nom et signature du responsable</p>
                                 </div>
                             </div>
 
                             <div class="company-info">
-                                <h4>{{ $company?->name ?? 'SMH' }}</h4>
-                                <p>{{ $company?->address ?? 'Centre Faloulay, 1er étage B30, Madina route Niger / T6, en face de la station Star, Sonfonia' }}</p>
-                                <p>Tél: {{ $company?->phone ?? '+224 626 311 915' }} | Email: {{ $company?->email ?? 'saikououmar47@gmail.com' }}</p>
+                                <h4>{{ $company?->name ?? 'Coleah Bandeya & Fils' }}</h4>
+                                <p>{{ $company?->address ?? 'Madina, Ecole Gare Routière Dabola Camion, Conakry' }}</p>
+                                <p>Tél: {{ $company?->phone ?? '625 45 35 45' }} | Email: {{ $company?->email ?? 'abdulghadirybalde@gmail.com' }}</p>
                                 <p>Merci pour votre confiance et à bientôt !</p>
                                 <p>Reçu généré le {{ \Carbon\Carbon::now()->format('d/m/Y H:i') }}</p>
                             </div>

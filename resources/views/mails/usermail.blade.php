@@ -225,9 +225,9 @@
         <div class="header">
             <div class="logo">
                 <!-- Remplacez par votre logo -->
-                <img src="{{ asset('companies/logo.jpg') }}" alt="SMH" style="max-width: 150px;">
+                <img src="{{ asset('companies/ADK.jpg') }}" alt="Coleah Bandeya & Fils" style="max-width: 150px;">
             </div>
-            <h1>Bienvenue chez SMH</h1>
+            <h1>Bienvenue chez Coleah Bandeya & Fils</h1>
             <p>Votre partenaire de confiance</p>
         </div>
         
@@ -274,7 +274,7 @@
                 </p>
                 <p>
                     <span>📱</span>
-                    <span><strong>Assistance</strong> - Besoin d'aide ? Contactez-nous à saikououmar47@gmail.com</span>
+                    <span><strong>Assistance</strong> - Besoin d'aide ? Contactez-nous à abdulghadirybalde@gmail.com</span>
                 </p>
             </div>
             
@@ -293,8 +293,8 @@
         
         <!-- Footer -->
         <div class="footer">
-            <p><strong>SMH</strong> - Votre partenaire commercial de confiance</p>
-            <p>📍 Conakry, Guinée | 📞 +224 626 311 915 | ✉️ saikououmar47@gmail.com</p>
+            <p><strong>Coleah Bandeya & Fils</strong> - Votre partenaire commercial de confiance</p>
+            <p>📍 Conakry, Guinée | 📞 625 45 35 45 | ✉️ abdulghadirybalde@gmail.com</p>
             
             <div class="social-links">
                 <a href="#" class="social-link">Facebook</a> •
@@ -303,7 +303,7 @@
             </div>
             
             <div class="copyright">
-                &copy; {{ $year ?? date('Y') }} SMH. Tous droits réservés.
+                &copy; {{ $year ?? date('Y') }} Coleah Bandeya & Fils. Tous droits réservés.
             </div>
         </div>
     </div>

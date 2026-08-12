@@ -11,7 +11,7 @@ class StoresSeeder extends Seeder
     {
         $placeId = DB::table('places')->where('placeName', 'Conakry')->value('id')
             ?? DB::table('places')->value('id');
-        $userId = DB::table('users')->where('email', 'manager@example.com')->value('id')
+        $userId = DB::table('users')->where('email', 'info@ibratechengineer.com')->value('id')
             ?? DB::table('users')->value('id');
 
         if (!$placeId || !$userId) {
@@ -20,20 +20,24 @@ class StoresSeeder extends Seeder
 
         $stores = [
             [
-                'store_name' => 'Magasin Central',
+                'store_name' => 'Quincaillerie Madina',
                 'place_id' => $placeId,
                 'user_id' => $userId,
                 'store_picture' => 'store.png',
                 'status' => 1,
-                'description' => 'Boutique principale.',
+                'description' => 'Boutique principale : peinture, outillage, serrurerie, plomberie, électricité et divers.',
+                'address' => 'Madina, Ecole Gare Routière Dabola Camion, Conakry',
+                'phone' => '625 45 35 45',
             ],
             [
-                'store_name' => 'Magasin Secondaire',
+                'store_name' => 'Dépôt Madina',
                 'place_id' => $placeId,
                 'user_id' => $userId,
                 'store_picture' => 'store.png',
                 'status' => 1,
-                'description' => 'Boutique secondaire.',
+                'description' => 'Entrepôt secondaire pour le réapprovisionnement.',
+                'address' => 'Madina, Conakry',
+                'phone' => '628 59 31 10',
             ],
         ];
 

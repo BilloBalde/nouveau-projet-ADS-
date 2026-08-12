@@ -35,6 +35,7 @@ __MACOSX/
 /storage/framework/testing/*
 /storage/framework/views/*
 /storage/logs/*.log
+/storage/app/backups/*
 
 # Rapports de tests et couverture
 /.phpunit.result.cache

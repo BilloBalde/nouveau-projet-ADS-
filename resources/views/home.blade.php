@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>SMH - Meubles de qualité en Guinée</title>
+    <title>COLEAH BANDEYA & FILS - Quincaillerie Générale à Conakry</title>
 
     {{-- Tailwind CSS CDN --}}
     <script src="https://cdn.tailwindcss.com"></script>
@@ -327,20 +327,20 @@
                     {{-- Badge --}}
                     <div class="hero-badge mb-5 w-fit">
                         <span class="w-2 h-2 rounded-full bg-orange-300 inline-block animate-pulse"></span>
-                        Meubles & équipements · Conakry, Guinée
+                        Quincaillerie générale · Conakry, Guinée
                     </div>
 
                     {{-- Titre --}}
                     <h1 class="text-5xl md:text-6xl font-extrabold text-white mb-5 leading-tight tracking-tight">
-                        Aménagez votre intérieur<br>
+                        Équipez votre chantier<br>
                         <span style="background:linear-gradient(90deg,#ffb46e,#ffe6cf);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">
-                            avec style et qualité
+                            avec qualité et confiance
                         </span>
                     </h1>
 
                     {{-- Sous-titre --}}
                     <p class="text-white/80 text-base md:text-lg mb-8 leading-relaxed max-w-md">
-                        Salons, chambres, salles à manger, bureaux — commandez en ligne, payez à la livraison ou par Orange Money, et recevez vos meubles partout en Guinée.
+                        Peinture, outillage, serrurerie, plomberie et électricité — commandez en ligne, payez à la livraison ou par Orange Money, et recevez vos articles partout en Guinée.
                     </p>
 
                     {{-- Boutons --}}
@@ -380,7 +380,7 @@
                             @php
                                 $heroImages = $allProducts->filter(fn($p) => !empty($p['image']))->take(6)->values();
                                 if ($heroImages->isEmpty()) {
-                                    $heroImages = collect([['image' => null, 'name' => 'SMH']]);
+                                    $heroImages = collect([['image' => null, 'name' => 'Coleah Bandeya & Fils']]);
                                 }
                             @endphp
                             @foreach($heroImages as $i => $prod)
@@ -391,7 +391,7 @@
                                 @else
                                     <div class="w-full h-full flex items-center justify-center"
                                          style="background:linear-gradient(135deg,#dbeafe,#bfdbfe);">
-                                        <img src="{{ asset('images/customers/logo.jpg') }}" alt="SMH" class="w-40 h-40 object-contain">
+                                        <img src="{{ asset('companies/ADK.jpg') }}" alt="Coleah Bandeya & Fils" class="w-40 h-40 object-contain">
                                     </div>
                                 @endif
                                 <div class="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent rounded-3xl"></div>
@@ -461,9 +461,9 @@
             <div class="grid grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-5 py-7">
                 @foreach([
                     ['icon' => 'fa-truck-fast',        'title' => 'Livraison 24-48h',        'text' => 'À Conakry, partout en Guinée'],
-                    ['icon' => 'fa-store',             'title' => 'Retrait gratuit',          'text' => 'Madina & T6 Sonfonia'],
+                    ['icon' => 'fa-store',             'title' => 'Retrait gratuit',          'text' => 'Madina, Conakry'],
                     ['icon' => 'fa-money-bill-wave',   'title' => 'Paiement flexible',        'text' => 'Orange Money ou à la livraison'],
-                    ['icon' => 'fa-headset',           'title' => 'Conseil personnalisé',     'text' => '+224 626 311 915'],
+                    ['icon' => 'fa-headset',           'title' => 'Conseil personnalisé',     'text' => '625 45 35 45'],
                 ] as $item)
                 <div class="flex items-center gap-3">
                     <div class="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0" style="background:#dbeafe;color:#1d4ed8;">
@@ -534,9 +534,9 @@
                     <div class="cat-slide-img">
                         @if($cat->image_url)
                             <img src="{{ $cat->image_url }}" alt="{{ $cat->name }}" loading="lazy"
-                                 onerror="this.outerHTML='<span class=&quot;cat-slide-icon&quot;><i class=&quot;fas fa-couch&quot;></i></span>'">
+                                 onerror="this.outerHTML='<span class=&quot;cat-slide-icon&quot;><i class=&quot;fas fa-toolbox&quot;></i></span>'">
                         @else
-                            <span class="cat-slide-icon"><i class="fas fa-couch"></i></span>
+                            <span class="cat-slide-icon"><i class="fas fa-toolbox"></i></span>
                         @endif
                     </div>
                     <div class="cat-slide-name">{{ $cat->name }}</div>
@@ -572,9 +572,9 @@
                                 @if($p['image'])
                                     <img src="{{ $p['image'] }}" alt="{{ $p['name'] }}"
                                          onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='block'">
-                                    <span class="no-img" style="display:none">🛋️</span>
+                                    <span class="no-img" style="display:none">🧰</span>
                                 @else
-                                    <span class="no-img">🪑</span>
+                                    <span class="no-img">🧰</span>
                                 @endif
                                 @if($p['old_price'])
                                     <span class="prod-badge badge-promo">-{{ $p['discount'] }}%</span>
@@ -722,12 +722,12 @@
         <div class="container mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-12">
                 <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-3">Modes de <span class="gradient-text">livraison</span></h2>
-                <p class="text-gray-500 max-w-xl mx-auto">Choisissez la formule qui vous convient — nous livrons vos meubles partout en Guinée</p>
+                <p class="text-gray-500 max-w-xl mx-auto">Choisissez la formule qui vous convient — nous livrons vos articles de quincaillerie partout en Guinée</p>
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 @foreach([
-                    ['icon' => 'fa-truck',        'title' => 'Livraison à domicile', 'text' => 'Recevez vos meubles chez vous en 24 à 48h à Conakry, montés et prêts à l\'emploi.'],
-                    ['icon' => 'fa-store',        'title' => 'Retrait en magasin',   'text' => 'Commandez en ligne et récupérez gratuitement à Madina (Centre Faloulay) ou à T6 Sonfonia.'],
+                    ['icon' => 'fa-truck',        'title' => 'Livraison à domicile', 'text' => 'Recevez votre commande chez vous ou sur le chantier en 24 à 48h à Conakry.'],
+                    ['icon' => 'fa-store',        'title' => 'Retrait en magasin',   'text' => 'Commandez en ligne et récupérez gratuitement à notre quincaillerie de Madina.'],
                     ['icon' => 'fa-bolt',         'title' => 'Livraison express',    'text' => 'Besoin urgent ? Livraison le jour même à Conakry pour les commandes passées avant midi.'],
                     ['icon' => 'fa-map',          'title' => 'Livraison en région',  'text' => 'Nous expédions dans toutes les régions de la Guinée via nos transporteurs partenaires.'],
                 ] as $mode)
@@ -754,13 +754,13 @@
                         Qui sommes-nous ?
                     </span>
                     <h2 class="text-4xl md:text-5xl font-bold text-gray-800 mb-6 leading-tight">
-                        <span class="gradient-text">SMH</span>
+                        <span class="gradient-text">Coleah Bandeya & Fils</span>
                     </h2>
                     <p class="text-gray-600 text-lg leading-relaxed mb-6">
-                        Nous sommes <strong>SMH</strong>, votre partenaire de confiance pour l'<strong>ameublement</strong> en Guinée. Salons, chambres, salles à manger, bureaux et pièces sur mesure — nous accompagnons particuliers et professionnels avec qualité, élégance et fiabilité.
+                        Nous sommes <strong>Coleah Bandeya & Fils</strong>, votre <strong>quincaillerie générale</strong> à Conakry. Peinture, outillage, serrurerie, plomberie, électricité et divers — nous accompagnons particuliers et professionnels du bâtiment avec qualité, sérieux et fiabilité.
                     </p>
                     <p class="text-gray-600 leading-relaxed mb-8">
-                        Notre mission : vous offrir des meubles de qualité à des prix accessibles, avec un service de proximité et un accompagnement personnalisé à chaque étape de votre projet d'aménagement. Chez SMH, au-delà de la qualité des autres.
+                        Notre mission : vous offrir des articles de quincaillerie de qualité à des prix accessibles, avec un service de proximité et un conseil personnalisé pour chaque chantier. Chez Coleah Bandeya & Fils, au-delà de la qualité des autres.
                     </p>
                     <div class="flex flex-wrap gap-4">
                         <div class="flex items-center gap-3 bg-white rounded-xl px-5 py-3 shadow-sm border border-gray-100">
@@ -769,7 +769,7 @@
                             </div>
                             <div>
                                 <p class="text-xs text-gray-400 font-medium">Localisation</p>
-                                <p class="text-sm font-semibold text-gray-700">Centre Faloulay, 1er étage B30, Madina route Niger</p>
+                                <p class="text-sm font-semibold text-gray-700">Madina, Ecole Gare Routière Dabola Camion, Conakry</p>
                             </div>
                         </div>
                         <div class="flex items-center gap-3 bg-white rounded-xl px-5 py-3 shadow-sm border border-gray-100">
@@ -778,7 +778,7 @@
                             </div>
                             <div>
                                 <p class="text-xs text-gray-400 font-medium">Qualité</p>
-                                <p class="text-sm font-semibold text-gray-700">Meubles durables, garantis</p>
+                                <p class="text-sm font-semibold text-gray-700">Matériaux durables, garantis</p>
                             </div>
                         </div>
                     </div>
@@ -787,18 +787,18 @@
                     <div class="relative w-full max-w-sm">
                         <div class="bg-gradient-to-br from-navy-700 to-navy-900 rounded-3xl p-8 text-white text-center shadow-2xl">
                             <div class="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                                <i class="fas fa-couch text-white text-4xl"></i>
+                                <i class="fas fa-toolbox text-white text-4xl"></i>
                             </div>
-                            <h3 class="text-2xl font-bold mb-2">SMH</h3>
-                            <p class="text-white/80 text-sm mb-6">Spécialiste en ameublement<br>Chez SMH, au-delà de la qualité des autres.</p>
+                            <h3 class="text-2xl font-bold mb-2">Coleah Bandeya & Fils</h3>
+                            <p class="text-white/80 text-sm mb-6">Quincaillerie générale<br>Chez Coleah Bandeya & Fils, au-delà de la qualité des autres.</p>
                             <div class="space-y-3 text-left">
                                 <div class="flex items-center gap-3 bg-white/10 rounded-xl px-4 py-2">
                                     <i class="fas fa-phone text-white/80 text-sm"></i>
-                                    <span class="text-sm">+224 626 311 915</span>
+                                    <span class="text-sm">625 45 35 45</span>
                                 </div>
                                 <div class="flex items-center gap-3 bg-white/10 rounded-xl px-4 py-2">
                                     <i class="fas fa-envelope text-white/80 text-sm"></i>
-                                    <span class="text-sm">saikououmar47@gmail.com</span>
+                                    <span class="text-sm">abdulghadirybalde@gmail.com</span>
                                 </div>
                             </div>
                         </div>
@@ -906,7 +906,7 @@
                     Nous sommes à <span class="gradient-text">votre écoute</span>
                 </h2>
                 <p class="text-gray-600 text-lg max-w-2xl mx-auto">
-                    Besoin d'un conseil, d'un devis ou d'une livraison ? Contactez SMH directement.
+                    Besoin d'un conseil, d'un devis ou d'une livraison ? Contactez Coleah Bandeya & Fils directement.
                 </p>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
@@ -914,24 +914,24 @@
                     <div class="feature-icon mx-auto mb-5"><i class="fas fa-map-marker-alt"></i></div>
                     <h3 class="text-xl font-bold text-gray-800 mb-3">Adresse</h3>
                     <p class="text-gray-600 leading-relaxed">
-                        1<sup>er</sup> adresse : Centre Faloulay, 1<sup>er</sup> étage B30, Madina route Niger<br>
-                        2<sup>e</sup> adresse : T6, en face de la station Star, en partant pour Sonfonia
+                        Madina, Ecole Gare Routière Dabola Camion, Conakry
                     </p>
                 </div>
                 <div class="text-center bg-gray-50 rounded-2xl p-8 border border-gray-100 hover:border-amber-300 hover:shadow-lg transition duration-300">
                     <div class="feature-icon mx-auto mb-5"><i class="fas fa-phone-alt"></i></div>
                     <h3 class="text-xl font-bold text-gray-800 mb-3">Appelez-nous</h3>
                     <p class="text-gray-600 leading-relaxed">
-                        <a href="tel:+224626311915" class="hover:text-amber-600 transition font-medium">+224 626 311 915</a><br>
-                        <a href="tel:+224626314400" class="hover:text-amber-600 transition font-medium">+224 626 31 44 00</a>
+                        <a href="tel:+224625453545" class="hover:text-amber-600 transition font-medium">625 45 35 45</a><br>
+                        <a href="tel:+224628593110" class="hover:text-amber-600 transition font-medium">628 59 31 10</a><br>
+                        <a href="tel:+224628801895" class="hover:text-amber-600 transition font-medium">628 80 18 95</a>
                     </p>
                 </div>
                 <div class="text-center bg-gray-50 rounded-2xl p-8 border border-gray-100 hover:border-amber-300 hover:shadow-lg transition duration-300">
                     <div class="feature-icon mx-auto mb-5"><i class="fas fa-envelope"></i></div>
                     <h3 class="text-xl font-bold text-gray-800 mb-3">Email</h3>
                     <p class="text-gray-600 leading-relaxed">
-                        <a href="mailto:saikououmar47@gmail.com" class="hover:text-amber-600 transition font-medium break-all">
-                            saikououmar47@gmail.com
+                        <a href="mailto:abdulghadirybalde@gmail.com" class="hover:text-amber-600 transition font-medium break-all">
+                            abdulghadirybalde@gmail.com
                         </a>
                     </p>
                 </div>
@@ -950,8 +950,8 @@
     <section class="py-16 bg-gradient-to-r from-amber-500 to-amber-600">
         <div class="container mx-auto px-4 sm:px-6 lg:px-8">
             <div class="max-w-3xl mx-auto text-center text-white">
-                <h2 class="text-4xl font-bold mb-4">Offres et nouveautés meubles</h2>
-                <p class="text-lg text-white/90 mb-8">Inscrivez-vous à notre newsletter et soyez le premier informé de nos promotions sur les salons, chambres et articles de décoration</p>
+                <h2 class="text-4xl font-bold mb-4">Offres et nouveautés quincaillerie</h2>
+                <p class="text-lg text-white/90 mb-8">Inscrivez-vous à notre newsletter et soyez le premier informé de nos promotions sur la peinture, l'outillage et le matériel électrique</p>
                 <form action="{{ route('newsletter.subscribe') }}" method="POST" class="flex gap-2 max-w-md mx-auto">
                     @csrf
                     <input type="email" name="email" placeholder="Votre email" required
@@ -997,7 +997,7 @@
             
             const imgHTML = p.image
                 ? `<img src="${p.image}" alt="Image non trouvée: ${p.image}" loading="lazy" style="width:100%;height:100%;object-fit:cover;" onerror="this.onerror=null; this.src='https://placehold.co/400x400?text=Introuvable'">`
-                : `<span class="no-img">🪑</span>`;
+                : `<span class="no-img">🧰</span>`;
             const tierHTML = displayTiersFor(p.price).map(t => `
                 <div class="tier-cell">
                     <div class="tier-qty">${t.qty}+</div>

@@ -10,9 +10,12 @@ class CategoriesSeeder extends Seeder
     public function run()
     {
         $categories = [
-            ['slug' => 'electronique', 'category_type' => 'Electronique', 'description' => 'Articles électroniques'],
-            ['slug' => 'maison', 'category_type' => 'Maison', 'description' => 'Articles pour la maison'],
-            ['slug' => 'bureau', 'category_type' => 'Bureau', 'description' => 'Fournitures de bureau'],
+            ['slug' => 'peinture', 'category_type' => 'Peinture & Droguerie', 'description' => 'Peintures, pinceaux et produits de finition'],
+            ['slug' => 'outillage', 'category_type' => 'Outillage', 'description' => 'Outils à main pour le bâtiment et le jardin'],
+            ['slug' => 'serrurerie', 'category_type' => 'Serrurerie & Sécurité', 'description' => 'Cadenas, serrures et verrous'],
+            ['slug' => 'plomberie', 'category_type' => 'Plomberie', 'description' => 'Tuyaux, raccords et robinetterie'],
+            ['slug' => 'electricite', 'category_type' => 'Électricité', 'description' => 'Câbles, ampoules et petit matériel électrique'],
+            ['slug' => 'quincaillerie-generale', 'category_type' => 'Quincaillerie Générale', 'description' => 'Clous, vis et articles divers'],
         ];
 
         foreach ($categories as $category) {

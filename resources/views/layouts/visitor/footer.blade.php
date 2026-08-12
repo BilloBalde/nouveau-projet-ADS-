@@ -3,13 +3,12 @@
         <div class="row gy-4">
             <div class="col-lg-4 col-md-4 footer-about">
                 <a href="index.html" class="logo d-flex align-items-center">
-                    <span class="sitename">SMH</span>
+                    <span class="sitename">Coleah Bandeya & Fils</span>
                 </a>
                 <div class="footer-contact pt-3">
-                    <p><strong>1<sup>er</sup> adresse:</strong> Centre Faloulay, 1<sup>er</sup> étage B30, Madina route Niger</p>
-                    <p><strong>2<sup>e</sup> adresse:</strong> T6, en face de la station Star, en partant pour Sonfonia</p>
-                    <p class="mt-3"><strong>Téléphone:</strong> <span>+224 626 311 915</span></p>
-                    <p><strong>Email:</strong> <span>saikououmar47@gmail.com</span></p>
+                    <p><strong>Adresse:</strong> Madina, Ecole Gare Routière Dabola Camion, Conakry</p>
+                    <p class="mt-3"><strong>Téléphone:</strong> <span>625 45 35 45 / 628 59 31 10 / 628 80 18 95</span></p>
+                    <p><strong>Email:</strong> <span>abdulghadirybalde@gmail.com</span></p>
                 </div>
                 <div class="social-links d-flex mt-4">
                     <a href=""><i class="bi bi-twitter-x"></i></a>
@@ -29,7 +28,7 @@
             <div class="col-lg-4 col-md-4 footer-links">
                 <h4>A Propos</h4>
                 <p>
-                Nous sommes SMH, votre partenaire de confiance pour l'ameublement en Guinée : salons, chambres, salles à manger, bureaux et pièces sur mesure. Chez SMH, au-delà de la qualité des autres. Retrouvez-nous à Centre Faloulay et à T6, en face de la station Star, ou joignez-nous au +224 626 311 915 / saikououmar47@gmail.com.
+                Nous sommes Coleah Bandeya & Fils, votre quincaillerie générale de confiance à Conakry : peinture, outillage, serrurerie, plomberie et électricité. Chez Coleah Bandeya & Fils, au-delà de la qualité des autres. Retrouvez-nous à Madina, Ecole Gare Routière Dabola Camion, ou joignez-nous au 625 45 35 45 / abdulghadirybalde@gmail.com.
                 </p>
             </div>
         </div>

@@ -523,7 +523,7 @@
                 </div>
                 <div class="invoice-head-brand-cell">
                     <div class="invoice-head-brandtext">
-                        <div class="invoice-head-company">{{ $company?->name ?? 'SMH' }}</div>
+                        <div class="invoice-head-company">{{ $company?->name ?? 'Coleah Bandeya & Fils' }}</div>
                         @if(!empty($company?->address))
                             <div class="invoice-head-sub">{{ $company->address }}</div>
                         @endif
@@ -733,7 +733,7 @@
             <div class="signature-line">Nom et cachet</div>
         </div>
         <div class="signature-right">
-            <div class="signature-title">Pour {{ $company?->name ?? 'SMH' }}</div>
+            <div class="signature-title">Pour {{ $company?->name ?? 'Coleah Bandeya & Fils' }}</div>
             <div class="signature-line">Le Gérant/Signature autorisée</div>
             <div class="signature-line" style="margin-top: 8px;">Nom et signature du responsable</div>
         </div>

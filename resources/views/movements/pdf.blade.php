@@ -287,7 +287,7 @@
         <h1>{{ $company->name ?? config('app.name') }}</h1>
         <p>{{ $company->address ?? 'Adresse non renseignée' }}</p>
         <p>
-            Tél : {{ $company->phone ?? '+224 626 311 915' }} | Email : {{ $company->email ?? 'saikououmar47@gmail.com' }}
+            Tél : {{ $company->phone ?? '625 45 35 45' }} | Email : {{ $company->email ?? 'abdulghadirybalde@gmail.com' }}
             @if($company->rc ?? false)
                 | RC : {{ $company->rc }} | NIF : {{ $company->nif ?? 'GN.TCC.2022.A.03557' }}
             @endif

@@ -9,33 +9,55 @@ class StoreProductsSeeder extends Seeder
 {
     public function run()
     {
-        $storeId = DB::table('stores')->where('store_name', 'Magasin Central')->value('id')
-            ?? DB::table('stores')->value('id');
+        $mainStoreId = DB::table('stores')->where('store_name', 'Quincaillerie Madina')->value('id');
+        $depotStoreId = DB::table('stores')->where('store_name', 'Dépôt Madina')->value('id');
 
-        if (!$storeId) {
+        if (!$mainStoreId) {
             return;
         }
 
         $products = DB::table('products')->pluck('id', 'sku');
 
-        $stocks = [
-            ['sku' => 'SKU-CLAV-001', 'quantity' => 50],
-            ['sku' => 'SKU-SOURIS-001', 'quantity' => 80],
-            ['sku' => 'SKU-IMPR-001', 'quantity' => 10],
-            ['sku' => 'SKU-CHAISE-001', 'quantity' => 20],
-            ['sku' => 'SKU-LAMPE-001', 'quantity' => 30],
+        // Stock de la boutique principale (vente au comptoir)
+        $mainStock = [
+            'CBF-PNT-001' => 25, 'CBF-PNT-002' => 30, 'CBF-PNC-001' => 60,
+            'CBF-MRT-001' => 20, 'CBF-PEL-001' => 15, 'CBF-PIO-001' => 15, 'CBF-SCI-001' => 18,
+            'CBF-CAD-001' => 40, 'CBF-SER-001' => 12, 'CBF-VER-001' => 20,
+            'CBF-TUY-001' => 22, 'CBF-ROB-001' => 18, 'CBF-RAC-001' => 50,
+            'CBF-FIL-001' => 10, 'CBF-AMP-001' => 80, 'CBF-DIS-001' => 25,
+            'CBF-CLO-001' => 45, 'CBF-VIS-001' => 45, 'CBF-BRW-001' => 6,
         ];
 
-        foreach ($stocks as $stock) {
-            $productId = $products[$stock['sku']] ?? null;
+        // Stock du dépôt (réserve, plus limité)
+        $depotStock = [
+            'CBF-PNT-001' => 15, 'CBF-MRT-001' => 10, 'CBF-CAD-001' => 20,
+            'CBF-TUY-001' => 12, 'CBF-FIL-001' => 8, 'CBF-CLO-001' => 25, 'CBF-BRW-001' => 4,
+        ];
+
+        foreach ($mainStock as $sku => $quantity) {
+            $productId = $products[$sku] ?? null;
             if (!$productId) {
                 continue;
             }
 
             DB::table('store_products')->updateOrInsert(
-                ['store_id' => $storeId, 'product_id' => $productId],
-                ['store_id' => $storeId, 'product_id' => $productId, 'quantity' => $stock['quantity']]
+                ['store_id' => $mainStoreId, 'product_id' => $productId],
+                ['store_id' => $mainStoreId, 'product_id' => $productId, 'quantity' => $quantity]
             );
+        }
+
+        if ($depotStoreId) {
+            foreach ($depotStock as $sku => $quantity) {
+                $productId = $products[$sku] ?? null;
+                if (!$productId) {
+                    continue;
+                }
+
+                DB::table('store_products')->updateOrInsert(
+                    ['store_id' => $depotStoreId, 'product_id' => $productId],
+                    ['store_id' => $depotStoreId, 'product_id' => $productId, 'quantity' => $quantity]
+                );
+            }
         }
     }
 }
