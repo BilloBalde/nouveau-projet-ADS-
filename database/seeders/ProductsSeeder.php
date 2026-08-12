@@ -47,7 +47,9 @@ class ProductsSeeder extends Seeder
                 [
                     'libelle' => $product['libelle'],
                     'description' => $product['description'],
-                    'image' => 'ib profile.jpg',
+                    // Vide plutôt qu'un nom de fichier fictif : les vues testent la
+                    // valeur et affichent leur visuel de repli, sans requête 404.
+                    'image' => '',
                     'price_sale' => $product['revient'],
                     'price' => round($product['revient'] * 1.3, 2),
                     'pcs' => 0,

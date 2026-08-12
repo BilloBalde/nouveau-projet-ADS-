@@ -422,7 +422,7 @@
                     <div class="login-userset">
                         <!-- Logo -->
                         <div class="login-logo">
-                            <img src="{{ asset('companies/ADK.jpg') }}" alt="Coleah Bandeya & Fils">
+                            <img src="{{ asset('companies/ADK.png') }}" alt="Coleah Bandeya & Fils">
                         </div>
 
                         <!-- Security Badge -->

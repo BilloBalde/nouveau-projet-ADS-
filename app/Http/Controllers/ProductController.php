@@ -233,7 +233,10 @@ class ProductController extends Controller
                 'pcs' => $request->stock_initial, // stock global e-commerce, initialisé au stock du premier magasin
                 'price' => $price,
                 'price_sale' => $priceSale,
-                'image' => $productName ?? 'ib profile.jpg',
+                // Sans upload, on stocke une valeur vide : les vues basculent alors
+                // sur leur visuel de repli. Pointer vers un "ib profile.jpg" qui
+                // n'existe pas produisait une image cassée sur chaque fiche.
+                'image' => $productName ?? '',
                 'is_promo' => $request->boolean('is_promo'),
                 'promo_percent' => $request->promo_percent ?? null,
                 'promo_price' => $this->computePromoPrice($request, $price),

@@ -8,11 +8,10 @@
 
     <script src="https://cdn.tailwindcss.com"></script>
     @include('partials.theme-head')
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
-        * { font-family: 'Poppins', sans-serif; }
+        * { font-family: 'Inter', sans-serif; }
         .navbar-fixed {
             position: fixed; top: 0; width: 100%; z-index: 50;
             background: rgba(255,255,255,0.97);
@@ -23,16 +22,16 @@
             width: 100%; padding: 12px 16px; font-size: 14px;
             border: 1.5px solid #e5e7eb; border-radius: 12px;
             background: #fff; color: #374151; outline: none;
-            font-family: 'Poppins', sans-serif;
+            font-family: 'Inter', sans-serif;
             transition: border-color 0.2s, box-shadow 0.2s;
         }
         .form-input:focus {
-            border-color: #c1682f;
+            border-color: #2e8b57;
             box-shadow: 0 0 0 3px rgba(245,158,11,0.12);
         }
         .form-input.error { border-color: #ef4444; }
         .gradient-text {
-            background: linear-gradient(135deg, #c9986a, #c1682f);
+            background: linear-gradient(135deg, #55aa7c, #2e8b57);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -43,23 +42,23 @@
             transition: all 0.25s;
         }
         .info-card:hover {
-            border-color: #c1682f;
+            border-color: #2e8b57;
             box-shadow: 0 8px 24px rgba(245,158,11,0.12);
             transform: translateY(-3px);
         }
         .info-icon {
             width: 60px; height: 60px;
-            background: linear-gradient(135deg, #c9986a, #a8532a);
+            background: linear-gradient(135deg, #55aa7c, #1f6f43);
             border-radius: 50%; margin: 0 auto 1rem;
             display: flex; align-items: center; justify-content: center;
             color: #fff; font-size: 22px;
         }
         .submit-btn {
             width: 100%; padding: 14px; font-size: 15px; font-weight: 700;
-            background: linear-gradient(135deg, #c9986a, #a8532a);
+            background: linear-gradient(135deg, #55aa7c, #1f6f43);
             color: #fff; border: none; border-radius: 12px; cursor: pointer;
             transition: opacity 0.2s, transform 0.1s;
-            font-family: 'Poppins', sans-serif;
+            font-family: 'Inter', sans-serif;
             display: flex; align-items: center; justify-content: center; gap: 8px;
         }
         .submit-btn:hover { opacity: 0.9; transform: scale(1.01); }
@@ -71,7 +70,7 @@
     @include('partials.storefront-nav')
 
     {{-- HERO --}}
-    <div class="pt-20 bg-gradient-to-r from-amber-500 to-amber-600">
+    <div class="pt-20 bg-gradient-to-r from-brand-500 to-brand-600">
         <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-14 text-center">
             <h1 class="text-4xl md:text-5xl font-bold text-white mb-3">Contactez-nous</h1>
             <p class="text-white/85 text-lg">Chez Coleah Bandeya & Fils, au-delà de la qualité des autres. Nous sommes à votre écoute, réponse sous 24h.</p>
@@ -107,16 +106,16 @@
                 <div class="info-icon"><i class="fas fa-phone-alt"></i></div>
                 <h3 class="text-lg font-bold text-gray-800 mb-2">Téléphone</h3>
                 <p class="text-gray-500 text-sm leading-relaxed">
-                    <a href="tel:+224625453545" class="hover:text-amber-600 transition block">625 45 35 45</a>
-                    <a href="tel:+224628593110" class="hover:text-amber-600 transition block">628 59 31 10</a>
-                    <a href="tel:+224628801895" class="hover:text-amber-600 transition block">628 80 18 95</a>
+                    <a href="tel:+224625453545" class="hover:text-brand-600 transition block">625 45 35 45</a>
+                    <a href="tel:+224628593110" class="hover:text-brand-600 transition block">628 59 31 10</a>
+                    <a href="tel:+224628801895" class="hover:text-brand-600 transition block">628 80 18 95</a>
                 </p>
             </div>
             <div class="info-card">
                 <div class="info-icon"><i class="fas fa-envelope"></i></div>
                 <h3 class="text-lg font-bold text-gray-800 mb-2">Email</h3>
                 <p class="text-gray-500 text-sm leading-relaxed">
-                    <a href="mailto:abdulghadirybalde@gmail.com" class="hover:text-amber-600 transition break-all">
+                    <a href="mailto:abdulghadirybalde@gmail.com" class="hover:text-brand-600 transition break-all">
                         abdulghadirybalde@gmail.com
                     </a>
                 </p>

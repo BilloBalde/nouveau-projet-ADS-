@@ -225,7 +225,7 @@
         <div class="header">
             <div class="logo">
                 <!-- Remplacez par votre logo -->
-                <img src="{{ asset('companies/ADK.jpg') }}" alt="Coleah Bandeya & Fils" style="max-width: 150px;">
+                <img src="{{ asset('companies/ADK.png') }}" alt="Coleah Bandeya & Fils" style="max-width: 150px;">
             </div>
             <h1>Bienvenue chez Coleah Bandeya & Fils</h1>
             <p>Votre partenaire de confiance</p>

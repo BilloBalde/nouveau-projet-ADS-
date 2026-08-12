@@ -35,10 +35,10 @@
 
 <div class="header-left active">
 <a href="index.html" class="logo">
-<img src="{{ asset('companies/logo.jpg') }}" alt="">
+<img src="{{ asset('companies/'.App\Models\Company::latest()->first()->logo) }}" alt="">
 </a>
 <a href="index.html" class="logo-small">
-<img src="{{ asset('companies/logo.jpg') }}" alt="">
+<img src="{{ asset('companies/'.App\Models\Company::latest()->first()->logo) }}" alt="">
 </a>
 <a id="toggle_btn" href="javascript:void(0);">
 </a>

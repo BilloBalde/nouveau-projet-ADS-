@@ -14,13 +14,13 @@
             font-family: 'Poppins', sans-serif;
             min-height: 100vh;
             display: flex;
-            background: #f8f7f5;
+            background: #f7faf8;
         }
 
         /* ── Panneau gauche ── */
         .left-panel {
             flex: 0 0 45%;
-            background: linear-gradient(160deg, #1a0e00 0%, #3b1a00 45%, #7c3a00 80%, #c8690a 100%);
+            background: linear-gradient(160deg, #061710 0%, #0c2c1c 45%, #195836 80%, #2e8b57 100%);
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -32,7 +32,7 @@
             content: '';
             position: absolute; top: -120px; right: -120px;
             width: 420px; height: 420px;
-            background: radial-gradient(circle, rgba(245,169,98,0.2) 0%, transparent 65%);
+            background: radial-gradient(circle, rgba(217,45,32,0.22) 0%, transparent 65%);
             border-radius: 50%;
             pointer-events: none;
         }
@@ -40,7 +40,7 @@
             content: '';
             position: absolute; bottom: -100px; left: -80px;
             width: 340px; height: 340px;
-            background: radial-gradient(circle, rgba(212,117,60,0.15) 0%, transparent 65%);
+            background: radial-gradient(circle, rgba(139,200,165,0.14) 0%, transparent 65%);
             border-radius: 50%;
             pointer-events: none;
         }
@@ -50,9 +50,14 @@
             display: flex; align-items: center; gap: 14px;
             position: relative; z-index: 2;
         }
-        .brand img {
-            height: 48px; width: auto; object-fit: contain;
-            filter: brightness(0) invert(1);
+        /* Pastille blanche : le logo a un fond blanc opaque, il apparaîtrait sinon
+           comme un rectangle clair posé sur le panneau sombre. */
+        .brand-logo {
+            display: inline-flex; align-items: center; justify-content: center;
+            background: #fff; border-radius: 12px; padding: 7px 11px;
+        }
+        .brand-logo img {
+            height: 34px; width: auto; object-fit: contain; display: block;
         }
         .brand-name {
             font-size: 1.4rem; font-weight: 800;
@@ -81,7 +86,7 @@
         }
         .left-badge span {
             width: 7px; height: 7px;
-            background: #f5a962; border-radius: 50%;
+            background: #f97066; border-radius: 50%;
             animation: pulse 2s infinite;
         }
         @keyframes pulse {
@@ -95,7 +100,7 @@
         }
         .left-title em {
             font-style: normal;
-            background: linear-gradient(90deg, #f5a962, #ffd89b);
+            background: linear-gradient(90deg, #b9dfc8, #ffffff);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
@@ -120,7 +125,7 @@
         }
         .stat-num {
             font-size: 1.5rem; font-weight: 800;
-            color: #f5a962;
+            color: #8bc8a5;
         }
         .stat-lbl {
             font-size: 0.7rem; color: rgba(255,255,255,0.55);
@@ -130,7 +135,9 @@
         /* Bas gauche */
         .left-footer {
             position: relative; z-index: 2;
-            font-size: 0.72rem; color: rgba(255,255,255,0.35);
+            /* 0.35 donnait 2,4:1 sur le vert : illisible. 0.55 remonte à ~3,7:1
+               tout en gardant la mention discrète. */
+            font-size: 0.72rem; color: rgba(255,255,255,0.55);
         }
 
         /* Icônes flottants */
@@ -208,7 +215,7 @@
         }
         .input-wrap .icon-left {
             position: absolute; left: 16px; top: 50%; transform: translateY(-50%);
-            color: #d97706; font-size: 15px;
+            color: #1f6f43; font-size: 15px;
             pointer-events: none;
         }
         .input-wrap input {
@@ -225,8 +232,8 @@
         }
         .input-wrap input:focus {
             background: #fff;
-            border-color: #f59e0b;
-            box-shadow: 0 0 0 4px rgba(245,158,11,0.1);
+            border-color: #2e8b57;
+            box-shadow: 0 0 0 4px rgba(46,139,87,0.12);
         }
         .input-wrap input::placeholder { color: #c4c4c4; }
 
@@ -238,7 +245,7 @@
             transition: color 0.2s;
             padding: 4px;
         }
-        .toggle-pw:hover { color: #d97706; }
+        .toggle-pw:hover { color: #1f6f43; }
 
         /* Lien oublié */
         .forgot-row {
@@ -246,29 +253,29 @@
             margin-top: -8px; margin-bottom: 24px;
         }
         .forgot-row a {
-            font-size: 0.78rem; color: #d97706;
+            font-size: 0.78rem; color: #1f6f43;
             text-decoration: none; font-weight: 500;
             transition: color 0.2s;
         }
-        .forgot-row a:hover { color: #92400e; }
+        .forgot-row a:hover { color: #195836; }
 
         /* Bouton submit */
         .btn-submit {
             width: 100%;
             padding: 14px;
-            background: linear-gradient(135deg, #f5a962 0%, #d97706 100%);
+            background: linear-gradient(135deg, #1f6f43 0%, #195836 100%);
             color: #fff; font-size: 0.95rem; font-weight: 700;
             font-family: 'Poppins', sans-serif;
             border: none; border-radius: 12px;
             cursor: pointer;
             transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
-            box-shadow: 0 4px 16px rgba(217,119,6,0.35);
+            box-shadow: 0 4px 16px rgba(31,111,67,0.35);
             display: flex; align-items: center; justify-content: center; gap: 8px;
         }
         .btn-submit:hover {
             opacity: 0.93;
             transform: translateY(-1px);
-            box-shadow: 0 8px 24px rgba(217,119,6,0.4);
+            box-shadow: 0 8px 24px rgba(31,111,67,0.45);
         }
         .btn-submit:active { transform: translateY(0); }
 
@@ -280,7 +287,7 @@
             text-decoration: none;
             transition: color 0.2s;
         }
-        .back-link:hover { color: #d97706; }
+        .back-link:hover { color: #1f6f43; }
 
         /* Responsive */
         @media (max-width: 768px) {
@@ -302,8 +309,9 @@
 
         {{-- Logo --}}
         <div class="brand">
-            <img src="{{ asset('companies/ADK.jpg') }}" alt="Coleah Bandeya & Fils"
-                 style="filter: none;">
+            <span class="brand-logo">
+                <img src="{{ asset('companies/ADK.png') }}" alt="Coleah Bandeya & Fils">
+            </span>
             <div>
                 <div class="brand-name">Coleah Bandeya & Fils</div>
                 <div class="brand-sub">Espace Manager</div>

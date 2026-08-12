@@ -6,18 +6,17 @@
     <title>À propos — Coleah Bandeya & Fils</title>
     <script src="https://cdn.tailwindcss.com"></script>
     @include('partials.theme-head')
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>* { font-family: 'Poppins', sans-serif; }</style>
+    <style>* { font-family: 'Inter', sans-serif; }</style>
 </head>
 <body class="bg-gray-50">
 
     @include('partials.storefront-nav')
 
     <!-- Hero -->
-    <section class="pt-24 pb-16 bg-gradient-to-br from-amber-50 to-orange-100">
+    <section class="pt-24 pb-16 bg-gradient-to-br from-brand-50 to-accent-100">
         <div class="max-w-4xl mx-auto px-4 text-center">
-            <h1 class="text-4xl font-black text-gray-900 mb-4">À propos de <span class="text-amber-500">Coleah Bandeya & Fils</span></h1>
+            <h1 class="text-4xl font-black text-gray-900 mb-4">À propos de <span class="text-brand-500">Coleah Bandeya & Fils</span></h1>
             <p class="text-lg text-gray-600 leading-relaxed">
                 Chez Coleah Bandeya & Fils, au-delà de la qualité des autres — votre quincaillerie générale de confiance à Conakry.
             </p>
@@ -40,10 +39,10 @@
                         de quincaillerie solides et adaptés à vos besoins.
                     </p>
                 </div>
-                <div class="bg-amber-50 rounded-2xl p-8 text-center">
-                    <div class="text-6xl text-amber-400 mb-4"><i class="fas fa-toolbox"></i></div>
+                <div class="bg-brand-50 rounded-2xl p-8 text-center">
+                    <div class="text-6xl text-brand-400 mb-4"><i class="fas fa-toolbox"></i></div>
                     <div class="text-3xl font-black text-gray-900">Coleah Bandeya & Fils</div>
-                    <div class="text-amber-600 font-semibold mt-1">Qualité & Service</div>
+                    <div class="text-brand-600 font-semibold mt-1">Qualité & Service</div>
                 </div>
             </div>
 
@@ -55,8 +54,8 @@
                     ['icon' => 'fa-handshake', 'title' => 'Fiabilité', 'text' => 'Un service client à votre écoute du lundi au samedi.'],
                 ] as $val)
                 <div class="bg-white rounded-2xl p-6 shadow-sm text-center">
-                    <div class="w-14 h-14 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <i class="fas {{ $val['icon'] }} text-amber-500 text-xl"></i>
+                    <div class="w-14 h-14 bg-brand-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas {{ $val['icon'] }} text-brand-500 text-xl"></i>
                     </div>
                     <h3 class="font-bold text-gray-900 mb-2">{{ $val['title'] }}</h3>
                     <p class="text-gray-500 text-sm">{{ $val['text'] }}</p>
@@ -67,15 +66,15 @@
             <!-- Adresses -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16">
                 <div class="bg-white rounded-2xl p-6 shadow-sm">
-                    <div class="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center mb-4">
-                        <i class="fas fa-map-marker-alt text-amber-500"></i>
+                    <div class="w-12 h-12 bg-brand-100 rounded-full flex items-center justify-center mb-4">
+                        <i class="fas fa-map-marker-alt text-brand-500"></i>
                     </div>
                     <h3 class="font-bold text-gray-900 mb-1">Quincaillerie Madina</h3>
                     <p class="text-gray-500 text-sm">Madina, Ecole Gare Routière Dabola Camion, Conakry</p>
                 </div>
                 <div class="bg-white rounded-2xl p-6 shadow-sm">
-                    <div class="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center mb-4">
-                        <i class="fas fa-map-marker-alt text-amber-500"></i>
+                    <div class="w-12 h-12 bg-brand-100 rounded-full flex items-center justify-center mb-4">
+                        <i class="fas fa-map-marker-alt text-brand-500"></i>
                     </div>
                     <h3 class="font-bold text-gray-900 mb-1">Dépôt Madina</h3>
                     <p class="text-gray-500 text-sm">Madina, Conakry (réapprovisionnement)</p>
@@ -84,7 +83,7 @@
 
             <!-- CTA -->
             <div class="text-center">
-                <a href="{{ route('contact') }}" class="inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white font-semibold px-8 py-3 rounded-xl transition">
+                <a href="{{ route('contact') }}" class="inline-flex items-center gap-2 bg-brand-500 hover:bg-brand-600 text-white font-semibold px-8 py-3 rounded-xl transition">
                     <i class="fas fa-envelope"></i> Nous contacter
                 </a>
                 <a href="{{ route('products.index') }}" class="inline-flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold px-8 py-3 rounded-xl transition ml-3">

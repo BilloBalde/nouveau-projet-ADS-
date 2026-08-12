@@ -28,7 +28,7 @@
         </li>
         <li class="nav-item dropdown has-arrow main-drop">
             <a href="javascript:void(0);" class="dropdown-toggle nav-link userset" data-bs-toggle="dropdown">
-                <span class="user-img"><img src="{{ Auth::check() && Auth::user()->profilePic ? asset('avatars/'.Auth::user()->profilePic) : asset('companies/logo.jpg') }}" alt="">
+                <span class="user-img"><img src="{{ Auth::check() && Auth::user()->profilePic ? asset('avatars/'.Auth::user()->profilePic) : asset('companies/'.App\Models\Company::latest()->first()->logo) }}" alt="">
                 <span class="status online"></span></span>
             </a>
             <div class="dropdown-menu menu-drop-user">

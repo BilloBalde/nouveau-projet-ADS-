@@ -7,10 +7,9 @@
     <title>{{ $product->libelle }} — Coleah Bandeya & Fils</title>
     <script src="https://cdn.tailwindcss.com"></script>
     @include('partials.theme-head')
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        * { font-family: 'Poppins', sans-serif; }
+        * { font-family: 'Inter', sans-serif; }
         .navbar-fixed {
             position: fixed; top: 0; width: 100%; z-index: 50;
             background: rgba(255,255,255,0.97);
@@ -25,51 +24,38 @@
         .prod-img-placeholder {
             width: 100%; height: 380px;
             display: flex; align-items: center; justify-content: center;
-            background: linear-gradient(135deg, #f4ece1, #e4d3b8);
+            background: linear-gradient(135deg, #dcefe3, #b9dfc8);
             border-radius: 1.25rem; font-size: 80px;
         }
         .badge-cat {
-            background: #f4ece1; color: #7a3a19;
+            background: #dcefe3; color: #14452c;
             font-size: 12px; font-weight: 600;
             padding: 4px 14px; border-radius: 999px;
             display: inline-block;
         }
-        .star { color: #c1682f; }
+        .star { color: #e8a020; }
         .star-empty { color: #d1d5db; }
-        .price-main { font-size: 2rem; font-weight: 800; color: #a8532a; }
+        .price-main { font-family: 'Fraunces', Georgia, serif; font-size: 2.1rem; font-weight: 700; color: var(--ink); }
         .price-old { font-size: 1rem; color: #9ca3af; text-decoration: line-through; }
         .tier-table { margin-bottom: 10px; }
         .tier-label {
-            font-size: 10px; font-weight: 600; color: #a8532a;
+            font-size: 10px; font-weight: 600; color: #1f6f43;
             text-transform: uppercase; letter-spacing: 0.03em;
             margin-bottom: 6px;
         }
         .tier-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; max-width: 320px; }
-        .tier-cell { background: #f4ece1; border-radius: 8px; padding: 6px 4px; text-align: center; }
-        .tier-qty { font-size: 11px; font-weight: 700; color: #7a3a19; }
-        .tier-price { font-size: 12px; font-weight: 600; color: #4a3220; }
+        .tier-cell { background: #dcefe3; border-radius: 8px; padding: 6px 4px; text-align: center; }
+        .tier-qty { font-size: 11px; font-weight: 700; color: #14452c; }
+        .tier-price { font-size: 12px; font-weight: 600; color: var(--ink); }
         .tier-badge {
             display: inline-block; margin-top: 2px;
             font-size: 10px; font-weight: 700; color: #fff;
-            background: #16a34a; border-radius: 20px; padding: 1px 6px;
+            background: var(--accent-600); border-radius: 999px; padding: 1px 6px;
         }
-        .prod-qty { display: flex; align-items: center; gap: 8px; margin: 12px 0; }
-        .qty-btn {
-            width: 28px; height: 28px; border-radius: 6px;
-            border: 1.5px solid #e5e7eb; background: #fff;
-            color: #a8532a; font-weight: 700; cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 15px; line-height: 1;
-        }
-        .qty-btn:hover { background: #f4ece1; border-color: #c1682f; }
-        .qty-input {
-            width: 48px; text-align: center; font-size: 14px;
-            border: 1.5px solid #e5e7eb; border-radius: 6px;
-            padding: 4px;
-        }
+        /* Sélecteur de quantité : styles centralisés dans partials/theme-head */
         .btn-cart {
             width: 100%;
-            background: linear-gradient(135deg, #c9986a, #a8532a);
+            background: linear-gradient(135deg, #55aa7c, #1f6f43);
             color: #fff; font-weight: 700; font-size: 15px;
             padding: 14px; border: none; border-radius: 12px;
             cursor: pointer; transition: opacity .2s, transform .1s;
@@ -83,7 +69,7 @@
             border-radius: 999px; transition: all .2s;
             text-decoration: none;
         }
-        .btn-back:hover { color: #a8532a; border-color: #c1682f; }
+        .btn-back:hover { color: #1f6f43; border-color: #2e8b57; }
         #cart-count {
             transition: transform 0.3s ease;
         }
@@ -95,17 +81,17 @@
             transition: all .25s; cursor: pointer;
             text-decoration: none;
         }
-        .rel-card:hover { border-color: #c1682f; transform: translateY(-3px); box-shadow: 0 8px 24px rgba(193,104,47,.15); }
+        .rel-card:hover { border-color: #2e8b57; transform: translateY(-3px); box-shadow: 0 10px 26px rgba(31,111,67,.16); }
         .rel-img { width: 100%; height: 130px; object-fit: cover; background: #fafafa; }
         .rel-placeholder {
             width: 100%; height: 130px;
             display: flex; align-items: center; justify-content: center;
-            font-size: 36px; background: #f4ece1;
+            font-size: 36px; background: #dcefe3;
         }
         .rel-info { padding: 10px 12px 14px; }
         .rel-name { font-size: 12px; font-weight: 600; color: #1f2937; line-height: 1.4;
             display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-        .rel-price { font-size: 14px; font-weight: 700; color: #a8532a; margin-top: 4px; }
+        .rel-price { font-size: 14px; font-weight: 700; color: var(--ink); margin-top: 4px; }
 
         /* Toast */
         #toast {
@@ -130,9 +116,9 @@
 
     {{-- BREADCRUMB --}}
     <nav class="flex items-center gap-2 text-sm text-gray-500 mb-8">
-        <a href="{{ route('accueil') }}" class="hover:text-amber-600 transition">Accueil</a>
+        <a href="{{ route('accueil') }}" class="hover:text-brand-600 transition">Accueil</a>
         <i class="fas fa-chevron-right text-xs"></i>
-        <a href="{{ route('products.index') }}" class="hover:text-amber-600 transition">Catalogue</a>
+        <a href="{{ route('products.index') }}" class="hover:text-brand-600 transition">Catalogue</a>
         <i class="fas fa-chevron-right text-xs"></i>
         @if($product->categories->first())
         <span class="text-gray-400">{{ $product->categories->first()->category_type }}</span>
@@ -152,9 +138,9 @@
                          alt="{{ $product->libelle }}"
                          class="prod-img-main"
                          onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex'">
-                    <div class="prod-img-placeholder" style="display:none;">🪑</div>
+                    <div class="prod-img-placeholder" style="display:none;">🧰</div>
                 @else
-                    <div class="prod-img-placeholder">🪑</div>
+                    <div class="prod-img-placeholder">🧰</div>
                 @endif
             </div>
 
@@ -196,7 +182,7 @@
                     {{-- Infos carton --}}
                     @if($product->pcs)
                     <div class="flex items-center gap-2 mb-2 text-sm text-gray-500">
-                        <i class="fas fa-box text-amber-400"></i>
+                        <i class="fas fa-box text-brand-400"></i>
                         <span>Pièces / carton : <strong class="text-gray-700">{{ $product->pcs }} pcs</strong></span>
                     </div>
                     @endif
@@ -220,10 +206,11 @@
                         </div>
                     </div>
 
-                    <div class="prod-qty">
-                        <button type="button" class="qty-btn" onclick="changeDetailQty(-1)">−</button>
+                    <div class="prod-qty prod-qty--lg">
+                        <span class="qty-label">Quantité</span>
+                        <button type="button" class="qty-btn" onclick="changeDetailQty(-1)" aria-label="Diminuer la quantité">−</button>
                         <input type="number" class="qty-input" min="1" value="1" id="detail-qty" data-base-price="{{ $basePrice }}" onchange="updateDetailPrice()">
-                        <button type="button" class="qty-btn" onclick="changeDetailQty(1)">+</button>
+                        <button type="button" class="qty-btn" onclick="changeDetailQty(1)" aria-label="Augmenter la quantité">+</button>
                     </div>
 
                     <div class="flex items-baseline gap-3 mb-3">
@@ -235,9 +222,9 @@
                         @endif
                     </div>
 
-                    <div class="flex items-center justify-between px-4 py-3 mb-6 rounded-xl" style="background:#fdf6ec;border:1px solid #f0e0c8;">
+                    <div class="flex items-center justify-between px-4 py-3 mb-6 rounded-xl" style="background:var(--brand-50);border:1px solid var(--brand-100);">
                         <span class="text-sm text-gray-600">Total pour <strong id="detail-total-qty">1</strong> article(s)</span>
-                        <span class="text-lg font-bold" style="color:#b45309;" id="detail-total">{{ number_format($basePrice, 0, ',', ' ') }} GNF</span>
+                        <span class="text-lg font-bold" style="color:var(--ink);" id="detail-total">{{ number_format($basePrice, 0, ',', ' ') }} GNF</span>
                     </div>
 
                     <div class="grid grid-cols-2 gap-3">
@@ -245,7 +232,7 @@
                             <i class="fas fa-shopping-bag"></i>
                             Ajouter
                         </button>
-                        <button type="button" class="btn-cart bg-gradient-to-r from-green-500 to-green-600" style="background: linear-gradient(135deg, #10b981, #059669);" onclick="buyNow({{ $product->id }}, this, detailQty())">
+                        <button type="button" class="btn-cart" style="background: linear-gradient(135deg, var(--accent-600), var(--accent-700));" onclick="buyNow({{ $product->id }}, this, detailQty())">
                             <i class="fas fa-bolt"></i>
                             Commander
                         </button>
@@ -264,7 +251,7 @@
     @if($related->count() > 0)
     <div>
         <h2 class="text-xl font-bold text-gray-800 mb-5">
-            <i class="fas fa-layer-group text-amber-500 mr-2"></i>
+            <i class="fas fa-layer-group text-brand-500 mr-2"></i>
             Produits similaires
         </h2>
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -274,9 +261,9 @@
                     <img src="{{ asset('products/' . $r->image) }}" alt="{{ $r->libelle }}"
                          class="rel-img"
                          onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex'">
-                    <div class="rel-placeholder" style="display:none;">🪑</div>
+                    <div class="rel-placeholder" style="display:none;">🧰</div>
                 @else
-                    <div class="rel-placeholder">🪑</div>
+                    <div class="rel-placeholder">🧰</div>
                 @endif
                 <div class="rel-info">
                     <div class="rel-name">{{ $r->libelle }}</div>

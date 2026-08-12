@@ -33,7 +33,7 @@
     @endif
     @if(session('info'))
         <div class="container mx-auto px-4 pt-4">
-            <div class="rounded-lg bg-amber-50 border border-amber-200 text-amber-900 px-4 py-3 text-sm" role="alert">{{ session('info') }}</div>
+            <div class="rounded-lg bg-brand-50 border border-brand-200 text-brand-900 px-4 py-3 text-sm" role="alert">{{ session('info') }}</div>
         </div>
     @endif
 

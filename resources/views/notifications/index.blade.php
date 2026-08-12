@@ -9,9 +9,8 @@
     <title>Mes notifications — Coleah Bandeya & Fils</title>
     <script src="https://cdn.tailwindcss.com"></script>
     @include('partials.theme-head')
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>* { font-family: 'Poppins', sans-serif; }</style>
+    <style>* { font-family: 'Inter', sans-serif; }</style>
 </head>
 <body class="bg-gray-50">
 
@@ -19,11 +18,11 @@
 
     <div class="pt-28 pb-16 container mx-auto px-4 sm:px-6 lg:px-8 max-w-3xl">
         <div class="flex items-center justify-between mb-6">
-            <h1 class="text-2xl font-bold text-gray-800"><i class="fas fa-bell text-amber-600 mr-2"></i>Mes notifications</h1>
+            <h1 class="text-2xl font-bold text-gray-800"><i class="fas fa-bell text-brand-600 mr-2"></i>Mes notifications</h1>
             @if(auth()->user()->unreadNotifications()->count())
             <form method="POST" action="{{ route('notifications.readAll') }}">
                 @csrf
-                <button type="submit" class="text-sm font-semibold text-amber-600 hover:text-amber-700 hover:underline">
+                <button type="submit" class="text-sm font-semibold text-brand-600 hover:text-brand-700 hover:underline">
                     Tout marquer lu
                 </button>
             </form>
@@ -36,9 +35,9 @@
             @forelse($notifications as $notification)
                 <a href="{{ $notification->data['url'] ?? '#' }}"
                    onclick="markRead(event, '{{ $notification->id }}', this.href)"
-                   class="block px-6 py-4 hover:bg-amber-50/50 transition {{ $notification->read_at ? '' : 'bg-amber-50/70' }}">
+                   class="block px-6 py-4 hover:bg-brand-50/50 transition {{ $notification->read_at ? '' : 'bg-brand-50/70' }}">
                     <div class="flex items-start gap-3">
-                        <span class="mt-1 w-2 h-2 rounded-full shrink-0 {{ $notification->read_at ? 'bg-gray-200' : 'bg-amber-600' }}"></span>
+                        <span class="mt-1 w-2 h-2 rounded-full shrink-0 {{ $notification->read_at ? 'bg-gray-200' : 'bg-brand-600' }}"></span>
                         <div class="min-w-0">
                             <p class="text-sm text-gray-800 {{ $notification->read_at ? '' : 'font-semibold' }}">
                                 {{ $notification->data['message'] ?? '' }}
@@ -95,7 +94,7 @@
                         <div class="page-btn">
                             <form method="POST" action="{{ route('notifications.readAll') }}">
                                 @csrf
-                                <button type="submit" class="btn btn-added" style="background-color:#c1682f;border-color:#c1682f;">
+                                <button type="submit" class="btn btn-added" style="background-color:#2e8b57;border-color:#2e8b57;">
                                     Tout marquer lu
                                 </button>
                             </form>

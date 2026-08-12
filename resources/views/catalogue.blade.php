@@ -8,11 +8,10 @@
 
     <script src="https://cdn.tailwindcss.com"></script>
     @include('partials.theme-head')
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
-        * { font-family: 'Poppins', sans-serif; }
+        * { font-family: 'Inter', sans-serif; }
 
         .navbar-fixed {
             position: fixed; top: 0; width: 100%; z-index: 50;
@@ -38,7 +37,7 @@
         .filter-group { margin-bottom: 1.5rem; }
         .filter-label { font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 10px; display: block; }
         .filter-option { display: flex; align-items: center; gap: 8px; padding: 5px 0; cursor: pointer; }
-        .filter-option input { width: 15px; height: 15px; accent-color: #a8532a; cursor: pointer; }
+        .filter-option input { width: 15px; height: 15px; accent-color: #1f6f43; cursor: pointer; }
         .filter-option span { font-size: 13px; color: #374151; }
         .filter-badge { margin-left: auto; font-size: 11px; background: #f3f4f6; color: #6b7280; padding: 1px 8px; border-radius: 20px; }
         .filter-divider { border: none; border-top: 1px solid #f3f4f6; margin: 0 0 1.25rem; }
@@ -47,17 +46,17 @@
             width: 80px; padding: 6px 10px; font-size: 12px;
             border: 1.5px solid #e5e7eb; border-radius: 8px;
             background: #fff; color: #374151; outline: none;
-            font-family: 'Poppins', sans-serif;
+            font-family: 'Inter', sans-serif;
         }
-        .price-inputs input:focus { border-color: #c1682f; }
+        .price-inputs input:focus { border-color: #2e8b57; }
         .price-sep { font-size: 12px; color: #9ca3af; }
         .reset-btn {
             width: 100%; padding: 8px; font-size: 12px; font-weight: 600;
-            color: #a8532a; border: 1.5px solid #d9c3a3;
+            color: #1f6f43; border: 1.5px solid #8bc8a5;
             border-radius: 8px; background: none; cursor: pointer;
             margin-top: 4px; transition: background 0.2s;
         }
-        .reset-btn:hover { background: #f4ece1; }
+        .reset-btn:hover { background: #dcefe3; }
 
         /* ── Grille produits ── */
         .prod-grid {
@@ -72,7 +71,7 @@
             box-shadow: 0 2px 8px rgba(0,0,0,0.04);
         }
         .prod-card:hover {
-            border-color: #c1682f;
+            border-color: #2e8b57;
             transform: translateY(-4px);
             box-shadow: 0 12px 28px rgba(245,158,11,0.15);
         }
@@ -89,8 +88,8 @@
             font-size: 10px; font-weight: 700;
             padding: 4px 10px; border-radius: 20px;
         }
-        .badge-promo { background: rgba(244,236,225,0.95); color: #7a3a19; }
-        .badge-best  { background: rgba(209,250,229,0.95); color: #065f46; }
+        .badge-promo { background: rgba(244,236,225,0.95); color: #14452c; }
+        .badge-best  { background: rgba(31,111,67,.94); color: #fff; }
 
         .prod-info { padding: 14px 14px 16px; }
         .prod-name {
@@ -99,60 +98,47 @@
             display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
         }
         .prod-cat-tag {
-            font-size: 11px; color: #fff; background: #c1682f;
+            font-size: 11px; color: #fff; background: #2e8b57;
             display: inline-block; padding: 2px 8px; border-radius: 20px;
             margin-bottom: 8px; font-weight: 500;
         }
         .tier-table { margin-bottom: 10px; }
         .tier-label {
-            font-size: 10px; font-weight: 600; color: #a8532a;
+            font-size: 10px; font-weight: 600; color: #1f6f43;
             text-transform: uppercase; letter-spacing: 0.03em;
             margin-bottom: 6px;
         }
         .tier-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
-        .tier-cell { background: #f4ece1; border-radius: 8px; padding: 4px 2px; text-align: center; }
-        .tier-qty { font-size: 10px; font-weight: 700; color: #7a3a19; }
-        .tier-price { font-size: 11px; font-weight: 600; color: #4a3220; }
+        .tier-cell { background: #dcefe3; border-radius: 8px; padding: 4px 2px; text-align: center; }
+        .tier-qty { font-size: 10px; font-weight: 700; color: #14452c; }
+        .tier-price { font-size: 11px; font-weight: 600; color: var(--ink); }
         .tier-badge {
             display: inline-block; margin-top: 2px;
             font-size: 9px; font-weight: 700; color: #fff;
-            background: #16a34a; border-radius: 20px; padding: 1px 5px;
+            background: var(--accent-600); border-radius: 999px; padding: 1px 5px;
         }
-        .prod-qty { display: flex; align-items: center; gap: 6px; margin: 10px 0; }
-        .qty-btn {
-            width: 24px; height: 24px; border-radius: 6px;
-            border: 1.5px solid #e5e7eb; background: #fff;
-            color: #a8532a; font-weight: 700; cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 14px; line-height: 1;
-        }
-        .qty-btn:hover { background: #f4ece1; border-color: #c1682f; }
-        .qty-input {
-            width: 40px; text-align: center; font-size: 13px;
-            border: 1.5px solid #e5e7eb; border-radius: 6px;
-            padding: 3px; font-family: 'Poppins', sans-serif;
-        }
+        /* Sélecteur de quantité : styles centralisés dans partials/theme-head */
         .prod-price-row { display: flex; align-items: baseline; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
-        .prod-price { font-size: 17px; font-weight: 700; color: #a8532a; }
-        .prod-price-old { font-size: 12px; color: #9ca3af; text-decoration: line-through; }
+        .prod-price { font-family: 'Fraunces', Georgia, serif; font-size: 17.5px; font-weight: 700; color: var(--ink); }
+        .prod-price-old { font-size: 12px; color: var(--ink-faint); text-decoration: line-through; }
         .prod-btns { display: flex; gap: 6px; }
         .prod-btn {
             flex: 1; padding: 9px 4px; font-size: 11px;
             font-weight: 600; text-align: center;
-            background: linear-gradient(135deg, #c9986a, #a8532a);
+            background: linear-gradient(135deg, #55aa7c, #1f6f43);
             color: #fff; border: none; border-radius: 10px; cursor: pointer;
             transition: opacity 0.2s, transform 0.1s;
-            font-family: 'Poppins', sans-serif;
+            font-family: 'Inter', sans-serif;
         }
         .prod-btn:hover { opacity: 0.88; transform: scale(1.02); }
         .prod-btn-order {
             flex: 1; padding: 9px 4px; font-size: 11px;
             font-weight: 600; text-align: center;
-            background: none; color: #a8532a;
-            border: 2px solid #a8532a; border-radius: 10px; cursor: pointer;
-            transition: all 0.2s; font-family: 'Poppins', sans-serif;
+            background: none; color: #1f6f43;
+            border: 2px solid #1f6f43; border-radius: 10px; cursor: pointer;
+            transition: all 0.2s; font-family: 'Inter', sans-serif;
         }
-        .prod-btn-order:hover { background: #a8532a; color: #fff; transform: scale(1.02); }
+        .prod-btn-order:hover { background: #1f6f43; color: #fff; transform: scale(1.02); }
 
         .empty-state { text-align: center; padding: 4rem 1rem; color: #9ca3af; font-size: 14px; }
         .empty-state i { font-size: 40px; margin-bottom: 16px; display: block; color: #d1d5db; }
@@ -164,17 +150,17 @@
             overflow: hidden; background: #fff;
             transition: border-color 0.2s;
         }
-        .search-bar:focus-within { border-color: #c1682f; }
+        .search-bar:focus-within { border-color: #2e8b57; }
         .search-bar input {
             flex: 1; padding: 10px 16px; font-size: 13px;
             border: none; outline: none; background: transparent;
-            font-family: 'Poppins', sans-serif; color: #374151;
+            font-family: 'Inter', sans-serif; color: #374151;
         }
         .search-bar button {
-            padding: 10px 16px; background: #c1682f; border: none;
+            padding: 10px 16px; background: #2e8b57; border: none;
             color: #fff; cursor: pointer; transition: background 0.2s;
         }
-        .search-bar button:hover { background: #a8532a; }
+        .search-bar button:hover { background: #1f6f43; }
 
         /* ── Pagination ── */
         .pagination { display: flex; gap: 6px; justify-content: center; margin-top: 2rem; flex-wrap: wrap; }
@@ -186,7 +172,7 @@
             transition: all 0.2s;
         }
         .page-btn-item:hover, .page-btn-item.active {
-            background: #c1682f; border-color: #c1682f; color: #fff;
+            background: #2e8b57; border-color: #2e8b57; color: #fff;
         }
 
         @media (max-width: 768px) {
@@ -201,7 +187,7 @@
     @include('partials.storefront-nav')
 
     {{-- HERO BANNER --}}
-    <div class="pt-20 bg-gradient-to-r from-amber-500 to-amber-600">
+    <div class="pt-20 bg-gradient-to-r from-brand-500 to-brand-600">
         <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-10">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
@@ -233,8 +219,8 @@
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
                         <span class="filter-label" style="margin-bottom:0">Catégories</span>
                         <a href="{{ route('public.categories') }}"
-                           style="font-size:11px;font-weight:600;color:#c1682f;text-decoration:none;display:flex;align-items:center;gap:4px;padding:3px 8px;border:1px solid #d9c3a3;border-radius:20px;transition:all 0.2s;"
-                           onmouseover="this.style.background='#f4ece1'" onmouseout="this.style.background='transparent'">
+                           style="font-size:11px;font-weight:600;color:#2e8b57;text-decoration:none;display:flex;align-items:center;gap:4px;padding:3px 8px;border:1px solid #8bc8a5;border-radius:20px;transition:all 0.2s;"
+                           onmouseover="this.style.background='#dcefe3'" onmouseout="this.style.background='transparent'">
                             <i class="fas fa-th-large" style="font-size:10px;"></i> Toutes
                         </a>
                     </div>
@@ -266,7 +252,7 @@
 
                 <div class="filter-group">
                     <span class="filter-label">Trier par</span>
-                    <select id="sort-select" class="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-amber-400" onchange="applyFilters()" style="font-family:'Poppins',sans-serif;">
+                    <select id="sort-select" class="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-brand-400" onchange="applyFilters()" style="font-family:'Inter',sans-serif;">
                         <option value="default">Plus récents</option>
                         <option value="price-asc">Prix croissant</option>
                         <option value="price-desc">Prix décroissant</option>
@@ -344,9 +330,10 @@
                         <div class="tier-grid">${tierHTML}</div>
                     </div>
                     <div class="prod-qty" onclick="event.stopPropagation()">
-                        <button type="button" class="qty-btn" onclick="changeQty(this,-1)">−</button>
+                        <span class="qty-label">Quantité</span>
+                        <button type="button" class="qty-btn" onclick="changeQty(this,-1)" aria-label="Diminuer la quantité">−</button>
                         <input type="number" class="qty-input" min="1" value="1" data-base-price="${p.price}" onchange="updateCardPrice(this)">
-                        <button type="button" class="qty-btn" onclick="changeQty(this,1)">+</button>
+                        <button type="button" class="qty-btn" onclick="changeQty(this,1)" aria-label="Augmenter la quantité">+</button>
                     </div>
                     <div class="prod-price-row">
                         <span class="prod-price" data-computed-price>${Number(p.price).toLocaleString('fr-FR')} GNF</span>
@@ -505,7 +492,7 @@
                 t.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:9999;padding:12px 20px;border-radius:12px;font-size:13px;font-weight:600;color:#fff;transition:opacity 0.4s;box-shadow:0 4px 20px rgba(0,0,0,0.15)';
                 document.body.appendChild(t);
             }
-            t.style.background = isError ? '#ef4444' : '#10b981';
+            t.style.background = isError ? '#d92d20' : '#1f6f43';
             t.textContent = msg;
             t.style.opacity = '1';
             clearTimeout(t._timer);

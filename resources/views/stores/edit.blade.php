@@ -79,7 +79,13 @@
                     <div class="col-lg-12">
                         <div class="form-group">
                             <label><strong>Image</strong></label>
-                            <img src="{{ asset('stores/' . $store->store_picture) }}" style="height: 200px"  alt="product">
+                            @if($store->store_picture)
+                                <img src="{{ asset('stores/' . $store->store_picture) }}" style="height: 200px" alt="{{ $store->store_name }}">
+                            @else
+                                <div style="height: 200px; width: 240px; display: flex; align-items: center; justify-content: center; background: #f0f8f3; color: #1f6f43; border-radius: 8px;">
+                                    <i class="fas fa-store fa-3x"></i>
+                                </div>
+                            @endif
                             <div class="image-upload">
                                 <input type="file" name="store_picture" class="form-control">
                                 <div class="image-uploads">

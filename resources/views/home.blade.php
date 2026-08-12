@@ -8,306 +8,241 @@
 
     {{-- Tailwind CSS CDN --}}
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        amber: {
-                            50:  '#fff7ed',
-                            100: '#ffedd5',
-                            200: '#fed7aa',
-                            300: '#fdba74',
-                            400: '#fb923c',
-                            500: '#f97316',
-                            600: '#ea580c',
-                            700: '#c2410c',
-                            800: '#9a3412',
-                            900: '#431407',
-                        },
-                        navy: {
-                            50:  '#eff6ff',
-                            100: '#dbeafe',
-                            200: '#bfdbfe',
-                            300: '#93c5fd',
-                            400: '#3b82f6',
-                            500: '#2563eb',
-                            600: '#1d4ed8',
-                            700: '#1e40af',
-                            800: '#1e3a8a',
-                            900: '#0a0f1f',
-                        },
-                    },
-                },
-            },
-        };
-    </script>
-
-    {{-- Google Fonts - Fraunces (titres), Poppins et Inter (texte) --}}
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Poppins:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    {{-- Système de design partagé : palette vert / rouge / blanc, typo, composants.
+         La config Tailwind vit là-bas et non ici, pour que l'accueil et les autres
+         pages publiques ne puissent plus diverger visuellement. --}}
+    @include('partials.theme-head')
 
     {{-- Font Awesome pour les icônes --}}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
-        * { font-family: 'Poppins', sans-serif; }
-        h1, h2, h3 { font-family: 'Fraunces', serif; }
-
-        /* ── Hero — palette bleu / noir / orange ── */
-        .hero-section {
-            background: linear-gradient(135deg, #05070d 0%, #0a1a3c 35%, #1d4ed8 72%, #f97316 100%);
-            min-height: 620px;
+        /* ══════════════════════════════════════
+           HERO — grande bande d'images défilantes, plein cadre
+        ══════════════════════════════════════ */
+        .hero-showcase {
             position: relative;
+            /* Se cale juste sous la barre fixe : 80px de hauteur + 3px de filet bicolore */
+            margin-top: 83px;
+            height: clamp(420px, 78vh, 760px);
             overflow: hidden;
+            background: var(--brand-950);
         }
-        .hero-section::before {
-            content: '';
-            position: absolute; top: -80px; right: -80px;
-            width: 520px; height: 520px;
-            background: radial-gradient(circle, rgba(249,115,22,0.28) 0%, transparent 70%);
-            border-radius: 50%;
-        }
-        .hero-section::after {
-            content: '';
-            position: absolute; bottom: -100px; left: -100px;
-            width: 450px; height: 450px;
-            background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
-            border-radius: 50%;
-        }
-        .hero-wave { position: absolute; bottom: -1px; left: 0; width: 100%; line-height: 0; z-index: 5; }
-        .hero-wave svg { display: block; width: 100%; height: 56px; }
-        .hero-content { position: relative; z-index: 10; }
+        .hero-track { position: absolute; inset: 0; }
 
-        /* ── Hero Carousel ── */
-        .hero-carousel {
-            position: relative;
-            width: 100%;
-            height: 420px;
-        }
         .hero-slide {
-            position: absolute; inset: 0;
-            opacity: 0;
-            transition: opacity 0.7s ease, transform 0.7s ease;
-            transform: translateX(40px) scale(0.97);
+            position: absolute; inset: 0; z-index: 1;
+            display: block; text-decoration: none;
+            opacity: 0; pointer-events: none;
+            transition: opacity .9s ease;
         }
-        .hero-slide.active {
-            opacity: 1;
-            transform: translateX(0) scale(1);
+        .hero-slide.active { opacity: 1; pointer-events: auto; z-index: 2; }
+        .hero-slide img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        /* Zoom lent sur la diapo visible : donne du mouvement à des photos fixes */
+        .hero-slide.active img { animation: heroZoom 7s ease-out forwards; }
+        @keyframes heroZoom {
+            from { transform: scale(1); }
+            to   { transform: scale(1.07); }
         }
-        .hero-slide.exit {
-            opacity: 0;
-            transform: translateX(-40px) scale(0.97);
+
+        /* ── Diapo décorative : tient la section tant que les photos manquent ── */
+        .hero-slide--deco { display: flex; align-items: center; justify-content: center; }
+        .deco-v0 { background: linear-gradient(135deg, #061710 0%, #0c2c1c 42%, #195836 100%); }
+        .deco-v1 { background: linear-gradient(135deg, #0c2c1c 0%, #14452c 45%, #1f6f43 100%); }
+        .deco-v2 { background: linear-gradient(135deg, #061710 0%, #14452c 55%, #2e8b57 100%); }
+        .hero-slide--deco::before {
+            content: ''; position: absolute; inset: 0;
+            background-image: repeating-linear-gradient(45deg, rgba(255,255,255,.035) 0 2px, transparent 2px 15px);
         }
-        .hero-slide img {
-            width: 100%; height: 100%;
-            object-fit: cover;
-            border-radius: 1.5rem;
+        .hero-slide--deco::after {
+            content: ''; position: absolute; top: -130px; right: -110px;
+            width: 540px; height: 540px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(217,45,32,.28) 0%, transparent 68%);
+        }
+        .hero-deco-body {
+            position: relative; z-index: 2;
+            display: flex; flex-direction: column; align-items: center; gap: 18px;
+            color: #fff; text-align: center; padding: 0 24px;
+        }
+        .hero-deco-body i { font-size: clamp(38px, 5vw, 58px); color: var(--brand-300); }
+        .hero-deco-body span {
+            font-family: 'Fraunces', Georgia, serif;
+            font-size: clamp(1.6rem, 4.2vw, 2.7rem); font-weight: 600; letter-spacing: -.01em;
+        }
+
+        .hero-scrim {
+            position: absolute; inset: 0; z-index: 3; pointer-events: none;
+            background: linear-gradient(to top, rgba(6,23,16,.55) 0%, rgba(6,23,16,.12) 26%, transparent 55%);
+        }
+
+        /* ── Contrôles ── */
+        .hero-arrow {
+            position: absolute; top: 50%; transform: translateY(-50%); z-index: 4;
+            width: 46px; height: 46px; border-radius: 50%;
+            background: rgba(255,255,255,.16);
+            border: 1px solid rgba(255,255,255,.3);
+            backdrop-filter: blur(8px);
+            color: #fff; font-size: 15px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: background .25s ease;
+        }
+        .hero-arrow:hover { background: rgba(255,255,255,.32); }
+        .hero-arrow.prev { left: 22px; }
+        .hero-arrow.next { right: 22px; }
+
+        .hero-dots {
+            position: absolute; z-index: 4; bottom: 22px; left: 0; right: 0;
+            display: flex; justify-content: center; gap: 9px;
         }
         .hero-dot {
-            width: 8px; height: 8px;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.35);
-            cursor: pointer;
-            transition: all 0.3s;
+            width: 9px; height: 9px; border-radius: 50%; border: none; padding: 0;
+            background: rgba(255,255,255,.42); cursor: pointer;
+            transition: width .3s ease, background .3s ease, border-radius .3s ease;
         }
-        .hero-dot.active {
-            width: 28px;
-            border-radius: 4px;
-            background: #fff;
+        .hero-dot.active { width: 30px; border-radius: 5px; background: #fff; }
+
+        /* ══════════════════════════════════════
+           INTRODUCTION — le texte sorti du hero
+        ══════════════════════════════════════ */
+        .hero-intro { background: #fff; padding: 58px 0 46px; }
+        .hero-intro-title {
+            font-size: clamp(2rem, 5vw, 3.25rem); font-weight: 600;
+            color: var(--ink); line-height: 1.12; margin-bottom: 18px;
         }
-        .hero-badge {
-            background: rgba(255,255,255,0.12);
-            backdrop-filter: blur(8px);
-            border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 999px;
-            padding: 6px 16px;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            color: #fff;
-            font-size: 0.8rem;
-            font-weight: 500;
+        .hero-intro-title .gradient-text { display: block; }
+        .hero-intro-lead {
+            font-size: 1.05rem; line-height: 1.65; color: var(--ink-muted);
+            max-width: 620px; margin: 0 auto 30px;
         }
+        .hero-stats { display: flex; justify-content: center; flex-wrap: wrap; gap: 14px; }
+        /* Variante claire : les cartes vitrées précédentes visaient un fond sombre */
         .hero-stat {
-            background: rgba(255,255,255,0.1);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.15);
-            border-radius: 1rem;
-            padding: 12px 20px;
-            text-align: center;
+            background: var(--brand-50); border: 1px solid var(--brand-100);
+            border-radius: var(--radius); padding: 14px 26px; text-align: center;
+            min-width: 128px;
         }
-        .carousel-arrow {
-            position: absolute; top: 50%; transform: translateY(-50%);
-            width: 36px; height: 36px;
-            background: rgba(255,255,255,0.15);
-            backdrop-filter: blur(8px);
-            border: 1px solid rgba(255,255,255,0.25);
-            border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            color: #fff; cursor: pointer;
-            transition: background 0.3s;
-            z-index: 20;
+        .hero-stat-num {
+            font-family: 'Fraunces', Georgia, serif;
+            font-size: 1.6rem; font-weight: 600; color: var(--brand-700); line-height: 1;
         }
-        .carousel-arrow:hover { background: rgba(255,255,255,0.28); }
-        .carousel-arrow.prev { left: 8px; }
-        .carousel-arrow.next { right: 8px; }
-        .floating-card {
-            position: absolute;
-            background: rgba(255,255,255,0.95);
-            border-radius: 1rem;
-            padding: 10px 14px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.18);
-            display: flex; align-items: center; gap: 10px;
-            min-width: 140px;
-            animation: floatY 3s ease-in-out infinite;
-        }
-        .floating-card.card-top { top: 16px; right: -16px; animation-delay: 0s; }
-        .floating-card.card-bot { bottom: 24px; left: -16px; animation-delay: 1.5s; }
-        @keyframes floatY {
-            0%,100% { transform: translateY(0); }
-            50%      { transform: translateY(-8px); }
-        }
-        @media (max-width: 768px) {
-            .floating-card { display: none; }
-            .hero-carousel { height: 280px; }
+        .hero-stat-lbl {
+            font-size: .7rem; margin-top: 6px; letter-spacing: .08em;
+            text-transform: uppercase; color: var(--ink-muted);
         }
 
-        /* ── Misc helpers ── */
-        .gradient-text {
-            background: linear-gradient(135deg, #1d4ed8, #f97316);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+        @media (max-width: 768px) {
+            .hero-showcase { height: clamp(320px, 56vh, 480px); }
+            .hero-arrow { display: none; }
+            .hero-intro { padding: 40px 0 34px; }
+            .hero-stat { padding: 12px 18px; min-width: 104px; }
         }
-        .navbar-transparent {
-            position: fixed; top: 0; width: 100%; z-index: 50;
-            background: rgba(255,255,255,0.95);
-            backdrop-filter: blur(10px);
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+
+        @media (prefers-reduced-motion: reduce) {
+            .hero-slide { transition: none; }
+            .hero-slide.active img { animation: none; }
         }
+
         .feature-icon {
-            width: 60px; height: 60px;
-            background: linear-gradient(135deg, #1d4ed8, #0a0f1f);
-            border-radius: 50%;
+            width: 58px; height: 58px; border-radius: 18px;
+            background: linear-gradient(135deg, var(--brand-600), var(--brand-900));
             display: flex; align-items: center; justify-content: center;
-            color: white; font-size: 28px;
-            margin: 0 auto 20px;
+            color: #fff; font-size: 23px; margin: 0 auto 20px;
         }
 
         /* ══════════════════════════════════════
            GRILLE & CARTES PRODUITS
         ══════════════════════════════════════ */
-        .prod-grid {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 20px;
-        }
+        .prod-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 22px; }
         @media (max-width: 1024px) { .prod-grid { grid-template-columns: repeat(4, 1fr); } }
         @media (max-width: 768px)  { .prod-grid { grid-template-columns: repeat(3, 1fr); } }
         @media (max-width: 480px)  { .prod-grid { grid-template-columns: repeat(2, 1fr); } }
+
         .prod-card {
-            background: #fff; border: 1.5px solid #f3f4f6;
-            border-radius: 20px; overflow: hidden;
-            transition: all 0.25s; cursor: pointer;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            background: #fff; border: 1px solid var(--hairline);
+            border-radius: 18px; overflow: hidden; cursor: pointer;
+            box-shadow: 0 1px 2px rgba(12,44,28,.04);
+            transition: border-color .22s ease, box-shadow .22s ease, transform .22s ease;
         }
         .prod-card:hover {
-            border-color: #f97316;
+            border-color: var(--brand-300);
             transform: translateY(-4px);
-            box-shadow: 0 12px 28px rgba(249,115,22,0.15);
+            box-shadow: 0 2px 4px rgba(12,44,28,.05), 0 20px 42px -20px rgba(12,44,28,.34);
         }
         .prod-img {
-            height: 180px; display: flex; align-items: center;
-            justify-content: center; position: relative;
-            background: #fafafa;
-            overflow: hidden;
+            height: 182px; display: flex; align-items: center; justify-content: center;
+            position: relative; background: var(--paper-warm); overflow: hidden;
         }
-        .prod-img img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s; }
+        .prod-img img { width: 100%; height: 100%; object-fit: cover; transition: transform .35s ease; }
         .prod-card:hover .prod-img img { transform: scale(1.05); }
-        .prod-img .no-img { font-size: 48px; }
+        .prod-img .no-img { font-size: 46px; }
         .prod-badge {
             position: absolute; top: 10px; left: 10px;
-            font-size: 10px; font-weight: 700;
-            padding: 4px 10px; border-radius: 20px;
-            backdrop-filter: blur(4px);
+            font-size: 10px; font-weight: 700; letter-spacing: .04em;
+            padding: 5px 11px; border-radius: 999px; backdrop-filter: blur(4px);
         }
-        .badge-promo { background: rgba(255,237,213,0.95); color: #c2410c; }
-        .badge-best { background: rgba(209,250,229,0.95); color: #065f46; }
+        .badge-promo { background: rgba(217,45,32,.94); color: #fff; }
+        .badge-best  { background: rgba(31,111,67,.94); color: #fff; }
 
-        .prod-info { padding: 14px 14px 16px; }
+        .prod-info { padding: 15px 15px 17px; }
+        .prod-cat-tag {
+            font-size: 10.5px; font-weight: 600; letter-spacing: .04em;
+            color: var(--brand-700); background: var(--brand-50);
+            display: inline-block; padding: 3px 9px; border-radius: 999px; margin-bottom: 9px;
+        }
         .prod-name {
-            font-size: 13px; font-weight: 600; color: #1f2937;
-            margin-bottom: 3px; line-height: 1.4;
+            font-family: 'Fraunces', Georgia, serif;
+            font-size: 14.5px; font-weight: 600; color: var(--ink);
+            margin-bottom: 5px; line-height: 1.35;
             display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
         }
-        .prod-cat-tag {
-            font-size: 11px; color: #fff; background: #1d4ed8;
-            display: inline-block; padding: 2px 8px; border-radius: 20px;
-            margin-bottom: 8px; font-weight: 500;
-        }
-        .prod-stars { font-size: 12px; color: #f97316; margin-bottom: 8px; }
-        .tier-table { margin-bottom: 10px; }
+        .prod-stars { font-size: 12px; color: #e8a020; margin-bottom: 9px; }
+
+        .tier-table { margin-bottom: 11px; }
         .tier-label {
-            font-size: 10px; font-weight: 600; color: #1d4ed8;
-            text-transform: uppercase; letter-spacing: 0.03em;
-            margin-bottom: 6px;
+            font-size: 9.5px; font-weight: 700; color: var(--brand-600);
+            text-transform: uppercase; letter-spacing: .07em; margin-bottom: 6px;
         }
-        .tier-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
-        .tier-cell { background: #eff6ff; border-radius: 8px; padding: 4px 2px; text-align: center; }
-        .tier-qty { font-size: 10px; font-weight: 700; color: #1e3a8a; }
-        .tier-price { font-size: 11px; font-weight: 600; color: #111827; }
+        .tier-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; }
+        .tier-cell {
+            background: var(--brand-50); border: 1px solid var(--brand-100);
+            border-radius: 9px; padding: 5px 2px; text-align: center;
+        }
+        .tier-qty { font-size: 10px; font-weight: 700; color: var(--brand-700); }
+        .tier-price { font-size: 11px; font-weight: 600; color: var(--ink); }
         .tier-badge {
             display: inline-block; margin-top: 2px;
             font-size: 9px; font-weight: 700; color: #fff;
-            background: #16a34a; border-radius: 20px; padding: 1px 5px;
+            background: var(--accent-600); border-radius: 999px; padding: 1px 6px;
         }
-        .prod-qty { display: flex; align-items: center; gap: 6px; margin: 10px 0; }
-        .qty-btn {
-            width: 24px; height: 24px; border-radius: 6px;
-            border: 1.5px solid #e5e7eb; background: #fff;
-            color: #1d4ed8; font-weight: 700; cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 14px; line-height: 1;
-        }
-        .qty-btn:hover { background: #eff6ff; border-color: #2563eb; }
-        .qty-input {
-            width: 40px; text-align: center; font-size: 13px;
-            border: 1.5px solid #e5e7eb; border-radius: 6px;
-            padding: 3px; font-family: 'Poppins', sans-serif;
-        }
-        .prod-price-row {
-            display: flex; align-items: baseline; gap: 6px;
-            margin-bottom: 12px; flex-wrap: wrap;
-        }
-        .prod-price { font-size: 17px; font-weight: 700; color: #ea580c; }
-        .prod-price-old {
-            font-size: 12px; color: #9ca3af;
-            text-decoration: line-through;
-        }
-        .prod-btns { display: flex; gap: 6px; }
-        .prod-btn {
-            flex: 1; padding: 9px 4px; font-size: 11px;
-            font-weight: 600; text-align: center;
-            background: linear-gradient(135deg, #fb923c, #ea580c);
-            color: #fff; border: none; border-radius: 10px; cursor: pointer;
-            transition: opacity 0.2s, transform 0.1s;
-            font-family: 'Poppins', sans-serif;
-        }
-        .prod-btn:hover { opacity: 0.88; transform: scale(1.02); }
-        .prod-btn-order {
-            flex: 1; padding: 9px 4px; font-size: 11px;
-            font-weight: 600; text-align: center;
-            background: none; color: #1d4ed8;
-            border: 2px solid #1d4ed8; border-radius: 10px; cursor: pointer;
-            transition: all 0.2s; font-family: 'Poppins', sans-serif;
-        }
-        .prod-btn-order:hover { background: #1d4ed8; color: #fff; transform: scale(1.02); }
 
-        .empty-state {
-            text-align: center; padding: 3rem 1rem;
-            color: #9ca3af; font-size: 14px;
+        /* Sélecteur de quantité : styles centralisés dans partials/theme-head */
+
+        .prod-price-row { display: flex; align-items: baseline; gap: 7px; margin-bottom: 13px; flex-wrap: wrap; }
+        .prod-price {
+            font-family: 'Fraunces', Georgia, serif;
+            font-size: 17.5px; font-weight: 700; color: var(--ink);
         }
-        .empty-state i { font-size: 32px; margin-bottom: 12px; display: block; color: #d1d5db; }
+        .prod-price-old { font-size: 12px; color: var(--ink-faint); text-decoration: line-through; }
+
+        .prod-btns { display: flex; gap: 7px; }
+        .prod-btn, .prod-btn-order {
+            flex: 1; padding: 10px 4px; font-size: 11.5px; font-weight: 600;
+            text-align: center; border-radius: 999px; cursor: pointer;
+            font-family: 'Inter', sans-serif; transition: all .18s ease;
+        }
+        .prod-btn {
+            background: linear-gradient(135deg, var(--brand-600), var(--brand-700));
+            color: #fff; border: none;
+        }
+        .prod-btn:hover { box-shadow: 0 10px 20px -10px rgba(31,111,67,.9); transform: translateY(-1px); }
+        .prod-btn-order {
+            background: #fff; color: var(--accent-600);
+            border: 1.5px solid var(--accent-200);
+        }
+        .prod-btn-order:hover { background: var(--accent-600); border-color: var(--accent-600); color: #fff; transform: translateY(-1px); }
+
+        .empty-state { text-align: center; padding: 3rem 1rem; color: var(--ink-faint); font-size: 14px; }
+        .empty-state i { font-size: 32px; margin-bottom: 12px; display: block; color: var(--brand-200); }
     </style>
 </head>
 <body class="bg-white">
@@ -315,141 +250,124 @@
     @include('partials.storefront-nav')
 
     {{-- ══════════════════════════════════════════
-        HERO — Carousel élégant
+        HERO — grande bande d'images défilantes, plein cadre
     ══════════════════════════════════════════ --}}
-    <section id="accueil" class="hero-section pt-28 pb-16">
-        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="hero-content grid grid-cols-1 md:grid-cols-2 gap-12 items-center min-h-[500px]">
+    @php
+        // Le carrousel se nourrit des photos du catalogue. Tant qu'elles sont trop
+        // peu nombreuses, on complète avec des diapos décoratives bâties sur les
+        // rayons : une grande section vide serait pire qu'un visuel de marque assumé.
+        $photoSlides = $allProducts->filter(fn($p) => !empty($p['image']))->take(6)->values();
 
-                {{-- ── Côté texte ── --}}
-                <div class="flex flex-col justify-center">
+        $iconePour = function ($nom) {
+            $rayons = [
+                'peinture' => 'fa-paint-roller',
+                'outil'    => 'fa-screwdriver-wrench',
+                'serrur'   => 'fa-lock',
+                'plomb'    => 'fa-faucet',
+                'lectric'  => 'fa-bolt',
+            ];
+            $minuscule = mb_strtolower($nom);
+            foreach ($rayons as $motCle => $icone) {
+                if (str_contains($minuscule, $motCle)) {
+                    return $icone;
+                }
+            }
+            return 'fa-toolbox';
+        };
 
-                    {{-- Badge --}}
-                    <div class="hero-badge mb-5 w-fit">
-                        <span class="w-2 h-2 rounded-full bg-orange-300 inline-block animate-pulse"></span>
-                        Quincaillerie générale · Conakry, Guinée
-                    </div>
+        $slides = $photoSlides;
+        if ($slides->count() < 4) {
+            $slides = $slides->concat(
+                $categories->take(6)->map(fn($c) => [
+                    'deco'  => true,
+                    'name'  => $c->name,
+                    'icone' => $iconePour($c->name),
+                ])
+            )->take(6)->values();
+        }
+        if ($slides->isEmpty()) {
+            $slides = collect([['deco' => true, 'name' => 'Quincaillerie générale', 'icone' => 'fa-toolbox']]);
+        }
+    @endphp
 
-                    {{-- Titre --}}
-                    <h1 class="text-5xl md:text-6xl font-extrabold text-white mb-5 leading-tight tracking-tight">
-                        Équipez votre chantier<br>
-                        <span style="background:linear-gradient(90deg,#ffb46e,#ffe6cf);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">
-                            avec qualité et confiance
-                        </span>
-                    </h1>
-
-                    {{-- Sous-titre --}}
-                    <p class="text-white/80 text-base md:text-lg mb-8 leading-relaxed max-w-md">
-                        Peinture, outillage, serrurerie, plomberie et électricité — commandez en ligne, payez à la livraison ou par Orange Money, et recevez vos articles partout en Guinée.
-                    </p>
-
-                    {{-- Boutons --}}
-                    <div class="flex flex-wrap gap-3 mb-10">
-                        <a href="{{ route('products.index') }}" class="px-7 py-3 rounded-full font-semibold text-amber-900 transition duration-300 hover:shadow-xl hover:scale-105 inline-flex items-center gap-2"
-                           style="background:linear-gradient(90deg,#ffb46e,#ffd9ae);">
-                            <i class="fas fa-shopping-bag text-sm"></i> Voir le catalogue
-                        </a>
-                        <a href="#produits" class="px-7 py-3 rounded-full font-semibold text-white border border-white/30 hover:bg-white/10 transition duration-300 inline-flex items-center gap-2">
-                            <i class="fas fa-arrow-down text-sm"></i> Découvrir
-                        </a>
-                    </div>
-
-                    {{-- Stats --}}
-                    <div class="flex gap-4 flex-wrap">
-                        <div class="hero-stat">
-                            <div class="text-2xl font-bold text-orange-200">{{ $totalProducts }}+</div>
-                            <div class="text-xs text-white/70 mt-1">Produits</div>
-                        </div>
-                        <div class="hero-stat">
-                            <div class="text-2xl font-bold text-orange-200">{{ $totalCategories }}</div>
-                            <div class="text-xs text-white/70 mt-1">Catégories</div>
-                        </div>
-                        <div class="hero-stat">
-                            <div class="text-2xl font-bold text-orange-200">24-48h</div>
-                            <div class="text-xs text-white/70 mt-1">Livraison Conakry</div>
+    <section id="accueil" class="hero-showcase" aria-label="Nos produits en images">
+        <div class="hero-track" id="heroCarousel">
+            @foreach($slides as $i => $slide)
+                @if(!empty($slide['deco']))
+                    <div class="hero-slide hero-slide--deco deco-v{{ $i % 3 }} {{ $i === 0 ? 'active' : '' }}" data-index="{{ $i }}">
+                        <div class="hero-deco-body">
+                            <i class="fas {{ $slide['icone'] }}"></i>
+                            <span>{{ $slide['name'] }}</span>
                         </div>
                     </div>
-                </div>
+                @else
+                    <a href="{{ route('productDetail', $slide['id']) }}"
+                       class="hero-slide {{ $i === 0 ? 'active' : '' }}"
+                       data-index="{{ $i }}"
+                       aria-label="{{ $slide['name'] }}">
+                        <img src="{{ $slide['image'] }}" alt="{{ $slide['name'] }}"
+                             loading="{{ $i === 0 ? 'eager' : 'lazy' }}"
+                             onerror="this.closest('.hero-slide').classList.add('hero-slide--deco','deco-v{{ $i % 3 }}');this.remove()">
+                    </a>
+                @endif
+            @endforeach
 
-                {{-- ── Côté carousel ── --}}
-                <div class="flex justify-center md:justify-end">
-                    <div class="relative" style="width:320px;">
+            {{-- Voile bas : garde flèches et pastilles lisibles sur une photo claire --}}
+            <div class="hero-scrim" aria-hidden="true"></div>
 
-                        {{-- Carousel --}}
-                        <div class="hero-carousel shadow-2xl rounded-3xl overflow-hidden border border-white/10" id="heroCarousel">
-                            @php
-                                $heroImages = $allProducts->filter(fn($p) => !empty($p['image']))->take(6)->values();
-                                if ($heroImages->isEmpty()) {
-                                    $heroImages = collect([['image' => null, 'name' => 'Coleah Bandeya & Fils']]);
-                                }
-                            @endphp
-                            @foreach($heroImages as $i => $prod)
-                            <div class="hero-slide {{ $i === 0 ? 'active' : '' }}" data-index="{{ $i }}">
-                                @if($prod['image'])
-                                    <img src="{{ $prod['image'] }}" alt="{{ $prod['name'] }}"
-                                         onerror="this.onerror=null;this.parentElement.style.background='linear-gradient(135deg,#1d4ed8,#f97316)'">
-                                @else
-                                    <div class="w-full h-full flex items-center justify-center"
-                                         style="background:linear-gradient(135deg,#dbeafe,#bfdbfe);">
-                                        <img src="{{ asset('companies/ADK.jpg') }}" alt="Coleah Bandeya & Fils" class="w-40 h-40 object-contain">
-                                    </div>
-                                @endif
-                                <div class="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent rounded-3xl"></div>
-                                {{-- Nom produit en bas --}}
-                                <div class="absolute bottom-4 left-4 right-4">
-                                    <span class="text-white text-sm font-semibold bg-black/30 backdrop-blur px-3 py-1 rounded-full">
-                                        {{ $prod['name'] }}
-                                    </span>
-                                </div>
-                            </div>
-                            @endforeach
+            <button class="hero-arrow prev" id="heroPrev" aria-label="Image précédente">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <button class="hero-arrow next" id="heroNext" aria-label="Image suivante">
+                <i class="fas fa-chevron-right"></i>
+            </button>
 
-                            {{-- Flèches --}}
-                            <button class="carousel-arrow prev" id="heroPrev" aria-label="Précédent">
-                                <i class="fas fa-chevron-left text-xs"></i>
-                            </button>
-                            <button class="carousel-arrow next" id="heroNext" aria-label="Suivant">
-                                <i class="fas fa-chevron-right text-xs"></i>
-                            </button>
-                        </div>
-
-                        {{-- Dots --}}
-                        <div class="flex justify-center gap-2 mt-4" id="heroDots">
-                            @foreach($heroImages as $i => $prod)
-                            <button class="hero-dot {{ $i === 0 ? 'active' : '' }}" data-dot="{{ $i }}" aria-label="Slide {{ $i+1 }}"></button>
-                            @endforeach
-                        </div>
-
-                        {{-- Floating cards --}}
-                        <div class="floating-card card-top">
-                            <div class="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
-                                <i class="fas fa-medal text-amber-600 text-xs"></i>
-                            </div>
-                            <div>
-                                <div class="text-xs font-bold text-gray-800">Qualité garantie</div>
-                                <div class="text-xs text-gray-500">Produits sélectionnés</div>
-                            </div>
-                        </div>
-                        <div class="floating-card card-bot">
-                            <div class="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0">
-                                <i class="fas fa-truck text-orange-600 text-xs"></i>
-                            </div>
-                            <div>
-                                <div class="text-xs font-bold text-gray-800">Livraison rapide</div>
-                                <div class="text-xs text-gray-500">Partout en Guinée</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
+            <div class="hero-dots" id="heroDots">
+                @foreach($slides as $i => $slide)
+                    <button class="hero-dot {{ $i === 0 ? 'active' : '' }}" data-dot="{{ $i }}" aria-label="Image {{ $i + 1 }}"></button>
+                @endforeach
             </div>
         </div>
+    </section>
 
-        {{-- Transition douce vers la section suivante --}}
-        <div class="hero-wave" aria-hidden="true">
-            <svg viewBox="0 0 1440 60" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-                <path fill="#ffffff" d="M0,32 C240,64 480,0 720,16 C960,32 1200,64 1440,32 L1440,60 L0,60 Z"></path>
-            </svg>
+    {{-- ══════════════════════════════════════════
+         INTRODUCTION — le texte que le hero ne porte plus
+    ══════════════════════════════════════════ --}}
+    <section class="hero-intro">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="max-w-3xl mx-auto text-center">
+                <span class="eyebrow mb-4">Quincaillerie générale · Conakry, Guinée</span>
+                <h1 class="hero-intro-title">
+                    Équipez votre chantier
+                    <span class="gradient-text">avec qualité et confiance</span>
+                </h1>
+                <p class="hero-intro-lead">
+                    Peinture, outillage, serrurerie, plomberie et électricité — commandez en ligne,
+                    payez à la livraison ou par Orange Money, et recevez vos articles partout en Guinée.
+                </p>
+                <div class="flex flex-wrap justify-center gap-3 mb-10">
+                    <a href="{{ route('products.index') }}" class="btn btn-accent">
+                        <i class="fas fa-shopping-bag text-sm"></i> Voir le catalogue
+                    </a>
+                    <a href="#produits" class="btn btn-outline">
+                        <i class="fas fa-arrow-down text-sm"></i> Découvrir
+                    </a>
+                </div>
+                <div class="hero-stats">
+                    <div class="hero-stat">
+                        <div class="hero-stat-num">{{ $totalProducts }}+</div>
+                        <div class="hero-stat-lbl">Produits</div>
+                    </div>
+                    <div class="hero-stat">
+                        <div class="hero-stat-num">{{ $totalCategories }}</div>
+                        <div class="hero-stat-lbl">Catégories</div>
+                    </div>
+                    <div class="hero-stat">
+                        <div class="hero-stat-num">24-48h</div>
+                        <div class="hero-stat-lbl">Livraison Conakry</div>
+                    </div>
+                </div>
+            </div>
         </div>
     </section>
 
@@ -466,7 +384,7 @@
                     ['icon' => 'fa-headset',           'title' => 'Conseil personnalisé',     'text' => '625 45 35 45'],
                 ] as $item)
                 <div class="flex items-center gap-3">
-                    <div class="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0" style="background:#dbeafe;color:#1d4ed8;">
+                    <div class="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0" style="background:var(--brand-50);color:var(--brand-600);">
                         <i class="fas {{ $item['icon'] }}"></i>
                     </div>
                     <div>
@@ -496,34 +414,35 @@
             .cat-slide:hover { transform: translateY(-4px); }
             .cat-slide-img {
                 width: 120px; height: 120px; margin: 0 auto 10px; border-radius: 50%;
-                overflow: hidden; border: 3px solid #dbeafe; background: #eff6ff;
+                overflow: hidden; border: 3px solid var(--brand-100); background: var(--brand-50);
                 display: flex; align-items: center; justify-content: center;
                 transition: border-color .2s, box-shadow .2s;
             }
-            .cat-slide:hover .cat-slide-img { border-color: #f97316; box-shadow: 0 8px 20px rgba(249,115,22,.18); }
+            .cat-slide:hover .cat-slide-img { border-color: var(--brand-500); box-shadow: 0 10px 24px rgba(31,111,67,.20); }
             .cat-slide-img img { width: 100%; height: 100%; object-fit: cover; }
-            .cat-slide-img .cat-slide-icon { font-size: 36px; color: #1d4ed8; }
+            .cat-slide-img .cat-slide-icon { font-size: 36px; color: var(--brand-600); }
             .cat-slide-name {
                 font-size: 13px; font-weight: 700; color: #1f2937;
                 white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
             }
-            .cat-slide-count { font-size: 11px; color: #9ca3af; }
+            .cat-slide-count { font-size: 11px; color: var(--ink-faint); }
             .cat-progress { display: flex; justify-content: center; gap: 6px; margin-top: 10px; }
             .cat-progress-dot {
-                width: 22px; height: 4px; border-radius: 999px; background: #dbeafe;
+                width: 22px; height: 4px; border-radius: 999px; background: var(--brand-100);
                 overflow: hidden; position: relative;
             }
             .cat-progress-dot.active::after {
-                content: ''; position: absolute; inset: 0; background: #f97316; border-radius: 999px;
+                content: ''; position: absolute; inset: 0; background: var(--accent-600); border-radius: 999px;
             }
         </style>
         <div class="container mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-end justify-between mb-6">
                 <div>
-                    <h2 class="text-3xl md:text-4xl font-bold text-gray-800">Parcourez nos <span class="gradient-text">catégories</span></h2>
+                    <span class="eyebrow mb-3">Nos rayons</span>
+                    <h2 class="text-3xl md:text-4xl font-semibold text-gray-900">Parcourez nos <span class="gradient-text">catégories</span></h2>
                     <p class="text-gray-500 mt-2">Cliquez sur une catégorie pour filtrer le catalogue</p>
                 </div>
-                <a href="{{ route('public.categories') }}" class="hidden sm:inline-flex items-center gap-2 text-amber-600 font-semibold hover:text-amber-700 whitespace-nowrap">
+                <a href="{{ route('public.categories') }}" class="hidden sm:inline-flex items-center gap-2 text-brand-600 font-semibold hover:text-brand-700 whitespace-nowrap">
                     Tout voir <i class="fas fa-arrow-right text-sm"></i>
                 </a>
             </div>
@@ -556,13 +475,15 @@
 
             {{-- En-tête --}}
             <div class="text-center mb-12">
-                <h2 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
+                <span class="eyebrow mb-4">Notre sélection</span>
+                <h2 class="text-4xl md:text-5xl font-semibold text-gray-900 mb-4">
                     Nos <span class="gradient-text">Produits</span>
                 </h2>
                 <p class="text-gray-600 text-lg max-w-2xl mx-auto">
                     Nos dernières arrivées — qualité soignée, prix dégressifs dès 2 pièces.
                     Besoin de filtrer par catégorie ou par prix ? Tout se passe dans le catalogue.
                 </p>
+                <div class="rule-duo is-centered"></div>
             </div>
             @if(isset($allProducts) && count($allProducts) > 0)
             <div class="prod-grid" id="grid-all">
@@ -603,9 +524,10 @@
                                     </div>
                                 </div>
                                 <div class="prod-qty" onclick="event.stopPropagation()">
-                                    <button type="button" class="qty-btn" onclick="changeQty(this,-1)">−</button>
+                                    <span class="qty-label">Quantité</span>
+                                    <button type="button" class="qty-btn" onclick="changeQty(this,-1)" aria-label="Diminuer la quantité">−</button>
                                     <input type="number" class="qty-input" min="1" value="1" data-base-price="{{ $p['price'] }}" onchange="updateCardPrice(this)">
-                                    <button type="button" class="qty-btn" onclick="changeQty(this,1)">+</button>
+                                    <button type="button" class="qty-btn" onclick="changeQty(this,1)" aria-label="Augmenter la quantité">+</button>
                                 </div>
                                 <div class="prod-price-row">
                                     <span class="prod-price" data-computed-price>{{ number_format($p['price'], 0, ',', ' ') }} GNF</span>
@@ -629,13 +551,12 @@
                 {{-- Liens vers le catalogue complet --}}
                 <div class="text-center mt-10 flex flex-wrap justify-center gap-3">
                     <a href="{{ route('products.index') }}"
-                       class="inline-flex items-center gap-2 px-8 py-3.5 rounded-full font-semibold text-sm text-white transition duration-200 hover:shadow-lg hover:scale-105"
-                       style="background:linear-gradient(135deg,#fb923c,#ea580c);">
+                       class="btn btn-brand">
                         <i class="fas fa-box-open"></i>
                         Voir tout le catalogue ({{ $totalProducts }} produits)
                     </a>
                     <a href="{{ route('public.categories') }}"
-                       class="inline-flex items-center gap-2 px-8 py-3.5 border-2 border-amber-500 text-amber-600 rounded-full font-semibold text-sm hover:bg-amber-500 hover:text-white transition duration-200">
+                       class="btn btn-outline">
                         <i class="fas fa-th-large"></i>
                         Parcourir par catégorie
                     </a>
@@ -652,16 +573,16 @@
     <style>
         .prod-row {
             display: flex; gap: 18px; overflow-x: auto; padding: 8px 2px 16px;
-            -ms-overflow-style: none; scrollbar-width: thin; scrollbar-color: #bfdbfe transparent;
+            -ms-overflow-style: none; scrollbar-width: thin; scrollbar-color: var(--brand-200) transparent;
         }
         .prod-row .prod-card { flex: 0 0 262px; }
         .section-row-head { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
         .section-row-head .row-icon {
-            width: 44px; height: 44px; border-radius: 12px; background: #dbeafe; color: #1d4ed8;
+            width: 44px; height: 44px; border-radius: 12px; background: var(--brand-50); color: var(--brand-600);
             display: inline-flex; align-items: center; justify-content: center; font-size: 19px;
         }
         .section-row-head h2 { font-size: 26px; font-weight: 800; color: #1f2937; }
-        .section-row-head p { font-size: 13px; color: #9ca3af; }
+        .section-row-head p { font-size: 13px; color: var(--ink-faint); }
     </style>
     <section class="py-16 bg-white">
         <div class="container mx-auto px-4 sm:px-6 lg:px-8 space-y-14">
@@ -669,7 +590,7 @@
             @if(isset($promoProducts) && count($promoProducts) > 0)
             <div>
                 <div class="section-row-head">
-                    <span class="row-icon" style="background:#fdecea;color:#dc2626;"><i class="fas fa-tag"></i></span>
+                    <span class="row-icon" style="background:var(--accent-50);color:var(--accent-600);"><i class="fas fa-tag"></i></span>
                     <div>
                         <h2>Promotions en cours</h2>
                         <p>Profitez-en avant la fin de l'offre</p>
@@ -721,8 +642,10 @@
     <section class="py-16 bg-gray-50">
         <div class="container mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-12">
-                <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-3">Modes de <span class="gradient-text">livraison</span></h2>
+                <span class="eyebrow mb-4">Recevoir sa commande</span>
+                <h2 class="text-3xl md:text-4xl font-semibold text-gray-900 mb-3">Modes de <span class="gradient-text">livraison</span></h2>
                 <p class="text-gray-500 max-w-xl mx-auto">Choisissez la formule qui vous convient — nous livrons vos articles de quincaillerie partout en Guinée</p>
+                <div class="rule-duo is-centered"></div>
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 @foreach([
@@ -731,8 +654,8 @@
                     ['icon' => 'fa-bolt',         'title' => 'Livraison express',    'text' => 'Besoin urgent ? Livraison le jour même à Conakry pour les commandes passées avant midi.'],
                     ['icon' => 'fa-map',          'title' => 'Livraison en région',  'text' => 'Nous expédions dans toutes les régions de la Guinée via nos transporteurs partenaires.'],
                 ] as $mode)
-                <div class="bg-white rounded-2xl p-7 text-center border border-gray-100 shadow-sm hover:shadow-lg hover:border-amber-200 transition">
-                    <div class="w-14 h-14 mx-auto mb-4 rounded-full flex items-center justify-center" style="background:#dbeafe;color:#1d4ed8;font-size:22px;">
+                <div class="bg-white rounded-2xl p-7 text-center border border-gray-100 shadow-sm hover:shadow-lg hover:border-brand-200 transition">
+                    <div class="w-14 h-14 mx-auto mb-4 rounded-full flex items-center justify-center" style="background:var(--brand-50);color:var(--brand-600);font-size:22px;">
                         <i class="fas {{ $mode['icon'] }}"></i>
                     </div>
                     <h3 class="font-bold text-gray-800 mb-2">{{ $mode['title'] }}</h3>
@@ -750,10 +673,10 @@
         <div class="container mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
                 <div>
-                    <span class="inline-block px-4 py-1 bg-amber-100 text-amber-700 rounded-full text-sm font-semibold mb-4">
+                    <span class="eyebrow mb-4">
                         Qui sommes-nous ?
                     </span>
-                    <h2 class="text-4xl md:text-5xl font-bold text-gray-800 mb-6 leading-tight">
+                    <h2 class="text-4xl md:text-5xl font-semibold text-gray-900 mb-6 leading-tight">
                         <span class="gradient-text">Coleah Bandeya & Fils</span>
                     </h2>
                     <p class="text-gray-600 text-lg leading-relaxed mb-6">
@@ -764,8 +687,8 @@
                     </p>
                     <div class="flex flex-wrap gap-4">
                         <div class="flex items-center gap-3 bg-white rounded-xl px-5 py-3 shadow-sm border border-gray-100">
-                            <div class="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
-                                <i class="fas fa-map-marker-alt text-amber-600"></i>
+                            <div class="w-10 h-10 bg-brand-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-map-marker-alt text-brand-600"></i>
                             </div>
                             <div>
                                 <p class="text-xs text-gray-400 font-medium">Localisation</p>
@@ -773,8 +696,8 @@
                             </div>
                         </div>
                         <div class="flex items-center gap-3 bg-white rounded-xl px-5 py-3 shadow-sm border border-gray-100">
-                            <div class="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
-                                <i class="fas fa-award text-amber-600"></i>
+                            <div class="w-10 h-10 bg-brand-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-award text-brand-600"></i>
                             </div>
                             <div>
                                 <p class="text-xs text-gray-400 font-medium">Qualité</p>
@@ -785,7 +708,7 @@
                 </div>
                 <div class="flex justify-center">
                     <div class="relative w-full max-w-sm">
-                        <div class="bg-gradient-to-br from-navy-700 to-navy-900 rounded-3xl p-8 text-white text-center shadow-2xl">
+                        <div class="bg-gradient-to-br from-brand-700 to-brand-950 rounded-3xl p-8 text-white text-center shadow-2xl">
                             <div class="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-6">
                                 <i class="fas fa-toolbox text-white text-4xl"></i>
                             </div>
@@ -802,8 +725,8 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="absolute -top-4 -right-4 w-24 h-24 bg-navy-200 rounded-full opacity-40 -z-10"></div>
-                        <div class="absolute -bottom-4 -left-4 w-16 h-16 bg-amber-400 rounded-full opacity-30 -z-10"></div>
+                        <div class="absolute -top-4 -right-4 w-24 h-24 bg-brand-200 rounded-full opacity-40 -z-10"></div>
+                        <div class="absolute -bottom-4 -left-4 w-16 h-16 bg-accent-500 rounded-full opacity-30 -z-10"></div>
                     </div>
                 </div>
             </div>
@@ -818,10 +741,10 @@
         <div class="container mx-auto px-4 sm:px-6 lg:px-8">
 
             <div class="text-center mb-12">
-                <span class="inline-block px-4 py-1 bg-amber-100 text-amber-700 rounded-full text-sm font-semibold mb-4">
+                <span class="eyebrow mb-4">
                     Où nous trouver
                 </span>
-                <h2 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
+                <h2 class="text-4xl md:text-5xl font-semibold text-gray-900 mb-4">
                     Nos <span class="gradient-text">Boutiques</span>
                 </h2>
                 <p class="text-gray-600 text-lg max-w-2xl mx-auto">
@@ -831,19 +754,19 @@
 
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-{{ min($stores->count(), 4) }} gap-8">
                 @foreach($stores as $store)
-                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-lg hover:border-amber-300 transition duration-300 flex flex-col">
+                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-lg hover:border-brand-300 transition duration-300 flex flex-col">
 
                     {{-- Image boutique --}}
                     @if($store->image_url)
                         <img src="{{ $store->image_url }}" alt="{{ $store->name }}"
                              class="w-full h-44 object-cover"
                              onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex'">
-                        <div class="w-full h-44 bg-gradient-to-br from-amber-100 to-amber-200 items-center justify-center hidden">
-                            <i class="fas fa-store text-amber-500 text-5xl"></i>
+                        <div class="w-full h-44 bg-gradient-to-br from-brand-100 to-brand-200 items-center justify-center hidden">
+                            <i class="fas fa-store text-brand-500 text-5xl"></i>
                         </div>
                     @else
-                        <div class="w-full h-44 bg-gradient-to-br from-amber-100 to-amber-200 flex items-center justify-center">
-                            <i class="fas fa-store text-amber-500 text-5xl"></i>
+                        <div class="w-full h-44 bg-gradient-to-br from-brand-100 to-brand-200 flex items-center justify-center">
+                            <i class="fas fa-store text-brand-500 text-5xl"></i>
                         </div>
                     @endif
 
@@ -853,7 +776,7 @@
 
                         @if($store->address)
                         <div class="flex items-start gap-2 text-sm text-gray-500 mb-2">
-                            <i class="fas fa-map-marker-alt text-amber-500 mt-0.5 flex-shrink-0"></i>
+                            <i class="fas fa-map-marker-alt text-brand-500 mt-0.5 flex-shrink-0"></i>
                             <span>{{ $store->address }}</span>
                         </div>
                         @endif
@@ -867,8 +790,8 @@
                         <div class="border-t border-gray-100 pt-4 mt-auto">
                             <p class="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-2">Responsable</p>
                             <div class="flex items-center gap-3">
-                                <div class="w-9 h-9 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
-                                    <i class="fas fa-user text-amber-600 text-sm"></i>
+                                <div class="w-9 h-9 rounded-full bg-brand-100 flex items-center justify-center flex-shrink-0">
+                                    <i class="fas fa-user text-brand-600 text-sm"></i>
                                 </div>
                                 <div>
                                     @if($store->manager)
@@ -876,7 +799,7 @@
                                     @endif
                                     @if($store->phone)
                                     <a href="tel:{{ $store->phone }}"
-                                       class="text-xs text-amber-600 hover:text-amber-700 font-medium transition">
+                                       class="text-xs text-brand-600 hover:text-brand-700 font-medium transition">
                                         <i class="fas fa-phone text-xs mr-1"></i>{{ $store->phone }}
                                     </a>
                                     @endif
@@ -899,10 +822,10 @@
     <section id="contact" class="py-20 bg-white">
         <div class="container mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-14">
-                <span class="inline-block px-4 py-1 bg-amber-100 text-amber-700 rounded-full text-sm font-semibold mb-4">
+                <span class="eyebrow mb-4">
                     Contactez-nous
                 </span>
-                <h2 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
+                <h2 class="text-4xl md:text-5xl font-semibold text-gray-900 mb-4">
                     Nous sommes à <span class="gradient-text">votre écoute</span>
                 </h2>
                 <p class="text-gray-600 text-lg max-w-2xl mx-auto">
@@ -910,34 +833,34 @@
                 </p>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-                <div class="text-center bg-gray-50 rounded-2xl p-8 border border-gray-100 hover:border-amber-300 hover:shadow-lg transition duration-300">
+                <div class="text-center bg-gray-50 rounded-2xl p-8 border border-gray-100 hover:border-brand-300 hover:shadow-lg transition duration-300">
                     <div class="feature-icon mx-auto mb-5"><i class="fas fa-map-marker-alt"></i></div>
                     <h3 class="text-xl font-bold text-gray-800 mb-3">Adresse</h3>
                     <p class="text-gray-600 leading-relaxed">
                         Madina, Ecole Gare Routière Dabola Camion, Conakry
                     </p>
                 </div>
-                <div class="text-center bg-gray-50 rounded-2xl p-8 border border-gray-100 hover:border-amber-300 hover:shadow-lg transition duration-300">
+                <div class="text-center bg-gray-50 rounded-2xl p-8 border border-gray-100 hover:border-brand-300 hover:shadow-lg transition duration-300">
                     <div class="feature-icon mx-auto mb-5"><i class="fas fa-phone-alt"></i></div>
                     <h3 class="text-xl font-bold text-gray-800 mb-3">Appelez-nous</h3>
                     <p class="text-gray-600 leading-relaxed">
-                        <a href="tel:+224625453545" class="hover:text-amber-600 transition font-medium">625 45 35 45</a><br>
-                        <a href="tel:+224628593110" class="hover:text-amber-600 transition font-medium">628 59 31 10</a><br>
-                        <a href="tel:+224628801895" class="hover:text-amber-600 transition font-medium">628 80 18 95</a>
+                        <a href="tel:+224625453545" class="hover:text-brand-600 transition font-medium">625 45 35 45</a><br>
+                        <a href="tel:+224628593110" class="hover:text-brand-600 transition font-medium">628 59 31 10</a><br>
+                        <a href="tel:+224628801895" class="hover:text-brand-600 transition font-medium">628 80 18 95</a>
                     </p>
                 </div>
-                <div class="text-center bg-gray-50 rounded-2xl p-8 border border-gray-100 hover:border-amber-300 hover:shadow-lg transition duration-300">
+                <div class="text-center bg-gray-50 rounded-2xl p-8 border border-gray-100 hover:border-brand-300 hover:shadow-lg transition duration-300">
                     <div class="feature-icon mx-auto mb-5"><i class="fas fa-envelope"></i></div>
                     <h3 class="text-xl font-bold text-gray-800 mb-3">Email</h3>
                     <p class="text-gray-600 leading-relaxed">
-                        <a href="mailto:abdulghadirybalde@gmail.com" class="hover:text-amber-600 transition font-medium break-all">
+                        <a href="mailto:abdulghadirybalde@gmail.com" class="hover:text-brand-600 transition font-medium break-all">
                             abdulghadirybalde@gmail.com
                         </a>
                     </p>
                 </div>
             </div>
             <div class="text-center mt-12">
-                <a href="{{ route('contact') }}" class="px-10 py-4 bg-amber-600 text-white rounded-full font-semibold text-lg hover:bg-amber-700 transition duration-300 inline-block shadow-lg">
+                <a href="{{ route('contact') }}" class="px-10 py-4 bg-brand-600 text-white rounded-full font-semibold text-lg hover:bg-brand-700 transition duration-300 inline-block shadow-lg">
                     <i class="fas fa-paper-plane mr-2"></i> Envoyer un message
                 </a>
             </div>
@@ -947,16 +870,19 @@
     {{-- ══════════════════════════════════════════
          NEWSLETTER
     ══════════════════════════════════════════ --}}
-    <section class="py-16 bg-gradient-to-r from-amber-500 to-amber-600">
+    <section class="py-16 bg-gradient-to-br from-brand-700 via-brand-800 to-brand-950">
         <div class="container mx-auto px-4 sm:px-6 lg:px-8">
             <div class="max-w-3xl mx-auto text-center text-white">
-                <h2 class="text-4xl font-bold mb-4">Offres et nouveautés quincaillerie</h2>
+                <h2 class="text-4xl font-semibold mb-4">Offres et nouveautés quincaillerie</h2>
                 <p class="text-lg text-white/90 mb-8">Inscrivez-vous à notre newsletter et soyez le premier informé de nos promotions sur la peinture, l'outillage et le matériel électrique</p>
-                <form action="{{ route('newsletter.subscribe') }}" method="POST" class="flex gap-2 max-w-md mx-auto">
+                {{-- flex-col en dessous de sm + min-w-0 sur le champ : sans ça le champ
+                     et le bouton refusaient de se réduire, débordaient l'écran mobile et
+                     élargissaient tout le document (barre de défilement horizontale). --}}
+                <form action="{{ route('newsletter.subscribe') }}" method="POST" class="flex flex-col sm:flex-row gap-2 max-w-md mx-auto">
                     @csrf
                     <input type="email" name="email" placeholder="Votre email" required
-                        class="flex-1 px-6 py-3 rounded-full text-gray-800 focus:outline-none focus:ring-2 focus:ring-white">
-                    <button type="submit" class="px-8 py-3 bg-white text-amber-600 rounded-full font-semibold hover:shadow-lg transition">
+                        class="flex-1 min-w-0 px-6 py-3 rounded-full text-gray-800 focus:outline-none focus:ring-2 focus:ring-white">
+                    <button type="submit" class="shrink-0 px-8 py-3 bg-white text-brand-700 rounded-full font-semibold hover:shadow-lg transition">
                         S'inscrire
                     </button>
                 </form>
@@ -1012,15 +938,16 @@
                 <div class="prod-info">
                     <div class="prod-name">${p.name}</div>
                     <div class="prod-cat-tag">${p.category_name ?? ''}</div>
-                    <div class="prod-stars">${stars} <span style="color:#9ca3af;font-size:11px;">${parseFloat(p.rating).toFixed(1)}</span></div>
+                    <div class="prod-stars">${stars} <span style="color:#93a09a;font-size:11px;">${parseFloat(p.rating).toFixed(1)}</span></div>
                     <div class="tier-table">
                         <div class="tier-label">Tarifs de gros — prix unitaire</div>
                         <div class="tier-grid">${tierHTML}</div>
                     </div>
                     <div class="prod-qty" onclick="event.stopPropagation()">
-                        <button type="button" class="qty-btn" onclick="changeQty(this,-1)">−</button>
+                        <span class="qty-label">Quantité</span>
+                        <button type="button" class="qty-btn" onclick="changeQty(this,-1)" aria-label="Diminuer la quantité">−</button>
                         <input type="number" class="qty-input" min="1" value="1" data-base-price="${p.price}" onchange="updateCardPrice(this)">
-                        <button type="button" class="qty-btn" onclick="changeQty(this,1)">+</button>
+                        <button type="button" class="qty-btn" onclick="changeQty(this,1)" aria-label="Augmenter la quantité">+</button>
                     </div>
                     <div class="prod-price-row">
                         <span class="prod-price" data-computed-price>${Number(p.price).toLocaleString('fr-FR')} GNF</span>
@@ -1046,7 +973,7 @@
 
             const icons = { success: '🛍️', error: '❌' };
             const colors = {
-                success: 'linear-gradient(135deg,#fb923c,#ea580c)',
+                success: 'linear-gradient(135deg,#1f6f43,#195836)',
                 error:   'linear-gradient(135deg,#ef4444,#dc2626)'
             };
 
@@ -1193,6 +1120,17 @@
             const dots   = document.querySelectorAll('.hero-dot');
             if (!slides.length) return;
 
+            const piste = document.getElementById('heroCarousel');
+
+            // Une seule diapo : les contrôles n'ont plus de sens et le défilement
+            // automatique ferait clignoter la même image.
+            if (slides.length < 2) {
+                piste?.querySelectorAll('.hero-arrow, .hero-dots').forEach(el => el.remove());
+                return;
+            }
+
+            const animationReduite = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
             let current = 0;
             let timer   = null;
 
@@ -1208,17 +1146,26 @@
                 slides[current].classList.add('active');
                 dots[current]?.classList.add('active');
 
-                setTimeout(() => slides[old].classList.remove('exit'), 750);
+                setTimeout(() => slides[old].classList.remove('exit'), 950);
             }
 
             function startAuto() {
                 clearInterval(timer);
-                timer = setInterval(() => goTo(current + 1), 3500);
+                if (animationReduite) return;
+                // 5 s : sur une image plein cadre, 3,5 s ne laissait pas le temps de regarder.
+                timer = setInterval(() => goTo(current + 1), 5000);
             }
+            function stopAuto() { clearInterval(timer); }
 
             document.getElementById('heroNext')?.addEventListener('click', () => { goTo(current + 1); startAuto(); });
             document.getElementById('heroPrev')?.addEventListener('click', () => { goTo(current - 1); startAuto(); });
             dots.forEach(d => d.addEventListener('click', () => { goTo(+d.dataset.dot); startAuto(); }));
+
+            // On suspend pendant que le visiteur regarde ou touche l'image.
+            piste?.addEventListener('mouseenter', stopAuto);
+            piste?.addEventListener('mouseleave', startAuto);
+            piste?.addEventListener('touchstart', stopAuto, { passive: true });
+            piste?.addEventListener('touchend', () => setTimeout(startAuto, 2500), { passive: true });
 
             startAuto();
         })();
@@ -1236,7 +1183,7 @@
                 if (!el) return;
                 el.innerHTML = data.length
                     ? data.map(renderCard).join('')
-                    : '<p style="color:#9ca3af;padding:12px;">Aucun produit à afficher pour le moment.</p>';
+                    : '<p style="color:#93a09a;padding:12px;">Aucun produit à afficher pour le moment.</p>';
             });
         })();
 

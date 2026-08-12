@@ -3,7 +3,7 @@
 
         <a href="{{ route('accueil') }}" class="logo d-flex align-items-center">
             <!-- Uncomment the line below if you also wish to use an image logo -->
-            <img src="{{ asset('companies/ADK.jpg') }}" alt="">
+            <img src="{{ asset('companies/ADK.png') }}" alt="">
             <h1 class="sitename">Coleah Bandeya & Fils</h1>
         </a>
 

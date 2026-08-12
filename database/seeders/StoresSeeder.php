@@ -23,7 +23,9 @@ class StoresSeeder extends Seeder
                 'store_name' => 'Quincaillerie Madina',
                 'place_id' => $placeId,
                 'user_id' => $userId,
-                'store_picture' => 'store.png',
+                // Vide plutôt qu'un nom de fichier fictif : les vues testent la
+                // valeur et affichent leur visuel de repli, sans requête 404.
+                'store_picture' => '',
                 'status' => 1,
                 'description' => 'Boutique principale : peinture, outillage, serrurerie, plomberie, électricité et divers.',
                 'address' => 'Madina, Ecole Gare Routière Dabola Camion, Conakry',
@@ -33,7 +35,9 @@ class StoresSeeder extends Seeder
                 'store_name' => 'Dépôt Madina',
                 'place_id' => $placeId,
                 'user_id' => $userId,
-                'store_picture' => 'store.png',
+                // Vide plutôt qu'un nom de fichier fictif : les vues testent la
+                // valeur et affichent leur visuel de repli, sans requête 404.
+                'store_picture' => '',
                 'status' => 1,
                 'description' => 'Entrepôt secondaire pour le réapprovisionnement.',
                 'address' => 'Madina, Conakry',

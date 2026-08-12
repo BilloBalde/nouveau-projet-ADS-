@@ -423,14 +423,14 @@
 
                         <div id="invoiceContent">
                             <div class="invoice-watermark" aria-hidden="true">
-                                <img class="watermark-logo" src="{{ asset('companies/' . ($company?->logo ?? 'ADK.jpg')) }}" alt="">
+                                <img class="watermark-logo" src="{{ asset('companies/' . ($company?->logo ?? 'ADK.png')) }}" alt="">
                             </div>
 
                             <div class="facture-inner">
                                 <!-- En-tête -->
                                 <div class="facture-header">
                                     <div class="facture-brand">
-                                        <img src="{{ asset('companies/' . ($company?->logo ?? 'ADK.jpg')) }}" alt="{{ $company?->name ?? 'Coleah Bandeya & Fils' }}">
+                                        <img src="{{ asset('companies/' . ($company?->logo ?? 'ADK.png')) }}" alt="{{ $company?->name ?? 'Coleah Bandeya & Fils' }}">
                                         <div>
                                             <div class="facture-brand-name">{{ $company?->name ?? 'Coleah Bandeya & Fils' }}</div>
                                             <div class="facture-brand-sub">

@@ -8,7 +8,7 @@
     @include('partials.theme-head')
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body class="min-h-screen bg-gradient-to-br from-red-50 to-orange-100 flex items-center justify-center p-4">
+<body class="min-h-screen bg-gradient-to-br from-red-50 to-accent-100 flex items-center justify-center p-4">
 
     <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full p-10 text-center">
 
@@ -38,7 +38,7 @@
         <div class="flex flex-col gap-3">
             @if($order)
             <a href="{{ route('payment.pay', $order->id) }}"
-               class="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 rounded-xl transition-colors">
+               class="w-full bg-accent-500 hover:bg-accent-600 text-white font-semibold py-3 rounded-xl transition-colors">
                 <i class="fas fa-redo me-2"></i> Réessayer le paiement
             </a>
             @endif

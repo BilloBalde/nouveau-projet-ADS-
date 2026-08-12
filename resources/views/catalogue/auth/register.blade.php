@@ -8,7 +8,7 @@
                 <div class="login-form-wrapper">
                     <!-- Logo -->
                     <div class="login-logo">
-                        <img src="{{ asset('companies/ADK.jpg') }}" alt="Coleah Bandeya & Fils Logo" class="logo-image">
+                        <img src="{{ asset('companies/ADK.png') }}" alt="Coleah Bandeya & Fils Logo" class="logo-image">
                         <h2 class="logo-text">Coleah Bandeya & Fils</h2>
                     </div>
 
