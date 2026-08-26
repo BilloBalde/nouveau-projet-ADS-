@@ -194,7 +194,12 @@ class OrderManagementController extends Controller
 
             // Création client, facture, paiement... (gardez votre code existant)
             $user = $order->user;
-            $customer = Customer::firstOrCreate(
+            // withTrashed : un client archivé garde son `mark`, et l'index unique
+            // qui porte dessus ignore `deleted_at`. Sans cela, la recherche ne
+            // trouvait rien, l'insertion se heurtait à l'index, et l'approbation
+            // échouait sur une erreur SQL brute — un client archivé ne pouvait
+            // plus jamais repasser commande.
+            $customer = Customer::withTrashed()->firstOrCreate(
                 ['email' => $user->email],
                 [
                     'mark'         => strtoupper(substr($user->name, 0, 3)) . $user->id,
@@ -204,6 +209,11 @@ class OrderManagementController extends Controller
                     'email'        => $user->email,
                 ]
             );
+
+            // Il repasse commande : on le sort de la corbeille, avec son historique.
+            if ($customer->trashed()) {
+                $customer->restore();
+            }
 
             $isPaid = $order->payment_status === 'paid';
             $avance = $isPaid ? $order->total_amount : 0;
