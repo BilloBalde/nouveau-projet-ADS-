@@ -108,14 +108,26 @@ class ProfileController extends Controller
 
     }
     public function companyCreate(Request $request){
+        // email et phone s'impriment en pied de chaque facture, devis et bon.
+        // Ils étaient auparavant codés en dur dans les vues, donc impossibles à
+        // corriger sans toucher au code.
         $validated = $request->validate([
             'name' =>'required|string|max:255',
             'address' =>'required|string|max:255',
+            'email' =>'nullable|email|max:255',
+            'phone' =>'nullable|string|max:40',
+            'phone_secondary' =>'nullable|string|max:40',
             'about' =>'required|string',
+        ], [
+            'email.email' => "L'adresse e-mail n'est pas valide.",
         ]);
         $compagnie = Company::find($request->id);
         if (isset($request->logo)) {
-            $logoName = time().'.'.request()->logo->getClientOriginalExtension();
+            // Liste blanche et taille limitée, comme dans StoreController : sans
+            // elles, l'extension fournie par le navigateur atterrit telle quelle
+            // dans un dossier servi publiquement.
+            $request->validate(['logo' => 'image|mimes:jpeg,png,jpg,webp|max:2048']);
+            $logoName = time().'-'.bin2hex(random_bytes(4)).'.'.request()->logo->getClientOriginalExtension();
             request()->logo->move(public_path('companies'), $logoName);
             $validated['logo'] = $logoName;
         }else {

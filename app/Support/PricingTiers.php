@@ -16,6 +16,18 @@ class PricingTiers
     ];
 
     /**
+     * Les paliers sont-ils actifs sur cette installation ?
+     *
+     * Coleah Bandeya & Fils vend au prix affiché quelle que soit la quantité ; la
+     * définition ci-dessus est conservée pour les installations qui les veulent.
+     * Voir config/pricing.php et PRICING_TIERS_ENABLED dans .env.
+     */
+    public static function enabled(): bool
+    {
+        return (bool) config('pricing.tiers_enabled', false);
+    }
+
+    /**
      * Retourne les paliers avec le prix unitaire calculé pour un prix de base donné.
      *
      * @return array<int, array{qty: int, percent: int, price: float}>
@@ -39,6 +51,10 @@ class PricingTiers
      */
     public static function displayTiers(float $basePrice): array
     {
+        if (! self::enabled()) {
+            return [];
+        }
+
         return array_values(array_filter(
             self::forPrice($basePrice),
             fn (array $tier) => $tier['percent'] > 0
@@ -50,6 +66,10 @@ class PricingTiers
      */
     public static function unitPriceFor(float $basePrice, int $quantity): float
     {
+        if (! self::enabled()) {
+            return round($basePrice);
+        }
+
         $applicable = self::TIERS[0];
         foreach (self::TIERS as $tier) {
             if ($quantity >= $tier['qty']) {

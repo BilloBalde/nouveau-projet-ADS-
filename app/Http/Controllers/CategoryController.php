@@ -45,10 +45,6 @@ class CategoryController extends Controller
         }
     }
 
-    public function show(CategoryEmballage $categoryEmballage)
-    {
-        //
-    }
 
     public function edit($categoryEmballage)
     {

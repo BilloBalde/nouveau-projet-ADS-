@@ -22,7 +22,7 @@
                                 <label>Email</label>
                                 <div class="form-addons">
                                     <input name="email" type="text" placeholder="Enter your email address">
-                                    <img src="assets/img/icons/mail.svg" alt="img">
+                                    <img src="{{ asset('assets/img/icons/mail.svg') }}" alt="img">
                                 </div>
                                 @error('email')
                                 <span class="invalid-feedback" role="alert">
@@ -42,7 +42,7 @@
                     </div>
                 </div>
                 <div class="login-img">
-                    <img src="assets/img/login.jpg" alt="img">
+                    <img src="{{ asset('assets/img/login.jpg') }}" alt="img">
                 </div>
             </div>
         </div>

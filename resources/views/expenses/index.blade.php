@@ -17,7 +17,7 @@
                             <h6>Gérer vos Dépenses</h6>
                         </div>
                         <div class="page-btn">
-                            <a href="{{ route('expenses.create') }}" class="btn btn-added"><img src="assets/img/icons/plus.svg" alt="img" class="me-2">Ajouter Dépense</a>
+                            <a href="{{ route('expenses.create') }}" class="btn btn-added"><img src="{{ asset('assets/img/icons/plus.svg') }}" alt="img" class="me-2">Ajouter Dépense</a>
                         </div>
                     </div>
                     @if (session('success'))
@@ -37,12 +37,12 @@
                                 <div class="search-set">
                                     <div class="search-path">
                                         <a class="btn btn-filter" id="filter_search">
-                                            <img src="assets/img/icons/filter.svg" alt="img">
-                                            <span><img src="assets/img/icons/closes.svg" alt="img"></span>
+                                            <img src="{{ asset('assets/img/icons/filter.svg') }}" alt="img">
+                                            <span><img src="{{ asset('assets/img/icons/closes.svg') }}" alt="img"></span>
                                         </a>
                                     </div>
                                     <div class="search-input">
-                                        <a class="btn btn-searchset"><img src="assets/img/icons/search-white.svg" alt="img"></a>
+                                        <a class="btn btn-searchset"><img src="{{ asset('assets/img/icons/search-white.svg') }}" alt="img"></a>
                                     </div>
                                 </div>
                             </div>
@@ -83,7 +83,7 @@
                                             </div>
                                             <div class="col-lg-2 col-sm-6 col-12 d-flex align-items-center">
                                                 <div class="form-group d-flex">
-                                                    <button type="submit" class="btn btn-filters me-2"><img src="assets/img/icons/search-whites.svg" alt="img"></button>
+                                                    <button type="submit" class="btn btn-filters me-2"><img src="{{ asset('assets/img/icons/search-whites.svg') }}" alt="img"></button>
                                                     <a href="{{ route('expenses.index') }}" class="btn btn-secondary">Reset</a>
                                                 </div>
                                             </div>
@@ -121,9 +121,9 @@
                                             @endif
                                             <td>
                                                 <a class="me-3" href="{{ route('expenses.edit', $expense->id) }}">
-                                                    <img src="assets/img/icons/edit.svg" alt="img">
+                                                    <img src="{{ asset('assets/img/icons/edit.svg') }}" alt="img">
                                                 </a>
-                                                <a class="btn me-3" data-bs-toggle="modal" data-bs-target="#deleteModal" data-id="{{ $expense->id }}" data-reference="{{ $expense->reference }}"><img src="assets/img/icons/delete.svg" alt="img"></a>
+                                                <a class="btn me-3" data-bs-toggle="modal" data-bs-target="#deleteModal" data-id="{{ $expense->id }}" data-reference="{{ $expense->reference }}"><img src="{{ asset('assets/img/icons/delete.svg') }}" alt="img"></a>
                                             </td>
                                         </tr>
                                         @endforeach

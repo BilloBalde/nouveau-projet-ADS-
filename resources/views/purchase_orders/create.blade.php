@@ -2,124 +2,6 @@
 <html lang="en">
     @include('layouts.head')
     <body>
-        <style>
-            .po-section {
-                background: #fff;
-                border: 1px solid #f0e4d8;
-                border-radius: 10px;
-                padding: 20px;
-                margin-bottom: 20px;
-            }
-            .po-section-title {
-                font-weight: 700;
-                color: #c1682f;
-                margin-bottom: 15px;
-                font-size: 15px;
-            }
-            .po-import-only {
-                display: none;
-            }
-            body.origin-chine .po-import-only {
-                display: block;
-            }
-            .po-line {
-                border: 1px solid #f0e4d8;
-                border-radius: 8px;
-                padding: 15px;
-                margin-bottom: 12px;
-                position: relative;
-            }
-            .po-line-remove {
-                position: absolute;
-                top: 10px;
-                right: 10px;
-                background: #fdecea;
-                color: #c1682f;
-                border: none;
-                border-radius: 50%;
-                width: 26px;
-                height: 26px;
-                cursor: pointer;
-            }
-            .po-line-remove:hover {
-                background: #c1682f;
-                color: #fff;
-            }
-            .po-line-cost-preview {
-                background: #fbf3ea;
-                border-radius: 6px;
-                padding: 8px 12px;
-                font-size: 13px;
-                color: #8a5a34;
-                margin-top: 10px;
-            }
-            .po-grand-total {
-                background: #fdf6ec;
-                border: 1px solid #f0e0c8;
-                border-radius: 10px;
-                padding: 15px 20px;
-                font-size: 15px;
-            }
-            .po-grand-total strong {
-                color: #c1682f;
-            }
-            .origin-toggle {
-                display: flex;
-                gap: 12px;
-            }
-            .origin-toggle label {
-                flex: 1;
-                border: 1px solid #e3d3c2;
-                border-radius: 8px;
-                padding: 12px;
-                text-align: center;
-                cursor: pointer;
-                font-weight: 600;
-            }
-            .origin-toggle input {
-                display: none;
-            }
-            .origin-toggle input:checked + span {
-                color: #c1682f;
-            }
-            .origin-toggle label:has(input:checked) {
-                border-color: #c1682f;
-                background: #fbf3ea;
-            }
-            .po-field-with-add {
-                display: flex;
-                gap: 6px;
-                align-items: stretch;
-            }
-            .po-field-with-add select {
-                flex: 1;
-            }
-            /* Select2 remplace le <select> par un span.select2-container qui n'hérite
-               pas de la règle ci-dessus : sans ça, il ne s'étire pas et chevauche le
-               bouton "+" (cf. sélecteur de produit). Le !important est nécessaire car
-               public/assets/css/style.css force globalement
-               ".select2-container{min-width:100%!important}", ce qui l'empêche sinon
-               de rétrécir pour laisser la place au bouton. */
-            .po-field-with-add .select2-container {
-                flex: 1 1 0% !important;
-                min-width: 0 !important;
-                width: auto !important;
-            }
-            .po-add-btn {
-                flex-shrink: 0;
-                width: 38px;
-                border: 1px solid #e3d3c2;
-                background: #fdf6ec;
-                color: #c1682f;
-                border-radius: 6px;
-                font-size: 14px;
-                cursor: pointer;
-            }
-            .po-add-btn:hover {
-                background: #c1682f;
-                color: #fff;
-            }
-        </style>
         <div id="global-loader">
             <div class="whirly-loader"> </div>
         </div>
@@ -139,142 +21,167 @@
                     <form action="{{ route('purchase-orders.store') }}" method="POST" id="poForm">
                         @csrf
 
-                        <div class="po-section">
-                            <div class="po-section-title">Informations générales</div>
-                            <div class="row">
-                                <div class="col-lg-3 col-sm-6 col-12">
-                                    <div class="form-group">
-                                        <label>Référence</label>
-                                        <input type="text" name="reference" class="form-control" value="{{ old('reference', $reference) }}" readonly>
-                                        @error('reference') <span class="text-danger">{{ $message }}</span> @enderror
-                                    </div>
-                                </div>
-                                <div class="col-lg-3 col-sm-6 col-12">
-                                    <div class="form-group">
-                                        <label>Magasin de destination</label>
-                                        <div class="po-field-with-add">
-                                            <select name="store_id" id="storeSelect" class="form-control" required>
-                                                <option value="">Sélectionner</option>
-                                                @foreach($stores as $store)
-                                                    <option value="{{ $store->id }}">{{ $store->store_name ?? $store->name }}</option>
-                                                @endforeach
-                                            </select>
-                                            <button type="button" class="po-add-btn" data-bs-toggle="modal" data-bs-target="#newStoreModal" title="Ajouter une boutique">
-                                                <i class="fa fa-plus"></i>
-                                            </button>
+                        {{-- Bandeau des paramètres de l'achat.
+                             Seul #poCostFields (monnaie, taux, transport, douane, frais divers)
+                             part dans la modale d'ouverture ; l'identification de l'achat reste
+                             ici. Les champs sont déplacés, jamais dupliqués : un name= en double
+                             casserait l'enregistrement. --}}
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-lg-3 col-md-4 col-sm-6 col-12">
+                                        <div class="form-group">
+                                            <label>Référence</label>
+                                            <input type="text" name="reference" class="form-control" value="{{ old('reference', $reference) }}" readonly>
+                                            @error('reference') <span class="text-danger">{{ $message }}</span> @enderror
                                         </div>
-                                        @error('store_id') <span class="text-danger">{{ $message }}</span> @enderror
+                                    </div>
+                                    <div class="col-lg-3 col-md-4 col-sm-6 col-12">
+                                        <div class="form-group">
+                                            <label>Magasin</label>
+                                            {{-- Grille Bootstrap plutôt qu'un flex maison : le thème force
+                                                 .select2-container{min-width:100%!important}, qui ferait
+                                                 chevaucher le select et le bouton dans un conteneur flex. --}}
+                                            <div class="row g-1">
+                                                <div class="col-9">
+                                                    <select name="store_id" id="storeSelect" class="form-control" required>
+                                                        <option value="">Sélectionner</option>
+                                                        @foreach($stores as $store)
+                                                            <option value="{{ $store->id }}">{{ $store->store_name ?? $store->name }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                </div>
+                                                <div class="col-3">
+                                                    <button type="button" class="btn btn-secondary w-100" data-bs-toggle="modal" data-bs-target="#newStoreModal" title="Ajouter une boutique">
+                                                        <i class="fa fa-plus"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            @error('store_id') <span class="text-danger">{{ $message }}</span> @enderror
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-3 col-md-4 col-sm-6 col-12">
+                                        <div class="form-group">
+                                            <label>Date d'émission</label>
+                                            <input type="date" name="date_emis" id="dateEmis" class="form-control" value="{{ old('date_emis', now()->toDateString()) }}" required>
+                                            @error('date_emis') <span class="text-danger">{{ $message }}</span> @enderror
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-3 col-md-4 col-sm-6 col-12">
+                                        <div class="form-group">
+                                            <label>Date de réception</label>
+                                            <input type="date" name="date_recu" class="form-control" value="{{ old('date_recu') }}">
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="col-lg-3 col-sm-6 col-12">
-                                    <div class="form-group">
-                                        <label>Date d'émission</label>
-                                        <input type="date" name="date_emis" class="form-control" value="{{ old('date_emis', now()->toDateString()) }}" required>
-                                        @error('date_emis') <span class="text-danger">{{ $message }}</span> @enderror
-                                    </div>
-                                </div>
-                                <div class="col-lg-3 col-sm-6 col-12">
-                                    <div class="form-group">
-                                        <label>Date de réception (optionnel)</label>
-                                        <input type="date" name="date_recu" class="form-control" value="{{ old('date_recu') }}">
-                                    </div>
-                                </div>
-                            </div>
 
-                            <div class="form-group">
-                                <label>Origine de l'achat</label>
-                                <div class="origin-toggle">
-                                    <label>
-                                        <input type="radio" name="origin" value="guinee" id="originGuinee" {{ old('origin', 'guinee') == 'guinee' ? 'checked' : '' }}>
-                                        <span>🇬🇳 Achat local (Guinée)</span>
-                                    </label>
-                                    <label>
-                                        <input type="radio" name="origin" value="chine" id="originChine" {{ old('origin') == 'chine' ? 'checked' : '' }}>
-                                        <span>🇨🇳 Import (Chine)</span>
-                                    </label>
+                                <div class="form-group">
+                                    <label>Origine de l'achat</label>
+                                    <div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="radio" name="origin" value="guinee" id="originGuinee" {{ old('origin', 'guinee') == 'guinee' ? 'checked' : '' }}>
+                                            <label class="form-check-label" for="originGuinee">Achat local (Guinée)</label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="radio" name="origin" value="chine" id="originChine" {{ old('origin') == 'chine' ? 'checked' : '' }}>
+                                            <label class="form-check-label" for="originChine">Import (Chine)</label>
+                                        </div>
+                                    </div>
+                                    @error('origin') <span class="text-danger">{{ $message }}</span> @enderror
                                 </div>
-                                @error('origin') <span class="text-danger">{{ $message }}</span> @enderror
+
+                                {{-- Bloc déplacé dans la modale au chargement, puis remis ici --}}
+                                <div id="poCostAnchor">
+                                    <div id="poCostFields">
+                                        <div class="row">
+                                            <div class="col-lg-3 col-md-4 col-sm-6 col-12 po-import-only">
+                                                <div class="form-group">
+                                                    <label>Monnaie de change</label>
+                                                    <select name="currency_code" id="currencyCode" class="form-control">
+                                                        <option value="">— GNF (Local) —</option>
+                                                        @foreach($currencies as $currency)
+                                                            <option value="{{ $currency->currencyCode }}"
+                                                                    data-rate="{{ $currency->rate_to_gnf }}"
+                                                                    data-updated="{{ $currency->updated_at?->format('d/m/Y') }}">
+                                                                {{ $currency->currencyName }} ({{ $currency->currencyCode }})
+                                                            </option>
+                                                        @endforeach
+                                                    </select>
+                                                    @error('currency_code') <span class="text-danger" data-error-for="currencyCode">{{ $message }}</span> @enderror
+                                                </div>
+                                            </div>
+                                            <div class="col-lg-3 col-md-4 col-sm-6 col-12 po-import-only">
+                                                <div class="form-group">
+                                                    <label>Taux de change</label>
+                                                    <input type="text" inputmode="decimal" name="exchange_rate_used" id="exchangeRate" class="form-control decimal-input" value="{{ old('exchange_rate_used') }}">
+                                                    <span class="text-danger" data-error-for="exchangeRate" style="display:none;">Veuillez entrer une valeur valide (&gt; 0).</span>
+                                                    @error('exchange_rate_used') <span class="text-danger">{{ $message }}</span> @enderror
+                                                </div>
+                                            </div>
+                                            <div class="col-lg-2 col-md-4 col-sm-6 col-12">
+                                                <div class="form-group">
+                                                    <label>Transport (GNF)</label>
+                                                    <input type="text" inputmode="decimal" name="transport_cost_gnf" id="transportCost" class="form-control decimal-input" value="{{ old('transport_cost_gnf', 0) }}">
+                                                    <span class="text-danger" data-error-for="transportCost" style="display:none;">Veuillez entrer une valeur valide (≥ 0).</span>
+                                                </div>
+                                            </div>
+                                            <div class="col-lg-2 col-md-4 col-sm-6 col-12 po-import-only">
+                                                <div class="form-group">
+                                                    <label>Douane (GNF)</label>
+                                                    <input type="text" inputmode="decimal" name="customs_cost_gnf" id="customsCost" class="form-control decimal-input" value="{{ old('customs_cost_gnf', 0) }}">
+                                                    <span class="text-danger" data-error-for="customsCost" style="display:none;">Veuillez entrer une valeur valide (≥ 0).</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <p class="text-muted" id="rateReference"></p>
+                                    </div>
+                                </div>
+
+                                <p class="text-muted">
+                                    Le transport et la douane sont répartis automatiquement entre les produits, au prorata du volume (CBM) de chaque ligne.
+                                </p>
                             </div>
                         </div>
 
-                        <div class="po-section po-import-only">
-                            <div class="po-section-title">Devise &amp; taux de change</div>
-                            <div class="row">
-                                <div class="col-lg-4 col-sm-6 col-12">
-                                    <div class="form-group">
-                                        <label>Devise de paiement</label>
-                                        <select name="currency_code" id="currencyCode" class="form-control">
-                                            <option value="">— GNF (Local) —</option>
-                                            @foreach($currencies as $currency)
-                                                <option value="{{ $currency->currencyCode }}"
-                                                        data-rate="{{ $currency->rate_to_gnf }}"
-                                                        data-updated="{{ $currency->updated_at?->format('d/m/Y') }}">
-                                                    {{ $currency->currencyName }} ({{ $currency->currencyCode }})
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                        @error('currency_code') 
-                                            <span class="text-danger" data-error-for="currencyCode">{{ $message }}</span> 
-                                        @enderror
-                                        <small class="form-text text-muted">Laissez vide pour utiliser GNF directement</small>
-                                    </div>
+                        <div class="card">
+                            <div class="card-body">
+                                <h5>Produits achetés</h5>
+                                <div class="table-responsive mb-3">
+                                    <table class="table">
+                                        <thead>
+                                            <tr>
+                                                <th>Produit</th>
+                                                <th>Cartons</th>
+                                                <th>Pièces / carton</th>
+                                                <th>Quantité</th>
+                                                <th class="po-price-label">Prix unitaire</th>
+                                                <th class="po-import-only">CBM / carton</th>
+                                                <th class="po-import-only">CBM / unité</th>
+                                                <th>Description</th>
+                                                <th>Coût de revient</th>
+                                                <th>Action</th>
+                                            </tr>
+                                        </thead>
+                                        {{-- id sur le tbody : addLine() y insère les <tr> --}}
+                                        <tbody id="poLines"></tbody>
+                                        <tfoot>
+                                            <tr>
+                                                <th colspan="3" class="text-end">Totaux</th>
+                                                <th><span id="grandTotalCbm">0.000</span> CBM</th>
+                                                <th><span id="grandTotalPrice">0</span> GNF</th>
+                                                <th class="po-import-only"></th>
+                                                <th class="po-import-only"></th>
+                                                <th></th>
+                                                <th><span id="grandTotalCost">0</span> GNF</th>
+                                                <th></th>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
                                 </div>
-                                <div class="col-lg-4 col-sm-6 col-12">
-                                    <div class="form-group">
-                                        <label>Taux du jour (1 unité = X GNF)</label>
-                                        <input type="text" inputmode="decimal"
-                                            name="exchange_rate_used"
-                                            id="exchangeRate"
-                                            class="form-control decimal-input"
-                                            value="{{ old('exchange_rate_used') }}">
-                                        @error('exchange_rate_used')
-                                            <span class="text-danger" data-error-for="exchangeRate">{{ $message }}</span>
-                                        @enderror
-                                    </div>
-                                </div>
+                                <button type="button" class="btn btn-primary w-100" id="addLineBtn">
+                                    <i class="fa fa-plus"></i> Ajouter une ligne
+                                </button>
                             </div>
-                            <p class="text-muted" style="font-size:13px;" id="rateReference"></p>
-                        </div>
-
-                        <div class="po-section">
-                            <div class="po-section-title">Frais de l'arrivage</div>
-                            <div class="row">
-                                <div class="col-lg-4 col-sm-6 col-12">
-                                    <div class="form-group">
-                                        <label>Transport (GNF)</label>
-                                        <input type="text" inputmode="decimal" name="transport_cost_gnf" id="transportCost" class="form-control decimal-input" value="{{ old('transport_cost_gnf', 0) }}">
-                                    </div>
-                                </div>
-                                <div class="col-lg-4 col-sm-6 col-12 po-import-only">
-                                    <div class="form-group">
-                                        <label>Douane / Dédouanement (GNF)</label>
-                                        <input type="text" inputmode="decimal" name="customs_cost_gnf" id="customsCost" class="form-control decimal-input" value="{{ old('customs_cost_gnf', 0) }}">
-                                    </div>
-                                </div>
-                                <div class="col-lg-4 col-sm-6 col-12">
-                                    <div class="form-group">
-                                        <label>Frais divers (GNF)</label>
-                                        <input type="text" inputmode="decimal" name="other_fees_gnf" id="otherFees" class="form-control decimal-input" value="{{ old('other_fees_gnf', 0) }}">
-                                    </div>
-                                </div>
-                            </div>
-                            <p class="text-muted" style="font-size:13px;">
-                                Le transport et la douane sont répartis automatiquement entre les produits, au prorata du volume (CBM) de chaque ligne.
-                            </p>
-                        </div>
-
-                        <div class="po-section">
-                            <div class="po-section-title">Produits achetés</div>
-                            <div id="poLines"></div>
-                            <button type="button" class="btn btn-secondary" id="addLineBtn">
-                                <i class="fa fa-plus"></i> Ajouter une ligne
-                            </button>
-                        </div>
-
-                        <div class="po-grand-total mb-3">
-                            <div>Prix total (HT) : <strong id="grandTotalPrice">0</strong> GNF</div>
-                            <div>Volume total : <strong id="grandTotalCbm">0.000</strong> CBM</div>
-                            <div>Coût de revient total estimé : <strong id="grandTotalCost">0</strong> GNF</div>
                         </div>
 
                         <div class="form-group">
@@ -289,73 +196,56 @@
             </div>
         </div>
 
-        <template id="poLineTemplate">
-            <div class="po-line" data-line>
-                <button type="button" class="po-line-remove" data-remove-line title="Retirer"><i class="fa fa-trash"></i></button>
-                <div class="row">
-                    <div class="col-lg-3 col-sm-6 col-12">
-                        <div class="form-group">
-                            <label>Produit</label>
-                            <div class="po-field-with-add">
-                                <select name="lines[__INDEX__][product_id]" class="form-control" data-field="product_id" required>
-                                    <option value="">Sélectionner le produit</option>
-                                    @foreach($products as $product)
-                                        <option value="{{ $product->id }}">{{ $product->libelle }} ({{ $product->sku }})</option>
-                                    @endforeach
-                                </select>
-                                <button type="button" class="po-add-btn" data-bs-toggle="modal" data-bs-target="#newProductModal" title="Ajouter un produit">
-                                    <i class="fa fa-plus"></i>
-                                </button>
-                            </div>
-                        </div>
+        {{-- Modale d'entrée : accueille le bandeau #poHeaderFields le temps de la saisie,
+             puis le rend à la page. Les champs sont les mêmes objets DOM, jamais dupliqués. --}}
+        <div class="modal fade" id="poIntroModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+            <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Compléter les détails du transport</h5>
                     </div>
-                    <div class="col-lg-2 col-sm-6 col-12">
-                        <div class="form-group">
-                            <label>Nombre de cartons</label>
-                            <input type="number" min="0" name="lines[__INDEX__][cartons]" class="form-control" data-field="cartons" value="0">
-                        </div>
+                    <div class="modal-body">
+                        <p class="text-muted">Veuillez d'abord remplir ces champs.</p>
+                        <div id="poIntroSlot"></div>
+                        <p class="text-muted">Vous pourrez les modifier ultérieurement si nécessaire.</p>
                     </div>
-                    <div class="col-lg-2 col-sm-6 col-12">
-                        <div class="form-group">
-                            <label>Pièces par carton</label>
-                            <input type="number" min="0" name="lines[__INDEX__][pieces_per_carton]" class="form-control" data-field="pieces_per_carton" value="0">
-                        </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" id="poIntroContinue">Continuer</button>
                     </div>
-                    <div class="col-lg-2 col-sm-6 col-12">
-                        <div class="form-group">
-                            <label>Quantité totale (pièces)</label>
-                            <input type="number" min="1" name="lines[__INDEX__][quantity]" class="form-control" data-field="quantity" readonly style="background:#f5f5f5" required>
-                        </div>
-                    </div>
-                    <div class="col-lg-2 col-sm-6 col-12">
-                        <div class="form-group">
-                            <label class="po-price-label">Prix unitaire</label>
-                            <input type="text" inputmode="decimal" name="lines[__INDEX__][unit_price_foreign]" class="form-control decimal-input" data-field="unit_price_foreign" required>
-                        </div>
-                    </div>
-                    <div class="col-lg-2 col-sm-6 col-12 po-import-only">
-                        <div class="form-group">
-                            <label>CBM / carton</label>
-                            <input type="text" inputmode="decimal" name="lines[__INDEX__][cbm_per_carton]" class="form-control decimal-input" data-field="cbm_per_carton" placeholder="Ex : 0.085">
-                        </div>
-                    </div>
-                    <div class="col-lg-2 col-sm-6 col-12 po-import-only">
-                        <div class="form-group">
-                            <label>CBM / unité (calculé)</label>
-                            <input type="text" class="form-control" data-field="cbm_per_unit_display" readonly style="background:#f5f5f5">
-                        </div>
-                    </div>
-                    <div class="col-lg-2 col-sm-6 col-12">
-                        <div class="form-group">
-                            <label>Description</label>
-                            <input type="text" name="lines[__INDEX__][description]" class="form-control" data-field="description">
-                        </div>
-                    </div>
-                </div>
-                <div class="po-line-cost-preview" data-preview>
-                    Coût de revient estimé : <strong data-preview-cost>0</strong> GNF / unité
                 </div>
             </div>
+        </div>
+
+        <template id="poLineTemplate">
+            <tr data-line>
+                <td>
+                    <div class="row g-1">
+                        <div class="col-9">
+                            <select name="lines[__INDEX__][product_id]" class="form-control" data-field="product_id" required>
+                                <option value="">Sélectionner le produit</option>
+                                @foreach($products as $product)
+                                    <option value="{{ $product->id }}">{{ $product->libelle }} ({{ $product->sku }})</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-3">
+                            <button type="button" class="btn btn-secondary w-100" data-bs-toggle="modal" data-bs-target="#newProductModal" title="Ajouter un produit">
+                                <i class="fa fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                </td>
+                <td><input type="number" min="0" name="lines[__INDEX__][cartons]" class="form-control" data-field="cartons" value="0"></td>
+                <td><input type="number" min="0" name="lines[__INDEX__][pieces_per_carton]" class="form-control" data-field="pieces_per_carton" value="0"></td>
+                <td><input type="number" min="1" name="lines[__INDEX__][quantity]" class="form-control" data-field="quantity" readonly required></td>
+                <td><input type="text" inputmode="decimal" name="lines[__INDEX__][unit_price_foreign]" class="form-control decimal-input" data-field="unit_price_foreign" required></td>
+                <td class="po-import-only"><input type="text" inputmode="decimal" name="lines[__INDEX__][cbm_per_carton]" class="form-control decimal-input" data-field="cbm_per_carton" placeholder="Ex : 0.085"></td>
+                <td class="po-import-only"><input type="text" class="form-control" data-field="cbm_per_unit_display" readonly></td>
+                <td><input type="text" name="lines[__INDEX__][description]" class="form-control" data-field="description"></td>
+                {{-- Remplace l'ancien encadré .po-line-cost-preview : même donnée, en colonne --}}
+                <td data-preview><strong data-preview-cost>0</strong> GNF</td>
+                <td><button type="button" class="btn btn-secondary" data-remove-line title="Retirer"><i class="fa fa-trash"></i></button></td>
+            </tr>
         </template>
 
         <!-- Modale : nouvelle boutique -->
@@ -593,7 +483,7 @@
                     });
                 }
 
-                [document.getElementById('exchangeRate'), document.getElementById('transportCost'), document.getElementById('customsCost'), document.getElementById('otherFees')].forEach(wireDecimalInput);
+                [document.getElementById('exchangeRate'), document.getElementById('transportCost'), document.getElementById('customsCost')].forEach(wireDecimalInput);
 
                 // Les messages d'erreur du serveur restent affichés tant qu'on n'a pas resoumis
                 function clearErrorFor(id) {
@@ -614,6 +504,12 @@
                 function setOriginClass() {
                     const isChine = document.getElementById('originChine').checked;
                     document.body.classList.toggle('origin-chine', isChine);
+                    // L'affichage des champs propres à l'import était piloté par une règle
+                    // CSS (body.origin-chine .po-import-only). Le design minimal n'ayant
+                    // plus de feuille de style, c'est le JS qui s'en charge.
+                    document.querySelectorAll('.po-import-only').forEach(function (el) {
+                        el.style.display = isChine ? '' : 'none';
+                    });
                     document.querySelectorAll('.po-price-label').forEach(function (label) {
                         label.textContent = isChine ? 'Prix unitaire (devise)' : 'Prix unitaire (GNF)';
                     });
@@ -665,7 +561,9 @@
 
                 function addLine() {
                     const html = template.innerHTML.replaceAll('__INDEX__', lineIndex);
-                    const wrapper = document.createElement('div');
+                    // <tbody> et non <div> : le parseur HTML supprime un <tr> injecté
+                    // dans un conteneur qui n'est pas une table.
+                    const wrapper = document.createElement('tbody');
                     wrapper.innerHTML = html;
                     const lineEl = wrapper.firstElementChild;
                     linesContainer.appendChild(lineEl);
@@ -729,7 +627,11 @@
 
                     // Le taux vient TOUJOURS de ce que l'utilisateur a saisi dans le champ
                     // (jamais du taux de référence enregistré) — c'est lui qui fait foi.
-                    if (currencySelect && currencySelect.value !== "") {
+                    // Aligné sur PurchaseOrderCostingService : pour un achat local le
+                    // taux vaut toujours 1, même si une devise reste sélectionnée d'un
+                    // passage précédent en import — sinon l'aperçu affiche des montants
+                    // multipliés par le taux que le serveur, lui, n'appliquera pas.
+                    if (isChine && currencySelect && currencySelect.value !== "") {
                         rate = parseFloat(exchangeRateInput.value) || 0;
                     }
 
@@ -743,7 +645,11 @@
 
                     const transport = parseFloat(document.getElementById('transportCost').value) || 0;
                     const customs = isChine ? (parseFloat(document.getElementById('customsCost').value) || 0) : 0;
-                    const otherFees = parseFloat(document.getElementById('otherFees').value) || 0;
+                    // Champ retiré du formulaire : les achats existants gardent leur valeur en base,
+                    // les nouveaux valent 0. La ventilation ci-dessous reste en place au cas où
+                    // le champ serait réintroduit.
+                    const champFrais = document.getElementById('otherFees');
+                    const otherFees = champFrais ? (parseFloat(champFrais.value) || 0) : 0;
 
                     const lines = Array.from(linesContainer.querySelectorAll('[data-line]'));
                     let totalCbm = 0;
@@ -805,6 +711,61 @@
                 setOriginClass();
                 updateRateReference();
                 document.getElementById('exchangeRate').required = document.getElementById('currencyCode').value !== "";
+
+                // ── Modale d'entrée ──
+                // Le bandeau de champs est déplacé dans la modale, puis remis en place
+                // une fois validé : un seul jeu d'inputs, donc aucun name= en double.
+                (function () {
+                    const champs = document.getElementById('poCostFields');
+                    const ancre  = document.getElementById('poCostAnchor');
+                    const slot   = document.getElementById('poIntroSlot');
+                    const boite  = document.getElementById('poIntroModal');
+                    if (!champs || !ancre || !slot || !boite) return;
+
+                    const modale = new bootstrap.Modal(boite, { backdrop: 'static', keyboard: false });
+                    slot.appendChild(champs);
+
+                    // Dans la modale, les 5 champs sont montrés quelle que soit l'origine :
+                    // celle-ci se choisit sur la page, donc elle n'est pas encore connue ici.
+                    champs.querySelectorAll('.po-import-only').forEach(function (el) {
+                        el.style.display = '';
+                    });
+                    modale.show();
+
+                    function valeur(id) {
+                        return parseFloat(String(document.getElementById(id).value).replace(/\s/g, '').replace(',', '.'));
+                    }
+                    function signaler(id, enFaute) {
+                        const m = champs.querySelector('[data-error-for="' + id + '"]');
+                        if (m) m.style.display = enFaute ? 'block' : 'none';
+                        document.getElementById(id).classList.toggle('is-invalid', enFaute);
+                        return !enFaute;
+                    }
+
+                    document.getElementById('poIntroContinue').addEventListener('click', function () {
+                        let ok = true;
+
+                        // Montants : facultatifs mais jamais négatifs ni illisibles.
+                        ['transportCost', 'customsCost'].forEach(function (id) {
+                            const v = valeur(id);
+                            ok = signaler(id, isNaN(v) || v < 0) && ok;
+                        });
+
+                        // Le taux n'est exigé que si une devise étrangère est choisie.
+                        if (document.getElementById('currencyCode').value) {
+                            const taux = valeur('exchangeRate');
+                            ok = signaler('exchangeRate', isNaN(taux) || taux <= 0) && ok;
+                        } else {
+                            signaler('exchangeRate', false);
+                        }
+
+                        if (!ok) return;
+
+                        ancre.appendChild(champs);
+                        modale.hide();
+                        setOriginClass(); // rétablit l'affichage selon l'origine choisie
+                    });
+                })();
             });
         </script>
     </body>

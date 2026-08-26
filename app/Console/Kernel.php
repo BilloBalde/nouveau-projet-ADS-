@@ -28,6 +28,16 @@ class Kernel extends ConsoleKernel
         $schedule->command('purchase-orders:refresh-status')
             ->dailyAt('00:10')
             ->timezone('Africa/Conakry');
+
+        // Sauvegarde quotidienne de la base, 14 jours conservés.
+        // withoutOverlapping : un dump encore en cours ne doit pas en croiser un
+        // second, qui produirait deux fichiers concurrents et doublerait la charge.
+        // Attention : la copie reste sur le même disque que la base. Elle protège
+        // d'une fausse manœuvre, pas d'une panne matérielle — voir LIVRAISON.md.
+        $schedule->command('db:backup')
+            ->dailyAt('02:00')
+            ->timezone('Africa/Conakry')
+            ->withoutOverlapping();
     }
 
     /**

@@ -2,13 +2,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <meta name="description" content="POS - Bootstrap Admin Template">
-    <meta name="keywords" content="admin, estimates, bootstrap, business, corporate, creative, invoice, html5, responsive, Projects">
-    <meta name="author" content="Dreamguys - Bootstrap Admin Template">
+    <meta name="description" content="Gestion commerciale — {{ $company?->name ?? config('app.name') }}">
+    <meta name="author" content="{{ $company?->name ?? config('app.name') }}">
     <meta name="robots" content="noindex, nofollow">
-    <title>{{ App\Models\Company::latest()->first()->name }}</title>
+    <title>{{ $company?->name ?? config('app.name') }}</title>
 
-    <link rel="shortcut icon" type="image/jpeg" href="{{ asset('companies/'.App\Models\Company::latest()->first()->logo) }}">
+    <link rel="shortcut icon" type="image/jpeg" href="{{ asset('companies/'.($company?->logo ?? 'ADK.png')) }}">
 
     <link rel="stylesheet" href="{{ asset('assets/css/bootstrap.min.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/css/animate.css') }}">
@@ -23,7 +22,11 @@
 
     <link rel="stylesheet" href="{{ asset('assets/css/style.css') }}">
 
-    {{-- Thème "Atelier chaleureux" — typo serif sur les titres --}}
+    {{-- Habillage maison, chargé après le thème : barre latérale verte, tableaux,
+         cartes. Isolé dans son propre fichier pour que style.css reste remplaçable. --}}
+    <link rel="stylesheet" href="{{ asset('assets/css/admin-theme.css') }}">
+
+    {{-- Typo serif sur les titres --}}
     {{-- Chargée en asynchrone : une police Google lente/inaccessible ne doit jamais
          bloquer l'exécution des scripts de la page (une feuille de style <link>
          classique bloque le JS tant qu'elle n'est pas chargée). --}}

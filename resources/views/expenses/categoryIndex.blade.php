@@ -17,7 +17,7 @@
                             <h6>Gérer vos Categories Dépense</h6>
                         </div>
                         <div class="page-btn">
-                            <a href="{{ route('expensesCategory.create') }}" class="btn btn-added"><img src="assets/img/icons/plus.svg" alt="img" class="me-2">Ajouter Category Dépense</a>
+                            <a href="{{ route('expensesCategory.create') }}" class="btn btn-added"><img src="{{ asset('assets/img/icons/plus.svg') }}" alt="img" class="me-2">Ajouter Category Dépense</a>
                         </div>
                     </div>
                     @if (session('success'))
@@ -36,7 +36,7 @@
                             <div class="table-top">
                                 <div class="search-set">
                                     <div class="search-input">
-                                        <a class="btn btn-searchset"><img src="assets/img/icons/search-white.svg" alt="img"></a>
+                                        <a class="btn btn-searchset"><img src="{{ asset('assets/img/icons/search-white.svg') }}" alt="img"></a>
                                     </div>
                                 </div>
                             </div>

@@ -8,6 +8,23 @@ use Illuminate\Support\Facades\Log;
 class SmsService
 {
     /**
+     * Un fournisseur capable d'envoyer réellement est-il en place ?
+     *
+     * Sert à masquer le bouton d'envoi de relance : sans fournisseur, il ne peut
+     * qu'échouer. Rétablir SMS_DRIVER et les identifiants correspondants le fait
+     * réapparaître, sans autre modification.
+     */
+    public static function fournisseurConfigure(): bool
+    {
+        return match (config('sms.driver')) {
+            'twilio' => (bool) (config('sms.twilio.sid') && config('sms.twilio.token') && config('sms.twilio.from')),
+            'http' => (bool) config('sms.http.url'),
+            'whatsapp' => (bool) (config('sms.whatsapp.instance') && config('sms.whatsapp.token')),
+            default => false,
+        };
+    }
+
+    /**
      * Envoie le SMS OTP (ou journalise selon le pilote configuré).
      * Ne lance pas d'exception vers le contrôleur : erreurs loguées uniquement.
      */
@@ -32,7 +49,6 @@ class SmsService
                 'twilio' => $this->sendTwilio($phone, $message),
                 'http' => $this->sendHttp($phone, $message),
                 'whatsapp' => $this->sendWhatsapp($phone, $message),
-                'nimba' => $this->sendNimba($phone, $message),
                 default => $this->sendLog($phone, $message),
             };
         } catch (\Throwable $e) {
@@ -42,14 +58,21 @@ class SmsService
         }
     }
 
+    /**
+     * Pilote de repli : rien n'est envoyé, la trace part dans le journal.
+     *
+     * Retourne false — aucun SMS n'a quitté le serveur. C'est ce que doit voir
+     * l'écran de relance des dettes, qui affiche « SMS envoyé » sur un retour
+     * positif : sans fournisseur configuré, ce message serait faux.
+     */
     protected function sendLog(string $phone, string $message): bool
     {
-        Log::channel('single')->info('[SMS — mode log, aucun envoi réel]', [
+        Log::channel('single')->info('[SMS — aucun fournisseur configuré, rien envoyé]', [
             'phone' => $phone,
             'message' => $message,
         ]);
 
-        return true;
+        return false;
     }
 
     protected function sendHttp(string $phone, string $message): bool
@@ -142,45 +165,8 @@ class SmsService
     }
 
     /**
-     * Nimba SMS (api.nimbasms.com) : Basic Auth (service_id, secret_token),
-     * POST /v1/messages en form-urlencoded — même contrat que le SDK officiel.
+     * UltraMsg (WhatsApp) : instance + token, POST en form-urlencoded.
      */
-    protected function sendNimba(string $phone, string $message): bool
-    {
-        $serviceId = config('sms.nimba.service_id');
-        $secretToken = config('sms.nimba.secret_token');
-        $senderName = config('sms.nimba.sender_name');
-
-        if (!$serviceId || !$secretToken || !$senderName) {
-            Log::warning('Nimba SMS non configuré (NIMBA_SERVICE_ID/NIMBA_SECRET_TOKEN/NIMBA_SENDER_NAME).');
-
-            return $this->sendLog($phone, $message);
-        }
-
-        $to = $this->normalizeE164($phone);
-
-        $response = Http::withBasicAuth($serviceId, $secretToken)
-            ->asForm()
-            ->timeout(20)
-            ->post('https://api.nimbasms.com/v1/messages', [
-                'to' => [$to],
-                'sender_name' => $senderName,
-                'message' => $message,
-            ]);
-
-        Log::info('Nimba SMS Response', [
-            'phone' => $to,
-            'status' => $response->status(),
-            'response' => $response->json() ?? $response->body(),
-        ]);
-
-        if (! $response->successful()) {
-            Log::error('Erreur Nimba SMS', ['body' => $response->body()]);
-        }
-
-        return $response->successful();
-    }
-
     protected function sendWhatsapp(string $phone, string $message): bool
     {
         $instance = env('ULTRAMSG_INSTANCE');

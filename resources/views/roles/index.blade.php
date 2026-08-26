@@ -18,7 +18,7 @@
                             <h6>Créez des rôles et cochez les actions qu'ils autorisent</h6>
                         </div>
                         <div class="page-btn">
-                            <a class="btn btn-added" href="{{ route('roles.create') }}" style="background-color:#c1682f;border-color:#c1682f;">
+                            <a class="btn btn-added" href="{{ route('roles.create') }}" style="background-color:#1f6f43;border-color:#1f6f43;">
                                 <img src="{{ asset('assets/img/icons/plus.svg') }}" alt="img" class="me-1">Ajouter un rôle
                             </a>
                         </div>
@@ -29,19 +29,19 @@
                             <div class="table-top">
                                 <div class="search-set">
                                     <div class="search-input">
-                                    <a class="btn btn-searchset"><img src="assets/img/icons/search-white.svg" alt="img"></a>
+                                    <a class="btn btn-searchset"><img src="{{ asset('assets/img/icons/search-white.svg') }}" alt="img"></a>
                                     </div>
                                 </div>
                                 <div class="wordset">
                                     <ul>
                                         <li>
-                                            <a data-bs-toggle="tooltip" data-bs-placement="top" title="pdf"><img src="assets/img/icons/pdf.svg" alt="img"></a>
+                                            <a data-bs-toggle="tooltip" data-bs-placement="top" title="pdf"><img src="{{ asset('assets/img/icons/pdf.svg') }}" alt="img"></a>
                                         </li>
                                         <li>
-                                            <a data-bs-toggle="tooltip" data-bs-placement="top" title="excel"><img src="assets/img/icons/excel.svg" alt="img"></a>
+                                            <a data-bs-toggle="tooltip" data-bs-placement="top" title="excel"><img src="{{ asset('assets/img/icons/excel.svg') }}" alt="img"></a>
                                         </li>
                                         <li>
-                                            <a data-bs-toggle="tooltip" data-bs-placement="top" title="print"><img src="assets/img/icons/printer.svg" alt="img"></a>
+                                            <a data-bs-toggle="tooltip" data-bs-placement="top" title="print"><img src="{{ asset('assets/img/icons/printer.svg') }}" alt="img"></a>
                                         </li>
                                     </ul>
                                 </div>
@@ -68,7 +68,7 @@
                                                 @elseif($d->slug === 'customer')
                                                     <span class="badge bg-secondary">Client e-commerce</span>
                                                 @else
-                                                    <span class="badge" style="background:#c1682f;">{{ $d->permissions_count }} action(s)</span>
+                                                    <span class="badge" style="background:#1f6f43;">{{ $d->permissions_count }} action(s)</span>
                                                 @endif
                                             </td>
                                             <td>{{ $d->users_count }}</td>
@@ -99,22 +99,22 @@
                 </div>
             </div>
         </div>
-        <script src="assets/js/jquery-3.6.0.min.js"></script>
+        <script src="{{ asset('assets/js/jquery-3.6.0.min.js') }}"></script>
 
-        <script src="assets/js/feather.min.js"></script>
+        <script src="{{ asset('assets/js/feather.min.js') }}"></script>
 
-        <script src="assets/js/jquery.slimscroll.min.js"></script>
+        <script src="{{ asset('assets/js/jquery.slimscroll.min.js') }}"></script>
 
-        <script src="assets/js/jquery.dataTables.min.js"></script>
-        <script src="assets/js/dataTables.bootstrap4.min.js"></script>
+        <script src="{{ asset('assets/js/jquery.dataTables.min.js') }}"></script>
+        <script src="{{ asset('assets/js/dataTables.bootstrap4.min.js') }}"></script>
 
-        <script src="assets/js/bootstrap.bundle.min.js"></script>
+        <script src="{{ asset('assets/js/bootstrap.bundle.min.js') }}"></script>
 
-        <script src="assets/plugins/select2/js/select2.min.js"></script>
+        <script src="{{ asset('assets/plugins/select2/js/select2.min.js') }}"></script>
 
-        <script src="assets/plugins/sweetalert/sweetalert2.all.min.js"></script>
-        <script src="assets/plugins/sweetalert/sweetalerts.min.js"></script>
+        <script src="{{ asset('assets/plugins/sweetalert/sweetalert2.all.min.js') }}"></script>
+        <script src="{{ asset('assets/plugins/sweetalert/sweetalerts.min.js') }}"></script>
 
-        <script src="assets/js/script.js"></script>
+        <script src="{{ asset('assets/js/script.js') }}"></script>
     </body>
 </html>

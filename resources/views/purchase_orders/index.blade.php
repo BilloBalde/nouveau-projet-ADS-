@@ -15,7 +15,7 @@
             .po-status-pending { background: #fff4de; color: #ffab00; }
             .po-status-received { background: #e2f5e9; color: #2ea86f; }
             .po-status-cancelled { background: #fdecea; color: #e04f4f; }
-            .po-origin-chine { color: #c1682f; font-weight: 600; }
+            .po-origin-chine { color: #1f6f43; font-weight: 600; }
             .po-origin-guinee { color: #2e7dc1; font-weight: 600; }
         </style>
         <div id="global-loader">
@@ -46,8 +46,8 @@
                                 <div class="search-set">
                                     <div class="search-path">
                                         <a class="btn btn-filter" id="filter_search">
-                                            <img src="assets/img/icons/filter.svg" alt="img">
-                                            <span><img src="assets/img/icons/closes.svg" alt="img"></span>
+                                            <img src="{{ asset('assets/img/icons/filter.svg') }}" alt="img">
+                                            <span><img src="{{ asset('assets/img/icons/closes.svg') }}" alt="img"></span>
                                         </a>
                                     </div>
                                 </div>
@@ -92,7 +92,7 @@
                                             </div>
                                             <div class="col-lg-2 col-sm-6 col-12 d-flex align-items-center">
                                                 <div class="form-group d-flex">
-                                                    <button type="submit" class="btn btn-filters me-2"><img src="assets/img/icons/search-whites.svg" alt="img"></button>
+                                                    <button type="submit" class="btn btn-filters me-2"><img src="{{ asset('assets/img/icons/search-whites.svg') }}" alt="img"></button>
                                                     <a href="{{ route('purchase-orders.index') }}" class="btn btn-secondary">Annuler</a>
                                                 </div>
                                             </div>
@@ -139,17 +139,17 @@
                                             <td>{{ \Illuminate\Support\Carbon::parse($order->date_emis)->format('d/m/Y') }}</td>
                                             <td class="text-end">
                                                 <a class="me-3" href="{{ route('purchase-orders.show', $order->id) }}" title="Voir">
-                                                    <img src="assets/img/icons/eye.svg" alt="img">
+                                                    <img src="{{ asset('assets/img/icons/eye.svg') }}" alt="img">
                                                 </a>
                                                 @if($order->status !== 'cancelled')
                                                 <a class="me-3" href="{{ route('purchase-orders.edit', $order->id) }}" title="Modifier">
-                                                    <img src="assets/img/icons/edit.svg" alt="img">
+                                                    <img src="{{ asset('assets/img/icons/edit.svg') }}" alt="img">
                                                 </a>
                                                 <form action="{{ route('purchase-orders.destroy', $order->id) }}" method="POST" style="display:inline" onsubmit="return confirm('Annuler cet achat ? Le stock ajouté sera retiré.');">
                                                     @csrf
                                                     @method('DELETE')
                                                     <button type="submit" class="btn btn-link p-0" title="Annuler">
-                                                        <img src="assets/img/icons/delete.svg" alt="img">
+                                                        <img src="{{ asset('assets/img/icons/delete.svg') }}" alt="img">
                                                     </button>
                                                 </form>
                                                 @endif

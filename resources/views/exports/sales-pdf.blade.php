@@ -221,7 +221,7 @@
 </head>
 <body>
     @php
-        $company = \App\Models\Company::latest()->first();
+        // $company vient de SaleController::exportPdf()
         $totalAmount = $sales->sum('prixTotal');
         $totalInterest = $sales->sum('interet');
         $totalQuantity = $sales->sum('quantity');
@@ -234,7 +234,7 @@
         // totalement de la résolution de chemin par Dompdf.
         $logoPath = ($company && $company->logo && file_exists(public_path('companies/'.$company->logo)))
             ? public_path('companies/'.$company->logo)
-            : (file_exists(public_path('images/customers/logo.jpg')) ? public_path('images/customers/logo.jpg') : null);
+            : null;
         $logoDataUri = $logoPath
             ? 'data:'.mime_content_type($logoPath).';base64,'.base64_encode(file_get_contents($logoPath))
             : null;
@@ -255,7 +255,7 @@
 
     <!-- Company Info -->
     <div class="company-info">
-        <p>{{ $company?->address ?? '' }} | Tél: {{ $company?->phone ?? '625 45 35 45' }} | Email: {{ $company?->email ?? 'abdulghadirybalde@gmail.com' }}</p>
+        <p>{{ $company?->address ?? '' }} | Tél: {{ $company?->phone ?? '' }} | Email: {{ $company?->email ?? '' }}</p>
     </div>
 
     <!-- Filter Info -->

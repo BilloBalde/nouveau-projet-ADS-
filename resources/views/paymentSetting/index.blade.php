@@ -16,7 +16,7 @@
                     <div class="page-header">
                         <div class="page-title">
                             <h4>Payment Settings</h4>
-                            <h6>Manage Payment Settings</h6>
+                            <h6>Gérer les modes de paiement</h6>
                         </div>
                         <div class="page-btn">
                             <a class="btn btn-added" data-bs-toggle="modal" data-bs-target="#addpayment"><img src="{{ asset('assets/img/icons/plus.svg') }}" alt="img" class="me-2">Add Payment Settings</a>

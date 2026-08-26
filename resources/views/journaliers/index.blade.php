@@ -12,7 +12,7 @@
                             <h4>Liste des Prises Journaliers</h4>
                         </div>
                         <div class="page-btn">
-                            <a href="{{ route('journaliers.create') }}" class="btn btn-added"><img src="assets/img/icons/plus.svg" alt="img" class="me-2">Ajouter Dette</a>
+                            <a href="{{ route('journaliers.create') }}" class="btn btn-added"><img src="{{ asset('assets/img/icons/plus.svg') }}" alt="img" class="me-2">Ajouter Dette</a>
                         </div>
                     </div>
                     @include('layouts.flash')

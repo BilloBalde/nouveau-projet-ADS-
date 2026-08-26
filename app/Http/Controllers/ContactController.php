@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\ContactMail;
 use App\Models\ContactMessage;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Http\Request;
 
 class ContactController extends Controller
@@ -23,7 +26,29 @@ class ContactController extends Controller
             'message.min'      => 'Le message doit contenir au moins 10 caractères.',
         ]);
 
-        ContactMessage::create($request->only(['name', 'email', 'phone', 'subject', 'message']));
+        $message = ContactMessage::create($request->only(['name', 'email', 'phone', 'subject', 'message']));
+
+        // Le message est conservé en base et consultable dans Boutique en ligne >
+        // Messages reçus. On prévient en plus par courriel : sans cela, personne
+        // ne sait qu'un client a écrit, et l'écran n'est consulté que par hasard.
+        $destinataire = \App\Models\Company::current()?->email ?: config('mail.from.address');
+
+        if ($destinataire) {
+            try {
+                Mail::to($destinataire)->send(new ContactMail(
+                    $request->subject,
+                    $request->email,
+                    $request->name,
+                    $request->message
+                ));
+            } catch (\Throwable $e) {
+                // Une panne SMTP ne doit pas faire croire au visiteur que son
+                // message est perdu : il est déjà enregistré.
+                Log::warning('Notification de contact non envoyée : '.$e->getMessage(), [
+                    'message_id' => $message->id,
+                ]);
+            }
+        }
 
         return redirect()->route('contact')->with('success',
             'Votre message a bien été reçu ! Nous vous répondrons sous 24h.');

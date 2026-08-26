@@ -1,11 +1,21 @@
+@php
+    // $company vient du View Composer (AppServiceProvider) : une seule requête
+    // pour toute la page. Repli sur le logo de l'entreprise quand l'utilisateur
+    // n'a pas de photo — sans ce garde-fou, asset('avatars/'.null) demandait
+    // « /avatars » et renvoyait un 404 à chaque page.
+    $logoUrl = asset('companies/'.($company?->logo ?? 'ADK.png'));
+    $avatarUrl = Auth::check() && Auth::user()->profilePic
+        ? asset('avatars/'.Auth::user()->profilePic)
+        : $logoUrl;
+@endphp
 <div class="header">
 
     <div class="header-left active">
         <a href="{{ route('home') }}" class="logo">
-            <img src="{{ asset('companies/'.App\Models\Company::latest()->first()->logo) }}" alt="">
+            <img src="{{ $logoUrl }}" alt="{{ $company?->name }}">
         </a>
         <a href="{{ route('home') }}" class="logo-small">
-            <img src="{{ asset('companies/'.App\Models\Company::latest()->first()->logo) }}" alt="">
+            <img src="{{ $logoUrl }}" alt="{{ $company?->name }}">
         </a>
         <a id="toggle_btn" href="javascript:void(0);"></a>
     </div>
@@ -22,13 +32,13 @@
             @include('partials.notification-bell')
         </li>
         <li class="nav-item has-arrow flag-nav">
-            <a class="nav-link" href="{{ route('pos') }}" style="background-color: #c1682f; color: #fff;">
+            <a class="nav-link" href="{{ route('pos') }}" style="background-color: #1f6f43; color: #fff;">
                 <img src="{{ asset('assets/img/icons/sales1.svg') }}" alt="" height="20">POS
             </a>
         </li>
         <li class="nav-item dropdown has-arrow main-drop">
             <a href="javascript:void(0);" class="dropdown-toggle nav-link userset" data-bs-toggle="dropdown">
-                <span class="user-img"><img src="{{ Auth::check() && Auth::user()->profilePic ? asset('avatars/'.Auth::user()->profilePic) : asset('companies/'.App\Models\Company::latest()->first()->logo) }}" alt="">
+                <span class="user-img"><img src="{{ $avatarUrl }}" alt="">
                 <span class="status online"></span></span>
             </a>
             <div class="dropdown-menu menu-drop-user">
@@ -36,7 +46,7 @@
                     <div class="profileset">
                         @if (Auth::check())
                         <span class="user-img">
-                            <img src="{{ asset('avatars/'.Auth::user()->profilePic) }}" alt="">
+                            <img src="{{ $avatarUrl }}" alt="">
                             <span class="status online"></span>
                         </span>
                         <div class="profilesets">
@@ -71,7 +81,7 @@
             <a class="dropdown-item">
                 @if (Auth::check())
                 <span class="user-img">
-                    <img src="{{ asset('avatars/'.Auth::user()->profilePic) }}" alt="">
+                    <img src="{{ $avatarUrl }}" alt="">
                     <span class="status online"></span>
                 </span>
                 <div class="profilesets">
@@ -85,7 +95,7 @@
                 </script>
                 @endif
             </a>
-            <a class="dropdown-item" href="{{ route('pos') }}" style="background-color: #c1682f; color: #fff;">
+            <a class="dropdown-item" href="{{ route('pos') }}" style="background-color: #1f6f43; color: #fff;">
                 <img src="{{ asset('assets/img/icons/sales1.svg') }}" class="me-2" alt="" height="20">POS
             </a>
             <a class="dropdown-item" href="{{ route('accueil') }}"><i class="me-2" data-feather="home"></i>Voir Site</a>

@@ -2,7 +2,15 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Rapport {{ ucfirst($period ?? '') }} - {{ $label ?? '' }}</title>
+    @php
+        // $period vient du contrôleur en anglais (daily, weekly…) : on l'affiche en français.
+        $libellePeriode = [
+            'daily' => 'journalier', 'weekly' => 'hebdomadaire', 'monthly' => 'mensuel',
+            'quarterly' => 'trimestriel', 'semestral' => 'semestriel', 'semi-annual' => 'semestriel',
+            'yearly' => 'annuel', 'custom' => 'personnalisé',
+        ][$period ?? 'daily'] ?? '';
+    @endphp
+    <title>Rapport {{ $libellePeriode }} — {{ $label ?? '' }}</title>
 
     <style>
         @page {
@@ -17,7 +25,7 @@
         body {
             font-family: 'Arial', 'Helvetica', sans-serif;
             font-size: 10px;
-            color: #1c1917;
+            color: #10221a;
             line-height: 1.4;
             background: #ffffff;
             padding: 5mm;
@@ -30,7 +38,7 @@
             width: 100%;
             table-layout: fixed;
             margin-bottom: 18px;
-            border-bottom: 3px solid #c1682f;
+            border-bottom: 3px solid #1f6f43;
             padding-bottom: 12px;
         }
         .invoice-head-left,
@@ -81,14 +89,14 @@
         .invoice-head-company {
             font-family: Georgia, 'Times New Roman', serif;
             font-weight: 700;
-            color: #92400e;
+            color: #195836;
             font-size: 18px;
             line-height: 1.2;
         }
 
         .invoice-head-sub {
             font-size: 10px;
-            color: #78716c;
+            color: #5d6b64;
             line-height: 1.4;
         }
 
@@ -97,7 +105,7 @@
             font-weight: 700;
             font-size: 20px;
             letter-spacing: 0.5px;
-            color: #c1682f;
+            color: #1f6f43;
             text-transform: uppercase;
             margin-bottom: 3px;
             line-height: 1.1;
@@ -106,7 +114,7 @@
         .invoice-head-period {
             font-size: 10px;
             font-weight: 700;
-            color: #57534e;
+            color: #4a5a52;
             text-transform: uppercase;
             letter-spacing: 0.5px;
             margin-top: 3px;
@@ -115,7 +123,7 @@
         .invoice-head-original {
             font-size: 9.5px;
             font-weight: 600;
-            color: #a8a29e;
+            color: #93a09a;
             text-transform: uppercase;
             letter-spacing: 0.5px;
             margin-top: 5px;
@@ -123,7 +131,7 @@
 
         .invoice-head-clientname {
             font-weight: 700;
-            color: #1c1917;
+            color: #10221a;
             font-size: 13px;
             margin-bottom: 3px;
             line-height: 1.2;
@@ -131,16 +139,16 @@
 
         .invoice-head-clientline {
             font-size: 10px;
-            color: #78716c;
+            color: #5d6b64;
             line-height: 1.3;
         }
 
         /* Bandeau numéro / période */
         .invoice-number-section {
-            background: #fdf6ec;
+            background: #f0f8f3;
             padding: 12px 14px;
-            border: 1px solid #f0e0c8;
-            border-left: 3px solid #c1682f;
+            border: 1px solid #b9dfc8;
+            border-left: 3px solid #1f6f43;
             border-radius: 8px;
             margin-bottom: 18px;
         }
@@ -166,14 +174,14 @@
 
         .invoice-number-label {
             font-weight: 700;
-            color: #b45309;
+            color: #1f6f43;
             margin-right: 5px;
             font-size: 10px;
         }
 
         .invoice-number-value {
             font-weight: 700;
-            color: #1c1917;
+            color: #10221a;
             font-size: 11px;
         }
 
@@ -199,13 +207,13 @@
             color: #ffffff;
         }
 
-        .summary-card.tone-1 { background-color: #92400e; }
-        .summary-card.tone-2 { background-color: #b45309; }
-        .summary-card.tone-3 { background-color: #c1682f; }
-        .summary-card.tone-4 { background-color: #78716c; }
-        .summary-card.tone-5 { background-color: #a1530a; }
+        .summary-card.tone-1 { background-color: #1f6f43; } /* Ventes */
+        .summary-card.tone-2 { background-color: #2a8050; } /* Paiements encaissés */
+        .summary-card.tone-3 { background-color: #d92d20; } /* Non payé — attention */
+        .summary-card.tone-4 { background-color: #14452c; } /* Achats */
+        .summary-card.tone-5 { background-color: #5d6b64; } /* Dépenses */
         .summary-card.tone-6 {
-            background-color: #059669;
+            background-color: #0c2c1c;
         }
         .summary-card.tone-6.negative {
             background-color: #b91c1c;
@@ -242,12 +250,12 @@
         .section-title {
             font-family: Georgia, 'Times New Roman', serif;
             font-weight: 700;
-            color: #92400e;
+            color: #195836;
             font-size: 14px;
             margin-bottom: 12px;
             margin-top: 18px;
             padding-bottom: 6px;
-            border-bottom: 2px solid #c1682f;
+            border-bottom: 2px solid #1f6f43;
         }
 
         /* Tables */
@@ -268,7 +276,7 @@
         }
 
         table th {
-            background: #92400e !important;
+            background: #195836 !important;
             color: #ffffff !important;
             font-weight: 600;
             padding: 10px 8px;
@@ -285,9 +293,9 @@
 
         table td {
             padding: 9px 8px;
-            border-bottom: 1px solid #f1e9dd;
+            border-bottom: 1px solid #dcefe3;
             font-size: 10px;
-            color: #1c1917;
+            color: #10221a;
             display: table-cell;
         }
 
@@ -297,25 +305,25 @@
         }
 
         table tbody tr:nth-child(even) {
-            background-color: #fdfaf5;
+            background-color: #f7faf8;
         }
 
         .total-row {
-            background: #fdf6ec !important;
+            background: #f0f8f3 !important;
         }
 
         .total-row td {
-            border-top: 2px solid #c1682f;
+            border-top: 2px solid #1f6f43;
             border-bottom: none;
             font-size: 11px;
             padding: 11px 8px;
-            color: #92400e;
+            color: #195836;
         }
 
         /* Montant en lettres */
         .amount-words-box {
-            background: #faf9f7;
-            border-left: 4px solid #c1682f;
+            background: #f7faf8;
+            border-left: 4px solid #1f6f43;
             border-radius: 0 10px 10px 0;
             padding: 14px 16px;
             margin: 18px 0;
@@ -323,7 +331,7 @@
 
         .amount-words-title {
             font-weight: 700;
-            color: #b45309;
+            color: #1f6f43;
             font-size: 10.5px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
@@ -332,7 +340,7 @@
 
         .amount-words-text {
             font-size: 11px;
-            color: #1c1917;
+            color: #10221a;
             font-weight: 600;
             line-height: 1.5;
         }
@@ -340,7 +348,7 @@
         .montant-chiffres {
             font-size: 9px;
             margin-top: 5px;
-            color: #78716c;
+            color: #5d6b64;
             font-style: italic;
         }
 
@@ -358,15 +366,15 @@
             display: table-cell;
             width: 50%;
             padding: 16px;
-            border: 1px solid #f0e0c8;
+            border: 1px solid #b9dfc8;
             vertical-align: top;
             border-radius: 10px;
-            background: #fdf6ec;
+            background: #f0f8f3;
         }
 
         .signature-title {
             font-weight: 700;
-            color: #92400e;
+            color: #195836;
             font-size: 11px;
             margin-bottom: 12px;
             text-transform: uppercase;
@@ -374,11 +382,11 @@
         }
 
         .signature-line {
-            border-top: 1px solid #d6ccc0;
+            border-top: 1px solid #b9dfc8;
             margin-top: 45px;
             padding-top: 6px;
             font-size: 10px;
-            color: #78716c;
+            color: #5d6b64;
             text-align: center;
         }
 
@@ -390,11 +398,11 @@
             right: 0;
             width: 100%;
             padding-top: 14px;
-            border-top: 2px solid #c1682f;
+            border-top: 2px solid #1f6f43;
             text-align: center;
             font-size: 10px;
-            color: #78716c;
-            background: #fdf6ec;
+            color: #5d6b64;
+            background: #f0f8f3;
             padding: 14px;
             border-radius: 8px 8px 0 0;
             margin: 0;
@@ -404,13 +412,13 @@
         .footer-contact {
             margin-bottom: 6px;
             font-weight: 600;
-            color: #1c1917;
+            color: #10221a;
         }
 
         .footer-thanks {
             font-family: Georgia, 'Times New Roman', serif;
             font-weight: 700;
-            color: #92400e;
+            color: #195836;
             margin-top: 8px;
             font-size: 11px;
             font-style: italic;
@@ -419,7 +427,7 @@
         .footer-date {
             margin-top: 8px;
             font-size: 10px;
-            color: #a8a29e;
+            color: #93a09a;
         }
 
         /* Badge de période */
@@ -433,17 +441,16 @@
             letter-spacing: 0.3px;
             margin-left: 8px;
             vertical-align: middle;
-            background: #fdf6ec;
-            color: #b45309;
-            border: 1px solid #f0e0c8;
+            background: #f0f8f3;
+            color: #1f6f43;
+            border: 1px solid #b9dfc8;
         }
     </style>
 </head>
 <body>
 
     @php
-        // Récupérer les données de l'entreprise
-        $company = \App\Models\Company::latest()->first();
+        // $company est fourni par le View Composer (AppServiceProvider)
 
         // Variables sécurisées avec des valeurs par défaut
         $period = $period ?? 'daily';
@@ -517,8 +524,6 @@
                 <div class="invoice-head-brand-cell logo-cell">
                     @if($company?->logo)
                         <img src="{{ public_path('companies/'.$company->logo) }}" alt="{{ $company?->name ?? 'Logo' }}" class="invoice-head-logo">
-                    @elseif(file_exists(public_path('images/customers/logo.jpg')))
-                        <img src="{{ public_path('images/customers/logo.jpg') }}" alt="{{ $company?->name ?? 'Logo' }}" class="invoice-head-logo">
                     @endif
                 </div>
                 <div class="invoice-head-brand-cell">
@@ -647,7 +652,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="7" style="text-align: center; padding: 20px; color: #a8a29e;">Aucune donnée pour cette période.</td>
+                    <td colspan="7" style="text-align: center; padding: 20px; color: #93a09a;">Aucune donnée pour cette période.</td>
                 </tr>
             @endforelse
             <tr class="total-row">

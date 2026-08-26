@@ -90,7 +90,7 @@
             
             <div class="warning">
                 <strong>⚠️ Vous n'avez pas demandé ce changement ?</strong><br>
-                Contactez immédiatement un administrateur à abdulghadirybalde@gmail.com
+                Contactez immédiatement un administrateur à {{ \App\Models\Company::current()?->email }}
             </div>
         </div>
         <div class="footer">

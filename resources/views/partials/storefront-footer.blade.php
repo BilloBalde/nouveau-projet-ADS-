@@ -1,8 +1,11 @@
 @php
     // Numéro principal de la boutique, au format international requis par wa.me et tel:
-    $telPrincipal = '224625453545';
-    $telSecondaire = '224628593110';
-    $emailBoutique = 'abdulghadirybalde@gmail.com';
+    // Numéro principal repris de la fiche entreprise (Profil), au format
+    // international requis par wa.me et tel:. Les deux viennent de la fiche
+    // entreprise (Profil) et peuvent être vides.
+    $telPrincipal = \App\Models\Company::current()?->phoneInternational() ?: '';
+    $telSecondaire = \App\Models\Company::current()?->phoneSecondaryInternational() ?: '';
+    $emailBoutique = \App\Models\Company::current()?->email ?: '';
 @endphp
 <footer class="text-gray-300 py-14" style="background:linear-gradient(180deg,var(--brand-950),#04120c);">
     <div class="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -43,6 +46,21 @@
                     <li><a href="{{ route('otp.login') }}" class="text-gray-400 hover:text-white transition">Espace client</a></li>
                     <li><a href="{{ route('contact') }}" class="text-gray-400 hover:text-white transition">Nous écrire</a></li>
                 </ul>
+
+                {{-- Réseaux sociaux : conservés à la demande du client. Les comptes
+                     n'existent pas encore, les liens restent donc en « # » — il
+                     suffira de remplacer le href de chaque icône le jour venu. --}}
+                <h4 class="font-bold text-white text-sm mt-8 mb-4">Suivez-nous</h4>
+                <div class="flex flex-wrap gap-3">
+                    <a href="#" title="Facebook" aria-label="Facebook"
+                       class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-brand-600 transition"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" title="Instagram" aria-label="Instagram"
+                       class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-brand-600 transition"><i class="fab fa-instagram"></i></a>
+                    <a href="#" title="TikTok" aria-label="TikTok"
+                       class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-brand-600 transition"><i class="fab fa-tiktok"></i></a>
+                    <a href="#" title="YouTube" aria-label="YouTube"
+                       class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-brand-600 transition"><i class="fab fa-youtube"></i></a>
+                </div>
             </div>
 
             {{-- Contacts réels et cliquables, à la place des icônes de réseaux sociaux
@@ -64,17 +82,19 @@
                             <span class="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-white shrink-0">
                                 <i class="fas fa-phone-alt text-xs"></i>
                             </span>
-                            625 45 35 45
+                            {{ \App\Models\Company::current()?->phone }}
                         </a>
                     </li>
+                    @if ($telSecondaire)
                     <li>
                         <a href="tel:+{{ $telSecondaire }}" class="flex items-center gap-2.5 text-gray-400 hover:text-white transition">
                             <span class="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-white shrink-0">
                                 <i class="fas fa-phone-alt text-xs"></i>
                             </span>
-                            628 59 31 10
+                            {{ \App\Models\Company::current()?->phone_secondary }}
                         </a>
                     </li>
+                    @endif
                     <li>
                         <a href="mailto:{{ $emailBoutique }}" class="flex items-center gap-2.5 text-gray-400 hover:text-white transition">
                             <span class="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-white shrink-0">
@@ -86,21 +106,7 @@
                 </ul>
             </div>
         </div>
-        {{-- Réseaux sociaux : conservés à la demande du client. Les comptes n'existent
-             pas encore, les liens restent donc en « # » — il suffira de remplacer le
-             href de chaque icône par l'adresse réelle le jour venu. --}}
         <div class="border-t border-white/10 pt-8 text-center">
-            <h4 class="font-bold text-white mb-4 text-sm">Suivez-nous</h4>
-            <div class="flex justify-center gap-3 mb-8">
-                <a href="#" title="Facebook" aria-label="Facebook"
-                   class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-brand-600 transition"><i class="fab fa-facebook-f"></i></a>
-                <a href="#" title="Instagram" aria-label="Instagram"
-                   class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-brand-600 transition"><i class="fab fa-instagram"></i></a>
-                <a href="#" title="TikTok" aria-label="TikTok"
-                   class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-brand-600 transition"><i class="fab fa-tiktok"></i></a>
-                <a href="#" title="YouTube" aria-label="YouTube"
-                   class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-brand-600 transition"><i class="fab fa-youtube"></i></a>
-            </div>
             <div class="text-sm text-gray-400">
                 <p>&copy; {{ date('Y') }} Coleah Bandeya & Fils. Tous droits réservés. Conakry, Guinée.</p>
                 <p class="mt-2">Chez Coleah Bandeya & Fils, au-delà de la qualité des autres.</p>

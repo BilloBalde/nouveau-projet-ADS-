@@ -43,8 +43,20 @@ class FactureController extends Controller
             $query->where('customer_id', $request->input('customer_id'));
         }
 
+        // Filtrer sur la colonne `statut` renverrait des factures affichées
+        // « Partiel » sous le libellé « Non payé » : le code n'y écrit jamais
+        // « partiel », et une facture à moitié payée y reste « non payé ». Même
+        // calcul que le badge et que la garde de suppression — montant_total moins
+        // reste — pour que les trois disent la même chose.
         if ($request->filled('statut')) {
-            $query->where('statut', 'like', '%' . $request->input('statut') . '%');
+            $query->where(function ($q) use ($request) {
+                match ($request->input('statut')) {
+                    'payé'     => $q->where('montant_total', '>', 0)->where('reste', '<=', 0),
+                    'partiel'  => $q->where('reste', '>', 0)->whereColumn('reste', '<', 'montant_total'),
+                    'non payé' => $q->whereColumn('reste', '>=', 'montant_total'),
+                    default    => $q,
+                };
+            });
         }
 
         if ($request->filled('livraison')) {
@@ -76,7 +88,7 @@ class FactureController extends Controller
     public function show($facture){
         $user = User::where('role_id', 2)->first();
         $invoice = Sale::where('numeroFacture', $facture)->get();
-        $laFacture = Facture::where('numero_facture', $facture)->first();
+        $laFacture = Facture::where('numero_facture', $facture)->firstOrFail();
         if (!$laFacture) {
             abort(404, "Facture introuvable.");
         }
@@ -92,7 +104,7 @@ class FactureController extends Controller
         $laFacture   = Facture::where('numero_facture', $facture)->firstOrFail();
         $customer    = Customer::find($laFacture->customer_id);
         $invoice     = Sale::where('numeroFacture', $facture)->get();
-        $company     = Company::latest()->first();
+        $company     = Company::current();
         $managerName = auth()->user()->name ?? 'Gérant';
     
         $pdf = Pdf::loadView('factures.pdf', compact(
@@ -116,7 +128,7 @@ class FactureController extends Controller
         $laFacture = Facture::where('numero_facture', $facture)->firstOrFail();
         $customer  = Customer::find($laFacture->customer_id);
         $invoice   = Sale::where('numeroFacture', $facture)->get();
-        $company   = Company::latest()->first();
+        $company   = Company::current();
         $managerName = auth()->user()->name ?? 'Gérant';
 
         $pdf = Pdf::loadView('factures.pdf', compact(
@@ -139,7 +151,7 @@ class FactureController extends Controller
     {
         $user = User::where('role_id', 2)->first();
         $invoice = Sale::where('numeroFacture', $facture)->get();
-        $laFacture = Facture::where('numero_facture', $facture)->first();
+        $laFacture = Facture::where('numero_facture', $facture)->firstOrFail();
         $customer = Customer::where('id', $laFacture->customer_id)->first();
         $paiements = Payment::where('facture_id', $laFacture->id)->get();
         
@@ -152,7 +164,7 @@ class FactureController extends Controller
     {
         $user = User::where('role_id', 2)->first();
         $invoice = Sale::where('numeroFacture', $facture)->get();
-        $laFacture = Facture::where('numero_facture', $facture)->first();
+        $laFacture = Facture::where('numero_facture', $facture)->firstOrFail();
         $customer = Customer::where('id', $laFacture->customer_id)->first();
         $paiements = Payment::where('facture_id', $laFacture->id)->get();
         
@@ -428,6 +440,25 @@ class FactureController extends Controller
     
     public function destroy(Request $request, Facture $facture)
     {
+        // Une vente encaissée ne se supprime pas : cette méthode efface
+        // définitivement les ventes et les paiements (ni l'une ni l'autre de ces
+        // tables n'a de `deleted_at`), l'encaissement disparaîtrait sans trace.
+        // Contrôle placé avant la transaction : rien ne doit même être tenté.
+        if ($facture->aRecuUnPaiement()) {
+            $message = sprintf(
+                'Facture n° %s : %s GNF ont déjà été encaissés. Une facture payée ou '
+                .'partiellement payée ne peut pas être supprimée.',
+                $facture->numero_facture,
+                number_format($facture->montantEncaisse(), 0, ',', ' ')
+            );
+
+            if ($request->ajax()) {
+                return response()->json(['error' => $message], 422);
+            }
+
+            return redirect()->route('factures.index')->with('error', $message);
+        }
+
         try {
             DB::beginTransaction();
 
@@ -456,7 +487,15 @@ class FactureController extends Controller
 
             // 3) Finally delete the facture
             $numero = $facture->numero_facture ?? $facture->numeroFacture ?? $facture->id;
+            $clientId = $facture->customer_id;
             $facture->delete();
+
+            // 4) Remettre les compteurs du client d'aplomb.
+            //    Sans cela, total_taken gardait le montant d'une facture qui
+            //    n'existe plus et le client restait débiteur d'une somme annulée.
+            //    On repart des factures restantes plutôt que de soustraire, pour
+            //    qu'une suppression ne puisse pas introduire un nouvel écart.
+            $this->recalculerCompteursClient($clientId);
 
             DB::commit();
 
@@ -478,5 +517,27 @@ class FactureController extends Controller
 
             return redirect()->back()->with('error', $err);
         }
+    }
+
+    /**
+     * Recalcule total_taken, total_repaid et balance d'un client à partir de ses
+     * factures. Même définition que la commande customers:recalculate-balances.
+     */
+    private function recalculerCompteursClient(?int $clientId): void
+    {
+        if (! $clientId) {
+            return;
+        }
+
+        $factures = Facture::where('customer_id', $clientId)->get();
+        $pris = round((float) $factures->sum('montant_total'), 2);
+        $du = round((float) $factures->sum('reste'), 2);
+
+        DB::table('customers')->where('id', $clientId)->update([
+            'total_taken' => $pris,
+            'total_repaid' => round($pris - $du, 2),
+            'balance' => $du,
+            'updated_at' => now(),
+        ]);
     }
 }

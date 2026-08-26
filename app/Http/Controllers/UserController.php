@@ -157,23 +157,4 @@ class UserController extends Controller
             : "Compte de {$user->name} activé.");
     }
 
-    public function assignStore(Request $request)
-    {
-        $request->validate([
-            'user_id' => 'required|exists:users,id',
-            'store_id' => 'required|exists:stores,id',
-        ]);
-
-        $user = User::findOrFail($request->user_id);
-        $user->store_id = $request->store_id;
-        $user->save();
-
-        return back()->with('success', 'Utilisateur affecté à la boutique avec succès.');
-    }
-    public function showAssignStoreForm()
-    {
-        $users = User::where('role_id', '>', 1)->get();
-        $stores = Store::all();
-        return view('users.assign_store', compact('users', 'stores'));
-    }
 }

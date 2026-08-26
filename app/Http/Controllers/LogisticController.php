@@ -69,7 +69,11 @@ class LogisticController extends Controller
      */
     public function create()
     {
-        return view('logistics.create');
+        // La vue parcourt $boutiques : sans lui, la liste deroulante restait
+        // vide et aucun mouvement ne pouvait etre enregistre.
+        $boutiques = Store::all();
+
+        return view('logistics.create', compact('boutiques'));
     }
 
     /**

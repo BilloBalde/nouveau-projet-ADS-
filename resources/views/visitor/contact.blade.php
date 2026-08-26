@@ -106,17 +106,18 @@
                 <div class="info-icon"><i class="fas fa-phone-alt"></i></div>
                 <h3 class="text-lg font-bold text-gray-800 mb-2">Téléphone</h3>
                 <p class="text-gray-500 text-sm leading-relaxed">
-                    <a href="tel:+224625453545" class="hover:text-brand-600 transition block">625 45 35 45</a>
-                    <a href="tel:+224628593110" class="hover:text-brand-600 transition block">628 59 31 10</a>
-                    <a href="tel:+224628801895" class="hover:text-brand-600 transition block">628 80 18 95</a>
+                    <a href="tel:+{{ \App\Models\Company::current()?->phoneInternational() }}" class="hover:text-brand-600 transition block">{{ \App\Models\Company::current()?->phone }}</a>
+                    @if (\App\Models\Company::current()?->phone_secondary)
+                        <a href="tel:+{{ \App\Models\Company::current()?->phoneSecondaryInternational() }}" class="hover:text-brand-600 transition block">{{ \App\Models\Company::current()?->phone_secondary }}</a>
+                    @endif
                 </p>
             </div>
             <div class="info-card">
                 <div class="info-icon"><i class="fas fa-envelope"></i></div>
                 <h3 class="text-lg font-bold text-gray-800 mb-2">Email</h3>
                 <p class="text-gray-500 text-sm leading-relaxed">
-                    <a href="mailto:abdulghadirybalde@gmail.com" class="hover:text-brand-600 transition break-all">
-                        abdulghadirybalde@gmail.com
+                    <a href="mailto:{{ \App\Models\Company::current()?->email }}" class="hover:text-brand-600 transition break-all">
+                        {{ \App\Models\Company::current()?->email }}
                     </a>
                 </p>
             </div>

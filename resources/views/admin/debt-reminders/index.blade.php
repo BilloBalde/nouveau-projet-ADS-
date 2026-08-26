@@ -52,7 +52,7 @@
                                                 <small class="d-block text-muted">{{ $r->customer?->mark ?? '' }}</small>
                                             </td>
                                             <td>{{ $r->customer?->tel ?? 'N/A' }}</td>
-                                            <td><strong style="color:#c1682f;">{{ number_format($r->total, 0, ',', ' ') }} GNF</strong></td>
+                                            <td><strong style="color:#1f6f43;">{{ number_format($r->total, 0, ',', ' ') }} GNF</strong></td>
                                             <td>{{ $r->count }}</td>
                                             <td>{{ $r->max_reminders }}</td>
                                             <td>{{ $r->last_sent_at ? \Carbon\Carbon::parse($r->last_sent_at)->format('d/m/Y H:i') : '—' }}</td>
@@ -62,13 +62,18 @@
                                                    class="btn btn-sm" style="background:#25D366;color:#fff;">
                                                     <i class="fab fa-whatsapp me-1"></i>WhatsApp
                                                 </a>
+                                                {{-- Aucun fournisseur SMS sur ce projet : le bouton ne pourrait
+                                                     qu'échouer, il est masqué. Le lien WhatsApp ci-dessus ne dépend
+                                                     d'aucun fournisseur et reste disponible. --}}
+                                                @if(\App\Services\SmsService::fournisseurConfigure())
                                                 <form method="POST" action="{{ route('admin.debt-reminders.send-sms', $r->customer?->id) }}" class="d-inline"
-                                                      onsubmit="return confirm('Envoyer un SMS de rappel à {{ $r->customer?->customerName }} ? (consomme un crédit Nimba SMS)');">
+                                                      onsubmit="return confirm('Envoyer un SMS de rappel à {{ $r->customer?->customerName }} ?');">
                                                     @csrf
-                                                    <button type="submit" class="btn btn-sm" style="background:#c1682f;color:#fff;">
+                                                    <button type="submit" class="btn btn-sm" style="background:#1f6f43;color:#fff;">
                                                         <i class="fas fa-sms me-1"></i>SMS
                                                     </button>
                                                 </form>
+                                                @endif
                                                 @else
                                                 <span class="badge bg-secondary" title="Numéro invalide">Tél. invalide</span>
                                                 @endif

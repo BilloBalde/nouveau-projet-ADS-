@@ -69,7 +69,7 @@
                                             </div>
                                             <div class="col-lg-2 col-sm-6 col-12 d-flex align-items-center">
                                                 <div class="form-group d-flex">
-                                                    <button type="submit" class="btn btn-filters me-2"><img src="assets/img/icons/search-whites.svg" alt="img"></button>
+                                                    <button type="submit" class="btn btn-filters me-2"><img src="{{ asset('assets/img/icons/search-whites.svg') }}" alt="img"></button>
                                                     <a href="{{ route('logistics.index') }}" class="btn btn-secondary">Annuler</a>
                                                 </div>
                                             </div>
@@ -103,7 +103,7 @@
                                             <td>{{ $data->dateFournis }}</td>
                                             <td class="text-end">
                                                 <a class="me-3" href="{{ route('logistics.edit', $data->id) }}">
-                                                    <img src="assets/img/icons/edit.svg" alt="img">
+                                                    <img src="{{ asset('assets/img/icons/edit.svg') }}" alt="img">
                                                 </a>
                                             </td>
                                         </tr>

@@ -143,7 +143,7 @@ class DeviController extends Controller
         $devis = Devi::with(['lines.product', 'store', 'customer', 'createdBy'])->findOrFail($id);
         
         // Get company info for PDF
-        $company = \App\Models\Company::latest()->first();
+        $company = \App\Models\Company::current();
 
         return view('devis.show', compact('devis', 'company'));
     }
@@ -297,7 +297,7 @@ class DeviController extends Controller
     public function showPdf($id)
     {
         $devis = Devi::with(['lines.product', 'store', 'customer', 'createdBy'])->findOrFail($id);
-        $company = \App\Models\Company::latest()->first();
+        $company = \App\Models\Company::current();
         
         return view('devis.pdf', compact('devis', 'company'));
     }
@@ -305,7 +305,7 @@ class DeviController extends Controller
     public function downloadPdf($id)
     {
         $devis = Devi::with(['lines.product', 'store', 'customer', 'createdBy'])->findOrFail($id);
-        $company = \App\Models\Company::latest()->first();
+        $company = \App\Models\Company::current();
         
         $html = view('devis.pdf', compact('devis', 'company'))->render();
         
@@ -326,7 +326,7 @@ class DeviController extends Controller
     public function generatePdf($id)
     {
         $devis = Devi::with(['lines.product', 'store', 'customer', 'createdBy'])->findOrFail($id);
-        $company = \App\Models\Company::latest()->first();
+        $company = \App\Models\Company::current();
 
         $pdf = Pdf::loadView('devis.pdf', compact('devis', 'company'));
         $pdf->setPaper('A4', 'portrait');

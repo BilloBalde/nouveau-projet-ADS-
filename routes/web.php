@@ -39,9 +39,6 @@ use App\Http\Controllers\StoreController;
 use App\Http\Controllers\StoreProductController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VisitController;
-use App\Http\Controllers\CustomerOrderController;
-use App\Http\Controllers\CatalogueAuthController;
-use App\Http\Controllers\CatalogueOrdersController;
 use App\Http\Controllers\DeviController;
 use App\Http\Controllers\NewExportController;
 use App\Http\Controllers\PurchaseOrderController;
@@ -165,8 +162,10 @@ Route::prefix('shop')->group(function () {
     Route::post('/register', [AuthOtpController::class, 'register'])->middleware('throttle:5,1')->name('otp.register_submit');
     Route::get('/login', [AuthOtpController::class, 'showLogin'])->name('otp.login');
     Route::post('/login', [AuthOtpController::class, 'login'])->middleware('throttle:5,1')->name('otp.login_submit');
-    Route::get('/verify', [AuthOtpController::class, 'showVerify'])->name('otp.verify');
-    Route::post('/verify-otp', [AuthOtpController::class, 'verify'])->middleware('throttle:10,1')->name('otp.verify_submit');
+    // Étape de vérification OTP retirée du parcours : le client se connecte
+    // directement avec son numéro. Les méthodes showVerify()/verify() et tout
+    // le mécanisme (OtpCode, AuthService, SmsService) restent en place ; il
+    // suffit de rétablir ces deux routes pour les remettre en service.
     Route::post('/logout', [AuthOtpController::class, 'logout'])->name('shop.logout');
 
     // Routes client connecté
@@ -250,8 +249,9 @@ Route::post('/compagnie', [ProfileController::class, 'companyCreate'])->name('co
 // permission:users.delete (cette route resource ne vérifiait qu'auth.check, donc
 // n'importe quel employé connecté pouvait supprimer n'importe quel compte).
 Route::resource('users', UserController::class)->except(['destroy']);
-Route::get('/admin/assign-store', [UserController::class, 'showAssignStoreForm'])->middleware('auth.check')->name('admin.showAssignStoreForm');
-Route::post('/admin/assign-store', [UserController::class, 'assignStore'])->middleware('auth.check')->name('admin.assignStore');
+// Ecran d'affectation a une boutique retire : la vue users.assign_store n'a
+// jamais existe, et le champ « boutique » est deja present dans les
+// formulaires de creation et de modification d'un utilisateur.
 
 // =============================================
 // 9. ROUTES PARAMÈTRES
@@ -263,7 +263,7 @@ Route::post('/admin/assign-store', [UserController::class, 'assignStore'])->midd
 Route::middleware(['auth', 'permission:settings.view'])->group(function () {
     Route::resource('paymentSetting', PaymentSettingController::class);
     Route::resource('currencySetting', CurrencySettingController::class);
-    Route::resource('roles', RoleController::class);
+    Route::resource('roles', RoleController::class)->except(['show']);
 });
 
 // =============================================
@@ -293,7 +293,9 @@ Route::put('/customers/{customer}', [CustomerController::class, 'update'])->name
 Route::delete('/customers/{id}', [CustomerController::class, 'destroy'])->name('customers.destroy');
 Route::post('/customers/{id}/restore', [CustomerController::class, 'restore'])->name('customers.restore');
 Route::delete('/customers/{id}/force', [CustomerController::class, 'forceDelete'])->name('customers.forceDelete');
-Route::get('/customers/trashed', [CustomerController::class, 'trashed'])->name('customers.trashed');
+// Pas de route « corbeille » : CustomerController n'a pas de méthode trashed() et
+// aucune vue ne l'accompagne. restore() et forceDelete() ci-dessus restent en place,
+// ils fonctionnent et constituent le seul moyen de récupérer un client supprimé.
 Route::post('/customers/search', [CustomerController::class, 'search'])->name('customers.search');
 Route::post('/customers/quick-add', [CustomerController::class, 'quickAdd'])->name('customers.quick-add');
 
@@ -301,8 +303,15 @@ Route::post('/customers/quick-add', [CustomerController::class, 'quickAdd'])->na
 // 12. ROUTES CATÉGORIES & PRODUITS
 // =============================================
 
-Route::resource('categories', CategoryController::class);
-Route::resource('produits', ProductController::class);
+// show() exclue : la methode n'a jamais ete ecrite (corps vide) et attendait
+// une classe CategoryEmballage qui n'existe pas dans ce projet. Les categories
+// se consultent depuis la liste et le formulaire de modification.
+Route::resource('categories', CategoryController::class)->except(['show']);
+// Le paramètre est contraint aux identifiants numériques : sans cela,
+// « produits/export-pdf » est lu comme l'élément dont l'identifiant vaut
+// « export-pdf », et les routes d'export déclarées plus bas ne sont
+// jamais atteintes — elles renvoyaient un 404.
+Route::resource('produits', ProductController::class)->where(['produit' => '[0-9]+']);
 Route::post('/produits/quick-create', [ProductController::class, 'quickStore'])->middleware('auth.check')->name('produits.quickCreate');
 Route::get('/products/{id}', [ProductController::class, 'show'])->name('products.show');
 Route::get('/fetch-product-details', [ProductController::class, 'fetchProductDetails'])->middleware('auth.check');
@@ -313,13 +322,22 @@ Route::get('/fetch-product-details-suggestion', [ProductController::class, 'fetc
 // =============================================
 
 Route::resource('expensesCategory', ExpenseCategoryController::class);
-Route::resource('expenses', ExpenseController::class);
+Route::resource('expenses', ExpenseController::class)->except(['show']);
 
 // =============================================
 // 14. ROUTES ACHATS
 // =============================================
 
-Route::resource('purchases', PurchaseController::class);
+// Le paramètre est contraint aux identifiants numériques : sans cela,
+// « purchases/export-pdf » est lu comme l'élément dont l'identifiant vaut
+// « export-pdf », et les routes d'export déclarées plus bas ne sont
+// jamais atteintes — elles renvoyaient un 404.
+// create() exclue : cet ecran de saisie a ete remplace par le module Achats
+// (purchase-orders). Le controleur ne transmet plus $numeroPurchase, $store_id
+// ni $products, la vue tombait donc en erreur.
+Route::resource('purchases', PurchaseController::class)
+    ->except(['create'])
+    ->where(['purchase' => '[0-9]+']);
 Route::resource('purchase-orders', PurchaseOrderController::class);
 Route::get('/purchases/ajout/{numeroPurchase}/{quantity}/{store}', [PurchaseController::class, 'ajout'])->name('purchases.ajout');
 Route::post('/purchases/exitAchat/{numeroPurchase}', [PurchaseController::class, 'exitAchat'])->name('exitPurchase');
@@ -328,7 +346,7 @@ Route::post('/purchases/exitAchat/{numeroPurchase}', [PurchaseController::class,
 // 15. ROUTES FACTURES
 // =============================================
 
-Route::resource('factures', FactureController::class);
+Route::resource('factures', FactureController::class)->except(['create']);
 Route::get('/factures/bon-de-commande/{facture}', [FactureController::class, 'bonDeCommande'])->name('factures.bon-de-commande');
 Route::get('/factures/bon-de-sortie/{facture}', [FactureController::class, 'bonDeSortie'])->name('factures.bon-de-sortie');
 
@@ -336,7 +354,9 @@ Route::get('/factures/bon-de-sortie/{facture}', [FactureController::class, 'bonD
 // 16. ROUTES VENTES
 // =============================================
 
-Route::resource('sales', SaleController::class);
+// create() exclue en plus : cet ecran a ete remplace par le point de vente
+// (/pos). Le controleur ne transmet plus $numero_facture a la vue.
+Route::resource('sales', SaleController::class)->except(['show', 'destroy', 'create']);
 Route::get('/ventes/export-excel', [SaleController::class, 'exportExcel'])->name('sales.export-excel');
 Route::get('/ventes/export-pdf', [SaleController::class, 'exportPDF'])->name('sales.export-pdf');
 Route::get('/ventes/export-current-excel', [SaleController::class, 'exportCurrentExcel'])->name('sales.export-current-excel');
@@ -353,7 +373,7 @@ Route::get('/sales/voir/{numero_facture}', [SaleController::class, 'voirSales'])
 // "/payments/export-pdf" est capturé par "/payments/{payment}" (show()) et plante.
 Route::get('/payments/export-pdf', [PaymentController::class, 'exportPdf'])->name('payments.export');
 Route::get('/payments/export-excel', [PaymentController::class, 'exportExcel'])->name('payments.exportExcel');
-Route::resource('payments', PaymentController::class);
+Route::resource('payments', PaymentController::class)->only(['index', 'store']);
 Route::get('/facture/payment/{id}', [PaymentController::class, 'creation'])->name('payments.creation');
 Route::get('/facture/voirPayment/{id}', [PaymentController::class, 'voir'])->name('payments.voir');
 Route::get('/paiementsClient/add/{mark}', [PaymentController::class, 'add'])->name('paiementsClient.add');
@@ -387,7 +407,11 @@ Route::get('/mouvements/pdf', [MovementController::class, 'exportPdf'])->name('m
 // 21. ROUTES LOGISTIQUE
 // =============================================
 
-Route::resource('logistics', LogisticController::class);
+// Le paramètre est contraint aux identifiants numériques : sans cela,
+// « logistics/export-pdf » est lu comme l'élément dont l'identifiant vaut
+// « export-pdf », et les routes d'export déclarées plus bas ne sont
+// jamais atteintes — elles renvoyaient un 404.
+Route::resource('logistics', LogisticController::class)->where(['logistic' => '[0-9]+']);
 Route::get('/logistics/export-excel', [LogisticController::class, 'exportExcel'])->middleware('auth.check')->name('logistics.export-excel');
 Route::get('/logistics/export-pdf', [LogisticController::class, 'exportPDF'])->middleware('auth.check')->name('logistics.export-pdf');
 
@@ -412,27 +436,6 @@ Route::post('/devis/{id}/status', [DeviController::class, 'changeStatus'])->name
 Route::post('/devis/{id}/validate', [DeviController::class, 'validateDevis'])->name('devis.validate');
 Route::get('/devis/{id}/pdf', [DeviController::class, 'showPdf'])->name('devis.pdf');
 Route::get('/devis/{id}/pdf-download', [DeviController::class, 'downloadPdf'])->name('devis.pdf-download');
-
-// =============================================
-// 25. ROUTES COMMANDES CLIENTS
-// =============================================
-
-Route::get('/orders', [CustomerOrderController::class, 'index'])->middleware('auth.check')->name('customer-orders.index');
-Route::get('/orders/{order}', [CustomerOrderController::class, 'show'])->middleware('auth.check')->name('customer-orders.show');
-Route::put('/orders/{order}/status', [CustomerOrderController::class, 'updateStatus'])->middleware('auth.check')->name('customer-orders.status');
-
-// =============================================
-// 26. ROUTES CATALOGUE CLIENT
-// =============================================
-
-Route::get('/catalogue-client', [CustomerOrderController::class, 'create'])->name('storefront');
-Route::post('/catalogue-client', [CustomerOrderController::class, 'store'])->name('storefront.store');
-Route::get('/catalogue/login', [CatalogueAuthController::class, 'showLogin'])->name('catalogue.login');
-Route::post('/catalogue/login', [CatalogueAuthController::class, 'login'])->middleware('throttle:10,1')->name('catalogue.login.submit');
-Route::get('/catalogue/register', [CatalogueAuthController::class, 'showRegister'])->name('catalogue.register');
-Route::post('/catalogue/register', [CatalogueAuthController::class, 'register'])->middleware('throttle:5,1')->name('catalogue.register.submit');
-Route::post('/catalogue/logout', [CatalogueAuthController::class, 'logout'])->name('catalogue.logout');
-Route::get('/catalogue/mes-commandes', [CatalogueOrdersController::class, 'index'])->name('catalogue.orders');
 
 // =============================================
 // 27. ROUTES FACTURATIONS
@@ -505,10 +508,10 @@ Route::get('/produits/export-pdf', function () {
     }
 })->name('produits.export-pdf');
 
-Route::get('/produits/export-excel-queue', function() {
-    dispatch(new \App\Jobs\ExportProductsJob(auth()->id(), auth()->user()->role_id));
-    return back()->with('success', 'Export en cours. Vous serez notifié quand il sera prêt.');
-})->name('produits.export-excel-queue');
+// Export « en file d'attente » retire, avec le travail ExportProductsJob :
+// aucun bouton n'y menait, le travail appelait auth()->loginUsingId() qui
+// n'existe pas hors session, et QUEUE_CONNECTION=sync l'executait de toute
+// facon en ligne. L'export direct /produits/export-excel fait le travail.
 
 Route::get('/produits/export-csv', function () {
     $filename = 'products_' . date('Y-m-d') . '.csv';
@@ -613,12 +616,10 @@ Route::get('/home-redirect', function () {
 });
 
 // =============================================
-// 36. FALLBACK - PAGE 404
+// 36. PAGE 404
 // =============================================
 
-Route::fallback(function () {
-    if (view()->exists('errors.404')) {
-        return view('errors.404');
-    }
-    return response()->view('welcome', [], 404);
-});
+// Aucune route fallback : Laravel rend `resources/views/errors/404.blade.php`
+// de lui-même pour toute URL inconnue, avec le statut 404. L'ancien fallback
+// renvoyait cette page avec un statut 200, ce qui la faisait passer pour une
+// page valide auprès des navigateurs et des moteurs de recherche.

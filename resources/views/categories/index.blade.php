@@ -13,11 +13,11 @@
                 <div class="content">
                     <div class="page-header">
                         <div class="page-title">
-                            <h4>Emballage Category List</h4>
+                            <h4>Catégories d'emballage</h4>
                             <h6>Gerer Votre Emballage Category</h6>
                         </div>
                         <div class="page-btn">
-                            <a href="{{ route('categories.create') }}" class="btn btn-added"><img src="assets/img/icons/plus.svg" alt="img" class="me-2">Ajouter une Category</a>
+                            <a href="{{ route('categories.create') }}" class="btn btn-added"><img src="{{ asset('assets/img/icons/plus.svg') }}" alt="img" class="me-2">Ajouter une Category</a>
                         </div>
                     </div>
                     @include('layouts.flash')
@@ -27,7 +27,7 @@
                                 <div class="search-set">
 
                                     <div class="search-input">
-                                        <a class="btn btn-searchset"><img src="assets/img/icons/search-white.svg" alt="img"></a>
+                                        <a class="btn btn-searchset"><img src="{{ asset('assets/img/icons/search-white.svg') }}" alt="img"></a>
                                     </div>
                                 </div>
                             </div>
@@ -50,7 +50,7 @@
                                             <td>{{ $categoryEmballage->description }}</td>
                                             <td>
                                                 <a class="me-3" href="{{ route('categories.edit', $categoryEmballage->id) }}">
-                                                    <img src="assets/img/icons/edit.svg" alt="img">
+                                                    <img src="{{ asset('assets/img/icons/edit.svg') }}" alt="img">
                                                 </a>
                                                 <a
                                                     type="button"
@@ -59,9 +59,9 @@
                                                     data-slug="{{ $categoryEmballage->slug }}"
                                                     data-bs-target="#confirmDeleteModal"
                                                     onclick="setDeleteFormAction('{{ route('categories.destroy', $categoryEmballage->id) }}')">
-                                                    <img src="assets/img/icons/delete.svg" class="me-2" alt="img">
+                                                    <img src="{{ asset('assets/img/icons/delete.svg') }}" class="me-2" alt="img">
                                                 </a>
-                                                {{-- <a class="me-3" data-bs-toggle="modal" data-bs-target="#deleteModal" data-id="{{ $categoryEmballage->id }}"><img src="assets/img/icons/delete.svg" alt="img"></a> --}}
+                                                {{-- <a class="me-3" data-bs-toggle="modal" data-bs-target="#deleteModal" data-id="{{ $categoryEmballage->id }}"><img src="{{ asset('assets/img/icons/delete.svg') }}" alt="img"></a> --}}
                                             </td>
                                         </tr>
                                         @endforeach

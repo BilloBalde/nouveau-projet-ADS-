@@ -15,7 +15,7 @@
             font-family: 'DejaVu Sans', 'Helvetica', 'Arial', sans-serif;
             font-size: 11px;
             line-height: 1.5;
-            color: #2b2118;
+            color: #10221a;
             background: #fff;
             margin: 1.5cm;
         }
@@ -27,7 +27,7 @@
         .header {
             width: 100%;
             border-collapse: collapse;
-            border-bottom: 3px solid #c1682f;
+            border-bottom: 3px solid #1f6f43;
             padding-bottom: 14px;
             margin-bottom: 18px;
         }
@@ -49,13 +49,13 @@
         .company-name {
             font-size: 20px;
             font-weight: bold;
-            color: #c1682f;
+            color: #1f6f43;
             letter-spacing: -0.3px;
         }
 
         .company-details {
             font-size: 9px;
-            color: #9a8a78;
+            color: #5d6b64;
             margin-top: 4px;
         }
 
@@ -75,24 +75,24 @@
         .report-title {
             font-size: 17px;
             font-weight: 700;
-            color: #2b2118;
+            color: #10221a;
             text-transform: uppercase;
             letter-spacing: 0.03em;
         }
 
         .report-generated {
             font-size: 9px;
-            color: #9a8a78;
+            color: #5d6b64;
         }
 
         .filters {
-            background: #fdfaf6;
+            background: #f7faf8;
             padding: 8px 14px;
             border-radius: 6px;
             margin-bottom: 16px;
             font-size: 9.5px;
-            color: #6b5c4c;
-            border-left: 3px solid #c1682f;
+            color: #5d6b64;
+            border-left: 3px solid #1f6f43;
         }
 
         /* ===== TABLEAU ===== */
@@ -104,7 +104,7 @@
         }
 
         table.data th {
-            background-color: #c1682f;
+            background-color: #1f6f43;
             color: white;
             padding: 9px 8px;
             text-align: left;
@@ -112,17 +112,17 @@
             font-size: 9.5px;
             text-transform: uppercase;
             letter-spacing: 0.02em;
-            border: 1px solid #c1682f;
+            border: 1px solid #1f6f43;
         }
 
         table.data td {
             padding: 7px 8px;
-            border: 1px solid #eee1d3;
+            border: 1px solid #dcefe3;
             vertical-align: top;
         }
 
         table.data tr:nth-child(even) td {
-            background-color: #fdfaf6;
+            background-color: #f7faf8;
         }
 
         .amount {
@@ -143,8 +143,8 @@
 
         /* ===== RÉSUMÉ ===== */
         .summary {
-            background: #fdfaf6;
-            border: 1px solid #e5d5c3;
+            background: #f7faf8;
+            border: 1px solid #b9dfc8;
             border-radius: 8px;
             padding: 14px 20px;
             margin-top: 18px;
@@ -165,28 +165,28 @@
         }
 
         .summary-row .total-label {
-            color: #6b5c4c;
+            color: #5d6b64;
         }
 
         .summary-row .total-value {
             text-align: right;
             font-weight: 700;
-            color: #2b2118;
+            color: #10221a;
         }
 
         .summary-row.grand-total td {
-            border-top: 2px solid #c1682f;
+            border-top: 2px solid #1f6f43;
             padding-top: 8px;
             font-size: 13px;
         }
 
         .summary-row.grand-total .total-label {
             font-weight: 700;
-            color: #2b2118;
+            color: #10221a;
         }
 
         .summary-row.grand-total .total-value {
-            color: #c1682f;
+            color: #1f6f43;
         }
 
         /* ===== PIED DE PAGE ===== */
@@ -196,9 +196,9 @@
             left: 0;
             right: 0;
             font-size: 8px;
-            color: #9a8a78;
+            color: #5d6b64;
             text-align: center;
-            border-top: 1px solid #eee1d3;
+            border-top: 1px solid #dcefe3;
             padding-top: 8px;
             margin-top: 20px;
             background: white;
@@ -217,7 +217,7 @@
             // s'affranchir totalement de la résolution de chemin par Dompdf.
             $logoPath = ($company && $company->logo && file_exists(public_path('companies/'.$company->logo)))
                 ? public_path('companies/'.$company->logo)
-                : (file_exists(public_path('images/customers/logo.jpg')) ? public_path('images/customers/logo.jpg') : null);
+                : null;
             $logoDataUri = $logoPath
                 ? 'data:'.mime_content_type($logoPath).';base64,'.base64_encode(file_get_contents($logoPath))
                 : null;
@@ -233,7 +233,7 @@
                 <div class="company-name">{{ $company->name ?? 'Coleah Bandeya & Fils' }}</div>
                 <div class="company-details">
                     {{ $company->address ?? 'Madina, Ecole Gare Routière Dabola Camion, Conakry' }}<br>
-                    Tél: {{ $company->phone ?? '625 45 35 45' }} | Email: {{ $company->email ?? 'abdulghadirybalde@gmail.com' }}
+                    Tél: {{ $company->phone ?? '' }} | Email: {{ $company->email ?? '' }}
                 </div>
             </td>
         </tr>
@@ -290,7 +290,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="7" style="text-align:center;color:#9a8a78;padding:20px;">Aucun paiement pour cette sélection.</td>
+                    <td colspan="7" style="text-align:center;color:#5d6b64;padding:20px;">Aucun paiement pour cette sélection.</td>
                 </tr>
             @endforelse
         </tbody>

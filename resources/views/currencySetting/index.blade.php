@@ -14,11 +14,11 @@
                 <div class="content">
                     <div class="page-header">
                         <div class="page-title">
-                            <h4>Currency Settings</h4>
-                            <h6>Manage Currency Settings</h6>
+                            <h4>Paramètres de devise</h4>
+                            <h6>Gérer les devises et taux de change</h6>
                         </div>
                         <div class="page-btn">
-                            <a class="btn btn-added" data-bs-toggle="modal" data-bs-target="#addpayment"><img src="assets/img/icons/plus.svg" alt="img" class="me-1">Add New Currency</a>
+                            <a class="btn btn-added" data-bs-toggle="modal" data-bs-target="#addpayment"><img src="{{ asset('assets/img/icons/plus.svg') }}" alt="img" class="me-1">Add New Currency</a>
                         </div>
                     </div>
                     <div class="card">
@@ -26,16 +26,16 @@
                             <div class="table-top">
                                 <div class="search-set">
                                     <div class="search-input">
-                                        <a class="btn btn-searchset"><img src="assets/img/icons/search-white.svg" alt="img"></a>
+                                        <a class="btn btn-searchset"><img src="{{ asset('assets/img/icons/search-white.svg') }}" alt="img"></a>
                                     </div>
                                 </div>
                                 <div class="wordset">
                                     <ul>
                                         <li>
-                                            <a data-bs-toggle="tooltip" data-bs-placement="top" title="pdf"><img src="assets/img/icons/pdf.svg" alt="img"></a>
+                                            <a data-bs-toggle="tooltip" data-bs-placement="top" title="pdf"><img src="{{ asset('assets/img/icons/pdf.svg') }}" alt="img"></a>
                                         </li>
                                         <li>
-                                            <a data-bs-toggle="tooltip" data-bs-placement="top" title="excel"><img src="assets/img/icons/excel.svg" alt="img"></a>
+                                            <a data-bs-toggle="tooltip" data-bs-placement="top" title="excel"><img src="{{ asset('assets/img/icons/excel.svg') }}" alt="img"></a>
                                         </li>
                                     </ul>
                                 </div>
@@ -73,13 +73,13 @@
                                                    data-symbol="{{ $d->currencySymbol }}"
                                                    data-rate="{{ $d->rate_to_gnf }}"
                                                    data-status="{{ $d->status }}">
-                                                    <img src="assets/img/icons/edit.svg" alt="img">
+                                                    <img src="{{ asset('assets/img/icons/edit.svg') }}" alt="img">
                                                 </a>
                                                 <form action="{{ route('currencySetting.destroy', $d->id) }}" method="POST" style="display:inline" onsubmit="return confirm('Supprimer cette devise ?');">
                                                     @csrf
                                                     @method('DELETE')
                                                     <button type="submit" class="btn btn-link p-0 me-3">
-                                                        <img src="assets/img/icons/delete.svg" alt="img">
+                                                        <img src="{{ asset('assets/img/icons/delete.svg') }}" alt="img">
                                                     </button>
                                                 </form>
                                             </td>
@@ -221,23 +221,23 @@
                 </div>
             </div>
         </div>
-    <script src="assets/js/jquery-3.6.0.min.js"></script>
+    <script src="{{ asset('assets/js/jquery-3.6.0.min.js') }}"></script>
 
-    <script src="assets/js/feather.min.js"></script>
+    <script src="{{ asset('assets/js/feather.min.js') }}"></script>
 
-    <script src="assets/js/jquery.slimscroll.min.js"></script>
+    <script src="{{ asset('assets/js/jquery.slimscroll.min.js') }}"></script>
 
-    <script src="assets/js/jquery.dataTables.min.js"></script>
-    <script src="assets/js/dataTables.bootstrap4.min.js"></script>
+    <script src="{{ asset('assets/js/jquery.dataTables.min.js') }}"></script>
+    <script src="{{ asset('assets/js/dataTables.bootstrap4.min.js') }}"></script>
 
-    <script src="assets/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ asset('assets/js/bootstrap.bundle.min.js') }}"></script>
 
-    <script src="assets/plugins/select2/js/select2.min.js"></script>
+    <script src="{{ asset('assets/plugins/select2/js/select2.min.js') }}"></script>
 
-    <script src="assets/plugins/sweetalert/sweetalert2.all.min.js"></script>
-    <script src="assets/plugins/sweetalert/sweetalerts.min.js"></script>
+    <script src="{{ asset('assets/plugins/sweetalert/sweetalert2.all.min.js') }}"></script>
+    <script src="{{ asset('assets/plugins/sweetalert/sweetalerts.min.js') }}"></script>
 
-    <script src="assets/js/script.js"></script>
+    <script src="{{ asset('assets/js/script.js') }}"></script>
     <script>
         document.querySelectorAll('.edit-currency-btn').forEach(function (btn) {
             btn.addEventListener('click', function () {

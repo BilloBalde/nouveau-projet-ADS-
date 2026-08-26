@@ -38,15 +38,19 @@ class AppServiceProvider extends ServiceProvider
         // Le rendu par défaut des liens de pagination cible Tailwind ; les pages
         // admin sont en Bootstrap, où ses SVG s'affichent à taille brute (géants).
         Paginator::useBootstrapFive();
-        View::composer('layouts.head', function ($view) {
-            try {
-                $company = Company::latest()->first();
-                $companyName = $company?->name ?? config('app.name');
-            } catch (\Throwable $e) {
-                $companyName = config('app.name');
-            }
-
-            $view->with('companyName', $companyName);
+        // Ces vues interrogeaient toutes `Company::latest()->first()` en dur, sans
+        // garde sur le null. Elles reçoivent désormais $company, résolu une seule
+        // fois par requête. Les vues servies par un contrôleur qui passe déjà
+        // `company` (devis, reçus, exports) ne sont pas listées ici.
+        View::composer([
+            'layouts.head',
+            'layouts.header',
+            'factures.show',
+            'factures.bon_de_commande',
+            'factures.bon_de_sortie',
+            'reports.daily-pdf',
+        ], function ($view) {
+            $view->with('company', Company::current());
         });
 
 

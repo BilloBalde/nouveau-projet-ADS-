@@ -53,9 +53,12 @@ class DebtReminderController extends Controller
     }
 
     /**
-     * Envoie manuellement un rappel par SMS (Nimba SMS) à un client — même
+     * Envoie manuellement un rappel par SMS à un client — même
      * principe que le bouton WhatsApp existant, mais déclenché explicitement
-     * par le staff (un SMS coûte un crédit Nimba, pas d'envoi automatique).
+     * par le staff (pas d'envoi automatique).
+     *
+     * Ce projet n'a aucun fournisseur SMS configuré : l'envoi échoue et le message
+     * est journalisé. Renseigner SMS_DRIVER pour le rendre opérationnel.
      */
     public function sendSms(int $customerId)
     {
@@ -78,7 +81,8 @@ class DebtReminderController extends Controller
         $message = 'Bonjour ' . ($customer->customerName ?? 'cher client')
             . ', vous avez une facture impayée de '
             . number_format($total, 0, ',', ' ')
-            . ' GNF chez SMH. Veuillez régler votre dette avant lundi. Merci de votre confiance.';
+            . ' GNF chez ' . (\App\Models\Company::current()?->name ?? config('app.name'))
+            . '. Veuillez régler votre dette avant lundi. Merci de votre confiance.';
 
         $sent = $this->sms->send($tel, $message);
 

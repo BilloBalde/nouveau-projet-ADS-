@@ -10,9 +10,38 @@ use Illuminate\Support\Str;
 
 class AuthService
 {
+    /**
+     * Numéro mobile guinéen : neuf chiffres commençant par 6, avec un indicatif
+     * pays facultatif. C'est le seul format que la boutique dessert, autant le
+     * dire au client au moment de la saisie plutôt qu'après coup.
+     */
+    public const REGLE_TELEPHONE = 'regex:/^(?:\+|00)?224[\s.-]?6\d{2}[\s.-]?\d{2}[\s.-]?\d{2}[\s.-]?\d{2}$|^6\d{2}[\s.-]?\d{2}[\s.-]?\d{2}[\s.-]?\d{2}$/';
+
+    public const MESSAGE_TELEPHONE = 'Entrez un numéro guinéen valide : 9 chiffres commençant par 6 (exemple : 622 33 44 55).';
+
     public function __construct(
         protected SmsService $smsService
     ) {}
+
+    /**
+     * Ramène un numéro à ses neuf chiffres locaux, indicatif et séparateurs ôtés.
+     *
+     * Sans cela, « +224 622 33 44 55 » et « 622334455 » créeraient deux comptes
+     * distincts, et un client inscrit sous une forme ne se reconnecterait pas
+     * sous l'autre. Le format court est celui déjà en base.
+     */
+    public static function normaliserTelephone(string $phone): string
+    {
+        $chiffres = preg_replace('/\D/', '', $phone);
+
+        if (str_starts_with($chiffres, '00224')) {
+            $chiffres = substr($chiffres, 5);
+        } elseif (str_starts_with($chiffres, '224') && strlen($chiffres) > 9) {
+            $chiffres = substr($chiffres, 3);
+        }
+
+        return $chiffres;
+    }
 
     public function generateOtp($phone)
     {
@@ -54,13 +83,13 @@ class AuthService
 
     public function register($data)
     {
-        $digits = preg_replace('/\D/', '', $data['phone']);
+        $phone = self::normaliserTelephone($data['phone']);
 
         return User::create([
             'name' => $data['name'],
-            'username' => 'c_'.$digits,
-            'phone' => $data['phone'],
-            'email' => 'c_'.$digits.'_'.uniqid('', true).'@clients.local',
+            'username' => 'c_'.$phone,
+            'phone' => $phone,
+            'email' => 'c_'.$phone.'_'.uniqid('', true).'@clients.local',
             'password' => Hash::make(Str::random(16)),
             'token' => '',
             'role_id' => User::ROLE_CUSTOMER,
@@ -70,6 +99,6 @@ class AuthService
 
     public function login($phone)
     {
-        return User::where('phone', $phone)->first();
+        return User::where('phone', self::normaliserTelephone($phone))->first();
     }
 }

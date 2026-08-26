@@ -123,7 +123,10 @@ class IndexController extends Controller
             ->orderBy('created_at', 'desc')
             ->take(5)
             ->get();
+            // whereNull('deleted_at') : sinon une facture supprimée reste comptée
+            // dans le chiffre d'affaires mensuel affiché.
             $salesData = DB::table('factures')
+                ->whereNull('deleted_at')
                 ->where('store_id', $store_id)
                 ->select(DB::raw('SUM(montant_total) as total'), DB::raw('MONTH(created_at) as month'))
                 ->groupBy('month')
@@ -159,7 +162,9 @@ class IndexController extends Controller
             ->orderBy('created_at', 'desc')
             ->take(5)
             ->get();
+            // whereNull('deleted_at') : voir plus haut, même raison.
             $salesData = DB::table('factures')
+                ->whereNull('deleted_at')
                 ->select(DB::raw('SUM(montant_total) as total'), DB::raw('MONTH(created_at) as month'))
                 ->groupBy('month')
                 ->pluck('total', 'month')
@@ -192,7 +197,9 @@ class IndexController extends Controller
             $query->where('store_id', $store->id);
         }
         
-        $factures = $query->with('paiements')->get();
+        // Les clients sont chargés ici, en une requête : la vue les cherchait
+        // un par un avec Customer::find() à l'intérieur de sa boucle.
+        $factures = $query->with(['paiements', 'customer'])->get();
 
         $grouped = $factures->groupBy(function ($facture) {
             return $facture->customer_id . '|' . $facture->created_at->format('Y-m-d');

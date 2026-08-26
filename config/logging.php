@@ -51,9 +51,12 @@ return [
     */
 
     'channels' => [
+        // 'daily' et non 'single' : ce dernier écrit dans un fichier unique qui
+        // grossit sans fin. 'daily' ouvre un fichier par jour et ne conserve que
+        // les 14 derniers, réglés plus bas.
         'stack' => [
             'driver' => 'stack',
-            'channels' => ['single'],
+            'channels' => ['daily'],
             'ignore_exceptions' => false,
         ],
 

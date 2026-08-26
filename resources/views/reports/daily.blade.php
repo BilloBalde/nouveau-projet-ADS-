@@ -37,7 +37,7 @@
 <div class="content">
     <div class="page-header d-flex align-items-center justify-content-between">
         <div class="page-title">
-            <h4>Daily Report</h4>
+            <h4>Rapport journalier</h4>
             <h6>
                 {{ $stores->firstWhere('id', $storeId)?->store_name ?? 'Toutes les boutiques' }}
                 ({{ $label }})

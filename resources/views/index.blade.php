@@ -59,7 +59,7 @@
 
             <!-- Dettes -->
             <div class="metric-card metric-card-3">
-                <div class="dash-count" style="background: linear-gradient(135deg, #c1682f, #9a3412);">
+                <div class="dash-count" style="background: linear-gradient(135deg, #1f6f43, #9a3412);">
                     <div class="dash-counts">
                         <h4 class="mb-1">{{ numberDelimiter($total_credits_store) }} FG</h4>
                         <h5 class="opacity-75">Dettes (non payé)</h5>
@@ -351,21 +351,27 @@
                                 @foreach ($grouped as $key => $factures)
                                     @php
                                         [$customerId, $date] = explode('|', $key);
-                                        $customer = \App\Models\Customer::find($customerId);
+                                        // Le client vient de la relation déjà chargée : un
+                                        // Customer::find() ici relançait une requête par ligne.
+                                        $customer = $factures->first()?->customer;
                                         $totalQuantity = $factures->sum('quantity');
                                         $totalMontant = $factures->sum('montant_total');
                                         $totalReste = $factures->sum('reste');
-                                        $totalPaye = $factures->sum(function ($facture) {
-                                            return optional($facture->paiements()->latest()->first())->total_paye ?? 0;
-                                        });
+                                        // montantEncaisse() se déduit de montant_total et reste,
+                                        // sans interroger les paiements. L'ancien calcul rejouait
+                                        // une requête par facture — et ignorait les avances
+                                        // saisies sans ligne de paiement.
+                                        $totalPaye = $factures->sum(fn ($facture) => $facture->montantEncaisse());
                                     @endphp
                                 <tr>
                                     <td class="fw-medium">{{ \Carbon\Carbon::parse($date)->format('d/m/Y') }}</td>
                                     <td>
                                         <div class="d-flex flex-column">
                                             <span class="fw-medium">{{ $customer->customerName ?? 'N/A' }}</span>
-                                            @if($customer && $customer->phone)
-                                            <small class="text-muted">{{ $customer->phone }}</small>
+                                            {{-- La colonne s'appelle « tel » : « phone » était
+                                                 toujours nul, le numéro ne s'affichait jamais. --}}
+                                            @if($customer && $customer->tel)
+                                            <small class="text-muted">{{ $customer->tel }}</small>
                                             @endif
                                         </div>
                                     </td>

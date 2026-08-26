@@ -228,7 +228,7 @@ class PaymentController extends Controller
             );
         }
 
-        $company = \App\Models\Company::latest()->first();
+        $company = \App\Models\Company::current();
         $pdf = Pdf::loadView('payments.payments_pdf', compact('payments', 'company'));
         // isPhpEnabled : nécessaire pour le bloc <script type="text/php"> du template,
         // qui affiche "Page X / Y" — la vue est un template interne fixe (pas de

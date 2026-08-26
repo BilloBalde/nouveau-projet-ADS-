@@ -539,11 +539,11 @@
             <div class="contact-info">
                 <span>
                     <i class="fas fa-phone-alt"></i>
-                    625 45 35 45
+                    {{ \App\Models\Company::current()?->phone }}
                 </span>
                 <span>
                     <i class="fas fa-envelope"></i>
-                    abdulghadirybalde@gmail.com
+                    {{ \App\Models\Company::current()?->email }}
                 </span>
                 <span>
                     <i class="fas fa-map-marker-alt"></i>

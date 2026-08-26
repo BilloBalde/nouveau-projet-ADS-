@@ -28,7 +28,7 @@
                             <h6>Gérer vos Utilisateurs</h6>
                         </div>
                         <div class="page-btn">
-                            <a href="{{ route('addUser') }}" class="btn btn-added"><img src="assets/img/icons/plus.svg" alt="img" class="me-2">Ajouter Utilisateur</a>
+                            <a href="{{ route('addUser') }}" class="btn btn-added"><img src="{{ asset('assets/img/icons/plus.svg') }}" alt="img" class="me-2">Ajouter Utilisateur</a>
                         </div>
                     </div>
 
@@ -38,7 +38,7 @@
                                 <div class="search-set">
                                     <div class="search-input">
                                         <a class="btn btn-searchset">
-                                            <img src="assets/img/icons/search-white.svg" alt="img">
+                                            <img src="{{ asset('assets/img/icons/search-white.svg') }}" alt="img">
                                         </a>
                                     </div>
                                 </div>
@@ -69,7 +69,7 @@
                                             <td>{{ $item->updated_at }}</td>
                                             <td class="text-end">
                                                 <a class="me-3" href="{{ route('editUser', $item->id) }}">
-                                                    <img src="assets/img/icons/edit.svg" alt="img">
+                                                    <img src="{{ asset('assets/img/icons/edit.svg') }}" alt="img">
                                                 </a>
                                                 @if($item->role_id != 1)
                                                     @php $isActive = strtolower((string) $item->status) === 'active'; @endphp
@@ -90,7 +90,7 @@
                                                         data-slug="{{ $item->name }}"
                                                         data-bs-target="#confirmDeleteModal"
                                                         onclick="setDeleteFormAction('{{ route('deleteUser', $item->id) }}')">
-                                                        <img src="assets/img/icons/delete.svg" class="me-2" alt="img">
+                                                        <img src="{{ asset('assets/img/icons/delete.svg') }}" class="me-2" alt="img">
                                                     </a>
                                             </td>
                                         </tr>

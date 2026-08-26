@@ -293,6 +293,7 @@
 
     @include('partials.storefront-footer')
 
+    <script>window.PRICING_TIERS_ENABLED = @json(\App\Support\PricingTiers::enabled());</script>
     <script src="{{ asset('assets/js/pricing-tiers.js') }}"></script>
     <script>
         const ALL_PRODUCTS = @json($allProducts);
@@ -325,10 +326,10 @@
                 <div class="prod-info">
                     <div class="prod-name">${p.name}</div>
                     <span class="prod-cat-tag">${p.category_name ?? ''}</span>
-                    <div class="tier-table">
+                    ${tierHTML ? `<div class="tier-table">
                         <div class="tier-label">Tarifs de gros — prix unitaire</div>
                         <div class="tier-grid">${tierHTML}</div>
-                    </div>
+                    </div>` : ''}
                     <div class="prod-qty" onclick="event.stopPropagation()">
                         <span class="qty-label">Quantité</span>
                         <button type="button" class="qty-btn" onclick="changeQty(this,-1)" aria-label="Diminuer la quantité">−</button>

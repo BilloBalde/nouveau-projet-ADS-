@@ -33,7 +33,7 @@
                             <div class="invoice-title-wrapper">
                                 <div class="invoice-title-row">
                                     <div class="invoice-logo">
-                                        <img src="{{ asset('images/customers/logo.jpg') }}" alt="{{ $company?->name ?? 'Logo' }}">
+                                        <img src="{{ asset('companies/' . ($company?->logo ?? 'ADK.png')) }}" alt="{{ $company?->name ?? 'Logo' }}">
                                     </div>
                                     <h1 class="invoice-title">REÇU TRANSACTION</h1>
                                 </div>
@@ -122,7 +122,7 @@
                             <div class="company-info">
                                 <h4>{{ $company?->name ?? 'Coleah Bandeya & Fils' }}</h4>
                                 <p>{{ $company?->address ?? 'Madina, Ecole Gare Routière Dabola Camion, Conakry' }}</p>
-                                <p>Tél: {{ $company?->phone ?? '625 45 35 45' }} | Email: {{ $company?->email ?? 'abdulghadirybalde@gmail.com' }}</p>
+                                <p>Tél: {{ $company?->phone ?? '' }} | Email: {{ $company?->email ?? '' }}</p>
                                 <p>Merci pour votre confiance et à bientôt !</p>
                                 <p>Reçu généré le {{ \Carbon\Carbon::now()->format('d/m/Y H:i') }}</p>
                             </div>

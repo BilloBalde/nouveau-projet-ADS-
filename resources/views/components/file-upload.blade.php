@@ -40,7 +40,7 @@
                 <!-- Upload Prompt -->
                 <div class="image-uploads" x-show="!imagePreview">
                     <img src="{{ asset('assets/img/icons/upload.svg') }}" alt="upload">
-                    <h4>Click to upload an image</h4>
+                    <h4>Cliquez pour choisir une image</h4>
                 </div>
             </div>
         </div>

@@ -397,21 +397,32 @@ class Authentification extends Controller
             'message.string' => 'Le champ message ne prend que des chaines de caracteres',
         ] */
 
+        // Destinataire : la fiche entreprise, modifiable depuis Profil. Le
+        // formulaire envoyait auparavant vers une adresse personnelle codee en
+        // dur : les messages des clients n'arrivaient pas a l'entreprise.
+        $destinataire = \App\Models\Company::current()?->email
+            ?: config('mail.from.address');
+
+        if (! $destinataire) {
+            \Illuminate\Support\Facades\Log::warning(
+                'Formulaire de contact : aucune adresse de destination. '
+                ."Renseigner l'e-mail de l'entreprise dans Profil, ou MAIL_FROM_ADDRESS."
+            );
+
+            return back()->with('error', "Le formulaire de contact n'est pas encore configure. "
+                .'Merci de nous joindre par telephone.');
+        }
+
         try {
-            // Using ContactMail (recommended)
-            Mail::to('saikououmar47@gmail.com')->send(new ContactMail(
+            // Un seul envoi : le doublon via UserMail rendait le message du
+            // visiteur en HTML brut ({!! $body !!}), ce qui permettait d'inserer
+            // un faux lien dans le courriel recu par le personnel. ContactMail,
+            // lui, echappe le contenu avant de l'afficher.
+            Mail::to($destinataire)->send(new ContactMail(
                 $request->subject,
                 $request->email,
                 $request->name,
                 $request->message
-            ));
-            
-            // OR using UserMail (your existing)
-            Mail::to('saikououmar47@gmail.com')->send(new UserMail(
-                $request->subject,
-                "Email envoyeur: " . $request->email . "\n" .
-                "Nom envoyeur: " . $request->name . "\n" .
-                "Message: " . $request->message
             ));
             
             return back()->with('success', 'Votre message a été envoyé avec succès. Nous vous répondrons dans les plus brefs délais.');

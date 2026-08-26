@@ -23,7 +23,7 @@
                                 <img src="{{ asset('avatars/'.$connectedUser->profilePic) }}" alt="img" id="blah">
                                 <div class="profileupload">
                                     <input type="file" id="imgInp" name="profilePic">
-                                    <a href="javascript:void(0);"><img src="assets/img/icons/edit-set.svg" alt="img"></a>
+                                    <a href="javascript:void(0);"><img src="{{ asset('assets/img/icons/edit-set.svg') }}" alt="img"></a>
                                     @error('profilePic')
                                     <span class="text-danger">{{ $message }}</span>
                                     @enderror
@@ -156,6 +156,36 @@
                             <input type="text" name="address" class="form-control" value="{{ $compagnie->address }}">
                         </div>
                         @error('address')
+                        <span class="text-danger">{{ $message }}</span>
+                        @enderror
+                    </div>
+                    {{-- E-mail et téléphone : imprimés en pied de chaque facture,
+                         devis, bon de commande et bon de sortie. --}}
+                    <div class="col-lg-4 col-sm-4 col-12">
+                        <div class="form-group">
+                            <label>E-mail de l'entreprise</label>
+                            <input type="email" name="email" class="form-control" value="{{ old('email', $compagnie->email) }}" placeholder="contact@exemple.com">
+                            <small class="text-muted">Figure sur les factures, devis et bons, et reçoit les messages du formulaire de contact.</small>
+                        </div>
+                        @error('email')
+                        <span class="text-danger">{{ $message }}</span>
+                        @enderror
+                    </div>
+                    <div class="col-lg-4 col-sm-4 col-12">
+                        <div class="form-group">
+                            <label>Téléphone de l'entreprise</label>
+                            <input type="text" name="phone" class="form-control" value="{{ old('phone', $compagnie->phone) }}" placeholder="625 45 35 45">
+                        </div>
+                        @error('phone')
+                        <span class="text-danger">{{ $message }}</span>
+                        @enderror
+                    </div>
+                    <div class="col-lg-4 col-sm-4 col-12">
+                        <div class="form-group">
+                            <label>Second téléphone <span class="text-muted">(facultatif)</span></label>
+                            <input type="text" name="phone_secondary" class="form-control" value="{{ old('phone_secondary', $compagnie->phone_secondary) }}" placeholder="628 59 31 10">
+                        </div>
+                        @error('phone_secondary')
                         <span class="text-danger">{{ $message }}</span>
                         @enderror
                     </div>

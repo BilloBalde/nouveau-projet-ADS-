@@ -4,11 +4,11 @@
    reports/sales.blade.php. */
 
 .invoice-details {
-    border: 1px solid #e5d5c3;
+    border: 1px solid #b9dfc8;
     border-radius: 8px;
     padding: 12px 16px;
     margin: 14px 0;
-    background: #fdfaf6;
+    background: #f7faf8;
 }
 
 .details-row {
@@ -16,11 +16,11 @@
     justify-content: space-between;
     padding: 4px 0;
     font-size: 13px;
-    color: #3a2f28;
+    color: #10221a;
 }
 
 .details-row + .details-row {
-    border-top: 1px dashed #e5d5c3;
+    border-top: 1px dashed #b9dfc8;
 }
 
 /* Blocs "info" génériques (bon de sortie / livraison) */
@@ -30,11 +30,11 @@
 
 .info-block h4 {
     font-size: 13px;
-    color: #c1682f;
+    color: #1f6f43;
     text-transform: uppercase;
     letter-spacing: 0.03em;
     margin-bottom: 10px;
-    border-bottom: 2px solid #c1682f;
+    border-bottom: 2px solid #1f6f43;
     padding-bottom: 4px;
 }
 
@@ -60,7 +60,7 @@
 .delivery-grid .label {
     font-size: 11px;
     text-transform: uppercase;
-    color: #9a8a78;
+    color: #5d6b64;
     letter-spacing: 0.03em;
 }
 
@@ -69,7 +69,7 @@
 .client-info-bon-item .value,
 .delivery-grid .value {
     font-size: 13px;
-    color: #2b2118;
+    color: #10221a;
     font-weight: 600;
 }
 
@@ -89,7 +89,7 @@
 
 .products-table th,
 .report-table th {
-    background: #c1682f;
+    background: #1f6f43;
     color: #fff;
     padding: 8px 10px;
     text-align: center;
@@ -103,12 +103,12 @@
 .report-table td {
     padding: 7px 10px;
     text-align: center;
-    border-bottom: 1px solid #eee1d3;
+    border-bottom: 1px solid #dcefe3;
 }
 
 .products-table tbody tr:nth-child(even),
 .report-table tbody tr:nth-child(even) {
-    background: #fdfaf6;
+    background: #f7faf8;
 }
 
 .products-table img {
@@ -120,11 +120,11 @@
 }
 
 .report-box {
-    border: 1px solid #e5d5c3;
+    border: 1px solid #b9dfc8;
     border-radius: 8px;
     padding: 14px;
     margin: 12px 0;
-    background: #fdfaf6;
+    background: #f7faf8;
 }
 
 /* Section délivraison (bon de sortie) */
@@ -136,7 +136,7 @@
 .delivery-info > strong {
     display: block;
     font-size: 12px;
-    color: #c1682f;
+    color: #1f6f43;
     text-transform: uppercase;
     margin-bottom: 8px;
 }
@@ -163,20 +163,20 @@
 }
 
 .summary-row.summary-total {
-    border-top: 2px solid #c1682f;
+    border-top: 2px solid #1f6f43;
     margin-top: 6px;
     padding-top: 8px;
     font-size: 15px;
     font-weight: 700;
-    color: #c1682f;
+    color: #1f6f43;
 }
 
-.summary-label { color: #6b5c4c; }
+.summary-label { color: #5d6b64; }
 .summary-value { font-weight: 600; }
 
 /* Bon de commande/sortie */
 .bon-header {
-    border-bottom: 2px solid #c1682f;
+    border-bottom: 2px solid #1f6f43;
     padding-bottom: 12px;
     margin-bottom: 12px;
 }
@@ -184,7 +184,7 @@
 .bon-reference,
 .devis-reference {
     font-size: 13px;
-    color: #6b5c4c;
+    color: #5d6b64;
     margin-top: 4px;
 }
 
@@ -196,7 +196,7 @@
 }
 
 .bon-products-table th {
-    background: #c1682f;
+    background: #1f6f43;
     color: #fff;
     padding: 8px 10px;
     font-size: 11px;
@@ -205,7 +205,7 @@
 
 .bon-products-table td {
     padding: 7px 10px;
-    border-bottom: 1px solid #eee1d3;
+    border-bottom: 1px solid #dcefe3;
     text-align: center;
 }
 
@@ -222,20 +222,20 @@
 }
 
 .bon-summary-row.bon-summary-total {
-    border-top: 2px solid #c1682f;
+    border-top: 2px solid #1f6f43;
     margin-top: 6px;
     padding-top: 8px;
     font-weight: 700;
-    color: #c1682f;
+    color: #1f6f43;
 }
 
-.bon-summary-label { color: #6b5c4c; }
+.bon-summary-label { color: #5d6b64; }
 .bon-summary-value { font-weight: 600; }
 
 .bon-conditions,
 .conditions {
     font-size: 11.5px;
-    color: #8a7a68;
+    color: #5d6b64;
     margin: 14px 0;
     line-height: 1.5;
 }
@@ -245,9 +245,9 @@
 .page-footer {
     text-align: center;
     font-size: 11px;
-    color: #9a8a78;
+    color: #5d6b64;
     margin-top: 20px;
-    border-top: 1px solid #eee1d3;
+    border-top: 1px solid #dcefe3;
     padding-top: 10px;
 }
 
@@ -269,8 +269,8 @@
 }
 
 .sortie-header {
-    background: #fdfaf6;
-    border: 1px solid #e5d5c3;
+    background: #f7faf8;
+    border: 1px solid #b9dfc8;
     border-radius: 8px;
     padding: 12px 16px;
     margin: 14px 0;
@@ -279,7 +279,7 @@
 
 .sortie-badge {
     display: inline-block;
-    background: #c1682f;
+    background: #1f6f43;
     color: #fff;
     font-weight: 700;
     font-size: 12px;
@@ -298,8 +298,8 @@
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.02em;
-    background: #eee1d3;
-    color: #6b5c4c;
+    background: #dcefe3;
+    color: #5d6b64;
 }
 
 .status-badge.status-approved,

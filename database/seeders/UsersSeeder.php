@@ -45,7 +45,7 @@ class UsersSeeder extends Seeder
                 'username' => 'storeuser',
                 'phone' => '620000002',
                 'email' => 'storeuser@example.com',
-                'role_id' => $roles['shopmanager'] ?? 3,
+                'role_id' => $roles['user'] ?? 3,
                 'status' => 'Active',
                 'token' => hash('sha256', Str::random(16)),
                 'password' => Hash::make('User@123'),

@@ -295,7 +295,7 @@ class SaleController extends Controller
 
         // Get products for filter display
         $produits = Product::all();
-        $company = \App\Models\Company::latest()->first();
+        $company = \App\Models\Company::current();
 
         $pdf = Pdf::loadView('exports.sales-pdf', compact('sales', 'produits', 'company'));
 
@@ -341,6 +341,27 @@ class SaleController extends Controller
 
 
 
+    /**
+     * Prochain numéro de facture libre.
+     *
+     * `Facture::max('id')` ignore les factures en corbeille, alors que l'index
+     * unique sur `factures.numero_facture`, lui, les compte toujours : après la
+     * mise à la corbeille d'une facture, son numéro était réattribué et
+     * l'insertion échouait sur « Duplicate entry ». On repart donc du maximum
+     * corbeille comprise, puis on avance tant que le numéro est déjà pris.
+     */
+    private function prochainNumeroFacture(): string
+    {
+        $sequence = (Facture::withTrashed()->max('id') ?? 0) + 1;
+
+        do {
+            $numero = date('Ym') . sprintf('%04d', $sequence);
+            $sequence++;
+        } while (Facture::withTrashed()->where('numero_facture', $numero)->exists());
+
+        return $numero;
+    }
+
     public function store(Request $request)
     {
         if ($storeId = $this->ownStoreIdOverride()) {
@@ -348,13 +369,27 @@ class SaleController extends Controller
         }
 
         $request->validate([
-            'numeroFacture' => 'required|string|unique:sales,numeroFacture',
+            'numeroFacture' => 'required|string',
             'store_id'      => 'required|exists:stores,id',
             'customer_id'   => 'required|exists:customers,id',
             'avance'        => 'nullable|numeric|min:0',
             'paid_by'       => 'nullable|string',
             'notes'         => 'nullable|string',
         ]);
+
+        // Le numéro affiché dans le POS est calculé à l'ouverture de la page : deux
+        // caisses ouvertes en même temps reçoivent le même, et le premier à valider
+        // le consomme. Plutôt que de renvoyer une erreur au vendeur, on reprend
+        // simplement le prochain numéro libre au moment de l'enregistrement.
+        // (La règle `unique:sales` ne suffisait pas : elle ne regardait pas la table
+        // `factures`, où porte la contrainte qui faisait échouer l'insertion.)
+        $numeroDemande = (string) $request->numeroFacture;
+        $dejaPris = Facture::withTrashed()->where('numero_facture', $numeroDemande)->exists()
+            || Sale::where('numeroFacture', $numeroDemande)->exists();
+
+        if ($dejaPris) {
+            $request->merge(['numeroFacture' => $this->prochainNumeroFacture()]);
+        }
 
         $salesData = $request->input('sales') ?? [];
         $salesData = array_values(array_filter($salesData, fn($row) => !empty($row['product_id'])));
@@ -373,6 +408,9 @@ class SaleController extends Controller
 
                 $data['prixTotal'] = $data['prix'] * $data['quantity'];
 
+                $product = Product::find($data['product_id']);
+                $libelle = $product?->libelle ?? 'Produit inconnu';
+
                 if ($isThirdParty) {
                     // ====================== VENTE TIERCE ======================
                     if (empty($data['partner_id']) || empty($data['purchase_price_from_partner'])) {
@@ -380,17 +418,22 @@ class SaleController extends Controller
                     }
 
                     $prixAmi = (float) $data['purchase_price_from_partner'];
+                    $this->assertPriceCoversCost($libelle, (float) $data['prix'], $prixAmi);
+
                     $data['interet'] = ($data['prix'] - $prixAmi) * $data['quantity'];
                     $data['is_third_party'] = true;
 
                 } else {
                     // ====================== VENTE NORMALE ======================
+                    // Le contrôle de marge passe avant le décrément de stock : inutile
+                    // de consommer du stock pour une ligne qui va être refusée.
+                    $prix_achat = $product ? $this->resolveUnitCost($product) : 0.0;
+                    $this->assertPriceCoversCost($libelle, (float) $data['prix'], $prix_achat);
+
                     if (!$this->stock->decrementIfAvailable((int) $request->store_id, (int) $data['product_id'], (int) $data['quantity'])) {
-                        throw new \RuntimeException('Stock insuffisant pour le produit : ' . Product::find($data['product_id'])->libelle ?? 'Inconnu');
+                        throw new \RuntimeException('Stock insuffisant pour le produit : ' . $libelle);
                     }
 
-                    $product = Product::find($data['product_id']);
-                    $prix_achat = $this->resolveUnitCost($product);
                     $data['interet'] = ($data['prix'] - $prix_achat) * $data['quantity'];
                     $data['is_third_party'] = false;
                 }
@@ -446,10 +489,17 @@ class SaleController extends Controller
             ]);
 
             // Mise à jour Client
+            // Convention du projet : balance = total_taken - total_repaid, donc
+            // un solde POSITIF signifie que le client doit de l'argent. C'est ce
+            // que lisent le tableau de bord (total des crédits), le contrôle qui
+            // empêche d'archiver un client endetté, et le recalcul groupé de
+            // PaymentController. Cette ligne appliquait le signe inverse : une
+            // vente à crédit rendait le solde négatif, et le client disparaissait
+            // des créances affichées.
             $customer = Customer::find($request->customer_id);
             $customer->total_taken += $total_price;
             $customer->total_repaid += $facture->avance;
-            $customer->balance += $facture->avance - $total_price;
+            $customer->balance += $total_price - $facture->avance;
             $customer->save();
 
             DB::commit();
@@ -492,8 +542,7 @@ class SaleController extends Controller
         $boutiques = Store::all();
         $customers = Customer::all();
         $partners = Partner::all();
-        $countFactures = (Facture::max('id') ?? 0) + 1;
-        $numeroFacture = date('Ym').''.sprintf("%04d", $countFactures);
+        $numeroFacture = $this->prochainNumeroFacture();
         return view('sales.pos', compact('produits', 'boutiques', 'customers', 'categories', 'userStoreId', 'numeroFacture', 'partners'));
     }
 
@@ -578,6 +627,10 @@ class SaleController extends Controller
 
             $product = Product::find($sale->product_id);
             $prixAchat = $product ? $this->resolveUnitCost($product) : 0;
+            // Même règle qu'à la création : modifier une vente ne doit pas permettre
+            // de repasser sous le prix de revient.
+            $this->assertPriceCoversCost($product?->libelle ?? 'Produit inconnu', (float) $request->prix, (float) $prixAchat);
+
             $sale->interet = ($request->prix - $prixAchat) * $request->quantity;
             $sale->save();
 
@@ -616,6 +669,27 @@ class SaleController extends Controller
      * Ne jamais retomber silencieusement sur 0 quand un achat existe —
      * c'est ce qui gonflait l'intérêt à 100 % du prix de vente.
      */
+    /**
+     * Interdit la vente à perte : le prix unitaire saisi doit couvrir le coût
+     * d'acquisition — prix de revient du produit pour une vente normale, prix
+     * payé au partenaire pour une vente tierce.
+     *
+     * Un coût nul signifie que le produit n'a jamais été rattaché à un achat :
+     * il n'y a alors rien à comparer, la vente passe. Le contrôle ne peut pas
+     * être plus strict que ce que l'historique d'achat permet de savoir.
+     */
+    private function assertPriceCoversCost(string $libelle, float $prixVente, float $cout): void
+    {
+        if ($cout > 0 && $prixVente < $cout) {
+            throw new \RuntimeException(sprintf(
+                'Vente à perte refusée pour « %s » : le prix de vente (%s GNF) est inférieur au prix de revient (%s GNF).',
+                $libelle,
+                number_format($prixVente, 0, ',', ' '),
+                number_format($cout, 0, ',', ' ')
+            ));
+        }
+    }
+
     private function resolveUnitCost(Product $product): float
     {
         // price_sale est désormais synchronisé à chaque achat (ancien flux Purchase
@@ -728,8 +802,7 @@ class SaleController extends Controller
             }
 
             // Générer un numéro de facture
-            $countFactures = (Facture::max('id') ?? 0) + 1;
-            $numeroFacture = date('Ym') . sprintf("%04d", $countFactures);
+            $numeroFacture = $this->prochainNumeroFacture();
 
             // Récupérer le magasin
             $storeId = $request->store_id;
@@ -753,6 +826,13 @@ class SaleController extends Controller
                     throw new \Exception('Aucun client trouvé. Veuillez d\'abord créer un client.');
                 }
             }
+
+            // Vente tierce rapide : le coût de référence est le prix payé au partenaire.
+            $this->assertPriceCoversCost(
+                $request->libelle,
+                (float) $request->prix,
+                (float) $request->purchase_price_from_partner
+            );
 
             $prixTotal = $request->prix * $request->quantity;
             $interet = ($request->prix - $request->purchase_price_from_partner) * $request->quantity;

@@ -29,7 +29,11 @@ class CustomerController extends Controller
 
     public function creditors()
     {
+        // whereNull('deleted_at') : DB::table court-circuite le filtre de
+        // suppression douce du modèle Facture. Sans lui, les factures mises à la
+        // corbeille continuent d'être réclamées aux clients.
         $query = DB::table('factures')
+            ->whereNull('factures.deleted_at')
             ->join('customers', 'factures.customer_id', '=', 'customers.id')
             ->join('stores', 'factures.store_id', '=', 'stores.id')
             ->select(
@@ -268,7 +272,26 @@ public function forceDelete($id)
         
         $customer = Customer::withTrashed()->findOrFail($id);
         $customerName = $customer->customerName;
-        
+
+        // Cette méthode efface définitivement les factures ET les paiements du
+        // client : sans ce contrôle, la protection posée sur la suppression d'une
+        // facture encaissée se contournerait en passant par la fiche client.
+        // withTrashed : une facture archivée conserve ses paiements, la table
+        // `payments` n'ayant pas de suppression douce.
+        $encaissees = $customer->factures()->withTrashed()->get()->filter->aRecuUnPaiement();
+
+        if ($encaissees->isNotEmpty()) {
+            DB::rollBack();
+
+            return redirect()->back()->with('error', sprintf(
+                'Le client « %s » a %d facture(s) déjà encaissée(s) (%s GNF au total). '
+                .'Il ne peut pas être supprimé définitivement.',
+                $customerName,
+                $encaissees->count(),
+                number_format($encaissees->sum->montantEncaisse(), 0, ',', ' ')
+            ));
+        }
+
         // Get invoice IDs before deleting
         $invoiceIds = $customer->factures()->pluck('id')->toArray();
         

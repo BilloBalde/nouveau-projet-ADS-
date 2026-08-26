@@ -381,7 +381,7 @@
                     ['icon' => 'fa-truck-fast',        'title' => 'Livraison 24-48h',        'text' => 'À Conakry, partout en Guinée'],
                     ['icon' => 'fa-store',             'title' => 'Retrait gratuit',          'text' => 'Madina, Conakry'],
                     ['icon' => 'fa-money-bill-wave',   'title' => 'Paiement flexible',        'text' => 'Orange Money ou à la livraison'],
-                    ['icon' => 'fa-headset',           'title' => 'Conseil personnalisé',     'text' => '625 45 35 45'],
+                    ['icon' => 'fa-headset',           'title' => 'Conseil personnalisé',     'text' => \App\Models\Company::current()?->phone],
                 ] as $item)
                 <div class="flex items-center gap-3">
                     <div class="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0" style="background:var(--brand-50);color:var(--brand-600);">
@@ -509,10 +509,15 @@
                                         @if($i <= floor($p['rating']))★@else☆@endif
                                     @endfor
                                 </div>
+                                {{-- Paliers désactivés sur cette installation : displayTiers()
+                                     renvoie un tableau vide et le bloc entier disparaît, plutôt
+                                     que de laisser un cadre « Tarifs de gros » sans contenu. --}}
+                                @php $paliers = \App\Support\PricingTiers::displayTiers($p['price']); @endphp
+                                @if($paliers)
                                 <div class="tier-table">
                                     <div class="tier-label">Tarifs de gros — prix unitaire</div>
                                     <div class="tier-grid">
-                                        @foreach(\App\Support\PricingTiers::displayTiers($p['price']) as $tier)
+                                        @foreach($paliers as $tier)
                                         <div class="tier-cell">
                                             <div class="tier-qty">{{ $tier['qty'] }}+</div>
                                             <div class="tier-price">{{ number_format($tier['price'], 0, ',', ' ') }}</div>
@@ -523,6 +528,7 @@
                                         @endforeach
                                     </div>
                                 </div>
+                                @endif
                                 <div class="prod-qty" onclick="event.stopPropagation()">
                                     <span class="qty-label">Quantité</span>
                                     <button type="button" class="qty-btn" onclick="changeQty(this,-1)" aria-label="Diminuer la quantité">−</button>
@@ -717,11 +723,11 @@
                             <div class="space-y-3 text-left">
                                 <div class="flex items-center gap-3 bg-white/10 rounded-xl px-4 py-2">
                                     <i class="fas fa-phone text-white/80 text-sm"></i>
-                                    <span class="text-sm">625 45 35 45</span>
+                                    <span class="text-sm">{{ \App\Models\Company::current()?->phone }}</span>
                                 </div>
                                 <div class="flex items-center gap-3 bg-white/10 rounded-xl px-4 py-2">
                                     <i class="fas fa-envelope text-white/80 text-sm"></i>
-                                    <span class="text-sm">abdulghadirybalde@gmail.com</span>
+                                    <span class="text-sm">{{ \App\Models\Company::current()?->email }}</span>
                                 </div>
                             </div>
                         </div>
@@ -844,17 +850,19 @@
                     <div class="feature-icon mx-auto mb-5"><i class="fas fa-phone-alt"></i></div>
                     <h3 class="text-xl font-bold text-gray-800 mb-3">Appelez-nous</h3>
                     <p class="text-gray-600 leading-relaxed">
-                        <a href="tel:+224625453545" class="hover:text-brand-600 transition font-medium">625 45 35 45</a><br>
-                        <a href="tel:+224628593110" class="hover:text-brand-600 transition font-medium">628 59 31 10</a><br>
-                        <a href="tel:+224628801895" class="hover:text-brand-600 transition font-medium">628 80 18 95</a>
+                        <a href="tel:+{{ \App\Models\Company::current()?->phoneInternational() }}" class="hover:text-brand-600 transition font-medium">{{ \App\Models\Company::current()?->phone }}</a><br>
+                        @if (\App\Models\Company::current()?->phone_secondary)
+                            <br>
+                            <a href="tel:+{{ \App\Models\Company::current()?->phoneSecondaryInternational() }}" class="hover:text-brand-600 transition font-medium">{{ \App\Models\Company::current()?->phone_secondary }}</a>
+                        @endif
                     </p>
                 </div>
                 <div class="text-center bg-gray-50 rounded-2xl p-8 border border-gray-100 hover:border-brand-300 hover:shadow-lg transition duration-300">
                     <div class="feature-icon mx-auto mb-5"><i class="fas fa-envelope"></i></div>
                     <h3 class="text-xl font-bold text-gray-800 mb-3">Email</h3>
                     <p class="text-gray-600 leading-relaxed">
-                        <a href="mailto:abdulghadirybalde@gmail.com" class="hover:text-brand-600 transition font-medium break-all">
-                            abdulghadirybalde@gmail.com
+                        <a href="mailto:{{ \App\Models\Company::current()?->email }}" class="hover:text-brand-600 transition font-medium break-all">
+                            {{ \App\Models\Company::current()?->email }}
                         </a>
                     </p>
                 </div>
@@ -901,6 +909,7 @@
     {{-- ══════════════════════════════════════════
          SCRIPTS
     ══════════════════════════════════════════ --}}
+    <script>window.PRICING_TIERS_ENABLED = @json(\App\Support\PricingTiers::enabled());</script>
     <script src="{{ asset('assets/js/pricing-tiers.js') }}"></script>
     <script>
         {{-- Données injectées depuis le contrôleur --}}
@@ -939,10 +948,10 @@
                     <div class="prod-name">${p.name}</div>
                     <div class="prod-cat-tag">${p.category_name ?? ''}</div>
                     <div class="prod-stars">${stars} <span style="color:#93a09a;font-size:11px;">${parseFloat(p.rating).toFixed(1)}</span></div>
-                    <div class="tier-table">
+                    ${tierHTML ? `<div class="tier-table">
                         <div class="tier-label">Tarifs de gros — prix unitaire</div>
                         <div class="tier-grid">${tierHTML}</div>
-                    </div>
+                    </div>` : ''}
                     <div class="prod-qty" onclick="event.stopPropagation()">
                         <span class="qty-label">Quantité</span>
                         <button type="button" class="qty-btn" onclick="changeQty(this,-1)" aria-label="Diminuer la quantité">−</button>

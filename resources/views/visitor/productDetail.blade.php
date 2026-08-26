@@ -191,10 +191,14 @@
                 {{-- Prix + Bouton --}}
                 <div>
                     @php $basePrice = $product->effective_promo_price ?? $product->price; @endphp
+                    {{-- Voir home.blade.php : bloc masqué en entier quand les paliers
+                         sont désactivés (config/pricing.php). --}}
+                    @php $paliers = \App\Support\PricingTiers::displayTiers($basePrice); @endphp
+                    @if($paliers)
                     <div class="tier-table mb-4">
                         <div class="tier-label">Tarifs de gros — prix unitaire</div>
                         <div class="tier-grid">
-                            @foreach(\App\Support\PricingTiers::displayTiers($basePrice) as $tier)
+                            @foreach($paliers as $tier)
                             <div class="tier-cell">
                                 <div class="tier-qty">{{ $tier['qty'] }}+</div>
                                 <div class="tier-price">{{ number_format($tier['price'], 0, ',', ' ') }}</div>
@@ -205,6 +209,7 @@
                             @endforeach
                         </div>
                     </div>
+                    @endif
 
                     <div class="prod-qty prod-qty--lg">
                         <span class="qty-label">Quantité</span>
@@ -285,6 +290,7 @@
     <span id="toast-msg">Produit ajouté au panier</span>
 </div>
 
+<script>window.PRICING_TIERS_ENABLED = @json(\App\Support\PricingTiers::enabled());</script>
 <script src="{{ asset('assets/js/pricing-tiers.js') }}"></script>
 <script>
 function detailQty() {

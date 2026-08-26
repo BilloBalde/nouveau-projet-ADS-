@@ -4,7 +4,7 @@
     <body>
         <style>
             .form-section {
-                border: 1px solid #f0e0c8;
+                border: 1px solid #b9dfc8;
                 border-radius: 10px;
                 padding: 20px;
                 margin-bottom: 24px;
@@ -14,7 +14,7 @@
             .form-section-title {
                 font-size: 15px;
                 font-weight: 700;
-                color: #c1682f;
+                color: #1f6f43;
                 margin-bottom: 16px;
                 display: flex;
                 align-items: center;
@@ -53,7 +53,7 @@
                 align-items: center;
                 gap: 14px;
                 background: #fbf3ea;
-                border: 1px solid #f0e0c8;
+                border: 1px solid #b9dfc8;
                 border-radius: 8px;
                 padding: 12px 16px;
                 margin-top: 8px;
@@ -70,13 +70,13 @@
             }
 
             .promo-preview .new-price {
-                color: #c1682f;
+                color: #1f6f43;
                 font-weight: 700;
                 font-size: 18px;
             }
 
             .promo-preview .badge-percent {
-                background: #c1682f;
+                background: #1f6f43;
                 color: #fff;
                 font-size: 12px;
                 font-weight: 700;
@@ -273,7 +273,7 @@
                                         <div class="col-lg-12">
                                             <div class="promo-preview" id="promoPreview">
                                                 <span class="old-price" id="promoOldPrice">0 FG</span>
-                                                <i class="fa fa-arrow-right" style="color:#c1682f;"></i>
+                                                <i class="fa fa-arrow-right" style="color:#1f6f43;"></i>
                                                 <span class="new-price" id="promoNewPrice">0 FG</span>
                                                 <span class="badge-percent" id="promoBadge">-0%</span>
                                             </div>

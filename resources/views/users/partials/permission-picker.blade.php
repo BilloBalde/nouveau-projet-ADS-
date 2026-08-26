@@ -43,13 +43,13 @@
         <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;">
             @foreach($permissionModules as $module => $permissions)
             <fieldset style="border:1.5px solid #f0e6d8;border-radius:12px;padding:12px 14px;background:#fdfbf7;">
-                <legend style="font-size:13px;font-weight:700;color:#a8532a;width:auto;padding:0 6px;margin-bottom:6px;float:none;">
+                <legend style="font-size:13px;font-weight:700;color:#195836;width:auto;padding:0 6px;margin-bottom:6px;float:none;">
                     {{ $module }}
                 </legend>
                 @foreach($permissions as $permission)
                 <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#374151;margin-bottom:6px;cursor:pointer;">
                     <input type="checkbox" name="permissions[]" value="{{ $permission->id }}"
-                           class="perm-checkbox" style="accent-color:#c1682f;width:15px;height:15px;"
+                           class="perm-checkbox" style="accent-color:#1f6f43;width:15px;height:15px;"
                            {{ in_array($permission->id, $checked, true) ? 'checked' : '' }}>
                     {{ $permission->name }}
                 </label>

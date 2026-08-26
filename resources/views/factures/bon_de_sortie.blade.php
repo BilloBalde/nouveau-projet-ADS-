@@ -459,10 +459,7 @@
 
                 <div class="card">
                     <div class="card-body">
-                        @php
-                            $company = \App\Models\Company::latest()->first();
-                        @endphp
-
+                        {{-- $company est fourni par le View Composer (AppServiceProvider) --}}
                         <div id="bonDeSortieContent">
                             <!-- Filigrane -->
                             <div class="watermark">BON DE SORTIE</div>
@@ -473,7 +470,7 @@
                                     @if($company && $company->logo)
                                         <img src="{{ asset('companies/'.$company->logo) }}" alt="{{ $company->name ?? 'Logo' }}">
                                     @else
-                                        <img src="{{ asset('images/customers/logo.jpg') }}" alt="Logo">
+                                        <img src="{{ asset('companies/ADK.png') }}" alt="{{ config('app.name') }}">
                                     @endif
                                     <div class="document-title">
                                         <h1>BON DE SORTIE</h1>
@@ -587,8 +584,8 @@
                                 <!-- Pied de page -->
                                 <div class="page-footer">
                                     <p>Document généré le {{ \Carbon\Carbon::now()->format('d/m/Y H:i:s') }}</p>
-                                    <p>{{ $company?->address ?? '' }} - Tél: {{ $company?->phone ?? '625 45 35 45' }}</p>
-                                    <p>Email: {{ $company?->email ?? 'abdulghadirybalde@gmail.com' }}</p>
+                                    <p>{{ $company?->address ?? '' }} - Tél: {{ $company?->phone ?? '' }}</p>
+                                    <p>Email: {{ $company?->email ?? '' }}</p>
                                     <p>Ce document atteste de la sortie des marchandises de nos stocks</p>
                                 </div>
                             </div>

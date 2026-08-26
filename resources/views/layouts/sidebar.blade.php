@@ -9,11 +9,11 @@
                 @endpermission
                 @permission('products.view')
                 <li class="submenu">
-                    <a href="javascript:void(0);" class="{{ isActiveRoute(['produits.index', 'categories.index', 'transfers.index']) }}" ><img src="{{ asset('assets/img/icons/product.svg') }}" alt="img"><span> Product</span> <span class="menu-arrow"></span></a>
+                    <a href="javascript:void(0);" class="{{ isActiveRoute(['produits.index', 'categories.index', 'transfers.index']) }}" ><img src="{{ asset('assets/img/icons/product.svg') }}" alt="img"><span> Produits</span> <span class="menu-arrow"></span></a>
                     <ul>
-                        <li><a href="{{ route('categories.index') }}">Category List</a></li>
-                        <li><a href="{{ route('produits.index') }}">Produit List</a></li>
-                        <li><a href="{{ route('transfers.index') }}">Transfert Produit List</a></li>
+                        <li><a href="{{ route('categories.index') }}">Catégories</a></li>
+                        <li><a href="{{ route('produits.index') }}">Liste des produits</a></li>
+                        <li><a href="{{ route('transfers.index') }}">Transferts entre magasins</a></li>
                     </ul>
                 </li>
                 @endpermission
@@ -30,10 +30,10 @@
                 <li class="submenu">
                     <a  class="{{ isActiveRoute(['sales.index', 'factures.index', 'payments.index']) }}" href="javascript:void(0);"><img src="{{ asset('assets/img/icons/sales1.svg') }}" alt="img"><span> Ventes</span> <span class="menu-arrow"></span></a>
                     <ul>
-                        <li><a href="{{ route('sales.index') }}">Vente List</a></li>
-                        <li><a href="{{ route('factures.index') }}">Facture List</a></li>
+                        <li><a href="{{ route('sales.index') }}">Liste des ventes</a></li>
+                        <li><a href="{{ route('factures.index') }}">Liste des factures</a></li>
                         @permission('payments.view')
-                        <li><a href="{{ route('payments.index') }}">Paiement List</a></li>
+                        <li><a href="{{ route('payments.index') }}">Liste des paiements</a></li>
                         <li><a href="{{ route('admin.debt-reminders.index') }}">Rappels de dettes</a></li>
                         @endpermission
                   </ul>
@@ -46,13 +46,17 @@
                         <li><a href="{{ route('admin.orders.index') }}">Commandes à valider</a></li>
                         <li><a href="{{ route('admin.orders.confirmed') }}">Commandes confirmées</a></li>
                         <li><a href="{{ route('admin.orders.factures') }}">Factures e-commerce</a></li>
+                        {{-- L'écran existait mais n'était relié à aucun menu : les
+                             messages du formulaire de contact s'accumulaient sans
+                             que personne puisse les lire. --}}
+                        <li><a href="{{ route('contact.messages') }}">Messages reçus</a></li>
                     </ul>
                 </li>
                 @endpermission
                 <li class="submenu">
                     <a class="{{ isActiveRoute(['expenses.index', 'expensesCategory.index']) }}" href="javascript:void(0);"><img src="{{ asset('assets/img/icons/expense1.svg') }}" alt="img"><span>Depenses</span> <span class="menu-arrow"></span></a>
                     <ul>
-                        <li><a href="{{ route('expenses.index') }}">Depense List</a></li>
+                        <li><a href="{{ route('expenses.index') }}">Liste des dépenses</a></li>
                         <li><a href="{{ route('expensesCategory.index') }}">Depense Category</a></li>
                     </ul>
                 </li>
@@ -61,10 +65,10 @@
                     <a  class="{{ isActiveRoute(['customers.index', 'users.index']) }}" href="javascript:void(0);"><img src="{{ asset('assets/img/icons/users1.svg') }}" alt="img"><span>Personnes</span> <span class="menu-arrow"></span></a>
                     <ul>
                         @permission('customers.view')
-                        <li><a href="{{ route('customers.index') }}">Client List</a></li>
+                        <li><a href="{{ route('customers.index') }}">Liste des clients</a></li>
                         @endpermission
                         @permission('users.view')
-                        <li><a href="{{ route('users.index') }}">Utilisateur List</a></li>
+                        <li><a href="{{ route('users.index') }}">Liste des utilisateurs</a></li>
                         @endpermission
                     </ul>
                 </li>
@@ -75,7 +79,7 @@
                     <a class="{{ isActiveRoute(['places.index', 'boutiques.index']) }}" href="javascript:void(0);"><img src="{{ asset('assets/img/icons/places.svg') }}" alt="img"><span>Places</span> <span class="menu-arrow"></span></a>
                     <ul>
                         <li><a href="{{ route('places.index') }}">Place list</a></li>
-                        <li><a href="{{ route('boutiques.index') }}">Boutique List</a></li>
+                        <li><a href="{{ route('boutiques.index') }}">Liste des boutiques</a></li>
                     </ul>
                 </li>
                 @endif

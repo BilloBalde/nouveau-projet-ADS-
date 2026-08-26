@@ -337,7 +337,7 @@
                 <div class="card">
                     <div class="card-body">
                         @php
-                            $company = \App\Models\Company::latest()->first();
+                            // $company vient de DeviController
                             $statusLabels = [
                                 'draft' => 'BROUILLON',
                                 'sent' => 'ENVOYÉ',
@@ -356,8 +356,6 @@
                             $logoPath = null;
                             if ($company && $company->logo && file_exists(public_path('companies/'.$company->logo))) {
                                 $logoPath = public_path('companies/'.$company->logo);
-                            } elseif (file_exists(public_path('images/customers/logo.jpg'))) {
-                                $logoPath = public_path('images/customers/logo.jpg');
                             }
                             $logoDataUri = $logoPath
                                 ? 'data:' . (mime_content_type($logoPath) ?: 'image/jpeg') . ';base64,' . base64_encode(file_get_contents($logoPath))
@@ -491,7 +489,7 @@
 
                             <!-- Pied de page -->
                             <div style="margin-top: 30px; text-align: center; font-size: 11px; color: #999 !important; border-top: 1px solid #eee; padding-top: 10px;">
-                                <p>Document généré le {{ \Carbon\Carbon::now()->format('d/m/Y H:i:s') }} - {{ $company?->address ?? '' }} - Tél: {{ $company?->phone ?? '625 45 35 45' }} | Email: {{ $company?->email ?? 'abdulghadirybalde@gmail.com' }}</p>
+                                <p>Document généré le {{ \Carbon\Carbon::now()->format('d/m/Y H:i:s') }} - {{ $company?->address ?? '' }} - Tél: {{ $company?->phone ?? '' }} | Email: {{ $company?->email ?? '' }}</p>
                             </div>
                         </div>
                     </div>

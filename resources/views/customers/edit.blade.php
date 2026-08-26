@@ -15,8 +15,8 @@
                 <div class="content">
                     <div class="page-header">
                         <div class="page-title">
-                            <h4>Customers Management</h4>
-                            <h6>Add/Update Customers</h6>
+                            <h4>Gestion des clients</h4>
+                            <h6>Ajouter ou modifier un client</h6>
                         </div>
                     </div>
                     <div class="card">

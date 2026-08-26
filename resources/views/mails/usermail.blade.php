@@ -274,7 +274,7 @@
                 </p>
                 <p>
                     <span>📱</span>
-                    <span><strong>Assistance</strong> - Besoin d'aide ? Contactez-nous à abdulghadirybalde@gmail.com</span>
+                    <span><strong>Assistance</strong> - Besoin d'aide ? Contactez-nous à {{ \App\Models\Company::current()?->email }}</span>
                 </p>
             </div>
             
@@ -294,7 +294,7 @@
         <!-- Footer -->
         <div class="footer">
             <p><strong>Coleah Bandeya & Fils</strong> - Votre partenaire commercial de confiance</p>
-            <p>📍 Conakry, Guinée | 📞 625 45 35 45 | ✉️ abdulghadirybalde@gmail.com</p>
+            <p>📍 Conakry, Guinée | 📞 {{ \App\Models\Company::current()?->phone }} | ✉️ {{ \App\Models\Company::current()?->email }}</p>
             
             <div class="social-links">
                 <a href="#" class="social-link">Facebook</a> •

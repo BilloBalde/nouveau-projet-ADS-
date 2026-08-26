@@ -29,12 +29,12 @@
                                 <div class="search-set">
                                     <div class="search-path">
                                         <a class="btn btn-filter" id="filter_search">
-                                            <img src="assets/img/icons/filter.svg" alt="img">
-                                            <span><img src="assets/img/icons/closes.svg" alt="img"></span>
+                                            <img src="{{ asset('assets/img/icons/filter.svg') }}" alt="img">
+                                            <span><img src="{{ asset('assets/img/icons/closes.svg') }}" alt="img"></span>
                                         </a>
                                     </div>
                                     <div class="search-input">
-                                        <a class="btn btn-searchset"><img src="assets/img/icons/search-white.svg" alt="img"></a>
+                                        <a class="btn btn-searchset"><img src="{{ asset('assets/img/icons/search-white.svg') }}" alt="img"></a>
                                     </div>
                                 </div>
 
@@ -193,7 +193,7 @@
                                             <div class="col-lg-3 col-sm-6 col-12 d-flex align-items-end">
                                                 <div class="form-group d-flex">
                                                     <button type="submit" class="btn btn-filters me-2">
-                                                        <img src="assets/img/icons/search-whites.svg" alt="img">
+                                                        <img src="{{ asset('assets/img/icons/search-whites.svg') }}" alt="img">
                                                     </button>
                                                     <a href="{{ route('payments.index') }}" class="btn btn-secondary">Réinitialiser</a>
                                                 </div>

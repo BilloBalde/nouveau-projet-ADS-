@@ -135,11 +135,47 @@ class Facture extends Model
     }
 
     /**
-     * Vérifier si la facture est payée
+     * Montant réellement encaissé sur cette facture.
+     *
+     * Volontairement calculé depuis `reste`, et non depuis `statut`, `avance` ou la
+     * somme des paiements — les trois ont un angle mort :
+     *  - `statut` n'est écrit qu'en « payé » / « non payé » : une facture soldée à
+     *    moitié y figure comme non payée ;
+     *  - `avance` n'est renseigné qu'à la création de la vente, jamais mis à jour par
+     *    les encaissements suivants ;
+     *  - `payments.total_paye` est un cumul, pas un montant unitaire : en faire la
+     *    somme compte plusieurs fois le même argent.
+     *
+     * `reste` est le seul champ que tiennent à jour les deux chemins, la création de
+     * la vente comme l'enregistrement d'un paiement.
+     */
+    public function montantEncaisse(): float
+    {
+        return max(0, (float) $this->montant_total - (float) $this->reste);
+    }
+
+    /**
+     * La facture a-t-elle reçu de l'argent, en totalité ou en partie ?
+     *
+     * Trois conditions cumulées là où une seule suffirait aujourd'hui : elles
+     * concordent sur les données actuelles, et le cumul garantit qu'un futur chemin
+     * qui n'en mettrait qu'une à jour ne rouvrira pas la porte à la suppression d'un
+     * encaissement.
+     */
+    public function aRecuUnPaiement(): bool
+    {
+        return $this->montantEncaisse() > 0
+            || (float) $this->avance > 0
+            || $this->paiements()->where('versement', '>', 0)->exists();
+    }
+
+    /**
+     * Vérifier si la facture est intégralement payée
      */
     public function isPaid(): bool
     {
-        return $this->statut === 'payé';
+        return (float) $this->montant_total > 0
+            && $this->montantEncaisse() >= (float) $this->montant_total;
     }
 
     /**
@@ -147,7 +183,7 @@ class Facture extends Model
      */
     public function isPartial(): bool
     {
-        return $this->statut === 'partiel';
+        return $this->aRecuUnPaiement() && ! $this->isPaid();
     }
 
     /**

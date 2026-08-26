@@ -21,7 +21,7 @@ class ReceiptController extends Controller
         $payment->load(['facture.customer', 'facture.store']);
         $facture = $payment->facture;
         $customer = $facture?->customer;
-        $company = Company::latest()->first();
+        $company = Company::current();
 
         return view('receipts.payment', [
             'payment' => $payment,
@@ -34,7 +34,7 @@ class ReceiptController extends Controller
     public function transaction(TransactionFacture $transaction)
     {
         $transaction->load('customer');
-        $company = Company::latest()->first();
+        $company = Company::current();
 
         return view('receipts.transaction', [
             'transaction' => $transaction,
@@ -47,7 +47,7 @@ class ReceiptController extends Controller
     public function transfer(StockTransfer $transfer)
     {
         $transfer->load(['product', 'fromStore', 'toStore']);
-        $company = Company::latest()->first();
+        $company = Company::current();
         $receiptNumber = generateReceiptNumber('TRF', $transfer->id);
 
         return view('receipts.transfer', [

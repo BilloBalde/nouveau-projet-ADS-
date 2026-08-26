@@ -12,6 +12,16 @@ class CheckManagerRoleTest extends TestCase
 {
     use RefreshDatabase;
 
+    /**
+     * RefreshDatabase crée les tables mais ne les peuple pas : sans les rôles,
+     * la clé étrangère users.role_id fait échouer toute création d'utilisateur.
+     */
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->seed(\Database\Seeders\RolesSeeder::class);
+    }
+
     public function test_admin_and_manager_can_access_superuser_routes(): void
     {
         Route::middleware('superuser')->get('/test-superuser-admin', function () {

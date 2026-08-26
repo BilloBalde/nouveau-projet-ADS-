@@ -12,7 +12,10 @@
      data-numeroFacture="{{ $numeroFacture }}"
      data-sku="{{ $dataItem->sku }}"
      data-id="{{ $dataItem->id }}"
-     data-price="{{ $dataItem->price }}">
+     data-price="{{ $dataItem->price }}"
+     {{-- Prix de revient : sert au blocage de la vente à perte côté POS.
+          Le contrôle faisant foi reste celui de SaleController::store(). --}}
+     data-cost="{{ $dataItem->price_sale ?? 0 }}">
     <div class="productset flex-fill">
         <div class="productsetimg">
             <img src="{{ asset('products/' . $dataItem->image) }}" alt="img" style="height: 170px" loading="lazy" onerror="this.closest('.productsetimg').classList.add('img-fallback')">

@@ -107,7 +107,7 @@
                             @forelse($notifications as $notification)
                                 <a href="{{ $notification->data['url'] ?? '#' }}"
                                    onclick="markRead(event, '{{ $notification->id }}', this.href)"
-                                   style="display:block;padding:14px 22px;border-bottom:1px solid #f3f4f6;color:#374151;text-decoration:none;{{ $notification->read_at ? '' : 'background:#fdf6ec;font-weight:600;' }}">
+                                   style="display:block;padding:14px 22px;border-bottom:1px solid #f3f4f6;color:#374151;text-decoration:none;{{ $notification->read_at ? '' : 'background:#f0f8f3;font-weight:600;' }}">
                                     {{ $notification->data['message'] ?? '' }}
                                     <span style="display:block;font-size:12px;color:#9ca3af;font-weight:400;margin-top:3px;">
                                         {{ $notification->created_at->diffForHumans() }}

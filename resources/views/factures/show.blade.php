@@ -29,12 +29,12 @@
         }
 
         .btn-added {
-            background-color: #c1682f;
+            background-color: #1f6f43;
             color: white;
         }
 
         .btn-added:hover {
-            background-color: #a8532a;
+            background-color: #195836;
         }
 
         .btn-cancel {
@@ -96,7 +96,7 @@
             align-items: flex-start;
             gap: 24px;
             padding-bottom: 22px;
-            border-bottom: 3px solid #c1682f;
+            border-bottom: 3px solid #1f6f43;
             margin-bottom: 24px;
         }
 
@@ -136,7 +136,7 @@
             font-size: 28px;
             font-weight: 700;
             letter-spacing: 1px;
-            color: #c1682f !important;
+            color: #1f6f43 !important;
             text-transform: uppercase;
         }
 
@@ -159,9 +159,9 @@
             font-weight: 700;
             letter-spacing: 0.5px;
             text-transform: uppercase;
-            background: #fdf6ec;
+            background: #f0f8f3;
             color: #b45309 !important;
-            border: 1px solid #f0e0c8;
+            border: 1px solid #b9dfc8;
         }
 
         /* Cartes d'info */
@@ -173,8 +173,8 @@
 
         .info-card {
             flex: 1;
-            background: #fdf6ec;
-            border: 1px solid #f0e0c8;
+            background: #f0f8f3;
+            border: 1px solid #b9dfc8;
             border-radius: 12px;
             padding: 16px 18px;
         }
@@ -246,8 +246,8 @@
 
         .invoice-products-table tfoot .invoice-total td {
             padding: 14px 12px;
-            background: #fdf6ec;
-            border-top: 2px solid #c1682f;
+            background: #f0f8f3;
+            border-top: 2px solid #1f6f43;
             font-size: 14px;
         }
 
@@ -259,7 +259,7 @@
         /* Montant en lettres */
         .amount-in-words {
             background: #faf9f7;
-            border-left: 4px solid #c1682f;
+            border-left: 4px solid #1f6f43;
             border-radius: 0 10px 10px 0;
             padding: 14px 18px;
             font-size: 12.5px;
@@ -417,10 +417,7 @@
 
                 <div class="card" style="background:#f8f5f0;">
                     <div class="card-body">
-                        @php
-                            $company = \App\Models\Company::latest()->first();
-                        @endphp
-
+                        {{-- $company est fourni par le View Composer (AppServiceProvider) --}}
                         <div id="invoiceContent">
                             <div class="invoice-watermark" aria-hidden="true">
                                 <img class="watermark-logo" src="{{ asset('companies/' . ($company?->logo ?? 'ADK.png')) }}" alt="">
@@ -435,7 +432,7 @@
                                             <div class="facture-brand-name">{{ $company?->name ?? 'Coleah Bandeya & Fils' }}</div>
                                             <div class="facture-brand-sub">
                                                 @if(!empty($company?->address)) {{ $company->address }}<br>@endif
-                                                Tél: {{ $company?->phone ?? '625 45 35 45' }}
+                                                Tél: {{ $company?->phone ?? '' }}
                                             </div>
                                         </div>
                                     </div>
@@ -519,7 +516,7 @@
                                 <div class="company-info">
                                     <h4>{{ $company?->name ?? 'Coleah Bandeya & Fils' }}</h4>
                                     <p>{{ $company?->address ?? '' }}</p>
-                                    <p>Tél: {{ $company?->phone ?? '625 45 35 45' }} | Email: {{ $company?->email ?? 'abdulghadirybalde@gmail.com' }}</p>
+                                    <p>Tél: {{ $company?->phone ?? '' }} | Email: {{ $company?->email ?? '' }}</p>
                                     <p>Facture générée le {{ \Carbon\Carbon::now()->format('d/m/Y H:i') }}</p>
                                 </div>
                             </div>

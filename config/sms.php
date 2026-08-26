@@ -2,7 +2,9 @@
 
 return [
 
-    // Pilote utilisé pour l'envoi des OTP : log | whatsapp | nimba | twilio | http
+    // Pilote d'envoi des SMS : log | whatsapp | twilio | http
+    // « log » n'envoie rien et sert de repli quand aucun fournisseur n'est en place,
+    // ce qui est le cas de ce projet.
     'driver' => env('SMS_DRIVER', 'log'),
 
     // Affiche le code OTP directement à l'écran (session flash) au lieu de compter
@@ -10,12 +12,6 @@ return [
     'show_code_flash' => env('SMS_SHOW_CODE_FLASH', false),
 
     'otp_message' => 'Votre code de connexion SMH : %s',
-
-    'nimba' => [
-        'service_id' => env('NIMBA_SERVICE_ID'),
-        'secret_token' => env('NIMBA_SECRET_TOKEN'),
-        'sender_name' => env('NIMBA_SENDER_NAME'),
-    ],
 
     'whatsapp' => [
         'instance' => env('ULTRAMSG_INSTANCE'),

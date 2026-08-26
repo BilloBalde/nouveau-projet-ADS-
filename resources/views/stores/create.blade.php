@@ -82,7 +82,7 @@
                                 <input type="file" name="store_picture" class="form-control">
                                 <div class="image-uploads">
                                     <img src="{{ asset('assets/img/icons/upload.svg') }}" alt="img">
-                                    <h4>Drag and drop a file to upload</h4>
+                                    <h4>Glissez un fichier ici pour l'envoyer</h4>
                                 </div>
                             </div>
                         </div>

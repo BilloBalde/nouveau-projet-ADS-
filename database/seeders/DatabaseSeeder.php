@@ -27,6 +27,11 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             RolesSeeder::class,
+            // Sans lui, une installation neuve n'a aucune permission : les menus et
+            // les écrans protégés par @permission restent invisibles, y compris pour
+            // l'administrateur. Doit passer après les rôles, qu'il référence.
+            PermissionSeeder::class,
+            CompanySeeder::class,
             UsersSeeder::class,
             PlacesSeeder::class,
             StoresSeeder::class,

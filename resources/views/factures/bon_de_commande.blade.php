@@ -353,10 +353,7 @@
 
                 <div class="card">
                     <div class="card-body">
-                        @php
-                            $company = \App\Models\Company::latest()->first();
-                        @endphp
-
+                        {{-- $company est fourni par le View Composer (AppServiceProvider) --}}
                         <div id="bonDeCommandeContent">
                             <!-- Filigrane -->
                             <div class="bon-watermark">BON DE COMMANDE</div>
@@ -367,7 +364,7 @@
                                     @if($company && $company->logo)
                                         <img src="{{ asset('companies/'.$company->logo) }}" alt="{{ $company->name ?? 'Logo' }}">
                                     @else
-                                        <img src="{{ asset('images/customers/logo.jpg') }}" alt="Logo">
+                                        <img src="{{ asset('companies/ADK.png') }}" alt="{{ config('app.name') }}">
                                     @endif
                                     <div class="document-title">
                                         <h1>BON DE COMMANDE</h1>
@@ -495,7 +492,7 @@
 
                             <!-- Pied de page -->
                             <div class="bon-footer-text">
-                                <p>Document généré le {{ \Carbon\Carbon::now()->format('d/m/Y H:i:s') }} - {{ $company?->address ?? '' }} - Tél: {{ $company?->phone ?? '625 45 35 45' }} | Email: {{ $company?->email ?? 'abdulghadirybalde@gmail.com' }}</p>
+                                <p>Document généré le {{ \Carbon\Carbon::now()->format('d/m/Y H:i:s') }} - {{ $company?->address ?? '' }} - Tél: {{ $company?->phone ?? '' }} | Email: {{ $company?->email ?? '' }}</p>
                             </div>
                         </div>
                     </div>

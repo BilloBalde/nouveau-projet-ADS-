@@ -5,12 +5,12 @@
     <style>
         /* Reset Password Specific Styles */
         :root {
-            --primary-color: #c1682f;
-            --secondary-color: #8a5a34;
+            --primary-color: #1f6f43;
+            --secondary-color: #195836;
             --success-color: #28a745;
             --danger-color: #dc3545;
             --warning-color: #ffc107;
-            --dark-bg: linear-gradient(135deg, #c1682f 0%, #8a5a34 100%);
+            --dark-bg: linear-gradient(135deg, #1f6f43 0%, #195836 100%);
         }
 
         body {

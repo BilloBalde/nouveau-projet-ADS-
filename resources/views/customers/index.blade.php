@@ -18,7 +18,7 @@
                             <h6>Gerer vos Clients</h6>
                         </div>
                         <div class="page-btn">
-                            <a href="{{ route('customers.create') }}" class="btn btn-added"><img src="assets/img/icons/plus.svg" alt="img" class="me-2">Add Customer</a>
+                            <a href="{{ route('customers.create') }}" class="btn btn-added"><img src="{{ asset('assets/img/icons/plus.svg') }}" alt="img" class="me-2">Add Customer</a>
                         </div>
                     </div>
                     @include('layouts.flash')
@@ -28,7 +28,7 @@
                                 <div class="search-set">
                                     <div class="search-input">
                                         <a class="btn btn-searchset">
-                                            <img src="assets/img/icons/search-white.svg" alt="img">
+                                            <img src="{{ asset('assets/img/icons/search-white.svg') }}" alt="img">
                                         </a>
                                     </div>
                                 </div>

@@ -4,15 +4,15 @@
     <body>
         <style>
             :root {
-                --po-primary: #c1682f;
-                --po-primary-light: #fdf1e6;
-                --po-ink: #2b2420;
-                --po-muted: #8d7f74;
-                --po-border: #f0e4d8;
+                --po-primary: #1f6f43;
+                --po-primary-light: #f0f8f3;
+                --po-ink: #10221a;
+                --po-muted: #5d6b64;
+                --po-border: #dcefe3;
             }
 
             .po-hero {
-                background: linear-gradient(135deg, #c1682f 0%, #a34e1f 100%);
+                background: linear-gradient(135deg, #1f6f43 0%, #195836 100%);
                 border-radius: 16px;
                 padding: 28px 32px;
                 color: #fff;
@@ -131,7 +131,7 @@
                 flex-shrink: 0;
             }
             .po-stat-icon.tone-store { background: #eaf2ff; color: #2e6bd6; }
-            .po-stat-icon.tone-origin { background: #fdf1e6; color: var(--po-primary); }
+            .po-stat-icon.tone-origin { background: #f0f8f3; color: var(--po-primary); }
             .po-stat-icon.tone-currency { background: #eafaf0; color: #21a366; }
             .po-stat-icon.tone-cbm { background: #f3ecff; color: #7c4fe0; }
             .po-stat-icon.tone-status { background: #fff4de; color: #b5790a; }
@@ -181,7 +181,7 @@
                 border-collapse: collapse;
             }
             .po-table thead th {
-                background: #faf5ef;
+                background: #f7faf8;
                 color: var(--po-muted);
                 text-transform: uppercase;
                 font-size: 11px;
@@ -193,7 +193,7 @@
             }
             .po-table tbody td {
                 padding: 14px 16px;
-                border-bottom: 1px solid #f5ece1;
+                border-bottom: 1px solid #dcefe3;
                 font-size: 14px;
                 color: var(--po-ink);
                 white-space: nowrap;
@@ -202,7 +202,7 @@
                 border-bottom: none;
             }
             .po-table tbody tr:hover {
-                background: #fef9f4;
+                background: #f7faf8;
             }
             .po-product-cell {
                 display: flex;
@@ -236,7 +236,7 @@
             }
 
             .po-grand-total {
-                background: linear-gradient(135deg, #fdf1e6 0%, #fbe6d2 100%);
+                background: linear-gradient(135deg, #f0f8f3 0%, #dcefe3 100%);
                 border-top: 1px solid var(--po-border);
                 padding: 22px 24px;
                 display: flex;
@@ -354,13 +354,6 @@
                             </div>
                         </div>
                         @endif
-                        <div class="po-stat-card">
-                            <div class="po-stat-icon tone-fees"><i class="fas fa-coins"></i></div>
-                            <div>
-                                <span class="po-stat-label">Frais divers</span>
-                                <span class="po-stat-value">{{ number_format($order->other_fees_gnf, 0, ',', ' ') }} GNF</span>
-                            </div>
-                        </div>
                         @if($order->notes)
                         <div class="po-stat-card">
                             <div class="po-stat-icon tone-notes"><i class="fas fa-sticky-note"></i></div>
@@ -390,7 +383,7 @@
                                         <th>CBM ligne</th>
                                         <th>Fret alloué</th>
                                         <th>Douane allouée</th>
-                                        <th>Frais divers alloués</th>
+                                     
                                         @endif
                                         <th>Coût de revient / unité</th>
                                     </tr>
@@ -414,7 +407,6 @@
                                         <td><span class="po-cbm-badge">{{ number_format($item->line_total_cbm, 3) }}</span></td>
                                         <td>{{ number_format($item->allocated_freight_gnf, 0, ',', ' ') }}</td>
                                         <td>{{ number_format($item->allocated_customs_gnf, 0, ',', ' ') }}</td>
-                                        <td>{{ number_format($item->allocated_other_fees_gnf, 0, ',', ' ') }}</td>
                                         @endif
                                         <td><span class="po-landed-cost">{{ number_format($item->landed_unit_cost_gnf, 0, ',', ' ') }} GNF</span></td>
                                     </tr>

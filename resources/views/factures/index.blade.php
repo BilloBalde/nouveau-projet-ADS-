@@ -69,10 +69,10 @@
                                             <div class="col-lg-2 col-sm-6 col-12">
                                                 <div class="form-group">
                                                     <select name="statut" id="statut" class="form-control">
-                                                        <option value="">Selectionner Statut</option>
+                                                        <option value="">Sélectionner un statut</option>
                                                         <option value="non payé" {{ request('statut') == 'non payé' ? 'selected' : '' }}>Non payé</option>
+                                                        <option value="partiel" {{ request('statut') == 'partiel' ? 'selected' : '' }}>Partiel</option>
                                                         <option value="payé" {{ request('statut') == 'payé' ? 'selected' : '' }}>Payé</option>
-                                                        
                                                     </select>
                                                 </div>
                                             </div>
@@ -92,7 +92,7 @@
                                             </div>
                                             <div class="col-lg-2 col-sm-6 col-12 d-flex align-items-center">
                                                 <div class="form-group d-flex">
-                                                    <button type="submit" class="btn btn-filters me-2"><img src="assets/img/icons/search-whites.svg" alt="img"></button>
+                                                    <button type="submit" class="btn btn-filters me-2"><img src="{{ asset('assets/img/icons/search-whites.svg') }}" alt="img"></button>
                                                     <a href="{{ route('factures.index') }}" class="btn btn-secondary">Annuler</a>
                                                 </div>
                                             </div>
@@ -132,18 +132,23 @@
                                             <td>{{ $data->paiements->first()?->total_paye }}</td>
                                             <td>{{ $data->reste }}</td>
                                             @php
-                                                $totalPaye = $data->paiements->sum('total_paye');
-                                                $montantTotal = $data->montant_total;
+                                                // `paiements->sum('total_paye')` comptait plusieurs fois le même
+                                                // argent : `total_paye` est un cumul, pas un montant unitaire.
+                                                // Le modèle porte désormais le calcul, partagé avec la garde qui
+                                                // bloque la suppression — l'état affiché et l'état qui bloque
+                                                // sont ainsi forcément les mêmes.
+                                                $totalPaye = $data->montantEncaisse();
+                                                $encaissee = $data->aRecuUnPaiement();
                                             @endphp
                                             <td>
                                                 <span class="badge
-                                                    @if ($totalPaye >= $montantTotal) bg-success
-                                                    @elseif ($totalPaye > 0) bg-warning text-dark
+                                                    @if ($data->isPaid()) bg-success
+                                                    @elseif ($data->isPartial()) bg-warning text-dark
                                                     @else bg-danger
                                                     @endif">
-                                                    @if ($totalPaye >= $montantTotal)
+                                                    @if ($data->isPaid())
                                                         Payé
-                                                    @elseif ($totalPaye > 0)
+                                                    @elseif ($data->isPartial())
                                                         Partiel
                                                     @else
                                                         Non payé
@@ -157,42 +162,53 @@
                                             <td>{{ $data->created_at }}</td>
                                             <td>
                                                 <a data-id="{{ $data->numero_facture }}" class="openModalShow btn" onclick="openViewModal({{ $data->id }}, '{{ $data->numero_facture }}')">
-                                                    <img src="assets/img/icons/eye1.svg" class="me-2" alt="img">
+                                                    <img src="{{ asset('assets/img/icons/eye1.svg') }}" class="me-2" alt="img">
                                                 </a>
-                                                <!-- <a href="{{ route('factures.show', $data->numero_facture) }}"><img src="assets/img/icons/eye1.svg" class="me-2" alt="img"></a> -->
+                                                <!-- <a href="{{ route('factures.show', $data->numero_facture) }}"><img src="{{ asset('assets/img/icons/eye1.svg') }}" class="me-2" alt="img"></a> -->
                                                 @if ($data->livraison !== "livré")
-                                                <a href="javascript:void(0);" class="me-2" data-bs-toggle="modal" data-bs-target="#editfacture" data-id="{{ $data->id }}" data-reference="{{ $data->numero_facture }}"><img src="assets/img/icons/calendars.svg" class="me-2" alt="img"></a>
+                                                <a href="javascript:void(0);" class="me-2" data-bs-toggle="modal" data-bs-target="#editfacture" data-id="{{ $data->id }}" data-reference="{{ $data->numero_facture }}"><img src="{{ asset('assets/img/icons/calendars.svg') }}" class="me-2" alt="img"></a>
                                                 @endif
+                                                @if ($encaissee)
+                                                    {{-- Bouton inactif plutôt que masqué : le vendeur voit qu'une
+                                                         suppression existe et lit pourquoi elle est refusée, au lieu
+                                                         de chercher un bouton disparu. Le serveur refuse de toute
+                                                         façon, cet affichage n'est qu'une courtoisie. --}}
+                                                    <button type="button" class="btn-danger" disabled style="opacity:.4;cursor:not-allowed;"
+                                                            title="{{ number_format($data->montantEncaisse(), 0, ',', ' ') }} GNF déjà encaissés — une facture payée ou partiellement payée ne peut pas être supprimée.">
+                                                        <img src="{{ asset('assets/img/icons/delete.svg') }}" class="me-2" alt="Suppression impossible">
+                                                    </button>
+                                                @else
                                                 <button type="button" class="btn-danger" data-bs-toggle="modal" data-bs-target="#deleteFactureModal-{{ $data->id }}">
-                                                    <img src="assets/img/icons/delete.svg" class="me-2" alt="img">
+                                                    <img src="{{ asset('assets/img/icons/delete.svg') }}" class="me-2" alt="Supprimer">
                                                 </button>
                                                 <div class="modal fade" id="deleteFactureModal-{{ $data->id }}" tabindex="-1" aria-labelledby="deleteFactureLabel-{{ $data->id }}" aria-hidden="true">
                                                     <div class="modal-dialog modal-dialog-centered">
                                                         <div class="modal-content border-0">
                                                             <div class="modal-header bg-danger text-white">
-                                                                <h5 class="modal-title" id="deleteFactureLabel-{{ $data->id }}">Delete invoice #{{ $data->numero_facture }}</h5>
-                                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                                <h5 class="modal-title" id="deleteFactureLabel-{{ $data->id }}">Supprimer la facture n° {{ $data->numero_facture }}</h5>
+                                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fermer"></button>
                                                             </div>
                                                             <div class="modal-body">
-                                                                <p class="mb-1">This will:</p>
+                                                                <p class="mb-1">Cette action va :</p>
                                                                 <ul class="mb-3">
-                                                                    <li>Delete all related sales</li>
-                                                                    <li>Delete all related payments</li>
-                                                                    <li>Restore product quantities back to <strong>store stock</strong></li>
+                                                                    <li>supprimer toutes les ventes rattachées ;</li>
+                                                                    <li>supprimer tous les paiements rattachés ;</li>
+                                                                    <li>remettre les quantités dans le <strong>stock de la boutique</strong>.</li>
                                                                 </ul>
-                                                                <p class="mb-0 text-danger fw-semibold">This action cannot be undone.</p>
+                                                                <p class="mb-0 text-danger fw-semibold">Cette action est irréversible.</p>
                                                             </div>
                                                             <div class="modal-footer">
                                                                 <form method="POST" action="{{ route('factures.destroy', $data) }}">
                                                                     @csrf
                                                                     @method('DELETE')
-                                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                                                    <button type="submit" class="btn btn-danger">Yes, delete it</button>
+                                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                                                                    <button type="submit" class="btn btn-danger">Oui, supprimer</button>
                                                                 </form>
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </div>
+                                                @endif
                                             </td>
                                             <td class="text-center">
                                                 <a class="action-set" href="javascript:void(0);" data-bs-toggle="dropdown" aria-expanded="true">
@@ -200,11 +216,11 @@
                                                 </a>
                                                 <ul class="dropdown-menu">
                                                     <li>
-                                                        <a href="{{ route('payments.voir', $data->id) }}" class="dropdown-item"><img src="assets/img/icons/dollar-square.svg" class="me-2" alt="img">Voir Paiements</a>
+                                                        <a href="{{ route('payments.voir', $data->id) }}" class="dropdown-item"><img src="{{ asset('assets/img/icons/dollar-square.svg') }}" class="me-2" alt="img">Voir Paiements</a>
                                                     </li>
                                                     @if ($data->statut !== "payé")
                                                     <li>
-                                                        <a href="{{ route('payments.creation', $data->id) }}" class="dropdown-item"><img src="assets/img/icons/plus-circle.svg" class="me-2" alt="img">Ajouter Paiement</a>
+                                                        <a href="{{ route('payments.creation', $data->id) }}" class="dropdown-item"><img src="{{ asset('assets/img/icons/plus-circle.svg') }}" class="me-2" alt="img">Ajouter Paiement</a>
                                                     </li>
                                                     @endif
                                                 </ul>

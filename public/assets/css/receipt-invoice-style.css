@@ -9,7 +9,7 @@
     background: #fff;
     padding: 28px 32px;
     font-family: 'Segoe UI', Arial, sans-serif;
-    color: #2b2118;
+    color: #10221a;
     overflow: hidden;
 }
 
@@ -45,7 +45,7 @@
 /* En-tête */
 .invoice-title-wrapper,
 .devis-header {
-    border-bottom: 3px solid #c1682f;
+    border-bottom: 3px solid #1f6f43;
     padding-bottom: 14px;
     margin-bottom: 16px;
 }
@@ -73,13 +73,13 @@
 
 .document-title h1 {
     font-size: 20px;
-    color: #c1682f;
+    color: #1f6f43;
     margin: 0;
 }
 
 .document-title h3 {
     font-size: 13px;
-    color: #6b5c4c;
+    color: #5d6b64;
     margin: 2px 0 0;
     font-weight: 500;
 }
@@ -87,7 +87,7 @@
 .invoice-title {
     font-size: 22px;
     font-weight: 800;
-    color: #c1682f;
+    color: #1f6f43;
     letter-spacing: 0.04em;
     margin: 0;
     text-align: right;
@@ -96,7 +96,7 @@
 .invoice-subtitle {
     text-align: right;
     font-size: 12px;
-    color: #9a8a78;
+    color: #5d6b64;
     text-transform: uppercase;
     letter-spacing: 0.08em;
     margin-top: 2px;
@@ -104,8 +104,8 @@
 
 /* Numéro / date */
 .invoice-number-section {
-    background: #fdfaf6;
-    border: 1px solid #e5d5c3;
+    background: #f7faf8;
+    border: 1px solid #b9dfc8;
     border-radius: 8px;
     padding: 10px 16px;
     margin-bottom: 14px;
@@ -118,18 +118,18 @@
 }
 
 .invoice-number-label {
-    color: #9a8a78;
+    color: #5d6b64;
     margin-right: 6px;
 }
 
 .invoice-number-value {
     font-weight: 700;
-    color: #2b2118;
+    color: #10221a;
 }
 
 /* Infos client */
 .client-info-box {
-    border: 1px solid #eee1d3;
+    border: 1px solid #dcefe3;
     border-radius: 8px;
     padding: 12px 16px;
     margin-bottom: 14px;
@@ -152,7 +152,7 @@
 }
 
 .invoice-table th {
-    background: #c1682f;
+    background: #1f6f43;
     color: #fff;
     padding: 9px 12px;
     text-transform: uppercase;
@@ -168,26 +168,26 @@
 
 .invoice-table td {
     padding: 8px 12px;
-    border-bottom: 1px solid #eee1d3;
+    border-bottom: 1px solid #dcefe3;
 }
 
 .invoice-table tfoot .invoice-total td {
-    border-top: 2px solid #c1682f;
+    border-top: 2px solid #1f6f43;
     border-bottom: none;
     font-size: 15px;
     padding-top: 10px;
-    color: #c1682f;
+    color: #1f6f43;
 }
 
 /* Montant en lettres */
 .amount-in-words {
-    background: #fdfaf6;
-    border: 1px dashed #e5d5c3;
+    background: #f7faf8;
+    border: 1px dashed #b9dfc8;
     border-radius: 8px;
     padding: 10px 16px;
     margin: 14px 0;
     font-size: 12.5px;
-    color: #6b5c4c;
+    color: #5d6b64;
 }
 
 /* Signatures */
@@ -206,7 +206,7 @@
 }
 
 .signature-line {
-    border-bottom: 1px solid #9a8a78;
+    border-bottom: 1px solid #5d6b64;
     height: 46px;
     margin-bottom: 6px;
 }
@@ -216,14 +216,14 @@
     text-align: center;
     margin-top: 20px;
     padding-top: 14px;
-    border-top: 1px solid #eee1d3;
+    border-top: 1px solid #dcefe3;
     font-size: 11px;
-    color: #9a8a78;
+    color: #5d6b64;
 }
 
 .company-info h4 {
     font-size: 13px;
-    color: #c1682f;
+    color: #1f6f43;
     margin: 0 0 4px;
 }
 
