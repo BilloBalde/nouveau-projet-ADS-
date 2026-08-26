@@ -250,6 +250,11 @@ class OrderManagementController extends Controller
                 'invoice_number' => $invoiceNumber,
             ]);
 
+            // L'approbation cree une facture : sans ce recalcul, les compteurs du
+            // client ignoraient la commande. Le solde restait inchange pendant que
+            // la dette reelle augmentait du montant de la vente.
+            $customer->recalculerCompteurs();
+
             DB::commit();
 
             $order->user?->notify(new OrderStatusNotification($order, 'approved'));

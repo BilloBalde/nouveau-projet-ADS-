@@ -514,10 +514,7 @@ class SaleController extends Controller
             // vente à crédit rendait le solde négatif, et le client disparaissait
             // des créances affichées.
             $customer = Customer::find($request->customer_id);
-            $customer->total_taken += $total_price;
-            $customer->total_repaid += $facture->avance;
-            $customer->balance += $total_price - $facture->avance;
-            $customer->save();
+            $customer->recalculerCompteurs();
 
             DB::commit();
 
@@ -606,9 +603,6 @@ class SaleController extends Controller
             $resteMontant = ($sale->quantity * $sale->prix) - ($request->quantity * $request->prix);
             $resteQuantity = ($sale->quantity) - ((int) $request->quantity);
 
-            $customer->total_taken -= $sale->quantity * $sale->prix;
-            $customer->total_taken += $request->quantity * $request->prix;
-
             $totalPaid = $paiements->sum('versement');
             // Update the invoice
             $invoice->quantity -= $resteQuantity;
@@ -622,10 +616,10 @@ class SaleController extends Controller
                 $pay->save();
             }
 
-            // Update customer's total_repaid and balance based on new invoice state
-            $customer->total_repaid = ($customer->total_repaid - $totalPaid) + $paiements->sum('versement');
-            $customer->balance = $customer->total_taken - $customer->total_repaid;
-            $customer->save();
+            // Les compteurs du client sont recalcules depuis les factures, une fois
+            // la facture et les paiements a jour.
+            $customer->recalculerCompteurs();
+
             // Update store product stock based on quantity delta
             $deltaQuantity = $request->quantity - $sale->quantity;
             if ($deltaQuantity > 0) {

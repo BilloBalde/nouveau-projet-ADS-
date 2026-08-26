@@ -328,10 +328,7 @@ class FactureController extends Controller
             
             $sms = "Facture cree avec success";
             $customer = Customer::find($request->customer_id);
-            $customer->total_taken += $total_amount;
-            $customer->total_repaid += $request->avance;
-            $customer->balance += $reste;
-            $customer->save();
+            $customer->recalculerCompteurs();
             $countCustomerInvoices = Facture::where('customer_id', $request->customer_id)->count();
             if ($countCustomerInvoices >= 5){
                 $customer->fidelite = 1;

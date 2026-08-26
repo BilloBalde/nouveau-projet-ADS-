@@ -395,10 +395,7 @@ class PaymentController extends Controller
                 ]);
 
                 // Update customer's overall balance
-                $customer->update([
-                    'total_repaid' => $customer->total_repaid + $versement,
-                    'balance' => $customer->balance - $versement
-                ]);
+                $customer->recalculerCompteurs();
 
                 return [$remainingPayment, $lastPaidInvoiceNumber];
             });
@@ -493,10 +490,7 @@ class PaymentController extends Controller
                 // Message de confirmation
                 $client = Customer::find($facture->customer_id);
                 if ($client) {
-                    $client->update([
-                        'total_repaid' => $client->total_repaid + $versement,
-                        'balance' => $client->balance - $versement
-                    ]);
+                    $client->recalculerCompteurs();
                 }
                 $sms = $reste == 0
                     ? "Facture {$facture->numero_facture} entièrement payée. Merci au client {$client?->customerName}."
