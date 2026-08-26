@@ -81,20 +81,24 @@ class ExpenseController extends Controller
             $request->merge(['store_id' => auth()->user()->store_id]);
         }
 
-        $request->validate([
+        // Le résultat de validate() ne contient que les champs déclarés ici.
+        // C'est lui qu'on écrit en base : $request->all() laissait passer tout le
+        // reste, dont user_id — le formulaire l'envoie en champ caché, il suffisait
+        // de le modifier pour attribuer la dépense à un collègue.
+        $donnees = $request->validate([
             'reference' => 'required|string|max:255|unique:expenses,reference',
             'expense_categories_id' => 'required|exists:expense_categories,id',
-            'amount' => 'required|numeric',
+            'amount' => 'required|numeric|min:0',
             'status' => 'required|string',
             'description' => 'nullable|string',
-            'store_id' => 'required|exists:stores,id', // on s'assure que store_id est présent
-        ], [
-            // messages en français (optionnel)
+            'store_id' => 'required|exists:stores,id',
         ]);
 
+        // L'auteur vient de la session, jamais de la requête.
+        $donnees['user_id'] = auth()->id();
+
         try {
-            //dd($request->all());
-            Expense::create($request->all());
+            Expense::create($donnees);
             return redirect()->route('expenses.index')->with('success', 'Dépense créée avec succès.');
         } catch (\Throwable $th) {
             return redirect()->route('expenses.index')->with('error', 'Erreur lors de la création : ' . $th->getMessage());
@@ -126,17 +130,19 @@ class ExpenseController extends Controller
             abort(403);
         }
 
-        $request->validate([
+        // Même raison qu'à la création : on n'écrit que les champs validés.
+        // L'auteur d'origine n'est pas modifié.
+        $donnees = $request->validate([
             'reference' => 'required|string|max:255|unique:expenses,reference,' . $expense->id,
             'expense_categories_id' => 'required|exists:expense_categories,id',
-            'amount' => 'required|numeric',
+            'amount' => 'required|numeric|min:0',
             'status' => 'required|string',
             'description' => 'nullable|string',
             'store_id' => 'required|exists:stores,id',
         ]);
 
         try {
-            $expense->update($request->all());
+            $expense->update($donnees);
             return redirect()->route('expenses.index')->with('success', 'Dépense mise à jour avec succès.');
         } catch (\Throwable $th) {
             return redirect()->route('expenses.index')->with('error', 'Erreur lors de la mise à jour : ' . $th->getMessage());

@@ -368,6 +368,12 @@ class SaleController extends Controller
             $request->merge(['store_id' => $storeId]);
         }
 
+        // Les lignes elles-mêmes n'étaient pas validées. Une quantité nulle créait
+        // une facture à 0 GNF ; une quantité négative passait dès qu'une autre
+        // ligne maintenait le total positif, et retranchait du montant sans
+        // contrepartie — le stock, lui, restait protégé par StockService.
+        // Seul le contrôle « avance > total » les rattrapait parfois, avec un
+        // message sans rapport avec la cause.
         $request->validate([
             'numeroFacture' => 'required|string',
             'store_id'      => 'required|exists:stores,id',
@@ -375,6 +381,17 @@ class SaleController extends Controller
             'avance'        => 'nullable|numeric|min:0',
             'paid_by'       => 'nullable|string',
             'notes'         => 'nullable|string',
+            'sales'                              => 'required|array|min:1',
+            'sales.*.product_id'                 => 'required|exists:products,id',
+            'sales.*.quantity'                   => 'required|integer|min:1',
+            'sales.*.prix'                       => 'required|numeric|min:0',
+            'sales.*.partner_id'                 => 'nullable|exists:partners,id',
+            'sales.*.purchase_price_from_partner'=> 'nullable|numeric|min:0',
+        ], [
+            'sales.required'            => 'Veuillez ajouter au moins un produit.',
+            'sales.*.quantity.min'      => 'La quantité doit être d\'au moins 1.',
+            'sales.*.quantity.integer'  => 'La quantité doit être un nombre entier.',
+            'sales.*.prix.min'          => 'Le prix ne peut pas être négatif.',
         ]);
 
         // Le numéro affiché dans le POS est calculé à l'ouverture de la page : deux
