@@ -32,9 +32,83 @@ class Authentification extends Controller
         $user = User::find($id);
         [$roles, $permissionModules, $rolePresets] = $this->permissionFormData();
         $userPermissions = $user->permissions()->pluck('permissions.id')->all();
-        $stores = \App\Models\Store::with('manager')->orderBy('store_name')->get();
-        $currentStoreId = \App\Models\Store::where('user_id', $user->id)->value('id');
-        return view('users.edit', compact('user', 'roles', 'permissionModules', 'rolePresets', 'userPermissions', 'stores', 'currentStoreId'));
+        [$stores, $places, $scopedRoleIds] = $this->storeAssignmentFormData();
+        $currentStoreId = $user->assignedStoreId();
+        $assignmentHistory = $user->storeAssignments()->with(['store', 'assignedBy'])->get();
+        return view('users.edit', compact('user', 'roles', 'permissionModules', 'rolePresets', 'userPermissions', 'stores', 'currentStoreId', 'places', 'scopedRoleIds', 'assignmentHistory'));
+    }
+
+    /**
+     * Données du bloc « magasin d'affectation » : magasins proposés, localités
+     * (création d'un magasin à la volée) et rôles limités à un magasin, c'est-à-
+     * dire ceux dont le preset n'inclut pas « stores.all ». Rien n'est codé en
+     * dur : un nouveau rôle sans cette permission affiche aussi le bloc.
+     */
+    private function storeAssignmentFormData(): array
+    {
+        $stores = \App\Models\Store::optionsFor(Auth::user()->isRestrictedToStore() ? Auth::user() : null)->loadCount('users');
+        $places = \App\Models\Place::orderBy('placeName')->get();
+        $globalRoleIds = \App\Models\Role::whereHas('permissions', fn ($q) => $q->where('slug', 'stores.all'))->pluck('id');
+        $scopedRoleIds = \App\Models\Role::whereNotIn('slug', ['admin', 'customer', 'associe'])
+            ->whereNotIn('id', $globalRoleIds)
+            ->pluck('id')
+            ->all();
+
+        return [$stores, $places, $scopedRoleIds];
+    }
+
+    /** Règles de validation du bloc « magasin d'affectation ». */
+    private function storeAssignmentRules(): array
+    {
+        return [
+            'store_mode'             => 'nullable|in:existing,new',
+            'store_id'               => 'nullable|exists:stores,id',
+            'new_store.store_name'   => 'required_if:store_mode,new|nullable|string|max:255|unique:stores,store_name',
+            'new_store.place_id'     => 'required_if:store_mode,new|nullable|exists:places,id',
+            'new_store.address'      => 'nullable|string|max:255',
+        ];
+    }
+
+    /**
+     * Applique le choix du formulaire : magasin existant, ou nouveau magasin
+     * créé ici puis affecté automatiquement. Ne s'applique qu'aux rôles limités
+     * à un magasin ; un profil à vue globale n'a pas d'affectation.
+     *
+     * @param bool $clearIfEmpty  en modification, « aucun magasin » désaffecte.
+     */
+    private function applyStoreAssignment(User $user, Request $request, bool $clearIfEmpty): void
+    {
+        [, , $scopedRoleIds] = $this->storeAssignmentFormData();
+        if (! in_array((int) $user->role_id, array_map('intval', $scopedRoleIds), true)) {
+            return;
+        }
+
+        if ($request->input('store_mode') === 'new') {
+            $store = \App\Models\Store::create([
+                'store_name'    => $request->input('new_store.store_name'),
+                'place_id'      => $request->input('new_store.place_id'),
+                'address'       => $request->input('new_store.address'),
+                // Responsable par défaut : l'employé qui y est affecté (modifiable
+                // ensuite depuis la fiche du magasin).
+                'user_id'       => $user->id,
+                'type'          => \App\Models\Store::TYPE_MAGASIN,
+                'status'        => 1,
+                'store_picture' => '',
+                'description'   => $request->input('new_store.store_name'),
+            ]);
+            $user->assignToStore($store->id, Auth::id());
+
+            return;
+        }
+
+        if ($request->filled('store_id')) {
+            if (Auth::user()->isRestrictedToStore()) {
+                $this->authorizeStore($request->store_id);
+            }
+            $user->assignToStore((int) $request->store_id, Auth::id());
+        } elseif ($clearIfEmpty && $request->has('store_mode')) {
+            $user->assignToStore(null, Auth::id());
+        }
     }
 
     /**
@@ -123,8 +197,8 @@ class Authentification extends Controller
 
     public function register(){
         [$roles, $permissionModules, $rolePresets] = $this->permissionFormData();
-        $stores = \App\Models\Store::with('manager')->orderBy('store_name')->get();
-        return view('users.register', compact('roles', 'permissionModules', 'rolePresets', 'stores'));
+        [$stores, $places, $scopedRoleIds] = $this->storeAssignmentFormData();
+        return view('users.register', compact('roles', 'permissionModules', 'rolePresets', 'stores', 'places', 'scopedRoleIds'));
     }
 
     public function create(Request $request)
@@ -138,8 +212,7 @@ class Authentification extends Controller
             'role_id' => 'required|integer|exists:roles,id',
             'permissions' => 'nullable|array',
             'permissions.*' => 'integer|exists:permissions,id',
-            'store_id' => 'nullable|exists:stores,id',
-        ],[
+        ] + $this->storeAssignmentRules(),[
             'email.required' => 'Vous devez remplir le champ email',
             'email.email' => 'Le champ email doit contenir un @ et .',
             'email.unique' => 'Cet email est déjà utilisé par un autre compte.',
@@ -203,9 +276,10 @@ class Authentification extends Controller
             // l'inverse) — cf. IndexController qui résout la boutique du vendeur par
             // Store::where('user_id', ...). On répercute donc le choix fait ici sur
             // la boutique sélectionnée, qui perd son ancien responsable le cas échéant.
-            if ($role?->slug === 'user' && $request->filled('store_id')) {
-                \App\Models\Store::where('id', $request->store_id)->update(['user_id' => $user->id]);
-            }
+            // Affectation à un seul magasin (users.store_id + historique). Un
+            // magasin peut désormais avoir plusieurs vendeurs : on ne retire plus
+            // la boutique à son responsable actuel (stores.user_id).
+            $this->applyStoreAssignment($user, $request, false);
         }
         catch(\Exception $e) {
             return back()->withInput()->with('fall', 'une erreur lors de lajout, voici le message : '.$e->getMessage());
@@ -238,8 +312,7 @@ class Authentification extends Controller
             'username' => ['required', 'string', Rule::unique('users', 'username')->ignore($user->id)],
             'phone' => 'required|string|max:20',
             'email' => ['required', 'email', Rule::unique('users', 'email')->ignore($user->id)],
-            'store_id' => 'nullable|exists:stores,id',
-        ], [
+        ] + $this->storeAssignmentRules(), [
             'email.unique' => 'Cet email est déjà utilisé par un autre compte.',
             'username.unique' => 'Ce nom d\'utilisateur est déjà pris.',
         ]);
@@ -270,9 +343,9 @@ class Authentification extends Controller
         // colonne stores.user_id est NOT NULL, donc "retirer" un vendeur suppose de
         // donner sa boutique à quelqu'un d'autre (via Boutiques > Modifier), pas de la
         // laisser vacante.
-        if ($request->filled('store_id') && \App\Models\Role::find($user->role_id)?->slug === 'user') {
-            \App\Models\Store::where('id', $request->store_id)->update(['user_id' => $user->id]);
-        }
+        // Changement de magasin : l'affectation précédente est close (historique),
+        // l'employé n'a plus accès qu'aux données de son nouveau magasin.
+        $this->applyStoreAssignment($user, $request, true);
 
         // Le champ "Mot de Passe" du formulaire est pré-rempli avec le mot de passe
         // actuel (motdepasse) pour que l'admin puisse le consulter en éditant — il

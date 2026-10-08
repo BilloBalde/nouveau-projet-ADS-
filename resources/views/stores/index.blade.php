@@ -51,9 +51,13 @@
                                 <table class="table  datanew">
                                     <thead>
                                         <tr>
-                                            <th>Nom Stock</th>
+                                            <th>Emplacement</th>
+                                            <th>Type</th>
+                                            <th>Rattaché à</th>
+                                            <th>Stock (unités)</th>
+                                            <th>Employés</th>
                                             <th>Localité</th>
-                                            <th>Vendeur</th>
+                                            <th>Responsable</th>
                                             <th>Image</th>
                                             <th>Status</th>
                                             <th>Description</th>
@@ -64,14 +68,21 @@
                                     <tbody>
                                         @foreach ($dataTable as $item)
                                         <tr>
-                                            <td>{{ $item->store_name }}</td>
+                                            <td>
+                                                <a href="{{ route('stock.show', $item->id) }}">{{ $item->store_name }}</a>
+                                                @if ($item->is_main)<span class="badge bg-success ms-1">Principal</span>@endif
+                                            </td>
+                                            <td>{{ $item->type_label }}</td>
+                                            <td>{{ $item->parent?->store_name ?? '—' }}</td>
+                                            <td>{{ number_format((int) $item->stock_total, 0, ',', ' ') }}</td>
+                                            <td>{{ $item->users_count }}</td>
                                             <td>{{ $item->place }}</td>
-                                            <td>{{ $item->user }}</td>
+                                            <td>{{ $item->manager?->name ?? $item->user }}</td>
                                             <td>
                                                 @if($item->store_picture)
                                                     <img src="{{ asset('stores/' . $item->store_picture) }}" alt="{{ $item->store_name }}" style="width: 180px; height: 150px; object-fit: cover;">
                                                 @else
-                                                    <div style="width: 180px; height: 150px; display: flex; align-items: center; justify-content: center; background: #f0f8f3; color: #1f6f43; border-radius: 6px;">
+                                                    <div style="width: 180px; height: 150px; display: flex; align-items: center; justify-content: center; background: #F4F5EC; color: #3E4C21; border-radius: 6px;">
                                                         <i class="fas fa-store fa-2x"></i>
                                                     </div>
                                                 @endif
@@ -85,7 +96,7 @@
                                             <td style="word-wrap: break-word; white-space: normal;">{{ $item->description }}</td>
                                             <td>{{ $item->updated_at }}</td>
                                             <td>
-                                                @if (Auth::user() && Auth::user()->role_id != 3)
+                                                @if (Auth::user() && ! Auth::user()->isRestrictedToStore())
                                                 <a class="me-3" href="{{ route('boutiques.edit', $item->id) }}">
                                                     <img src="{{ asset('assets/img/icons/edit.svg') }}" alt="img">
                                                 </a>

@@ -44,7 +44,7 @@
                                                 'Bonjour ' . ($r->customer?->customerName ?? 'cher client')
                                                 . ', vous avez une facture impayée de '
                                                 . number_format($r->total, 0, ',', ' ')
-                                                . ' GNF chez Coleah Bandeya & Fils. Veuillez régler votre dette avant lundi. Merci de votre confiance.'
+                                                . ' GNF chez TELICO. Veuillez régler votre dette avant lundi. Merci de votre confiance.'
                                             );
                                         @endphp
                                         <tr>
@@ -52,7 +52,7 @@
                                                 <small class="d-block text-muted">{{ $r->customer?->mark ?? '' }}</small>
                                             </td>
                                             <td>{{ $r->customer?->tel ?? 'N/A' }}</td>
-                                            <td><strong style="color:#1f6f43;">{{ number_format($r->total, 0, ',', ' ') }} GNF</strong></td>
+                                            <td><strong style="color:#3E4C21;">{{ number_format($r->total, 0, ',', ' ') }} GNF</strong></td>
                                             <td>{{ $r->count }}</td>
                                             <td>{{ $r->max_reminders }}</td>
                                             <td>{{ $r->last_sent_at ? \Carbon\Carbon::parse($r->last_sent_at)->format('d/m/Y H:i') : '—' }}</td>
@@ -69,7 +69,7 @@
                                                 <form method="POST" action="{{ route('admin.debt-reminders.send-sms', $r->customer?->id) }}" class="d-inline"
                                                       onsubmit="return confirm('Envoyer un SMS de rappel à {{ $r->customer?->customerName }} ?');">
                                                     @csrf
-                                                    <button type="submit" class="btn btn-sm" style="background:#1f6f43;color:#fff;">
+                                                    <button type="submit" class="btn btn-sm" style="background:#3E4C21;color:#fff;">
                                                         <i class="fas fa-sms me-1"></i>SMS
                                                     </button>
                                                 </form>

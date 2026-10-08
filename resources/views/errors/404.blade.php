@@ -20,25 +20,25 @@
             justify-content: center;
             padding: 24px;
             font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-            color: #0c2c1c;
-            background: linear-gradient(135deg, #f0f8f3, #ffffff 55%, #fef3f2);
+            color: #1C230D;
+            background: linear-gradient(135deg, #F4F5EC, #ffffff 55%, #FBF6EA);
         }
         .boite {
             width: 100%;
             max-width: 520px;
             text-align: center;
             background: #fff;
-            border: 1px solid #dcefe3;
+            border: 1px solid #E6E9D5;
             border-radius: 18px;
             padding: 48px 32px;
-            box-shadow: 0 24px 60px -30px rgba(12, 44, 28, .45);
+            box-shadow: 0 24px 60px -30px rgba(28,35,13, .45);
         }
         .code {
             font-size: 72px;
             font-weight: 800;
             line-height: 1;
             letter-spacing: -.03em;
-            background: linear-gradient(120deg, #1f6f43, #2e8b57 55%, #d92d20);
+            background: linear-gradient(120deg, #3E4C21, #6B7A35 55%, #C7A150);
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
@@ -48,7 +48,7 @@
             height: 4px;
             margin: 20px auto 24px;
             border-radius: 999px;
-            background: linear-gradient(90deg, #1f6f43 0 55%, #d92d20 55% 100%);
+            background: linear-gradient(90deg, #3E4C21 0 55%, #C7A150 55% 100%);
         }
         h1 { margin: 0 0 10px; font-size: 22px; font-weight: 700; }
         p  { margin: 0 0 28px; color: #40614f; line-height: 1.6; }
@@ -56,15 +56,15 @@
             display: inline-block;
             padding: 13px 28px;
             border-radius: 999px;
-            background: linear-gradient(135deg, #1f6f43, #195836);
+            background: linear-gradient(135deg, #3E4C21, #323D1A);
             color: #fff;
             font-weight: 600;
             text-decoration: none;
         }
-        .lien:hover { background: linear-gradient(135deg, #195836, #0c2c1c); }
+        .lien:hover { background: linear-gradient(135deg, #323D1A, #1C230D); }
         @media (prefers-color-scheme: dark) {
-            body { color: #eaf4ee; background: linear-gradient(135deg, #061710, #0c2c1c); }
-            .boite { background: #0c2c1c; border-color: #195836; }
+            body { color: #eaf4ee; background: linear-gradient(135deg, #10150A, #1C230D); }
+            .boite { background: #1C230D; border-color: #323D1A; }
             p { color: #a9c9b7; }
         }
     </style>

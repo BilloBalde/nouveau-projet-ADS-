@@ -34,12 +34,12 @@
                                 </div>
                                 <div class="col-lg-3 col-sm-6 col-12">
                                     <div class="form-group">
-                                        <label>Magasin de destination</label>
+                                        <label>Destination du stock</label>
                                         <div class="row g-1">
                                             <div class="col-9">
                                             <select name="store_id" id="storeSelect" class="form-control" required>
                                                 @foreach($stores as $store)
-                                                    <option value="{{ $store->id }}" {{ old('store_id', $order->store_id) == $store->id ? 'selected' : '' }}>{{ $store->store_name ?? $store->name }}</option>
+                                                    <option value="{{ $store->id }}" {{ old('store_id', $order->store_id) == $store->id ? 'selected' : '' }}>{{ $store->full_name }} ({{ $store->type_label }})</option>
                                                 @endforeach
                                             </select>
                                             </div>
@@ -52,6 +52,8 @@
                                         @error('store_id') <span class="text-danger">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
+                                @include('purchase_orders.partials.supplier', ['selectedSupplierId' => $order->partner_id])
+                                @include('purchase_orders.partials.fund', ['selectedFundId' => $order->fund_id])
                                 <div class="col-lg-3 col-sm-6 col-12">
                                     <div class="form-group">
                                         <label>Date d'émission</label>
@@ -232,13 +234,13 @@
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title">Nouvelle boutique</h5>
+                        <h5 class="modal-title">Nouvel emplacement (magasin, entrepôt ou stock)</h5>
                         <button type="button" class="close" data-bs-dismiss="modal"><span>&times;</span></button>
                     </div>
                     <div class="modal-body">
                         <div id="newStoreError" class="alert alert-danger" style="display:none;"></div>
                         <div class="form-group">
-                            <label>Nom de la boutique</label>
+                            <label>Nom de l'emplacement</label>
                             <input type="text" id="newStoreName" class="form-control">
                         </div>
                         <div class="form-group">
@@ -247,6 +249,23 @@
                                 <option value="">Sélectionner</option>
                                 @foreach($places as $place)
                                     <option value="{{ $place->id }}">{{ $place->placeName }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Type d'emplacement</label>
+                            <select id="newStoreType" class="form-control">
+                                @foreach(\App\Models\Store::TYPES as $typeValue => $typeLabel)
+                                    <option value="{{ $typeValue }}" {{ $typeValue === 'entrepot' ? 'selected' : '' }}>{{ $typeLabel }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Rattaché à (optionnel)</label>
+                            <select id="newStoreParent" class="form-control">
+                                <option value="">— Aucun —</option>
+                                @foreach(\App\Models\Store::optionsFor(null)->where('type', '!=', 'stock') as $parentStore)
+                                    <option value="{{ $parentStore->id }}">{{ $parentStore->full_name }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -262,7 +281,7 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-cancel" data-bs-dismiss="modal">Annuler</button>
-                        <button type="button" class="btn btn-submit" id="newStoreSubmit">Créer la boutique</button>
+                        <button type="button" class="btn btn-submit" id="newStoreSubmit">Créer l'emplacement</button>
                     </div>
                 </div>
             </div>
@@ -323,6 +342,7 @@
             })->all();
         @endphp
         @include('layouts.scripts')
+        @stack('purchase_modals')
         <script>
         document.addEventListener('DOMContentLoaded', function () {
             const linesContainer = document.getElementById('poLines');
@@ -381,6 +401,8 @@
                     store_name: document.getElementById('newStoreName').value,
                     place_id: document.getElementById('newStorePlace').value,
                     user_id: document.getElementById('newStoreManager').value,
+                    type: document.getElementById('newStoreType').value,
+                    parent_id: document.getElementById('newStoreParent').value || null,
                 }).then(function (result) {
                     if (!result.ok || !result.data.success) {
                         const errors = result.data.errors

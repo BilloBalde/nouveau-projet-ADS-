@@ -25,6 +25,8 @@ class User extends Authenticatable
         'status',
         'token',
         'description',
+        'store_id',
+        'fund_id',
     ];
 
     protected $hidden = [
@@ -54,15 +56,18 @@ class User extends Authenticatable
     /** Responsable achats (approvisionnement, fournisseurs). */
     public const ROLE_ACHAT = 6;
 
+    /**
+     * Employé (accès au back-office) : tout rôle existant autre que « client ».
+     * La liste figée des ids 1, 2, 3, 5, 6 excluait les rôles ajoutés ensuite
+     * (magasinier, responsable magasin, ou tout rôle créé depuis l'écran des
+     * rôles) : ces comptes étaient renvoyés à l'accueil. Ce que chacun peut
+     * faire reste décidé par ses permissions.
+     */
     public function isStaff(): bool
     {
-        return in_array((int) $this->role_id, [
-            self::ROLE_ADMIN,
-            self::ROLE_MANAGER,
-            self::ROLE_STORE_MANAGER,
-            self::ROLE_COMPTABLE,
-            self::ROLE_ACHAT,
-        ], true);
+        return $this->role_id !== null
+            && ! $this->isCustomer()
+            && $this->roleRelation !== null;
     }
 
     public function isCustomer(): bool
@@ -110,6 +115,186 @@ class User extends Authenticatable
     public function permissions()
     {
         return $this->belongsToMany(Permission::class, 'user_permissions');
+    }
+
+    /** Fonds dont ce compte est l'associé (lecture seule de son relevé). */
+    public function fund()
+    {
+        return $this->belongsTo(Fund::class);
+    }
+
+    /**
+     * Compte d'associé : il ne voit que son relevé. Reconnu au rôle « associe »
+     * (créé par LocationPermissions), pas à un numéro de rôle.
+     */
+    public function isAssociate(): bool
+    {
+        return $this->roleRelation?->slug === 'associe';
+    }
+
+    public function storeAssignments()
+    {
+        return $this->hasMany(StoreAssignment::class)->latest('started_at');
+    }
+
+    // -----------------------------------------------------------------
+    // Périmètre magasin
+    // -----------------------------------------------------------------
+
+    /** Memo par requête, invalidé par assignToStore(). */
+    private ?array $accessibleStoreIdsCache = null;
+
+    /**
+     * Vrai si l'employé est limité à son magasin, par ses droits : il ne
+     * possède pas la permission « stores.all ». Admin, manager, comptable et
+     * achats l'ont ; vendeur, magasinier et responsable magasin ne l'ont pas.
+     * Sert aux décisions de droits (menus d'administration…), pas au filtrage.
+     */
+    public function isRestrictedToStore(): bool
+    {
+        return ! $this->hasPermission('stores.all');
+    }
+
+    /**
+     * Vrai si les données affichées doivent être limitées à une section :
+     * toujours pour un employé rattaché, et pour le propriétaire quand il est
+     * « entré » dans une section (sinon il est en vue globale).
+     */
+    public function isStoreScoped(): bool
+    {
+        return $this->isRestrictedToStore() || $this->activeSectionId() !== null;
+    }
+
+    /**
+     * Section choisie par un profil à vue globale (session), ou null pour la
+     * vue globale. Un employé rattaché n'a pas de choix : sa section est son
+     * magasin d'affectation.
+     */
+    public function activeSectionId(): ?int
+    {
+        // La session est celle de l'utilisateur connecté : elle ne vaut pas pour
+        // un autre compte manipulé pendant la requête (fiche employé…).
+        if ((int) auth()->id() !== (int) $this->id
+            || $this->isRestrictedToStore()
+            || ! app()->bound('session') || ! request()->hasSession()) {
+            return null;
+        }
+
+        $id = (int) session('section_id');
+
+        if (! $id) {
+            return null;
+        }
+
+        return $this->activeSectionCache[$id] ??= Store::whereKey($id)->exists() ? $id : null;
+    }
+
+    /** @var array<int, int|null> */
+    private array $activeSectionCache = [];
+
+    /**
+     * Section courante : celle choisie par le propriétaire, ou le magasin
+     * d'affectation d'un employé. Null = vue globale.
+     */
+    public function currentSection(): ?Store
+    {
+        $id = $this->isRestrictedToStore() ? $this->assignedStoreId() : $this->activeSectionId();
+
+        return $id ? Store::find($id) : null;
+    }
+
+    /**
+     * Magasin d'affectation. users.store_id fait foi ; stores.user_id (l'ancien
+     * rattachement, une seule personne par boutique) sert de repli pour les
+     * comptes que la migration n'aurait pas pu reprendre. Pour le propriétaire
+     * entré dans une section, c'est cette section.
+     */
+    public function assignedStoreId(): ?int
+    {
+        if ($section = $this->activeSectionId()) {
+            return $section;
+        }
+
+        if ($this->store_id) {
+            return (int) $this->store_id;
+        }
+
+        // Le repli ne vaut que pour un compte jamais affecté par le nouveau
+        // mécanisme : un employé explicitement désaffecté ne doit pas retrouver
+        // son ancien magasin par ce biais.
+        if (StoreAssignment::where('user_id', $this->id)->exists()) {
+            return null;
+        }
+
+        $legacy = Store::where('user_id', $this->id)->orderBy('id')->value('id');
+
+        return $legacy ? (int) $legacy : null;
+    }
+
+    /**
+     * Emplacements accessibles : le magasin d'affectation et tout ce qui lui
+     * est rattaché (stocks internes, entrepôts). Tableau vide si l'employé n'a
+     * pas de magasin — il ne voit alors rien, plutôt que tout.
+     * Sans objet pour un profil à vue globale (voir isStoreScoped()).
+     */
+    public function accessibleStoreIds(): array
+    {
+        if ($this->accessibleStoreIdsCache !== null) {
+            return $this->accessibleStoreIdsCache;
+        }
+
+        $storeId = $this->assignedStoreId();
+
+        return $this->accessibleStoreIdsCache = $storeId ? Store::withDescendantIds($storeId) : [];
+    }
+
+    public function canAccessStore($storeId): bool
+    {
+        if (! $storeId) {
+            return false;
+        }
+
+        return ! $this->isStoreScoped() || in_array((int) $storeId, $this->accessibleStoreIds(), true);
+    }
+
+    /**
+     * Magasin imposé à l'employé dans les formulaires (null = choix libre).
+     * Remplace les anciens `role_id == 3 ? Store::where('user_id', …)` éparpillés.
+     */
+    public function forcedStoreId(): ?int
+    {
+        return $this->isStoreScoped() ? $this->assignedStoreId() : null;
+    }
+
+    /**
+     * Affecte l'employé à un seul magasin. L'affectation précédente est close
+     * (historique conservé dans store_assignments), pas écrasée.
+     */
+    public function assignToStore(?int $storeId, ?int $assignedBy = null): void
+    {
+        $current = $this->store_id ? (int) $this->store_id : null;
+
+        if ($current === $storeId) {
+            return;
+        }
+
+        $now = now();
+
+        StoreAssignment::where('user_id', $this->id)->whereNull('ended_at')->update(['ended_at' => $now]);
+
+        if ($storeId) {
+            StoreAssignment::create([
+                'user_id'     => $this->id,
+                'store_id'    => $storeId,
+                'assigned_by' => $assignedBy,
+                'started_at'  => $now,
+            ]);
+        }
+
+        $this->store_id = $storeId;
+        $this->save();
+
+        $this->accessibleStoreIdsCache = null;
     }
 
     /** Slugs de permissions effectifs, memoïsés pour la durée de la requête. */

@@ -155,6 +155,14 @@
     <script>
     $(document).ready(function() {
         // Configuration
+        // Propriétaire de la marchandise de chaque ligne : fonds propres ou fonds d'un associé.
+        const fundsList = @json($funds);
+        function fundSelect(index, selected) {
+            if (!fundsList.length) return '';
+            let opts = '<option value="">Fonds propres</option>';
+            fundsList.forEach(f => { opts += '<option value="' + f.id + '"' + (String(f.id) === String(selected) ? ' selected' : '') + '>' + f.name + '</option>'; });
+            return '<select name="products[' + index + '][fund_id]" class="form-control form-control-sm mt-1" title="Propriétaire de la marchandise">' + opts + '</select>';
+        }
         let productIndex = {{ $devis->lines->count() }};
         const products = @json($products);
         const existingLines = @json($devis->lines);
@@ -190,6 +198,7 @@
             
             html += `
                         </select>
+                    ${fundSelect(index, lineData ? lineData.fund_id : null)}
                     </td>
                     <td>
                         <input type="number" name="products[${index}][quantity]" class="form-control quantity-input" 

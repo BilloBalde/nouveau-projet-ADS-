@@ -74,10 +74,15 @@ class FactureController extends Controller
         $query->with(['customer', 'store', 'paiements' => fn ($q) => $q->latest()])
             ->withSum('sales as interet_total', 'interet');
 
-        // Appliquer la restriction selon le rôle
-        if (auth()->user()->role_id == 3) {
-            $storeId = Store::where('user_id', auth()->user()->id)->first()->id;
-            $query->where('store_id', $storeId);
+        // Périmètre magasin : un employé rattaché ne voit que les factures de
+        // son magasin (et des emplacements qui lui sont rattachés).
+        $user = auth()->user();
+        if ($user->isStoreScoped()) {
+            $query->whereIn('store_id', $user->accessibleStoreIds());
+        }
+
+        if ($request->filled('channel')) {
+            $query->where('channel', $request->input('channel'));
         }
 
         $dataTable = $query->paginate(50)->appends($request->query());
@@ -92,6 +97,7 @@ class FactureController extends Controller
         if (!$laFacture) {
             abort(404, "Facture introuvable.");
         }
+        $this->authorizeStore($laFacture->store_id);
         $customer = Customer::where('id', $laFacture->customer_id)->first();
         $paiements = Payment::where('facture_id', $laFacture->id)->get();
         return view('factures.show', compact('invoice', 'facture', 'laFacture', 'customer', 'user', 'paiements'));
@@ -199,14 +205,13 @@ class FactureController extends Controller
     }
     
     public function facturationForm(){
-        $userStoreId = Auth::user()->role_id == 3
-            ? Store::where('user_id', Auth::user()->id)->value('id')
-            : null;
-        $boutiques = Store::all();
+        $userStoreId = Auth::user()->forcedStoreId();
+        $boutiques = Store::optionsFor(Auth::user());
         $customers = Customer::all();
         $countFactures = (Facture::max('id') ?? 0) + 1;
         $numeroFacture = date('Ym').''.sprintf("%04d", $countFactures);
-        return view('factures.create', compact('boutiques', 'customers', 'userStoreId', 'numeroFacture'));
+        $funds = \App\Models\Fund::active()->orderBy('name')->get(['id', 'name']);
+        return view('factures.create', compact('boutiques', 'customers', 'userStoreId', 'numeroFacture', 'funds'));
     }
         
     public function facturationStore(Request $request){
@@ -226,7 +231,10 @@ class FactureController extends Controller
             'products.*.price' => 'required|numeric|min:0',
             'products.*.subtotal' => 'required|numeric|min:0',
             'products.*.image' => 'nullable|file|mimes:jpg,png,jpeg',
+            'products.*.fund_id' => 'nullable|exists:funds,id',
         ]);
+
+        $this->authorizeStore($request->store_id);
 
         try {
             DB::beginTransaction();
@@ -248,7 +256,8 @@ class FactureController extends Controller
                 $productName = str_replace('`', '', $productName); // Remove backticks that can cause SQL issues
                 $produit = Product::firstOrNew(['libelle' => $productName]);
                 $produit->sku         = $productName; // consider making this unique if needed
-                $produit->qtityCtn    = $product['qty_per_ctn'];
+                // (La colonne products.qtityCtn n'existe pas : l'écrire faisait
+                // échouer chaque facturation sur une erreur SQL.)
                 $produit->description = $productName;
 
                 if ($uploadedImagePath) {
@@ -266,23 +275,26 @@ class FactureController extends Controller
                 $total_amount += $product['subtotal'];
                 //dd($product['cartons'], $product['qty_per_ctn'], $product['subtotal']);
                 // Atomic decrement to avoid overselling under concurrency
-                if (!$this->stock->decrementIfAvailable((int) $request->store_id, (int) $produit->id, (int) $product['quantity'])) {
-                    throw new \RuntimeException('Stock insuffisant pour ce produit.');
-                }
+                // Propriétaire de la marchandise de la ligne : fonds propres
+                // (vide) ou fonds d'un associé. Le stock est pris chez lui.
+                $fundId = ! empty($product['fund_id']) ? (int) $product['fund_id'] : null;
 
-                //$prix_achat = Purchase::where('product_id', $data['product_id'])->first()->price;
-                //$dataItem->latestLigneCommande?->unit_price_sale
-                //$product = Product::find($data['product_id']);
-                $latest = $produit->latestLigneCommande;
-                if ($latest && $latest->unit_price_purchase !== null) {
-                    $prix_achat = (float) $latest->unit_price_purchase;
-                } elseif ($latest && $latest->quantity > 0 && $latest->total_price_purchase !== null) {
-                    $prix_achat = (float) ($latest->total_price_purchase / $latest->quantity);
-                } else {
-                    $prix_achat = (float) (Purchase::where('product_id', $produit->id)->latest()->value('price') ?? 0);
-                }
-                //dd($prix_achat);
-                $product["interet"] = ($product['price'] - $prix_achat) * $product['quantity'];
+                $this->stock->decrementOrFail((int) $request->store_id, (int) $produit->id, (int) $product['quantity'], [
+                    'type'         => \App\Models\StockMovement::SALE,
+                    'source_type'  => 'facture',
+                    'document_ref' => $request->numeroFacture,
+                    'customer_id'  => $request->customer_id,
+                    'unit_price'   => $product['price'],
+                    'fund_id'      => $fundId,
+                ]);
+
+                // Marge au coût du propriétaire, même règle que le point de vente.
+                // (L'ancien calcul prenait le dernier « achat simple », ce qui
+                // donnait des intérêts négatifs ou égaux au prix de vente.)
+                $coutFonds = $fundId ? app(\App\Services\FundService::class)->unitCost($fundId, (int) $produit->id) : null;
+                $product["interet"] = $fundId
+                    ? ($coutFonds > 0 ? ((float) $product['price'] - $coutFonds) * (int) $product['quantity'] : 0)
+                    : $produit->interetPour((float) $product['price'], (int) $product['quantity']);
                 Sale::create(
                     [
                         'numeroFacture' => $request->numeroFacture,
@@ -293,6 +305,8 @@ class FactureController extends Controller
                         'interet' => $product['interet'],
                         'store_id' => $request->store_id,
                         'user_id' => auth()->id(),
+                        'fund_id' => $fundId,
+                        'unit_cost' => $fundId ? $coutFonds : null,
                     ]
                 );
             }
@@ -305,6 +319,8 @@ class FactureController extends Controller
             $facture = Facture::create([
                 'numero_facture' => $request->numeroFacture,
                 'store_id' => $request->store_id,
+                'user_id' => auth()->id(),
+                'channel' => Facture::CHANNEL_FACTURATION,
                 'customer_id' => $request->customer_id,
                 'quantity' => $total_pcs,
                 'montant_total' => $total_amount,
@@ -320,7 +336,7 @@ class FactureController extends Controller
                 'facture_id' => $facture->id,
                 'versement' => $facture->avance,
                 'total_paye' => $facture->avance,
-                'paid_by' => "Cash",
+                'paid_by' => 'cash',
                 'reste' => $reste,
                 'note' => "un premier versement de ".$facture->avance." effectué lors de l'emission de la facture comme avance.",
                 'receipt_number' => $receiptNumber,
@@ -456,6 +472,8 @@ class FactureController extends Controller
             return redirect()->route('factures.index')->with('error', $message);
         }
 
+        $this->authorizeStore($facture->store_id);
+
         try {
             DB::beginTransaction();
 
@@ -467,11 +485,21 @@ class FactureController extends Controller
 
             // 1) Restore stock for each sale, then delete the sale
             foreach ($sales as $sale) {
-                // increment quantity back to store stock
-                DB::table('store_products')
-                    ->where('store_id', $sale->store_id)
-                    ->where('product_id', $sale->product_id)
-                    ->increment('quantity', (int) $sale->quantity);
+                // Remise en stock à l'emplacement exact d'où la ligne était
+                // sortie, tracée comme un retour. Une vente tierce n'avait
+                // jamais puisé dans le stock : rien à y remettre.
+                if (! $sale->is_third_party) {
+                    $this->stock->increment((int) $sale->store_id, (int) $sale->product_id, (int) $sale->quantity, [
+                        'type'         => \App\Models\StockMovement::SALE_RETURN,
+                        'source_type'  => 'sale',
+                        'source_id'    => $sale->id,
+                        'document_ref' => $facture->numero_facture,
+                        'customer_id'  => $facture->customer_id,
+                        'unit_price'   => $sale->prix,
+                        'fund_id'      => $sale->fund_id,
+                        'reason'       => 'Suppression de la facture ' . $facture->numero_facture,
+                    ]);
+                }
 
                 // delete sale row
                 $sale->delete();

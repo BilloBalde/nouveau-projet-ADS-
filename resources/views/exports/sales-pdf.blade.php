@@ -248,7 +248,7 @@
             @endif
             <div class="document-title">
                 <h1>RAPPORT DES VENTES</h1>
-                <h3>{{ $company?->name ?? 'Coleah Bandeya & Fils' }}</h3>
+                <h3>{{ $company?->name ?? 'TELICO' }}</h3>
             </div>
         </div>
     </div>

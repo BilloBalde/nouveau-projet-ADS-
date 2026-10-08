@@ -76,31 +76,10 @@ class UserController extends Controller
      */
     public function edit($id)
     {
-        $user = User::find($id);
-
-        $granter   = Auth::user();
-        $isAdmin   = $granter && (int) $granter->role_id === User::ROLE_ADMIN;
-        $grantable = $isAdmin ? null : $granter?->effectivePermissionIds() ?? collect();
-
-        $permissions = \App\Models\Permission::orderBy('module')->orderBy('id')->get();
-        if (! $isAdmin) {
-            $permissions = $permissions->whereIn('id', $grantable->all());
-        }
-        $permissionModules = $permissions->groupBy('module');
-
-        $roles = \App\Models\Role::whereNotIn('slug', ['admin', 'customer'])->get();
-        $rolePresets = $roles->mapWithKeys(
-            fn ($role) => [$role->id => $role->permissions()->pluck('permissions.id')->all()]
-        );
-        if (! $isAdmin) {
-            $roles = $roles->filter(
-                fn ($role) => collect($rolePresets[$role->id])->diff($grantable)->isEmpty()
-            )->values();
-        }
-
-        $userPermissions = $user->permissions()->pluck('permissions.id')->all();
-
-        return view('users.edit', compact('user', 'roles', 'permissionModules', 'rolePresets', 'userPermissions'));
+        // Le formulaire complet (rôle, permissions, magasin d'affectation et son
+        // historique) est servi par Authentification::edit : cette version-ci ne
+        // transmettait pas les magasins et la vue échouait.
+        return redirect()->route('editUser', $id);
     }
 
     /**

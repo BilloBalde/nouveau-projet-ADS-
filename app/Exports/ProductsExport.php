@@ -17,8 +17,8 @@ class ProductsExport implements FromView, WithTitle, WithChunkReading
         // Utiliser chunk pour éviter de charger tout en mémoire
         $dataTable = Product::with('categories', 'stores')->get();
         
-        $userStoreId = auth()->user()->role_id == 3
-                ? Store::where('user_id', auth()->user()->id)->value('id')
+        $userStoreId = auth()->user()->isStoreScoped()
+                ? auth()->user()->assignedStoreId()
                 : null;
 
         return view('products.export', compact('dataTable', 'userStoreId'));

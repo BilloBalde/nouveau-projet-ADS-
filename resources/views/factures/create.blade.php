@@ -548,6 +548,15 @@
             }
 
 
+            // Propriétaire de la marchandise de chaque ligne : fonds propres ou fonds d'un associé.
+            const fundsList = @json($funds ?? []);
+            function fundSelect(index) {
+                if (!fundsList.length) return '';
+                let opts = '<option value="">Fonds propres</option>';
+                fundsList.forEach(f => { opts += '<option value="' + f.id + '">' + f.name + '</option>'; });
+                return '<select name="products[' + index + '][fund_id]" class="form-control form-control-sm mt-1" title="Propriétaire de la marchandise">' + opts + '</select>';
+            }
+
             document.getElementById('addRowButton').addEventListener('click', function () {
                 rowIndex++;
                 const tableBody = document.querySelector('#orderTable tbody');
@@ -555,7 +564,7 @@
                 const newRow = document.createElement('tr');
                 newRow.innerHTML = `
                     <td>${rowIndex}</td>
-                    <td><input type="text" name="products[${rowIndex}][productName]" class="form-control productName"></td>
+                    <td><input type="text" name="products[${rowIndex}][productName]" class="form-control productName">${fundSelect(rowIndex)}</td>
                     <td>
                         <input type="file" name="products[${rowIndex}][image]" class="form-control image-input" accept="image/*">
                         <img class="image-preview" style="max-width: 80px; max-height: 80px; display: none; margin-top: 5px;">

@@ -44,8 +44,8 @@ class DeviController extends Controller
         }
 
         // Filter by store for staff
-        if (auth()->user()->role_id == 3) {
-            $storeId = Store::where('user_id', auth()->id())->value('id');
+        if (auth()->user()->isStoreScoped()) {
+            $storeId = auth()->user()->assignedStoreId();
             $query->where('store_id', $storeId);
         }
 
@@ -63,11 +63,12 @@ class DeviController extends Controller
         
         // For staff, preselect their store
         $userStoreId = null;
-        if (auth()->user()->role_id == 3) {
-            $userStoreId = Store::where('user_id', auth()->id())->value('id');
+        if (auth()->user()->isStoreScoped()) {
+            $userStoreId = auth()->user()->assignedStoreId();
         }
 
-        return view('devis.create', compact('stores', 'products', 'customers', 'userStoreId'));
+        $funds = \App\Models\Fund::active()->orderBy('name')->get(['id', 'name']);
+        return view('devis.create', compact('stores', 'products', 'customers', 'userStoreId', 'funds'));
     }
 
     public function store(Request $request)
@@ -81,7 +82,18 @@ class DeviController extends Controller
             'products.*.product_id' => 'required|exists:products,id',
             'products.*.quantity' => 'required|integer|min:1',
             'products.*.unit_price' => 'required|numeric|min:0',
+            // Emplacement source par ligne (facultatif : sinon celui du devis).
+            'products.*.store_id' => 'nullable|exists:stores,id',
+            // Propriétaire de la marchandise : vide = fonds propres.
+            'products.*.fund_id' => 'nullable|exists:funds,id',
         ]);
+
+        $this->authorizeStore($request->store_id);
+        foreach ((array) $request->products as $ligne) {
+            if (! empty($ligne['store_id'])) {
+                $this->authorizeStore($ligne['store_id']);
+            }
+        }
 
         DB::beginTransaction();
         try {
@@ -124,6 +136,8 @@ class DeviController extends Controller
                     'unit_price' => $productData['unit_price'],
                     'total_price' => $totalPrice,
                     'notes' => $productData['notes'] ?? null,
+                    'store_id' => $productData['store_id'] ?? null,
+                    'fund_id' => ! empty($productData['fund_id']) ? (int) $productData['fund_id'] : null,
                 ]);
             }
 
@@ -162,7 +176,8 @@ class DeviController extends Controller
         $products = Product::with('stores')->get();
         $customers = Customer::all();
 
-        return view('devis.edit', compact('devis', 'stores', 'products', 'customers'));
+        $funds = \App\Models\Fund::orderBy('name')->get(['id', 'name']);
+        return view('devis.edit', compact('devis', 'stores', 'products', 'customers', 'funds'));
     }
 
     public function update(Request $request, $id)
@@ -182,7 +197,18 @@ class DeviController extends Controller
             'products.*.product_id' => 'required|exists:products,id',
             'products.*.quantity' => 'required|integer|min:1',
             'products.*.unit_price' => 'required|numeric|min:0',
+            // Emplacement source par ligne (facultatif : sinon celui du devis).
+            'products.*.store_id' => 'nullable|exists:stores,id',
+            // Propriétaire de la marchandise : vide = fonds propres.
+            'products.*.fund_id' => 'nullable|exists:funds,id',
         ]);
+
+        $this->authorizeStore($request->store_id);
+        foreach ((array) $request->products as $ligne) {
+            if (! empty($ligne['store_id'])) {
+                $this->authorizeStore($ligne['store_id']);
+            }
+        }
 
         DB::beginTransaction();
         try {
@@ -215,6 +241,8 @@ class DeviController extends Controller
                     'unit_price' => $productData['unit_price'],
                     'total_price' => $totalPrice,
                     'notes' => $productData['notes'] ?? null,
+                    'store_id' => $productData['store_id'] ?? null,
+                    'fund_id' => ! empty($productData['fund_id']) ? (int) $productData['fund_id'] : null,
                 ]);
             }
 

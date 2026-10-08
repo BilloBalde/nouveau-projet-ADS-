@@ -1,6 +1,9 @@
+{{-- Emblème TELICO en favicon pour tout le site public. --}}
+<link rel="icon" type="image/png" href="{{ asset('favicon-telico.png') }}">
+<link rel="apple-touch-icon" href="{{ asset('companies/telico-embleme.png') }}">
 {{-- ════════════════════════════════════════════════════════════════════
-     SYSTÈME DE DESIGN — Coleah Bandeya & Fils
-     Palette : vert forêt (marque) · rouge (action/prix) · blanc (respiration)
+     SYSTÈME DE DESIGN — TELICO
+     Palette tirée du logo (baobab) : vert TELICO · or baobab (détails) · blanc chaud
      Source unique pour toutes les pages publiques : la config Tailwind, les
      jetons CSS et les classes de composants vivent ici, pas dupliqués par page.
      ════════════════════════════════════════════════════════════════════ --}}
@@ -11,54 +14,56 @@
                 colors: {
                     /* Vert de marque — structure, navigation, confiance */
                     brand: {
-                        50:  '#f0f8f3',
-                        100: '#dcefe3',
-                        200: '#b9dfc8',
-                        300: '#8bc8a5',
-                        400: '#55aa7c',
-                        500: '#2e8b57',
-                        600: '#1f6f43',
-                        700: '#195836',
-                        800: '#14452c',
-                        900: '#0c2c1c',
-                        950: '#061710',
+                        50:  '#F4F5EC',
+                        100: '#E6E9D5',
+                        200: '#CED5AE',
+                        300: '#ADB97E',
+                        400: '#8C9A55',
+                        500: '#6B7A35',
+                        600: '#3E4C21',
+                        700: '#323D1A',
+                        800: '#283114',
+                        900: '#1C230D',
+                        950: '#10150A',
                     },
-                    /* Rouge d'accent — prix, promotions, appels à l'action */
+                    /* Or baobab — ornement du logo : détails, prix, mises en avant.
+                       Les teintes 600+ restent lisibles en texte blanc. */
                     accent: {
-                        50:  '#fef3f2',
-                        100: '#fee4e2',
-                        200: '#fecdca',
-                        300: '#fda29b',
-                        400: '#f97066',
-                        500: '#ef4444',
-                        600: '#d92d20',
-                        700: '#b42318',
-                        800: '#912018',
-                        900: '#7a271a',
+                        50:  '#FBF6EA',
+                        100: '#F5E9CC',
+                        200: '#EBD49D',
+                        300: '#DFBC70',
+                        400: '#D1AA5C',
+                        500: '#C7A150',
+                        600: '#9A7A30',
+                        700: '#8A6A24',
+                        800: '#6D531D',
+                        900: '#523E17',
                     },
                     /* Alias de compatibilité : d'anciennes vues utilisent encore
                        `amber-*`. Pointé sur le vert de marque pour qu'aucune page
                        non migrée ne reste orange. À retirer une fois tout migré. */
                     amber: {
-                        50:  '#f0f8f3',
-                        100: '#dcefe3',
-                        200: '#b9dfc8',
-                        300: '#8bc8a5',
-                        400: '#55aa7c',
-                        500: '#2e8b57',
-                        600: '#1f6f43',
-                        700: '#195836',
-                        800: '#14452c',
-                        900: '#0c2c1c',
+                        50:  '#F4F5EC',
+                        100: '#E6E9D5',
+                        200: '#CED5AE',
+                        300: '#ADB97E',
+                        400: '#8C9A55',
+                        500: '#6B7A35',
+                        600: '#3E4C21',
+                        700: '#323D1A',
+                        800: '#283114',
+                        900: '#1C230D',
                     },
                 },
                 fontFamily: {
-                    display: ['Fraunces', 'Georgia', 'serif'],
-                    sans: ['Inter', 'system-ui', 'sans-serif'],
+                    display: ['Cinzel', 'Georgia', 'serif'],
+                    sans: ['"Source Sans 3"', 'system-ui', 'sans-serif'],
+                    label: ['"Barlow Condensed"', 'Arial Narrow', 'sans-serif'],
                 },
                 boxShadow: {
-                    soft: '0 1px 2px rgba(12,44,28,.04), 0 8px 24px -12px rgba(12,44,28,.15)',
-                    lift: '0 2px 4px rgba(12,44,28,.05), 0 18px 40px -18px rgba(12,44,28,.28)',
+                    soft: '0 1px 2px rgba(28,35,13,.04), 0 8px 24px -12px rgba(28,35,13,.15)',
+                    lift: '0 2px 4px rgba(28,35,13,.05), 0 18px 40px -18px rgba(28,35,13,.28)',
                 },
             },
         },
@@ -68,47 +73,49 @@
 {{-- Chargée en asynchrone : une police lente/injoignable ne doit jamais bloquer
      l'exécution des scripts de la page. --}}
 <link rel="preload" as="style"
-      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Source+Sans+3:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap"
       onload="this.onload=null;this.rel='stylesheet'">
-<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap"></noscript>
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Source+Sans+3:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap"></noscript>
 
 <style>
     :root {
-        --brand-50:  #f0f8f3;
-        --brand-100: #dcefe3;
-        --brand-200: #b9dfc8;
-        --brand-300: #8bc8a5;
-        --brand-500: #2e8b57;
-        --brand-600: #1f6f43;
-        --brand-700: #195836;
-        --brand-900: #0c2c1c;
-        --brand-950: #061710;
+        --brand-50:  #F4F5EC;
+        --brand-100: #E6E9D5;
+        --brand-200: #CED5AE;
+        --brand-300: #ADB97E;
+        --brand-500: #6B7A35;
+        --brand-600: #3E4C21;
+        --brand-700: #323D1A;
+        --brand-900: #1C230D;
+        --brand-950: #10150A;
 
-        --accent-50:  #fef3f2;
-        --accent-100: #fee4e2;
-        --accent-500: #ef4444;
-        --accent-600: #d92d20;
-        --accent-700: #b42318;
+        --accent-50:  #FBF6EA;
+        --accent-100: #F5E9CC;
+        --accent-500: #C7A150;
+        --accent-600: #9A7A30;
+        --accent-700: #8A6A24;
 
-        --ink:        #10221a;
-        --ink-muted:  #5d6b64;
-        --ink-faint:  #93a09a;
+        --ink:        #1F2414;
+        --ink-muted:  #66695A;
+        --ink-faint:  #9A9C8A;
         --paper:      #ffffff;
-        --paper-warm: #f7faf8;
-        --hairline:   #e6efe9;
+        --paper-warm: #F9F9F3;
+        --hairline:   #E6E6D8;
 
         --radius-sm: 10px;
         --radius:    16px;
         --radius-lg: 22px;
     }
 
-    body { font-family: 'Inter', system-ui, sans-serif; color: var(--ink); }
-    h1, h2, h3, h4 { font-family: 'Fraunces', Georgia, serif; letter-spacing: -0.015em; }
+    body { font-family: 'Source Sans 3', system-ui, sans-serif; color: var(--ink); }
+    /* Capitales gravées du logo : grands titres seulement. */
+    h1, h2 { font-family: 'Cinzel', Georgia, serif; letter-spacing: 0.02em; }
+    h3, h4 { font-family: 'Source Sans 3', system-ui, sans-serif; letter-spacing: 0; }
 
     /* ── Titre de section : surtitre + titre + filet bicolore ── */
     .eyebrow {
         display: inline-flex; align-items: center; gap: 8px;
-        font-family: 'Inter', sans-serif;
+        font-family: 'Source Sans 3', sans-serif;
         font-size: 11px; font-weight: 700; letter-spacing: .16em;
         text-transform: uppercase; color: var(--brand-600);
     }
@@ -133,16 +140,16 @@
     .btn {
         display: inline-flex; align-items: center; justify-content: center; gap: 9px;
         padding: 13px 28px; border-radius: 999px; border: none; cursor: pointer;
-        font-family: 'Inter', sans-serif; font-size: 14.5px; font-weight: 600;
+        font-family: 'Source Sans 3', sans-serif; font-size: 14.5px; font-weight: 600;
         line-height: 1; text-decoration: none; white-space: nowrap;
         transition: transform .18s ease, box-shadow .18s ease, background .18s ease, color .18s ease;
     }
     .btn:active { transform: translateY(1px); }
     .btn-brand {
         background: linear-gradient(135deg, var(--brand-600), var(--brand-700));
-        color: #fff; box-shadow: 0 10px 24px -12px rgba(31,111,67,.85);
+        color: #fff; box-shadow: 0 10px 24px -12px rgba(62,76,33,.85);
     }
-    .btn-brand:hover { box-shadow: 0 16px 30px -12px rgba(31,111,67,.95); transform: translateY(-2px); color: #fff; }
+    .btn-brand:hover { box-shadow: 0 16px 30px -12px rgba(62,76,33,.95); transform: translateY(-2px); color: #fff; }
     .btn-accent {
         background: linear-gradient(135deg, var(--accent-600), var(--accent-700));
         color: #fff; box-shadow: 0 10px 24px -12px rgba(217,45,32,.85);
@@ -163,12 +170,12 @@
     /* ── Surfaces ── */
     .surface {
         background: var(--paper); border: 1px solid var(--hairline);
-        border-radius: var(--radius); box-shadow: 0 1px 2px rgba(12,44,28,.04);
+        border-radius: var(--radius); box-shadow: 0 1px 2px rgba(28,35,13,.04);
         transition: border-color .22s ease, box-shadow .22s ease, transform .22s ease;
     }
     .surface-hover:hover {
         border-color: var(--brand-300);
-        box-shadow: 0 2px 4px rgba(12,44,28,.05), 0 18px 40px -18px rgba(12,44,28,.28);
+        box-shadow: 0 2px 4px rgba(28,35,13,.05), 0 18px 40px -18px rgba(28,35,13,.28);
         transform: translateY(-3px);
     }
 
@@ -181,7 +188,7 @@
     .icon-pill.is-accent { background: var(--accent-50); color: var(--accent-600); }
 
     /* ── Filigrane décoratif réutilisable (sections sombres) ── */
-    .glow-brand { background: radial-gradient(circle, rgba(46,139,87,.32) 0%, transparent 70%); }
+    .glow-brand { background: radial-gradient(circle, rgba(107,122,53,.32) 0%, transparent 70%); }
     .glow-accent { background: radial-gradient(circle, rgba(217,45,32,.26) 0%, transparent 70%); }
 
     /* ── Sélecteur de quantité ──
@@ -215,7 +222,7 @@
         width: 52px; height: 36px; text-align: center;
         font-size: 15px; font-weight: 600;
         border: 1.5px solid var(--brand-200); border-radius: 10px;
-        padding: 2px; font-family: 'Inter', sans-serif; color: var(--ink);
+        padding: 2px; font-family: 'Source Sans 3', sans-serif; color: var(--ink);
         -moz-appearance: textfield;
     }
     /* Les flèches natives du champ nombre sont minuscules et font doublon avec
@@ -224,7 +231,7 @@
     .qty-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
     .qty-input:focus {
         outline: none; border-color: var(--brand-500);
-        box-shadow: 0 0 0 3px rgba(46,139,87,.14);
+        box-shadow: 0 0 0 3px rgba(107,122,53,.14);
     }
     /* Fiche produit : cible tactile de 44px, la recommandation d'accessibilité */
     .prod-qty--lg .qty-btn { width: 44px; height: 44px; font-size: 22px; border-radius: 12px; }
@@ -235,29 +242,24 @@
        Le filet du bas est une ombre interne et non une bordure, pour que la hauteur
        reste à 83px exactement — c'est sur cette valeur qu'est calé le hero. */
     .nav-dark {
-        /* Vert forêt moyen en haut de page, vert quasi noir une fois défilé :
-           deux valeurs volontairement éloignées, le passage doit se voir. */
-        /* .96 et non .92 : plus le fond est translucide, plus le contraste des liens
-           dépend de ce qui défile derrière — à .92 ils tombaient sous 4,5:1. */
-        background: rgba(25,88,54,.96);
+        /* Bandeau clair TELICO : blanc, logo posé directement dessus, liens vert
+           TELICO, filet ivoire. Une ombre se dessine dès que la page défile. */
+        background: rgba(255,255,255,.97);
         backdrop-filter: blur(10px);
-        box-shadow: inset 0 -1px 0 rgba(255,255,255,.14), 0 8px 28px -18px rgba(0,0,0,.6);
-        transition: background .35s ease, box-shadow .35s ease;
+        box-shadow: inset 0 -1px 0 #E6E6D8;
+        transition: box-shadow .35s ease, background .35s ease;
     }
     .nav-dark.is-scrolled {
-        background: rgba(5,20,13,.985);
-        box-shadow: inset 0 -1px 0 rgba(255,255,255,.06), 0 18px 38px -14px rgba(0,0,0,.95);
+        background: #FFFFFF;
+        box-shadow: inset 0 -1px 0 #E6E6D8, 0 14px 30px -18px rgba(28,35,13,.45);
     }
     @media (prefers-reduced-motion: reduce) {
         .nav-dark { transition: none; }
     }
 
-    /* ── Cloche de notifications posée sur le bandeau vert ──
-       Le partial notification-bell est partagé avec l'espace de gestion, dont
-       l'en-tête est resté blanc : ses couleurs claires sont donc appliquées ici,
-       dans la feuille du site public que l'admin ne charge pas. */
-    .nav-dark .notif-bell-btn { color: rgba(255,255,255,.82); }
-    .nav-dark .notif-bell-btn:hover { background: rgba(255,255,255,.12); color: #fff; }
+    /* Cloche de notifications : couleurs du bandeau clair. */
+    .nav-dark .notif-bell-btn { color: #3E4C21; }
+    .nav-dark .notif-bell-btn:hover { background: #F4F5EC; color: #1C230D; }
 
     ::selection { background: var(--brand-200); color: var(--brand-900); }
 </style>

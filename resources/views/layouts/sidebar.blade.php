@@ -2,9 +2,18 @@
     <div class="sidebar-inner slimscroll">
         <div id="sidebar-menu" class="sidebar-menu">
             <ul>
+                {{-- Compte d'associé : son relevé, rien d'autre. --}}
+                @if (Auth::check() && Auth::user()->isAssociate())
+                <li class="{{ isActiveRoute(['associates.show', 'associates.me']) }}">
+                    <a href="{{ route('associates.me') }}"><img src="{{ asset('assets/img/icons/dashboard.svg') }}" alt="img"><span>Mon relevé d'associé</span></a>
+                </li>
+                @else
                 @permission('dashboard.view')
                 <li class="{{ isActiveRoute(['home']) }}">
                     <a href="{{ route('home') }}"><img src="{{ asset('assets/img/icons/dashboard.svg') }}" alt="img"><span>Tableau de Bord</span> </a>
+                </li>
+                <li class="{{ isActiveRoute(['sections.index']) }}">
+                    <a href="{{ route('sections.index') }}"><img src="{{ asset('assets/img/icons/places.svg') }}" alt="img"><span>Sections</span> </a>
                 </li>
                 @endpermission
                 @permission('products.view')
@@ -13,7 +22,34 @@
                     <ul>
                         <li><a href="{{ route('categories.index') }}">Catégories</a></li>
                         <li><a href="{{ route('produits.index') }}">Liste des produits</a></li>
-                        <li><a href="{{ route('transfers.index') }}">Transferts entre magasins</a></li>
+                    </ul>
+                </li>
+                @endpermission
+                @permission('stock.view')
+                <li class="submenu">
+                    <a href="javascript:void(0);" class="{{ isActiveRoute(['stock.index', 'stock.show', 'stock.movements', 'stock.trace', 'stock.adjust.form', 'transfers.index']) }}"><img src="{{ asset('assets/img/icons/product.svg') }}" alt="img"><span> Stock</span> <span class="menu-arrow"></span></a>
+                    <ul>
+                        <li><a href="{{ route('stock.index') }}">Stock par emplacement</a></li>
+                        @permission('transfers.view')
+                        <li><a href="{{ route('transfers.index') }}">Transferts</a></li>
+                        @endpermission
+                        @permission('stock.movements')
+                        <li><a href="{{ route('stock.movements') }}">Journal des mouvements</a></li>
+                        <li><a href="{{ route('stock.trace') }}">Traçabilité produit</a></li>
+                        @endpermission
+                        @permission('stock.adjust')
+                        <li><a href="{{ route('stock.adjust.form') }}">Inventaire / ajustement</a></li>
+                        @endpermission
+                    </ul>
+                </li>
+                @endpermission
+                @permission('reports.view')
+                <li class="submenu">
+                    <a href="javascript:void(0);" class="{{ isActiveRoute(['reports.sales', 'reports.daily', 'reports.flash']) }}"><img src="{{ asset('assets/img/icons/sales1.svg') }}" alt="img"><span> Rapports</span> <span class="menu-arrow"></span></a>
+                    <ul>
+                        <li><a href="{{ route('reports.sales') }}">Rapport des ventes</a></li>
+                        <li><a href="{{ route('reports.flash') }}">Ventes flash</a></li>
+                        <li><a href="{{ route('reports.daily') }}">Rapport journalier</a></li>
                     </ul>
                 </li>
                 @endpermission
@@ -60,7 +96,7 @@
                         <li><a href="{{ route('expensesCategory.index') }}">Depense Category</a></li>
                     </ul>
                 </li>
-                @if (Auth::check() && (Auth::user()->hasPermission('users.view') || (Auth::user()->hasPermission('customers.view') && Auth::user()->role_id != 3)))
+                @if (Auth::check() && (Auth::user()->hasPermission('users.view') || (Auth::user()->hasPermission('customers.view') && ! Auth::user()->isRestrictedToStore())))
                 <li class="submenu">
                     <a  class="{{ isActiveRoute(['customers.index', 'users.index']) }}" href="javascript:void(0);"><img src="{{ asset('assets/img/icons/users1.svg') }}" alt="img"><span>Personnes</span> <span class="menu-arrow"></span></a>
                     <ul>
@@ -74,12 +110,12 @@
                 </li>
                 @endif
                 @permission('stores.view')
-                @if (Auth::check() && Auth::user()->role_id != 3)
+                @if (Auth::check() && ! Auth::user()->isRestrictedToStore())
                 <li class="submenu">
-                    <a class="{{ isActiveRoute(['places.index', 'boutiques.index']) }}" href="javascript:void(0);"><img src="{{ asset('assets/img/icons/places.svg') }}" alt="img"><span>Places</span> <span class="menu-arrow"></span></a>
+                    <a class="{{ isActiveRoute(['places.index', 'boutiques.index']) }}" href="javascript:void(0);"><img src="{{ asset('assets/img/icons/places.svg') }}" alt="img"><span>Magasins & entrepôts</span> <span class="menu-arrow"></span></a>
                     <ul>
-                        <li><a href="{{ route('places.index') }}">Place list</a></li>
-                        <li><a href="{{ route('boutiques.index') }}">Liste des boutiques</a></li>
+                        <li><a href="{{ route('places.index') }}">Localités</a></li>
+                        <li><a href="{{ route('boutiques.index') }}">Magasins, entrepôts et stocks</a></li>
                     </ul>
                 </li>
                 @endif
@@ -96,6 +132,12 @@
                         <li><a href="#">Administration</a></li>
                     </ul>
                 </li>
+                @endif
+                @permission('associates.manage')
+                <li class="{{ isActiveRoute(['associates.index', 'associates.show', 'associates.create', 'associates.edit']) }}">
+                    <a href="{{ route('associates.index') }}"><img src="{{ asset('assets/img/icons/users1.svg') }}" alt="img"><span>Associés</span></a>
+                </li>
+                @endpermission
                 @endif
             </ul>
         </div>

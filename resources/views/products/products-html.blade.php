@@ -131,8 +131,8 @@
             @foreach($products as $product)
             @php
                 // Calculer la quantité selon le rôle
-                if (auth()->check() && auth()->user()->role_id == 3) {
-                    $storeId = \App\Models\Store::where('user_id', auth()->id())->value('id');
+                if (auth()->check() && auth()->user()->isStoreScoped()) {
+                    $storeId = auth()->user()->assignedStoreId();
                     $store = $product->stores->firstWhere('id', $storeId);
                     $quantity = $store ? $store->pivot->quantity : 0;
                 } else {
@@ -165,7 +165,7 @@
 
     <div class="footer">
         <p>Document généré le {{ now()->format('d/m/Y H:i:s') }}</p>
-        <p>Coleah Bandeya & Fils - Tous droits réservés</p>
+        <p>TELICO - Tous droits réservés</p>
     </div>
 
     <script>

@@ -61,8 +61,8 @@ class SalesExport implements FromView, WithTitle, WithEvents, ShouldAutoSize
             }
 
             // Role-based filtering
-            if (auth()->user()->role_id == 3) {
-                $storeId = Store::where('user_id', auth()->user()->id)->value('id');
+            if (auth()->user()->isStoreScoped()) {
+                $storeId = auth()->user()->assignedStoreId();
                 $query->where('store_id', $storeId);
             }
 

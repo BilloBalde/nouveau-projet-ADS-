@@ -4,14 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Contact — Coleah Bandeya & Fils</title>
+    <title>Contact — TELICO</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
     @include('partials.theme-head')
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
-        * { font-family: 'Inter', sans-serif; }
+        * { font-family: 'Source Sans 3', sans-serif; }
         .navbar-fixed {
             position: fixed; top: 0; width: 100%; z-index: 50;
             background: rgba(255,255,255,0.97);
@@ -22,16 +22,16 @@
             width: 100%; padding: 12px 16px; font-size: 14px;
             border: 1.5px solid #e5e7eb; border-radius: 12px;
             background: #fff; color: #374151; outline: none;
-            font-family: 'Inter', sans-serif;
+            font-family: 'Source Sans 3', sans-serif;
             transition: border-color 0.2s, box-shadow 0.2s;
         }
         .form-input:focus {
-            border-color: #2e8b57;
+            border-color: #6B7A35;
             box-shadow: 0 0 0 3px rgba(245,158,11,0.12);
         }
         .form-input.error { border-color: #ef4444; }
         .gradient-text {
-            background: linear-gradient(135deg, #55aa7c, #2e8b57);
+            background: linear-gradient(135deg, #8C9A55, #6B7A35);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -42,23 +42,23 @@
             transition: all 0.25s;
         }
         .info-card:hover {
-            border-color: #2e8b57;
+            border-color: #6B7A35;
             box-shadow: 0 8px 24px rgba(245,158,11,0.12);
             transform: translateY(-3px);
         }
         .info-icon {
             width: 60px; height: 60px;
-            background: linear-gradient(135deg, #55aa7c, #1f6f43);
+            background: linear-gradient(135deg, #8C9A55, #3E4C21);
             border-radius: 50%; margin: 0 auto 1rem;
             display: flex; align-items: center; justify-content: center;
             color: #fff; font-size: 22px;
         }
         .submit-btn {
             width: 100%; padding: 14px; font-size: 15px; font-weight: 700;
-            background: linear-gradient(135deg, #55aa7c, #1f6f43);
+            background: linear-gradient(135deg, #8C9A55, #3E4C21);
             color: #fff; border: none; border-radius: 12px; cursor: pointer;
             transition: opacity 0.2s, transform 0.1s;
-            font-family: 'Inter', sans-serif;
+            font-family: 'Source Sans 3', sans-serif;
             display: flex; align-items: center; justify-content: center; gap: 8px;
         }
         .submit-btn:hover { opacity: 0.9; transform: scale(1.01); }
@@ -73,7 +73,7 @@
     <div class="pt-20 bg-gradient-to-r from-brand-500 to-brand-600">
         <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-14 text-center">
             <h1 class="text-4xl md:text-5xl font-bold text-white mb-3">Contactez-nous</h1>
-            <p class="text-white/85 text-lg">Chez Coleah Bandeya & Fils, au-delà de la qualité des autres. Nous sommes à votre écoute, réponse sous 24h.</p>
+            <p class="text-white/85 text-lg">Chez TELICO, au-delà de la qualité des autres. Nous sommes à votre écoute, réponse sous 24h.</p>
         </div>
     </div>
 

@@ -1,104 +1,61 @@
 /* ══════════════════════════════════════════════════════════════
-   Habillage back-office — Coleah Bandeya & Fils
+   Habillage back-office — TELICO
    Chargé APRÈS style.css : ce fichier ne contient que des écarts
    assumés par rapport au thème, pour qu'une mise à jour du thème
    reste possible sans rejouer une refonte complète.
    ══════════════════════════════════════════════════════════════ */
 
 :root {
-    --adm-brand-50:  #f0f8f3;
-    --adm-brand-100: #dcefe3;
-    --adm-brand-200: #b9dfc8;
-    --adm-brand-300: #8bc8a5;
-    --adm-brand-500: #2e8b57;
-    --adm-brand-600: #1f6f43;
-    --adm-brand-700: #195836;
-    --adm-brand-900: #0c2c1c;
-    --adm-brand-950: #061710;
-    --adm-accent:    #d92d20;
-    --adm-ink:       #10221a;
-    --adm-ink-muted: #5d6b64;
+    --adm-brand-50:  #F4F5EC;
+    --adm-brand-100: #E6E9D5;
+    --adm-brand-200: #CED5AE;
+    --adm-brand-300: #ADB97E;
+    --adm-brand-500: #6B7A35;
+    --adm-brand-600: #3E4C21;
+    --adm-brand-700: #323D1A;
+    --adm-brand-900: #1C230D;
+    --adm-brand-950: #10150A;
+    --adm-accent:    #C7A150; /* or baobab */
+    --adm-ink:       #1F2414;
+    --adm-ink-muted: #66695A;
 }
 
-/* ── Barre latérale : vert profond ──
-   Le thème la livre en blanc avec du texte sombre. Tout ce qui suit
-   inverse ce contraste ; sans ces règles, le menu deviendrait illisible. */
-.sidebar {
-    background: linear-gradient(180deg, var(--adm-brand-900), var(--adm-brand-950)) !important;
-    border-right: 1px solid rgba(255, 255, 255, .08) !important;
+/* ── Barre latérale : fond blanc du thème, texte sombre ──
+   Elle avait d'abord été passée en vert profond avec du texte blanc. Retour au
+   blanc d'origine, à la demande.
+
+   Reste à neutraliser le survol du thème, qui inverse tout le contraste :
+   fond #1C230D, texte et libellé en blanc, et icônes éclaircies par un filtre.
+   Sur fond blanc, cela faisait disparaître la ligne survolée. Le menu doit
+   rester noir sur blanc en toutes circonstances.
+
+   `:not(.active)` protège la ligne de la page courante, qui garde son fond vert
+   et son texte blanc — c'est le seul repère visuel du menu. */
+.sidebar .sidebar-menu > ul > li:not(.active) > a:not(.active):hover {
+    background: transparent !important;
+    color: #212b36 !important;
 }
 
-.sidebar .sidebar-menu ul li a {
-    color: rgba(255, 255, 255, .78);
-    border-radius: 8px;
+.sidebar .sidebar-menu > ul > li:not(.active) > a:not(.active):hover span {
+    color: #637381 !important;
 }
 
-.sidebar .sidebar-menu ul li a:hover {
-    background: rgba(255, 255, 255, .10) !important;
-    color: #fff;
+/* Le thème applique `filter: brightness(0) invert(1)` aux icônes au survol :
+   sur fond blanc, elles deviennent blanches, donc invisibles. */
+.sidebar .sidebar-menu > ul > li:not(.active) > a:not(.active):hover img {
+    filter: none !important;
 }
 
-.sidebar .sidebar-menu > ul > li > a.active,
-.sidebar .sidebar-menu > ul > li.active > a {
-    background: var(--adm-brand-600) !important;
-    color: #fff !important;
-}
-
-/* Les icônes du menu sont des SVG sombres : sur fond vert il faut les
-   éclaircir, sinon elles disparaissent. */
-.sidebar .sidebar-menu ul li a img {
-    filter: brightness(0) invert(1);
-    opacity: .8;
-}
-.sidebar .sidebar-menu ul li a:hover img,
-.sidebar .sidebar-menu > ul > li > a.active img,
-.sidebar .sidebar-menu > ul > li.active > a img {
-    opacity: 1;
-}
-
-/* Titres de section du menu */
-.sidebar .sidebar-menu ul li.submenu-open .menu-title,
-.sidebar .sidebar-menu ul li .menu-title,
-.sidebar .sidebar-menu > ul > li.menu-title {
-    color: rgba(255, 255, 255, .42) !important;
-    text-transform: uppercase;
-    letter-spacing: .07em;
-    font-size: 11px;
-    font-weight: 700;
-}
-
-/* Sous-menus déroulants.
-   Le thème cible `.sidebar .sidebar-menu>ul>li.submenu ul li a` : il faut au moins
-   cette spécificité, sinon le texte reste en #212b36 et devient illisible sur le
-   fond vert. */
-.sidebar .sidebar-menu > ul > li.submenu ul {
-    background: rgba(0, 0, 0, .18);
-    border-radius: 8px;
-}
-.sidebar .sidebar-menu > ul > li.submenu ul li a {
-    color: rgba(255, 255, 255, .68);
-    font-size: 13.5px;
-}
-.sidebar .sidebar-menu > ul > li.submenu ul li a:hover,
-.sidebar .sidebar-menu > ul > li.submenu ul li a.active,
-.sidebar .sidebar-menu > ul > li.submenu ul li.active a {
-    color: #fff;
-}
-
-/* Flèche des menus dépliables */
-.sidebar .sidebar-menu ul li a.subdrop::after,
-.sidebar .sidebar-menu ul li a::after {
-    color: rgba(255, 255, 255, .5);
-}
-
-/* Barre de défilement interne, invisible sur fond sombre par défaut */
-.sidebar .slimScrollBar {
-    background: rgba(255, 255, 255, .22) !important;
+/* Sous-menus : le thème colore le survol en #3E4C21, un vert peu lisible sur
+   blanc. Même règle, le texte ne bouge pas. */
+.sidebar .sidebar-menu > ul > li.submenu ul li:not(.active) a:not(.active):hover {
+    background: transparent !important;
+    color: #212b36 !important;
 }
 
 /* ── En-tête : reste blanc, avec un filet de marque ── */
 .header {
-    border-bottom: 1px solid #e6efe9 !important;
+    border-bottom: 1px solid #E6E6D8 !important;
 }
 .header::after {
     content: '';
@@ -110,7 +67,7 @@
 
 /* ── Zone de travail ── */
 .page-wrapper {
-    background: #f6faf8;
+    background: #F9F9F3;
 }
 
 .page-header .page-title h4 {
@@ -122,9 +79,9 @@
 }
 
 .card {
-    border: 1px solid #e6efe9;
+    border: 1px solid #E6E6D8;
     border-radius: 14px;
-    box-shadow: 0 1px 2px rgba(12, 44, 28, .04);
+    box-shadow: 0 1px 2px rgba(28,35,13, .04);
 }
 
 /* ── Tableaux : lisibilité des listes, écran le plus consulté ── */
@@ -145,7 +102,7 @@
 .form-control:focus,
 .select2-container--default .select2-selection--single:focus {
     border-color: var(--adm-brand-500);
-    box-shadow: 0 0 0 3px rgba(46, 139, 87, .12);
+    box-shadow: 0 0 0 3px rgba(107,122,53, .12);
 }
 
 /* ── Badges d'état ── */
@@ -153,4 +110,53 @@
 .bg-lightgreen {
     background: var(--adm-brand-100) !important;
     color: var(--adm-brand-700) !important;
+}
+
+/* ── En-tête TELICO : logo agrandi ──
+   Le thème fixe l'en-tête à 60 px (logo de 140 px de large, prévu pour un logo
+   horizontal). Le logo TELICO est vertical : il est passé à 76 px de haut, avec
+   le nom à côté, dans un en-tête de 84 px. Tout ce que le thème cale sur 60 px
+   (barre latérale, zone de contenu, boutons mobiles) suit cette hauteur. */
+:root { --telico-header-h: 84px; }
+
+.header,
+.header .header-left,
+.header .page-title-box { height: var(--telico-header-h) !important; }
+
+.header .header-left .logo {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    height: 100%;
+    line-height: normal;
+}
+.header .header-left .logo img { width: auto !important; height: 76px; }
+.header .header-left .logo .logo-mot {
+    font-family: 'Cinzel', Georgia, serif;
+    font-weight: 600;
+    font-size: 1.45rem;
+    letter-spacing: .18em;
+    color: var(--adm-brand-600);
+}
+.header .header-left .logo-small img { width: auto !important; height: 58px; }
+
+.user-menu.nav > li > a { height: var(--telico-header-h); line-height: var(--telico-header-h); }
+.user-menu.nav > li > a i { line-height: var(--telico-header-h); }
+
+.page-wrapper { padding-top: var(--telico-header-h) !important; }
+.sidebar,
+.sidebar-overlay { top: var(--telico-header-h) !important; }
+/* script.js calcule la hauteur de la barre latérale avec 60 px. */
+.sidebar .slimScrollDiv,
+.sidebar .sidebar-inner { height: calc(100vh - var(--telico-header-h)) !important; }
+
+@media (max-width: 991px) {
+    .header .mobile_btn,
+    .header-pos #mobile_btn,
+    .header .mobile-user-menu,
+    .header .responsive-search { height: var(--telico-header-h); line-height: var(--telico-header-h); }
+    /* Sur petit écran le logo est centré : le nom à côté chevaucherait les menus. */
+    .header .header-left .logo .logo-mot { display: none; }
+    .header .header-left .logo img { height: 68px; }
 }

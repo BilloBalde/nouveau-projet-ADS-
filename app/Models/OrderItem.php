@@ -6,7 +6,13 @@ use Illuminate\Database\Eloquent\Model;
 
 class OrderItem extends Model
 {
-    protected $fillable = ['order_id', 'product_id', 'quantity', 'price', 'quantity_delivered'];
+    protected $fillable = ['order_id', 'product_id', 'store_id', 'fund_id', 'quantity', 'price', 'quantity_delivered'];
+
+    /** Emplacement qui a fourni la ligne, choisi à l'approbation. */
+    public function store()
+    {
+        return $this->belongsTo(Store::class);
+    }
 
     public function order()
     {

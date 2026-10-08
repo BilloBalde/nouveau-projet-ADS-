@@ -15,7 +15,7 @@
             font-family: 'DejaVu Sans', 'Helvetica', 'Arial', sans-serif;
             font-size: 10pt;
             line-height: 1.5;
-            color: #10221a;
+            color: #1F2414;
             background: white;
             padding: 0.8cm;
         }
@@ -36,35 +36,35 @@
             font-family: Georgia, 'Times New Roman', serif;
             font-size: 17pt;
             font-weight: 700;
-            color: #0c2c1c;
+            color: #1C230D;
             margin-bottom: 4px;
         }
 
         .company-info p {
             font-size: 9pt;
-            color: #5d6b64;
+            color: #66695A;
             margin: 2px 0;
         }
 
         .report-info {
             font-size: 9pt;
-            background: #f0f8f3;
+            background: #F4F5EC;
             padding: 8px 12px;
             border-radius: 6px;
-            border-left: 4px solid #1f6f43;
+            border-left: 4px solid #3E4C21;
         }
 
         .report-info p {
             margin: 4px 0;
-            color: #10221a;
+            color: #1F2414;
         }
 
         .report-info strong {
-            color: #14452c;
+            color: #283114;
         }
 
         .admin-badge {
-            background: #1f6f43;
+            background: #3E4C21;
             color: white;
             padding: 2px 8px;
             border-radius: 12px;
@@ -84,24 +84,24 @@
             font-family: Georgia, 'Times New Roman', serif;
             font-size: 15pt;
             font-weight: 700;
-            color: #0c2c1c;
+            color: #1C230D;
             text-transform: uppercase;
             margin-bottom: 6px;
             letter-spacing: 1px;
         }
 
         .filters {
-            background: #f0f8f3;
+            background: #F4F5EC;
             display: inline-block;
             padding: 6px 18px;
             border-radius: 30px;
             font-size: 9pt;
-            color: #10221a;
-            border: 1px solid #b9dfc8;
+            color: #1F2414;
+            border: 1px solid #CED5AE;
         }
 
         .filters strong {
-            color: #14452c;
+            color: #283114;
         }
 
         /* ===== CARTES RÉCAPITULATIVES ===== */
@@ -116,15 +116,15 @@
             display: table-cell;
             padding: 14px 8px;
             text-align: center;
-            background-color: #f0f8f3;
-            border: 1px solid #b9dfc8;
+            background-color: #F4F5EC;
+            border: 1px solid #CED5AE;
         }
 
         .summary-card .label {
             font-size: 9pt;
             text-transform: uppercase;
             font-weight: 600;
-            color: #5d6b64;
+            color: #66695A;
             margin-bottom: 6px;
             letter-spacing: 0.5px;
         }
@@ -136,14 +136,14 @@
         }
 
         .summary-card.ventes { border-top: 4px solid #059669; }
-        .summary-card.achats { border-top: 4px solid #14452c; }
+        .summary-card.achats { border-top: 4px solid #283114; }
         .summary-card.depenses { border-top: 4px solid #b91c1c; }
-        .summary-card.solde { border-top: 4px solid #0c2c1c; }
+        .summary-card.solde { border-top: 4px solid #1C230D; }
 
         .text-success { color: #059669; }
         .text-danger { color: #b91c1c; }
-        .text-warning { color: #14452c; }
-        .text-primary { color: #0c2c1c; }
+        .text-warning { color: #283114; }
+        .text-primary { color: #1C230D; }
 
         /* ===== TABLEAU DES MOUVEMENTS ===== */
         .movements-table {
@@ -154,7 +154,7 @@
         }
 
         .movements-table th {
-            background: #0c2c1c;
+            background: #1C230D;
             color: white;
             padding: 10px 6px;
             font-weight: 600;
@@ -166,12 +166,12 @@
 
         .movements-table td {
             padding: 8px 6px;
-            border: 1px solid #dcefe3;
+            border: 1px solid #E6E9D5;
             vertical-align: middle;
         }
 
         .movements-table tr:nth-child(even) {
-            background-color: #f7faf8;
+            background-color: #F9F9F3;
         }
 
         .badge {
@@ -187,20 +187,20 @@
         }
 
         .badge.vente { background: #059669; }
-        .badge.achat { background: #14452c; }
+        .badge.achat { background: #283114; }
         .badge.depense { background: #b91c1c; }
-        .badge.autre { background: #5d6b64; }
+        .badge.autre { background: #66695A; }
 
         .total-row {
-            background: #f0f8f3 !important;
+            background: #F4F5EC !important;
             font-weight: 700;
-            border-top: 2px solid #1f6f43;
+            border-top: 2px solid #3E4C21;
         }
 
         .total-row td {
             padding: 10px 6px;
-            background: #f0f8f3;
-            color: #0c2c1c;
+            background: #F4F5EC;
+            color: #1C230D;
         }
 
         .nowrap {
@@ -223,11 +223,11 @@
             right: 0;
             width: 100%;
             padding-top: 14px;
-            border-top: 2px solid #1f6f43;
+            border-top: 2px solid #3E4C21;
             text-align: center;
             font-size: 10px;
-            color: #5d6b64;
-            background: #f0f8f3;
+            color: #66695A;
+            background: #F4F5EC;
             padding: 14px;
             margin: 0;
             box-sizing: border-box;
@@ -236,13 +236,13 @@
         .footer-contact {
             margin-bottom: 6px;
             font-weight: 600;
-            color: #10221a;
+            color: #1F2414;
         }
 
         .footer-thanks {
             font-family: Georgia, 'Times New Roman', serif;
             font-weight: 700;
-            color: #0c2c1c;
+            color: #1C230D;
             margin-top: 8px;
             font-size: 11px;
             font-style: italic;
@@ -251,17 +251,17 @@
         .footer-date {
             margin-top: 8px;
             font-size: 10px;
-            color: #93a09a;
+            color: #9A9C8A;
         }
 
         /* ===== UTILITAIRES ===== */
         .empty-message {
             padding: 30px;
             text-align: center;
-            background: #f7faf8;
-            color: #5d6b64;
+            background: #F9F9F3;
+            color: #66695A;
             font-style: italic;
-            border: 1px dashed #b9dfc8;
+            border: 1px dashed #CED5AE;
         }
     </style>
 </head>
@@ -269,14 +269,14 @@
 {{-- ======================================== --}}
 {{-- EN-TÊTE : LOGO + SOCIÉTÉ + INFOS RAPPORT --}}
 {{-- ======================================== --}}
-<div class="header" style="display: table; width: 100%; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 3px solid #1f6f43;">
+<div class="header" style="display: table; width: 100%; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 3px solid #3E4C21;">
 
     {{-- Logo --}}
     <div style="display: table-cell; width: 90px; vertical-align: middle; text-align: left;">
         @if($company->logo ?? false)
             <img src="{{ public_path('companies/'.$company->logo) }}" alt="{{ $company->name ?? 'Logo' }}" style="max-width: 70px; height: auto; border-radius: 8px;">
         @else
-            <div style="width: 70px; height: 60px; background: #f0f8f3; border-radius: 6px; text-align: center; color: #14452c; font-size: 10px; padding-top: 22px;">Logo</div>
+            <div style="width: 70px; height: 60px; background: #F4F5EC; border-radius: 6px; text-align: center; color: #283114; font-size: 10px; padding-top: 22px;">Logo</div>
         @endif
     </div>
 

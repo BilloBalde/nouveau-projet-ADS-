@@ -7,7 +7,9 @@
     <meta name="robots" content="noindex, nofollow">
     <title>{{ $company?->name ?? config('app.name') }}</title>
 
-    <link rel="shortcut icon" type="image/jpeg" href="{{ asset('companies/'.($company?->logo ?? 'ADK.png')) }}">
+    {{-- Emblème du baobab : lisible en petite taille, contrairement au logo complet. --}}
+    <link rel="icon" type="image/png" href="{{ asset('favicon-telico.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('companies/telico-embleme.png') }}">
 
     <link rel="stylesheet" href="{{ asset('assets/css/bootstrap.min.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/css/animate.css') }}">
@@ -26,15 +28,17 @@
          cartes. Isolé dans son propre fichier pour que style.css reste remplaçable. --}}
     <link rel="stylesheet" href="{{ asset('assets/css/admin-theme.css') }}">
 
-    {{-- Typo serif sur les titres --}}
+    {{-- Typographies TELICO : Cinzel (grands titres, comme le logo),
+         Source Sans 3 (texte), Barlow Condensed (références, prix, étiquettes). --}}
     {{-- Chargée en asynchrone : une police Google lente/inaccessible ne doit jamais
          bloquer l'exécution des scripts de la page (une feuille de style <link>
          classique bloque le JS tant qu'elle n'est pas chargée). --}}
     <link rel="preload" as="style"
-          href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Source+Sans+3:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap"
           onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&display=swap"></noscript>
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Source+Sans+3:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap"></noscript>
     <style>
-        h1, h2, h3 { font-family: 'Fraunces', serif; }
+        body, .sidebar, .header, .table, .form-control, .btn { font-family: 'Source Sans 3', 'Segoe UI', Arial, sans-serif; }
+        h1, h2 { font-family: 'Cinzel', Georgia, serif; letter-spacing: .02em; }
     </style>
 </head>

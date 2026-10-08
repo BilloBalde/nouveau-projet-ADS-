@@ -37,7 +37,7 @@
                                         {{-- Logo de l'entreprise enregistré en base, jamais un
                                              fichier figé : un changement depuis la fiche
                                              entreprise doit se répercuter partout. --}}
-                                        <img src="{{ asset('companies/' . ($company?->logo ?? 'ADK.png')) }}" alt="{{ $company?->name ?? 'Logo' }}">
+                                        <img src="{{ asset('companies/' . ($company?->logo ?? 'telico.png')) }}" alt="{{ $company?->name ?? 'Logo' }}">
                                     </div>
                                     <h1 class="invoice-title">REÇU DE PAIEMENT</h1>
                                 </div>
@@ -148,13 +148,13 @@
                                 
                                 <div class="signature-box">
                                     <div class="signature-line"></div>
-                                    <p><strong>POUR {{ strtoupper($company?->name ?? 'Coleah Bandeya & Fils') }}</strong></p>
+                                    <p><strong>POUR {{ strtoupper($company?->name ?? 'TELICO') }}</strong></p>
                                 </div>
                             </div>
 
                             <!-- Informations de l'entreprise en bas -->
                             <div class="company-info">
-                                <h4>{{ $company?->name ?? 'Coleah Bandeya & Fils' }}</h4>
+                                <h4>{{ $company?->name ?? 'TELICO' }}</h4>
                                 <p>{{ $company?->address ?? 'Madina, Ecole Gare Routière Dabola Camion, Conakry' }}</p>
                                 <p>Tél: {{ $company?->phone ?? '' }} | Email: {{ $company?->email ?? '' }}</p>
                                 <p>Merci pour votre confiance et à bientôt !</p>

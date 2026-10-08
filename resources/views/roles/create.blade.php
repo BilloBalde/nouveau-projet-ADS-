@@ -35,7 +35,7 @@
                                         @include('roles.partials.permission-grid')
                                     </div>
                                     <div class="col-lg-12 mt-4">
-                                        <button type="submit" class="btn btn-submit me-2" style="background-color:#1f6f43;border-color:#1f6f43;">Créer le rôle</button>
+                                        <button type="submit" class="btn btn-submit me-2" style="background-color:#3E4C21;border-color:#3E4C21;">Créer le rôle</button>
                                         <a href="{{ route('roles.index') }}" class="btn btn-cancel">Annuler</a>
                                     </div>
                                 </div>

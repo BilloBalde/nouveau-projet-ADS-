@@ -105,7 +105,7 @@ class PermissionSeeder extends Seeder
                 'customers.view', 'customers.create', 'customers.edit', 'customers.delete',
                 'payments.view', 'payments.create',
                 'reports.view',
-                'orders.view', 'orders.deliver',
+                'orders.view', 'orders.validate', 'orders.deliver', // validate : commandes attribuées à sa boutique uniquement
             ],
             // comptable : finances
             $comptable->id => [
@@ -131,5 +131,10 @@ class PermissionSeeder extends Seeder
                 );
             }
         }
+
+        // Emplacements, stock, transferts + rôles Magasinier / Responsable magasin.
+        // Même code que la migration 2026_09_29_000005 : une base neuve et une base
+        // migrée aboutissent au même état.
+        \App\Support\LocationPermissions::install();
     }
 }

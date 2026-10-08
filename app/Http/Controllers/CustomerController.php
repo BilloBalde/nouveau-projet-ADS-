@@ -59,8 +59,8 @@ class CustomerController extends Controller
             ->orderBy('stores.store_name')
             ->orderByDesc('balance');
 
-        if (auth()->user()->role_id == 3) {
-            $store = Store::where('user_id', auth()->id())->first();
+        if (auth()->user()->isStoreScoped()) {
+            $store = Store::find(auth()->user()->assignedStoreId());
             if (!$store) {
                 return redirect('login')->with('error', 'Dites au manager de vous attribuer à une boutique afin de pouvoir continuer');
             }

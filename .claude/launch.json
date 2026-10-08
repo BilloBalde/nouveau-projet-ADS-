@@ -2,10 +2,14 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "smh-laravel",
+      "name": "adk-laravel",
       "runtimeExecutable": "php",
-      "runtimeArgs": ["artisan", "serve"],
-      "port": 8000,
+      "runtimeArgs": [
+        "artisan",
+        "serve",
+        "--port=8001"
+      ],
+      "port": 8001,
       "autoPort": false
     }
   ]

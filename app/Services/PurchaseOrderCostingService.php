@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Product;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
+use App\Models\StockMovement;
 use App\Models\StoreProduct;
 use Illuminate\Support\Facades\DB;
 
@@ -19,14 +20,36 @@ class PurchaseOrderCostingService
     /**
      * @param  array<int, array{product_id:int, quantity:int, cartons?:int|null, pieces_per_carton?:int|null, unit_price_foreign?:float|null, cbm_per_carton?:float|null, description?:string|null}>  $lines
      */
-    public function costOrder(PurchaseOrder $order, array $lines): void
+    public function __construct(private ?StockService $stock = null)
     {
-        DB::transaction(function () use ($order, $lines) {
+        $this->stock ??= app(StockService::class);
+    }
+
+    /**
+     * @param  int|null  $previousStoreId  destination avant modification : c'est
+     *   de là que le stock de l'ancienne version de l'achat doit être retiré.
+     *   Auparavant on le retirait de la NOUVELLE destination, ce qui faussait
+     *   deux emplacements quand on changeait la destination d'un achat.
+     */
+    public function costOrder(PurchaseOrder $order, array $lines, ?int $previousStoreId = null, int|false|null $previousFundId = false): void
+    {
+        DB::transaction(function () use ($order, $lines, $previousStoreId, $previousFundId) {
+            $oldStoreId = $previousStoreId ?? (int) $order->store_id;
+            // Fonds d'origine des lignes précédentes (modification d'un achat qui
+            // change de financeur) : false = inchangé.
+            $oldFundId = $previousFundId === false ? $order->fund_id : $previousFundId;
 
             foreach ($order->items as $existingItem) {
-                StoreProduct::where('store_id', $order->store_id)
-                    ->where('product_id', $existingItem->product_id)
-                    ->decrement('quantity', $existingItem->quantity);
+                // Retrait tracé de la version précédente de l'achat (modification).
+                $this->stock->forceDecrement($oldStoreId, (int) $existingItem->product_id, (int) $existingItem->quantity, [
+                    'type'         => StockMovement::CORRECTION,
+                    'source_type'  => 'purchase_order',
+                    'source_id'    => $order->id,
+                    'document_ref' => $order->reference,
+                    'supplier_id'  => $order->partner_id,
+                    'fund_id'      => $oldFundId,
+                    'reason'       => 'Modification de l\'achat ' . $order->reference . ' : annulation des lignes précédentes',
+                ]);
             }
             $order->items()->delete();
 
@@ -134,15 +157,25 @@ class PurchaseOrderCostingService
                 // affiché au client — nommage historique trompeur, pas une erreur ici.
                 // Le prix de vente se recalcule à chaque achat pour rester à 30% de
                 // marge sur le dernier coût de revient connu.
-                Product::where('id', $item['product_id'])->update([
-                    'price_sale' => $item['landed_unit_cost_gnf'],
-                    'price' => round($item['landed_unit_cost_gnf'] * (1 + self::SALE_MARGIN), 2),
-                ]);
+                // Un achat financé par un associé ne touche pas au prix de revient
+                // des fonds propres : son coût est suivi à part (FundService).
+                if (! $order->fund_id) {
+                    Product::where('id', $item['product_id'])->update([
+                        'price_sale' => $item['landed_unit_cost_gnf'],
+                        'price' => round($item['landed_unit_cost_gnf'] * (1 + self::SALE_MARGIN), 2),
+                    ]);
+                }
 
-                StoreProduct::updateOrCreate(
-                    ['store_id' => $order->store_id, 'product_id' => $item['product_id']],
-                    ['quantity' => DB::raw('quantity + ' . (int) $item['quantity'])]
-                );
+                // Entrée en stock à l'emplacement exact choisi comme destination.
+                $this->stock->increment((int) $order->store_id, (int) $item['product_id'], (int) $item['quantity'], [
+                    'type'         => StockMovement::PURCHASE,
+                    'source_type'  => 'purchase_order',
+                    'source_id'    => $order->id,
+                    'document_ref' => $order->reference,
+                    'supplier_id'  => $order->partner_id,
+                    'fund_id'      => $order->fund_id,
+                    'unit_price'   => $item['landed_unit_cost_gnf'],
+                ]);
             }
         });
     }

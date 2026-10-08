@@ -33,7 +33,7 @@
                                         <select name="sales[0][product_id]" id="product_id" class="form-control">
                                             <option value="">Select le Produit</option>
                                             @foreach ($produits as $item)
-                                            @if (Auth::user()->role_id !== 3)
+                                            @if (! Auth::user()->isStoreScoped())
                                             @php
                                             $storeProd = App\Models\StoreProduct::where('product_id', $item->id)->first();
                                                 $productQtityglo = $storeProd ? $storeProd->quantity : 0;

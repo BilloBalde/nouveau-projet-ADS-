@@ -58,8 +58,8 @@
                     <div class="col-lg-3 col-sm-6 col-12">
                         <div class="form-group">
                             <label for="store_id">Boutique</label>
-                            <select id="store_id" name="store_id" class="form-control" {{ auth()->user()->role_id == 3 ? 'disabled' : '' }}>
-                                @if(auth()->user()->role_id != 3)
+                            <select id="store_id" name="store_id" class="form-control" {{ auth()->user()->isStoreScoped() ? 'disabled' : '' }}>
+                                @if(! auth()->user()->isStoreScoped())
                                     <option value="">Toutes les boutiques</option>
                                 @endif
                                 @foreach ($stores as $store)
@@ -68,7 +68,7 @@
                                     </option>
                                 @endforeach
                             </select>
-                            @if(auth()->user()->role_id == 3)
+                            @if(auth()->user()->isStoreScoped())
                                 <input type="hidden" name="store_id" value="{{ $storeId }}">
                             @endif
                         </div>

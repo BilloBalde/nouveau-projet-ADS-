@@ -5,12 +5,12 @@
     <style>
         /* Reset Password Specific Styles */
         :root {
-            --primary-color: #1f6f43;
-            --secondary-color: #195836;
+            --primary-color: #3E4C21;
+            --secondary-color: #323D1A;
             --success-color: #28a745;
             --danger-color: #dc3545;
             --warning-color: #ffc107;
-            --dark-bg: linear-gradient(135deg, #1f6f43 0%, #195836 100%);
+            --dark-bg: linear-gradient(135deg, #3E4C21 0%, #323D1A 100%);
         }
 
         body {
@@ -18,7 +18,7 @@
             min-height: 100vh;
             display: flex;
             align-items: center;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: 'Source Sans 3', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
 
         .main-wrapper {
@@ -422,7 +422,7 @@
                     <div class="login-userset">
                         <!-- Logo -->
                         <div class="login-logo">
-                            <img src="{{ asset('companies/ADK.png') }}" alt="Coleah Bandeya & Fils">
+                            <img src="{{ asset('companies/telico.png') }}" alt="TELICO">
                         </div>
 
                         <!-- Security Badge -->

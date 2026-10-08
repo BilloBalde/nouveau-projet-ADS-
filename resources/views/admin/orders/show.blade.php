@@ -189,6 +189,40 @@
                                 <h4 class="card-title">Actions</h4>
                             </div>
                             <div class="card-body">
+                                <p class="mb-2" style="font-size:13px;">
+                                    Traitée par : <strong>{{ $order->store?->store_name ?? 'le siège' }}</strong>
+                                    @if ($order->assigned_at)
+                                        <span class="text-muted">(attribuée le {{ $order->assigned_at->format('d/m/Y H:i') }}{{ $order->assignedBy ? ' par '.$order->assignedBy->name : '' }})</span>
+                                    @endif
+                                </p>
+                                @if (auth()->user()->hasPermission('orders.assign') && ! auth()->user()->isRestrictedToStore())
+                                <form method="POST" action="{{ route('admin.orders.assign', $order) }}" class="mb-3">
+                                    @csrf
+                                    <label style="font-size:12px;" class="text-muted mb-1">Attribuer à une boutique</label>
+                                    <select name="store_id" class="form-control form-control-sm" onchange="this.form.submit()">
+                                        <option value="">Siège (traitement central)</option>
+                                        @foreach (\App\Models\Store::sectionsWithIds() as $section)
+                                            <option value="{{ $section->id }}" {{ (int) $order->store_id === $section->id ? 'selected' : '' }}>{{ $section->store_name }}</option>
+                                        @endforeach
+                                    </select>
+                                </form>
+                                @endif
+                                @if ($order->store_id && auth()->user()->isStoreScoped())
+                                <form method="POST" action="{{ route('admin.orders.release', $order) }}" class="mb-3"
+                                      onsubmit="var r = prompt('Motif (facultatif) : pourquoi rendre la commande au siège ?'); if (r === null) return false; this.reason.value = r;">
+                                    @csrf
+                                    <input type="hidden" name="reason">
+                                    <button type="submit" class="btn btn-outline-secondary btn-block w-100">
+                                        <i class="fas fa-undo me-1"></i> Rendre au siège
+                                    </button>
+                                </form>
+                                @endif
+                                @unless (auth()->user()->hasPermission('orders.validate'))
+                                <div class="alert alert-info py-2 mb-0" style="font-size:13px;">
+                                    Votre compte n'a pas le droit d'approuver les commandes. Demandez au responsable ou à l'administrateur.
+                                </div>
+                                @endunless
+                                @permission('orders.validate')
                                 {{-- Bouton qui ouvre la modale --}}
                                 <button type="button"
                                     class="btn btn-success btn-block mb-2 btn-approve"
@@ -205,6 +239,7 @@
                                         <i class="fa fa-times"></i> Rejeter la commande
                                     </button>
                                 </form>
+                                @endpermission
                             </div>
                         </div>
                         @else
@@ -266,27 +301,29 @@
                     </button>
                 </div>
                 <div class="modal-body p-4">
-                    <div class="mb-4">
-                        <label class="form-label fw-semibold" style="font-size:13px;">
-                            <i class="fas fa-store-alt me-1 text-warning"></i>
-                            Sélectionnez la boutique de vente
-                        </label>
-                        <select id="storeSelect" class="form-control" style="border-radius:10px;">
-                            <option value="">— Choisir une boutique —</option>
-                            @foreach(\App\Models\Store::orderBy('store_name')->get() as $store)
-                                <option value="{{ $store->id }}">{{ $store->store_name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div id="stockCheckZone" style="display:none;">
-                        <p class="fw-semibold mb-2" style="font-size:13px;">
-                            <i class="fas fa-boxes me-1 text-info"></i> Disponibilité du stock
-                        </p>
-                        <div id="stockCheckList"></div>
-                    </div>
+                    {{-- Un emplacement de stock par produit. --}}
+                    <p class="fw-semibold mb-2" style="font-size:13px;">
+                        <i class="fas fa-boxes me-1 text-info"></i> Emplacement du stock pour chaque produit
+                    </p>
                     <div id="stockCheckLoading" style="display:none;" class="text-center py-3 text-muted">
                         <div class="spinner-border spinner-border-sm me-2"></div>
-                        Vérification du stock…
+                        Chargement du stock…
+                    </div>
+                    <div id="stockCheckZone" style="display:none;">
+                        <div id="stockCheckList"></div>
+                    </div>
+                    {{-- Magasin qui facture : automatique d'après les lignes. --}}
+                    <div class="mt-3">
+                        <label class="form-label fw-semibold" style="font-size:13px;">
+                            <i class="fas fa-store-alt me-1 text-warning"></i>
+                            Magasin de vente (facture)
+                        </label>
+                        <select id="storeSelect" class="form-control" style="border-radius:10px;">
+                            <option value="">Automatique (d'après l'emplacement des produits)</option>
+                            @foreach(\App\Models\Store::optionsFor(auth()->user())->where('type', \App\Models\Store::TYPE_MAGASIN) as $store)
+                                <option value="{{ $store->id }}">{{ $store->full_name }}</option>
+                            @endforeach
+                        </select>
                     </div>
                 </div>
                 <div class="modal-footer" style="border-top:1px solid #f3f4f6;padding:16px 24px;">
@@ -300,6 +337,7 @@
     </div>
 
     @include('layouts.scripts')
+    @include('admin.orders.partials.location-picker')
     @include('layouts.delete')
 
     <script>
@@ -314,69 +352,31 @@
             currentApproveUrl = $(this).data('approve-url');
             $('#modalOrderLabel').text('Commande ' + $(this).data('order-label'));
             $('#storeSelect').val('');
-            $('#stockCheckZone').hide();
-            $('#stockCheckLoading').hide();
             $('#stockCheckList').html('');
             $('#confirmApproveBtn').prop('disabled', true);
             stockOk = false;
             $('#approveModal').modal('show');
-        });
-
-        $('#storeSelect').on('change', function () {
-            var storeId = $(this).val();
-            $('#confirmApproveBtn').prop('disabled', true);
-            $('#stockCheckZone').hide();
-            $('#stockCheckList').html('');
-            stockOk = false;
-            if (!storeId) return;
-            $('#stockCheckLoading').show();
-            $.ajax({
-                url: currentCheckUrl + '?store_id=' + storeId,
-                timeout: 15000,
-                headers: { 'X-Requested-With': 'XMLHttpRequest' },
-                success: function (data) {
-                    $('#stockCheckLoading').hide();
-                    stockOk = data.all_ok;
-                    var html = '';
-                    $.each(data.items, function (i, item) {
-                        var ok    = item.ok;
-                        var icon  = ok ? '<i class="fas fa-check-circle text-success mr-2"></i>'
-                                       : '<i class="fas fa-times-circle text-danger mr-2"></i>';
-                        var badge = ok ? '<span class="badge badge-success">' + item.available + ' dispo</span>'
-                                       : '<span class="badge badge-danger">' + item.available + ' dispo / ' + item.requested + ' demandé</span>';
-                        html += '<div class="d-flex justify-content-between align-items-center py-2 px-3 mb-2" ' +
-                                    'style="background:' + (ok ? '#f0fdf4' : '#fef2f2') + ';border-radius:10px;border-left:3px solid ' + (ok ? '#22c55e' : '#ef4444') + '">' +
-                                    '<span style="font-size:13px;">' + icon + item.name + ' <em class="text-muted">× ' + item.requested + '</em></span>' +
-                                    badge +
-                                '</div>';
-                    });
-                    if (!data.all_ok) {
-                        html += '<div class="alert alert-danger py-2 mb-0 mt-2" style="font-size:13px;border-radius:10px;">' +
-                                    '<i class="fas fa-exclamation-triangle mr-1"></i>' +
-                                    'Stock insuffisant — impossible d\'approuver.' +
-                                '</div>';
-                    }
-                    $('#stockCheckList').html(html);
-                    $('#stockCheckZone').show();
-                    $('#confirmApproveBtn').prop('disabled', !stockOk);
-                },
-                error: function () {
-                    $('#stockCheckLoading').hide();
-                    $('#stockCheckList').html('<div class="alert alert-warning py-2" style="font-size:13px;">Impossible de vérifier le stock.</div>');
-                    $('#stockCheckZone').show();
-                }
+            // Une ligne « emplacement » par produit, affichée tout de suite.
+            window.loadOrderLines(currentCheckUrl, function (ok) {
+                stockOk = ok;
+                $('#confirmApproveBtn').prop('disabled', !stockOk);
             });
         });
 
+        $(document).on('change', '#stockCheckList .item-location', function () {
+            stockOk = window.refreshOrderLines();
+            $('#confirmApproveBtn').prop('disabled', !stockOk);
+        });
+
         $('#confirmApproveBtn').on('click', function () {
-            if (!stockOk || !$('#storeSelect').val()) return;
+            if (!stockOk) return;
             $('#confirmApproveBtn').prop('disabled', true)
                 .html('<span class="spinner-border spinner-border-sm mr-1"></span> Traitement…');
             $.ajax({
                 url:    currentApproveUrl,
                 method: 'POST',
                 timeout: 30000, // évite un blocage indéfini de la modale si le serveur traîne
-                data:   { _token: csrfToken, store_id: $('#storeSelect').val() },
+                data:   { _token: csrfToken, store_id: $('#storeSelect').val(), locations: window.collectOrderLocations() },
                 success: function (response) {
                     // Si la réponse est un objet JSON (succès) on recharge la page ou on redirige
                     if (response.success === false) {

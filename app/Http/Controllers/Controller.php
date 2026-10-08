@@ -13,20 +13,31 @@ class Controller extends BaseController
     use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
 
     /**
-     * Un gérant de boutique (role_id = ROLE_STORE_MANAGER) ne doit pouvoir écrire que
-     * pour sa propre boutique : store_id ne doit jamais venir du formulaire pour ce
-     * rôle, car c'est un champ falsifiable côté client. Retourne null pour les autres
-     * rôles (admin, manager, comptable, achat...), qui restent libres de choisir une
-     * boutique.
+     * Un employé rattaché à un magasin (vendeur, magasinier, responsable — tout
+     * profil sans la permission « stores.all ») ne doit pouvoir écrire que pour
+     * son propre magasin : store_id ne doit jamais venir du formulaire pour lui,
+     * car c'est un champ falsifiable côté client. Retourne null pour les profils
+     * à vue globale (admin, manager, comptable, achat...), qui restent libres de
+     * choisir une boutique.
      */
     protected function ownStoreIdOverride(): ?int
     {
         $user = auth()->user();
 
-        if (! $user || (int) $user->role_id !== User::ROLE_STORE_MANAGER) {
+        if (! $user instanceof User) {
             return null;
         }
 
-        return $user->store_id;
+        return $user->forcedStoreId();
+    }
+
+    /** 403 si l'emplacement est hors du périmètre de l'utilisateur connecté. */
+    protected function authorizeStore($storeId): void
+    {
+        $user = auth()->user();
+
+        if (! $user instanceof User || ! $user->canAccessStore($storeId)) {
+            abort(403, 'Cet emplacement ne fait pas partie de votre périmètre.');
+        }
     }
 }

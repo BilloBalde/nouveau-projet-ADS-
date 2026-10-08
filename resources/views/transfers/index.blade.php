@@ -56,7 +56,9 @@
                             <h6>Gerer vos Transferts Stock</h6>
                         </div>
                         <div class="page-btn">
-                            <a class="btn btn-added" data-bs-toggle="modal" data-bs-target="#addTransfer"><img src="{{ asset('assets/img/icons/plus.svg') }}" alt="img" class="me-2">Transferer Stock</a>
+                            @permission('transfers.create')
+                            <a class="btn btn-added" data-bs-toggle="modal" data-bs-target="#addTransfer"><img src="{{ asset('assets/img/icons/plus.svg') }}" alt="img" class="me-2">Nouveau transfert</a>
+                            @endpermission
                         </div>
                     </div>
                     @include('layouts.flash')
@@ -115,10 +117,20 @@
                                                     <input type="date" name="created_at" value="{{ request('created_at') }}" placeholder="date creation" class="form-control">
                                                 </div>
                                             </div>
+                                            <div class="col-lg-2 col-sm-2 col-12">
+                                                <div class="form-group">
+                                                    <select name="status" class="form-control">
+                                                        <option value="">Tous les statuts</option>
+                                                        @foreach (\App\Models\StockTransfer::STATUSES as $value => $label)
+                                                        <option value="{{ $value }}" {{ request('status') === $value ? 'selected' : '' }}>{{ $label }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                </div>
+                                            </div>
                                             <div class="col-lg-3 col-sm-3 col-12 d-flex align-items-center">
                                                 <div class="form-group d-flex">
                                                     <button type="submit" class="btn btn-filters me-2"><img src="{{ asset('assets/img/icons/search-whites.svg') }}" alt="img"></button>
-                                                    <a href="{{ route('purchases.index') }}" class="btn btn-secondary">Annuler Recherche</a>
+                                                    <a href="{{ route('transfers.index') }}" class="btn btn-secondary">Annuler Recherche</a>
                                                 </div>
                                             </div>
                                         </div>
@@ -129,17 +141,20 @@
                                 <table class="table  datanew">
                                     <thead>
                                         <tr>
+                                            <th>Référence</th>
                                             <th>Produit</th>
                                             <th>Source</th>
                                             <th>Destination</th>
-                                            <th>Quantity</th>
-                                            <th>Date</th>
+                                            <th>Quantité</th>
+                                            <th>Statut</th>
+                                            <th>Suivi</th>
                                             <th class="text-end">Action</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         @foreach ($dataTable as $data)
                                         <tr>
+                                            <td>{{ $data->reference }}</td>
                                             <td>
                                                 @php
                                                 $categoryList = [];
@@ -184,15 +199,65 @@
                                                     </div>
                                                 </div>
                                             </div>
-                                            <td>{{ $data->fromStore->store_name }}</td>
-                                            <td>{{ $data->toStore->store_name }}</td>
-                                            <td>{{ $data->quantity }}</td>
-                                            <td>{{ $data->created_at }}</td>
-                                            <td class="text-end">
-                                                <a class="me-3" href="{{ route('transfers.edit', $data->id) }}">
-                                                    <img src="{{ asset('assets/img/icons/edit.svg') }}" alt="img">
-                                                </a>
-                                                <a class="me-3" href="{{ route('receipts.transfers.show', $data->id) }}">
+                                            <td>{{ $data->fromStore?->full_name }} <small class="text-muted">({{ $data->fromStore?->type_label }})</small></td>
+                                            <td>{{ $data->toStore?->full_name }} <small class="text-muted">({{ $data->toStore?->type_label }})</small></td>
+                                            <td>
+                                                {{ number_format($data->quantity, 0, ',', ' ') }}
+                                                @if ($data->fund_id)<small class="d-block text-muted">{{ \App\Models\Fund::labelFor($data->fund_id) }}</small>@endif
+                                            </td>
+                                            <td>
+                                                @php
+                                                    $badge = [
+                                                        'pending' => 'bg-warning', 'approved' => 'bg-info', 'in_transit' => 'bg-primary',
+                                                        'completed' => 'bg-success', 'rejected' => 'bg-danger', 'cancelled' => 'bg-secondary',
+                                                    ][$data->status] ?? 'bg-secondary';
+                                                @endphp
+                                                <span class="badge {{ $badge }}">{{ $data->status_label }}</span>
+                                            </td>
+                                            <td style="font-size:12px; line-height:1.5;">
+                                                Demandé {{ $data->created_at?->format('d/m/Y H:i') }}{{ $data->requester ? ' par '.$data->requester->name : '' }}<br>
+                                                @if ($data->approved_at) {{ $data->status === 'rejected' ? 'Refusé' : 'Autorisé' }} {{ $data->approved_at->format('d/m/Y H:i') }}{{ $data->approver ? ' par '.$data->approver->name : '' }}<br>@endif
+                                                @if ($data->shipped_at) Expédié {{ $data->shipped_at->format('d/m/Y H:i') }}{{ $data->shipper ? ' par '.$data->shipper->name : '' }}<br>@endif
+                                                @if ($data->received_at) Réceptionné {{ $data->received_at->format('d/m/Y H:i') }}{{ $data->receiver ? ' par '.$data->receiver->name : '' }}@endif
+                                            </td>
+                                            <td class="text-end" style="white-space:nowrap;">
+                                                @if ($data->status === 'pending')
+                                                    @permission('transfers.approve')
+                                                    <form action="{{ route('transfers.approve', $data) }}" method="POST" class="d-inline">@csrf
+                                                        <button class="btn btn-sm btn-success" title="Autoriser">Autoriser</button>
+                                                    </form>
+                                                    <form action="{{ route('transfers.reject', $data) }}" method="POST" class="d-inline" onsubmit="var r = prompt('Motif du refus ?'); if (r === null) return false; this.reason.value = r;">@csrf
+                                                        <input type="hidden" name="reason">
+                                                        <button class="btn btn-sm btn-outline-danger" title="Refuser">Refuser</button>
+                                                    </form>
+                                                    @endpermission
+                                                @elseif ($data->status === 'approved')
+                                                    @permission('transfers.execute')
+                                                    <form action="{{ route('transfers.ship', $data) }}" method="POST" class="d-inline">@csrf
+                                                        <button class="btn btn-sm btn-primary" title="Expédier">Expédier</button>
+                                                    </form>
+                                                    @endpermission
+                                                @elseif ($data->status === 'in_transit')
+                                                    @permission('transfers.execute')
+                                                    <form action="{{ route('transfers.receive', $data) }}" method="POST" class="d-inline">@csrf
+                                                        <button class="btn btn-sm btn-success" title="Réceptionner">Réceptionner</button>
+                                                    </form>
+                                                    @endpermission
+                                                @endif
+                                                @if (in_array($data->status, ['pending', 'approved', 'in_transit'], true)
+                                                    && (auth()->user()->hasPermission('transfers.approve') || (int) $data->requested_by === (int) auth()->id()))
+                                                    <form action="{{ route('transfers.cancel', $data) }}" method="POST" class="d-inline" onsubmit="return confirm('Annuler ce transfert ?');">@csrf
+                                                        <button class="btn btn-sm btn-outline-secondary" title="Annuler">Annuler</button>
+                                                    </form>
+                                                @endif
+                                                @if ($data->status === 'completed')
+                                                    @permission('transfers.edit')
+                                                    <a class="me-2" href="{{ route('transfers.edit', $data->id) }}" title="Corriger la quantité">
+                                                        <img src="{{ asset('assets/img/icons/edit.svg') }}" alt="img">
+                                                    </a>
+                                                    @endpermission
+                                                @endif
+                                                <a class="me-2" href="{{ route('receipts.transfers.show', $data->id) }}">
                                                     <img src="{{ asset('assets/img/icons/printer.svg') }}" alt="img">
                                                 </a>
                                             </td>

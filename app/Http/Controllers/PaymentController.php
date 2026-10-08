@@ -250,8 +250,8 @@ class PaymentController extends Controller
         $dataTable = TransactionFacture::where('customer_id', $customer->id)->get();
         $balanceQuery = Facture::where('customer_id', $customer->id)
             ->where('statut', '!=', 'payé');
-        if (auth()->user()->role_id == 3) {
-            $store = Store::where('user_id', auth()->id())->first();
+        if (auth()->user()->isStoreScoped()) {
+            $store = Store::find(auth()->user()->assignedStoreId());
             if ($store) {
                 $balanceQuery->where('store_id', $store->id);
             }
@@ -299,8 +299,8 @@ class PaymentController extends Controller
             $customer = Customer::findOrFail($request->customer_id);
             $versement = (float) $request->versement;
             $storeId = null;
-            if (auth()->user()->role_id == 3) {
-                $store = Store::where('user_id', auth()->id())->first();
+            if (auth()->user()->isStoreScoped()) {
+                $store = Store::find(auth()->user()->assignedStoreId());
                 $storeId = $store?->id;
             }
 

@@ -2,8 +2,11 @@
 @section('content')
 <div class="content">
 
-    @if(auth()->user()->role_id !== 3)
-    @foreach (App\Models\Store::all() as $item)
+    @if(! auth()->user()->isStoreScoped())
+    {{-- Un bloc détaillé par magasin de vente ; les entrepôts et stocks internes
+         (potentiellement des dizaines) sont regroupés dans la vue « Stock par
+         emplacement » plutôt que d'allonger indéfiniment cette page. --}}
+    @foreach (App\Models\Store::where('type', App\Models\Store::TYPE_MAGASIN)->orderByDesc('is_main')->orderBy('store_name')->get() as $item)
     <div class="store-section mb-4">
         <div class="store-header d-flex align-items-center mb-3">
             <i class="fas fa-store me-2 text-primary"></i>
@@ -59,7 +62,7 @@
 
             <!-- Dettes -->
             <div class="metric-card metric-card-3">
-                <div class="dash-count" style="background: linear-gradient(135deg, #1f6f43, #9a3412);">
+                <div class="dash-count" style="background: linear-gradient(135deg, #3E4C21, #9a3412);">
                     <div class="dash-counts">
                         <h4 class="mb-1">{{ numberDelimiter($total_credits_store) }} FG</h4>
                         <h5 class="opacity-75">Dettes (non payé)</h5>
@@ -279,6 +282,53 @@
                 <div class="card-body pt-3">
                     <div id="sales_charts"></div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Vue multi-emplacements : ventes par période (dont ventes directes depuis
+         les entrepôts), stock par type d'emplacement, transferts en cours. --}}
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0"><i class="fas fa-warehouse me-2 text-primary"></i>Vue d'ensemble — {{ $overview['locations'] }} emplacement(s)</h5>
+                @permission('stock.view')
+                <a href="{{ route('stock.index') }}" class="btn btn-sm btn-primary">Détail par magasin et entrepôt</a>
+                @endpermission
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm mb-3">
+                    <thead><tr><th></th><th class="text-end">Aujourd'hui</th><th class="text-end">Semaine</th><th class="text-end">Mois</th><th class="text-end">Année</th></tr></thead>
+                    <tbody>
+                        <tr><td>Chiffre d'affaires</td>@foreach ($overview['sales'] as $s)<td class="text-end">{{ numberDelimiter($s['ca']) }} FG</td>@endforeach</tr>
+                        <tr><td>dont ventes directes depuis les entrepôts</td>@foreach ($overview['sales'] as $s)<td class="text-end">{{ numberDelimiter($s['direct']) }} FG</td>@endforeach</tr>
+                        <tr><td>Marge (sur les ventes au coût connu)</td>@foreach ($overview['sales'] as $s)<td class="text-end">{{ numberDelimiter($s['marge']) }} FG</td>@endforeach</tr>
+                        {{-- Activité financée par les associés : comprise dans les totaux
+                             ci-dessus ; son résultat est partagé selon leur clé (relevés). --}}
+                        <tr class="table-light"><td><strong>Activité associés</strong> — chiffre d'affaires</td>@foreach ($overview['sales'] as $s)<td class="text-end">{{ numberDelimiter($s['assoc_ca']) }} FG</td>@endforeach</tr>
+                        <tr class="table-light"><td><strong>Activité associés</strong> — marge (avant partage)</td>@foreach ($overview['sales'] as $s)<td class="text-end">{{ numberDelimiter($s['assoc_marge']) }} FG</td>@endforeach</tr>
+                    </tbody>
+                </table>
+            </div>
+            @if (! empty($overview['associates']))
+            @php $a = $overview['associates']; @endphp
+            <div class="d-flex flex-wrap gap-3 align-items-center mb-3 p-2 rounded" style="font-size:14px; background:#F9F9F3; border:1px solid #E2E3CF;">
+                <strong><i class="fas fa-handshake me-1 text-primary"></i>Associés ({{ $a['count'] }}) :</strong>
+                <span>Capital restant dû : <strong>{{ numberDelimiter($a['capital_restant']) }} FG</strong></span>
+                <span>Stock des associés : <strong>{{ numberDelimiter($a['stock_valeur']) }} FG</strong></span>
+                <span>Bénéfice à leur verser : <strong>{{ numberDelimiter($a['benefice_a_verser']) }} FG</strong></span>
+                <span>Votre part restante : <strong>{{ numberDelimiter($a['part_patron_restante']) }} FG</strong></span>
+                <span>Comptes associés : <strong>{{ numberDelimiter($a['tresorerie']) }} FG</strong></span>
+                <a href="{{ route('associates.index') }}" class="ms-auto">Voir les relevés <i class="fas fa-arrow-right"></i></a>
+            </div>
+            @endif
+            <div class="d-flex flex-wrap gap-3" style="font-size:14px;">
+                @foreach (\App\Models\Store::TYPES as $type => $label)
+                    <span><strong>{{ $label }}s :</strong> {{ number_format((int) ($overview['stock_by_type'][$type] ?? 0), 0, ',', ' ') }} unités</span>
+                @endforeach
+                @permission('transfers.view')
+                <a href="{{ route('transfers.index', ['status' => 'pending']) }}"><strong>Transferts en cours :</strong> {{ $overview['pending_transfers'] }}</a>
+                @endpermission
             </div>
         </div>
     </div>

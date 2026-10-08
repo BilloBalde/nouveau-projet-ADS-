@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Liste des paiements - Coleah Bandeya & Fils</title>
+    <title>Liste des paiements - TELICO</title>
     <style>
         /* ===== RESET & BASE ===== */
         * {
@@ -15,7 +15,7 @@
             font-family: 'DejaVu Sans', 'Helvetica', 'Arial', sans-serif;
             font-size: 11px;
             line-height: 1.5;
-            color: #10221a;
+            color: #1F2414;
             background: #fff;
             margin: 1.5cm;
         }
@@ -27,7 +27,7 @@
         .header {
             width: 100%;
             border-collapse: collapse;
-            border-bottom: 3px solid #1f6f43;
+            border-bottom: 3px solid #3E4C21;
             padding-bottom: 14px;
             margin-bottom: 18px;
         }
@@ -49,13 +49,13 @@
         .company-name {
             font-size: 20px;
             font-weight: bold;
-            color: #1f6f43;
+            color: #3E4C21;
             letter-spacing: -0.3px;
         }
 
         .company-details {
             font-size: 9px;
-            color: #5d6b64;
+            color: #66695A;
             margin-top: 4px;
         }
 
@@ -75,24 +75,24 @@
         .report-title {
             font-size: 17px;
             font-weight: 700;
-            color: #10221a;
+            color: #1F2414;
             text-transform: uppercase;
             letter-spacing: 0.03em;
         }
 
         .report-generated {
             font-size: 9px;
-            color: #5d6b64;
+            color: #66695A;
         }
 
         .filters {
-            background: #f7faf8;
+            background: #F9F9F3;
             padding: 8px 14px;
             border-radius: 6px;
             margin-bottom: 16px;
             font-size: 9.5px;
-            color: #5d6b64;
-            border-left: 3px solid #1f6f43;
+            color: #66695A;
+            border-left: 3px solid #3E4C21;
         }
 
         /* ===== TABLEAU ===== */
@@ -104,7 +104,7 @@
         }
 
         table.data th {
-            background-color: #1f6f43;
+            background-color: #3E4C21;
             color: white;
             padding: 9px 8px;
             text-align: left;
@@ -112,17 +112,17 @@
             font-size: 9.5px;
             text-transform: uppercase;
             letter-spacing: 0.02em;
-            border: 1px solid #1f6f43;
+            border: 1px solid #3E4C21;
         }
 
         table.data td {
             padding: 7px 8px;
-            border: 1px solid #dcefe3;
+            border: 1px solid #E6E9D5;
             vertical-align: top;
         }
 
         table.data tr:nth-child(even) td {
-            background-color: #f7faf8;
+            background-color: #F9F9F3;
         }
 
         .amount {
@@ -143,8 +143,8 @@
 
         /* ===== RÉSUMÉ ===== */
         .summary {
-            background: #f7faf8;
-            border: 1px solid #b9dfc8;
+            background: #F9F9F3;
+            border: 1px solid #CED5AE;
             border-radius: 8px;
             padding: 14px 20px;
             margin-top: 18px;
@@ -165,28 +165,28 @@
         }
 
         .summary-row .total-label {
-            color: #5d6b64;
+            color: #66695A;
         }
 
         .summary-row .total-value {
             text-align: right;
             font-weight: 700;
-            color: #10221a;
+            color: #1F2414;
         }
 
         .summary-row.grand-total td {
-            border-top: 2px solid #1f6f43;
+            border-top: 2px solid #3E4C21;
             padding-top: 8px;
             font-size: 13px;
         }
 
         .summary-row.grand-total .total-label {
             font-weight: 700;
-            color: #10221a;
+            color: #1F2414;
         }
 
         .summary-row.grand-total .total-value {
-            color: #1f6f43;
+            color: #3E4C21;
         }
 
         /* ===== PIED DE PAGE ===== */
@@ -196,9 +196,9 @@
             left: 0;
             right: 0;
             font-size: 8px;
-            color: #5d6b64;
+            color: #66695A;
             text-align: center;
-            border-top: 1px solid #dcefe3;
+            border-top: 1px solid #E6E9D5;
             padding-top: 8px;
             margin-top: 20px;
             background: white;
@@ -230,7 +230,7 @@
                 @endif
             </td>
             <td>
-                <div class="company-name">{{ $company->name ?? 'Coleah Bandeya & Fils' }}</div>
+                <div class="company-name">{{ $company->name ?? 'TELICO' }}</div>
                 <div class="company-details">
                     {{ $company->address ?? 'Madina, Ecole Gare Routière Dabola Camion, Conakry' }}<br>
                     Tél: {{ $company->phone ?? '' }} | Email: {{ $company->email ?? '' }}
@@ -290,7 +290,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="7" style="text-align:center;color:#5d6b64;padding:20px;">Aucun paiement pour cette sélection.</td>
+                    <td colspan="7" style="text-align:center;color:#66695A;padding:20px;">Aucun paiement pour cette sélection.</td>
                 </tr>
             @endforelse
         </tbody>
@@ -316,7 +316,7 @@
     </div>
 
     <div class="footer">
-        {{ $company->name ?? 'Coleah Bandeya & Fils' }} — Rapport de paiements — Document confidentiel
+        {{ $company->name ?? 'TELICO' }} — Rapport de paiements — Document confidentiel
     </div>
 
     <script type="text/php">

@@ -94,7 +94,7 @@
             </div>
         </div>
         <div class="footer">
-            © {{ date('Y') }} Coleah Bandeya & Fils - Tous droits réservés
+            © {{ date('Y') }} TELICO - Tous droits réservés
         </div>
     </div>
 </body>

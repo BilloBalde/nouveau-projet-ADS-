@@ -3,7 +3,7 @@
 @include('layouts.head')
 <head>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Source+Sans+3:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
     <style>
         .page-btn {
             display: flex;
@@ -29,12 +29,12 @@
         }
 
         .btn-added {
-            background-color: #1f6f43;
+            background-color: #3E4C21;
             color: white;
         }
 
         .btn-added:hover {
-            background-color: #195836;
+            background-color: #323D1A;
         }
 
         .btn-cancel {
@@ -47,13 +47,13 @@
         }
 
         /* ============================= */
-        /* FACTURE — design Coleah Bandeya & Fils */
+        /* FACTURE — design TELICO */
         /* ============================= */
         #invoiceContent {
             position: relative;
             overflow: hidden;
             color: #1c1917 !important;
-            font-family: 'Inter', Arial, sans-serif;
+            font-family: 'Source Sans 3', Arial, sans-serif;
             background: #ffffff;
             max-width: 850px;
             margin: 0 auto;
@@ -96,7 +96,7 @@
             align-items: flex-start;
             gap: 24px;
             padding-bottom: 22px;
-            border-bottom: 3px solid #1f6f43;
+            border-bottom: 3px solid #3E4C21;
             margin-bottom: 24px;
         }
 
@@ -114,7 +114,7 @@
         }
 
         .facture-brand-name {
-            font-family: 'Fraunces', Georgia, serif;
+            font-family: 'Cinzel', Georgia, serif;
             font-size: 22px;
             font-weight: 700;
             color: #92400e !important;
@@ -132,11 +132,11 @@
         }
 
         .facture-heading .label {
-            font-family: 'Fraunces', Georgia, serif;
+            font-family: 'Cinzel', Georgia, serif;
             font-size: 28px;
             font-weight: 700;
             letter-spacing: 1px;
-            color: #1f6f43 !important;
+            color: #3E4C21 !important;
             text-transform: uppercase;
         }
 
@@ -159,9 +159,9 @@
             font-weight: 700;
             letter-spacing: 0.5px;
             text-transform: uppercase;
-            background: #f0f8f3;
+            background: #F4F5EC;
             color: #b45309 !important;
-            border: 1px solid #b9dfc8;
+            border: 1px solid #CED5AE;
         }
 
         /* Cartes d'info */
@@ -173,8 +173,8 @@
 
         .info-card {
             flex: 1;
-            background: #f0f8f3;
-            border: 1px solid #b9dfc8;
+            background: #F4F5EC;
+            border: 1px solid #CED5AE;
             border-radius: 12px;
             padding: 16px 18px;
         }
@@ -246,8 +246,8 @@
 
         .invoice-products-table tfoot .invoice-total td {
             padding: 14px 12px;
-            background: #f0f8f3;
-            border-top: 2px solid #1f6f43;
+            background: #F4F5EC;
+            border-top: 2px solid #3E4C21;
             font-size: 14px;
         }
 
@@ -259,7 +259,7 @@
         /* Montant en lettres */
         .amount-in-words {
             background: #faf9f7;
-            border-left: 4px solid #1f6f43;
+            border-left: 4px solid #3E4C21;
             border-radius: 0 10px 10px 0;
             padding: 14px 18px;
             font-size: 12.5px;
@@ -322,7 +322,7 @@
         }
 
         .company-info h4 {
-            font-family: 'Fraunces', Georgia, serif;
+            font-family: 'Cinzel', Georgia, serif;
             font-size: 14px;
             color: #92400e !important;
             margin-bottom: 3px;
@@ -420,16 +420,16 @@
                         {{-- $company est fourni par le View Composer (AppServiceProvider) --}}
                         <div id="invoiceContent">
                             <div class="invoice-watermark" aria-hidden="true">
-                                <img class="watermark-logo" src="{{ asset('companies/' . ($company?->logo ?? 'ADK.png')) }}" alt="">
+                                <img class="watermark-logo" src="{{ asset('companies/' . ($company?->logo ?? 'telico.png')) }}" alt="">
                             </div>
 
                             <div class="facture-inner">
                                 <!-- En-tête -->
                                 <div class="facture-header">
                                     <div class="facture-brand">
-                                        <img src="{{ asset('companies/' . ($company?->logo ?? 'ADK.png')) }}" alt="{{ $company?->name ?? 'Coleah Bandeya & Fils' }}">
+                                        <img src="{{ asset('companies/' . ($company?->logo ?? 'telico.png')) }}" alt="{{ $company?->name ?? 'TELICO' }}">
                                         <div>
-                                            <div class="facture-brand-name">{{ $company?->name ?? 'Coleah Bandeya & Fils' }}</div>
+                                            <div class="facture-brand-name">{{ $company?->name ?? 'TELICO' }}</div>
                                             <div class="facture-brand-sub">
                                                 @if(!empty($company?->address)) {{ $company->address }}<br>@endif
                                                 Tél: {{ $company?->phone ?? '' }}
@@ -508,13 +508,13 @@
                                     </div>
                                     <div class="signature-box">
                                         <div class="signature-line"></div>
-                                        <p>Pour {{ strtoupper($company?->name ?? 'Coleah Bandeya & Fils') }}</p>
+                                        <p>Pour {{ strtoupper($company?->name ?? 'TELICO') }}</p>
                                     </div>
                                 </div>
 
                                 <!-- Pied de page -->
                                 <div class="company-info">
-                                    <h4>{{ $company?->name ?? 'Coleah Bandeya & Fils' }}</h4>
+                                    <h4>{{ $company?->name ?? 'TELICO' }}</h4>
                                     <p>{{ $company?->address ?? '' }}</p>
                                     <p>Tél: {{ $company?->phone ?? '' }} | Email: {{ $company?->email ?? '' }}</p>
                                     <p>Facture générée le {{ \Carbon\Carbon::now()->format('d/m/Y H:i') }}</p>

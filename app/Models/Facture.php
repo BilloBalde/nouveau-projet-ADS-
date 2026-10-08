@@ -27,8 +27,46 @@ class Facture extends Model
         'livraison',
         'notes',
         'order_id', // Ajouter pour la relation avec la commande
-        'user_id',  // Ajouter pour l'utilisateur qui a créé la facture
+        'user_id',  // Vendeur / utilisateur qui a émis la facture
+        'channel',
     ];
+
+    /**
+     * Canal d'émission. « pos » = vente flash (encaissement rapide en caisse).
+     * NULL = facture antérieure à ce suivi, canal inconnu.
+     */
+    public const CHANNEL_POS = 'pos';
+    public const CHANNEL_FACTURATION = 'facturation';
+    public const CHANNEL_ECOMMERCE = 'ecommerce';
+    public const CHANNEL_DEVIS = 'devis';
+    public const CHANNEL_TIERS = 'tiers';
+
+    public const CHANNELS = [
+        self::CHANNEL_POS         => 'Vente flash (caisse)',
+        self::CHANNEL_FACTURATION => 'Facturation',
+        self::CHANNEL_ECOMMERCE   => 'Commande e-commerce',
+        self::CHANNEL_DEVIS       => 'Devis validé',
+        self::CHANNEL_TIERS       => 'Vente tierce',
+    ];
+
+    /**
+     * Prochain numéro de facture libre (AAAAMM + séquence).
+     *
+     * `max('id')` hors corbeille ignorerait les factures supprimées alors que
+     * l'index unique sur numero_facture, lui, les compte : on repart du
+     * maximum corbeille comprise, puis on avance tant que le numéro est pris.
+     */
+    public static function prochainNumero(): string
+    {
+        $sequence = (static::withTrashed()->max('id') ?? 0) + 1;
+
+        do {
+            $numero = date('Ym') . sprintf('%04d', $sequence);
+            $sequence++;
+        } while (static::withTrashed()->where('numero_facture', $numero)->exists());
+
+        return $numero;
+    }
 
     /**
      * Accesseur pour le nom complet du client

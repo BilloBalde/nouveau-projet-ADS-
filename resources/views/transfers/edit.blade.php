@@ -85,9 +85,22 @@
                                             @enderror
                                         </div>
                                     </div>
+                                    <div class="col-lg-6 col-sm-6 col-12">
+                                        <div class="form-group">
+                                            <label for="reason">Motif de la correction</label>
+                                            <input type="text" name="reason" id="reason" value="{{ old('reason') }}" class="form-control" placeholder="Ex. : erreur de comptage au départ">
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <p class="text-muted" style="font-size:12px;">
+                                            Seule la quantité d'un transfert réceptionné peut être corrigée ; l'écart est enregistré
+                                            dans le journal des mouvements comme une correction. Pour changer de produit, de source ou de
+                                            destination, annulez ou faites un transfert inverse.
+                                        </p>
+                                    </div>
                                     <div class="col-lg-12">
                                         <button type="submit" class="btn btn-submit me-2">Modifier</button>
-                                        <a href="{{ route('purchases.index') }}" class="btn btn-cancel">Annuler</a>
+                                        <a href="{{ route('transfers.index') }}" class="btn btn-cancel">Annuler</a>
                                     </div>
                                 </div>
                             </form>

@@ -6,19 +6,28 @@ use App\Models\StoreProduct;
 use App\Models\StockTransfer;
 use App\Models\Store;
 use App\Models\Product;
-use App\Services\StockService;
+use App\Services\TransferService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
+/**
+ * Transferts de stock entre emplacements (route resource « transfers »).
+ * La logique du circuit (demande → autorisation → expédition → réception)
+ * est dans TransferService.
+ */
 class StoreProductController extends Controller
 {
-    private StockService $stock;
-
-    public function __construct(StockService $stock)
+    public function __construct(private TransferService $transfers)
     {
         $this->middleware('auth.check');
-        $this->stock = $stock;
+        // Aucune permission n'était vérifiée : n'importe quel employé connecté,
+        // vendeur compris, pouvait déplacer du stock entre boutiques.
+        $this->middleware('permission:transfers.view')->only(['index', 'show']);
+        $this->middleware('permission:transfers.create')->only(['create', 'store']);
+        $this->middleware('permission:transfers.edit')->only(['edit', 'update']);
+        $this->middleware('permission:transfers.approve')->only(['approve', 'reject']);
+        $this->middleware('permission:transfers.execute')->only(['ship', 'receive']);
     }
+
     /**
      * Display a listing of the resource.
      *
@@ -26,188 +35,173 @@ class StoreProductController extends Controller
      */
     public function index(Request $request)
     {
-        $produits = Product::all();
-        $boutiques = Store::all();
-        $query = StockTransfer::query();
+        $user = auth()->user();
+        $produits = Product::orderBy('libelle')->get(['id', 'libelle', 'sku']);
+        // Toutes les destinations possibles (un magasin peut demander à un
+        // entrepôt hors de son périmètre) ; la visibilité des transferts, elle,
+        // reste limitée au périmètre.
+        $boutiques = Store::optionsFor(null);
+        $mesEmplacements = Store::optionsFor($user);
+
+        $query = StockTransfer::query()->visibleTo($user);
 
         if ($request->filled('from_store_id')) {
-            $query->where('from_store_id', 'like', '%' . $request->input('from_store_id') . '%');
+            $query->where('from_store_id', $request->input('from_store_id'));
         }
 
         if ($request->filled('to_store_id')) {
-            $query->where('to_store_id', 'like', '%' . $request->input('to_store_id') . '%');
+            $query->where('to_store_id', $request->input('to_store_id'));
         }
 
         if ($request->filled('product_id')) {
-            $query->where('product_id', 'like', '%' . $request->input('product_id') . '%');
+            $query->where('product_id', $request->input('product_id'));
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->input('status'));
         }
 
         if ($request->filled('created_at')) {
-            $query->where('created_at', $request->input('created_at'));
+            $query->whereDate('created_at', $request->input('created_at'));
         }
 
         // Eager loading + pagination serveur (évite ~1100 requêtes N+1)
-        $dataTable = $query->with(['product.categories', 'fromStore', 'toStore'])
+        $dataTable = $query->with(['product.categories', 'fromStore', 'toStore', 'requester', 'approver', 'shipper', 'receiver'])
             ->latest()
             ->paginate(50)
             ->appends($request->query());
 
-        // Pass the necessary data to the view, including options for filters
-        return view('transfers.index', compact('dataTable', 'produits', 'boutiques'));
+        $funds = \App\Models\Fund::active()->orderBy('name')->get();
+
+        return view('transfers.index', compact('dataTable', 'produits', 'boutiques', 'mesEmplacements', 'funds'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function create()
     {
-        //
+        return redirect()->route('transfers.index');
     }
 
     /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * Demande de transfert. Si l'utilisateur peut à la fois autoriser et
+     * exécuter, et coche « exécuter immédiatement », le transfert est mené à
+     * son terme en une fois (comportement historique), étapes tracées.
      */
     public function store(Request $request)
     {
-        $request->validate([
+        $data = $request->validate([
             'product_id' => 'required|exists:products,id',
             'from_store_id' => 'required|exists:stores,id',
             'to_store_id' => 'required|exists:stores,id|different:from_store_id',
             'quantity' => 'required|integer|min:1',
+            'notes' => 'nullable|string|max:1000',
+            'fund_id' => 'nullable|exists:funds,id',
         ]);
 
+        $user = auth()->user();
+
         try {
-            $productId = (int) $request->product_id;
-            $fromStoreId = (int) $request->from_store_id;
-            $toStoreId = (int) $request->to_store_id;
-            $quantity = (int) $request->quantity;
+            $transfer = $this->transfers->request($user, $data);
 
-            DB::beginTransaction();
+            if ($request->boolean('execute_now')
+                && $user->hasPermission('transfers.approve')
+                && $user->hasPermission('transfers.execute')) {
+                $this->transfers->executeImmediately($user, $transfer);
 
-            // Atomic decrement on source to avoid negative stock / concurrency issues
-            if (!$this->stock->decrementIfAvailable($fromStoreId, $productId, $quantity)) {
-                DB::rollBack();
-                return redirect()->route('transfers.index')->with('error', 'Stock insuffisant dans le magasin source.');
+                return redirect()->route('transfers.index')->with('success', "Transfert {$transfer->reference} effectué : stock déplacé.");
             }
 
-            // Ensure destination row exists then increment
-            $this->stock->increment($toStoreId, $productId, $quantity);
-
-            // Record the stock transfer
-            StockTransfer::create([
-                'product_id' => $productId,
-                'from_store_id' => $fromStoreId,
-                'to_store_id' => $toStoreId,
-                'quantity' => $quantity,
-            ]);
-
-            DB::commit();
-            return redirect()->route('transfers.index')->with('success', 'Le transfert a été effectué avec succès.');
+            return redirect()->route('transfers.index')->with('success', "Transfert {$transfer->reference} demandé, en attente d'autorisation.");
         } catch (\Throwable $th) {
-            DB::rollBack();
+            return redirect()->route('transfers.index')->with('error', $th->getMessage())->withInput();
+        }
+    }
+
+    public function approve(StockTransfer $transfer)
+    {
+        return $this->step(fn () => $this->transfers->approve(auth()->user(), $transfer), "Transfert {$transfer->reference} autorisé.");
+    }
+
+    public function reject(Request $request, StockTransfer $transfer)
+    {
+        return $this->step(fn () => $this->transfers->reject(auth()->user(), $transfer, $request->input('reason')), "Transfert {$transfer->reference} refusé.");
+    }
+
+    public function ship(StockTransfer $transfer)
+    {
+        return $this->step(fn () => $this->transfers->ship(auth()->user(), $transfer), "Transfert {$transfer->reference} expédié : stock sorti de la source.");
+    }
+
+    public function receive(StockTransfer $transfer)
+    {
+        return $this->step(fn () => $this->transfers->receive(auth()->user(), $transfer), "Transfert {$transfer->reference} réceptionné : stock entré à destination.");
+    }
+
+    public function cancel(StockTransfer $transfer)
+    {
+        $user = auth()->user();
+        if (! $user->hasPermission('transfers.approve') && (int) $transfer->requested_by !== (int) $user->id) {
+            abort(403, 'Seul le demandeur ou un responsable peut annuler ce transfert.');
+        }
+
+        return $this->step(fn () => $this->transfers->cancel($user, $transfer), "Transfert {$transfer->reference} annulé.");
+    }
+
+    private function step(callable $action, string $success)
+    {
+        try {
+            $action();
+
+            return redirect()->route('transfers.index')->with('success', $success);
+        } catch (\Throwable $th) {
             return redirect()->route('transfers.index')->with('error', $th->getMessage());
         }
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  \App\Models\StoreProduct  $storeProduct
-     * @return \Illuminate\Http\Response
-     */
     public function show(StoreProduct $storeProduct)
     {
-        //
+        return redirect()->route('transfers.index');
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\StoreProduct  $storeProduct
-     * @return \Illuminate\Http\Response
-     */
     public function edit($id)
     {
-        $storeProduct = StockTransfer::find($id);
+        $storeProduct = StockTransfer::visibleTo(auth()->user())->findOrFail($id);
         $produits = Product::all();
-        $boutiques = Store::all();
+        $boutiques = Store::optionsFor(null);
+
         return view('transfers.edit', compact('storeProduct', 'produits', 'boutiques'));
     }
 
     /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\StoreProduct  $storeProduct
-     * @return \Illuminate\Http\Response
+     * Correction de la quantité d'un transfert terminé. L'ancienne version
+     * annulait puis réécrivait le transfert (produit, source et destination
+     * compris) sans laisser de trace ; désormais seul l'écart de quantité est
+     * appliqué, par des mouvements de correction visibles dans le journal.
+     * Un transfert vers le mauvais emplacement se corrige par un nouveau
+     * transfert, pas en réécrivant l'ancien.
      */
     public function update(Request $request, $id)
     {
         $request->validate([
-            'product_id' => 'required|exists:products,id',
-            'from_store_id' => 'required|exists:stores,id',
-            'to_store_id' => 'required|exists:stores,id|different:from_store_id',
             'quantity' => 'required|integer|min:1',
+            'reason'   => 'nullable|string|max:500',
         ]);
-        try {
-            // Fetch the existing transfer record
-            $transfer = StockTransfer::findOrFail($id);
 
-            $productId = (int) $request->product_id;
-            $fromStoreId = (int) $request->from_store_id;
-            $toStoreId = (int) $request->to_store_id;
-            $newQuantity = (int) $request->quantity;
-            $oldQuantity = (int) $transfer->quantity;
+        $transfer = StockTransfer::visibleTo(auth()->user())->findOrFail($id);
 
-            DB::beginTransaction();
-
-            // 1) Reverse original transfer safely:
-            // source += oldQuantity
-            $this->stock->increment($fromStoreId, $productId, $oldQuantity);
-
-            // destination -= oldQuantity (must have enough)
-            if (!$this->stock->decrementIfAvailable($toStoreId, $productId, $oldQuantity)) {
-                DB::rollBack();
-                return redirect()->route('transfers.index')->with('error', 'Stock insuffisant dans le magasin destination pour annuler l\'ancien transfert.');
-            }
-
-            // 2) Apply new transfer safely:
-            if (!$this->stock->decrementIfAvailable($fromStoreId, $productId, $newQuantity)) {
-                DB::rollBack();
-                return redirect()->route('transfers.index')->with('error', 'Stock insuffisant dans le magasin source pour appliquer le nouveau transfert.');
-            }
-
-            $this->stock->increment($toStoreId, $productId, $newQuantity);
-
-            // 3) Update transfer record
-            $transfer->update([
-                'product_id' => $productId,
-                'from_store_id' => $fromStoreId,
-                'to_store_id' => $toStoreId,
-                'quantity' => $newQuantity,
-            ]);
-
-            DB::commit();
-            return redirect()->route('transfers.index')->with('success', 'Le transfert a été mis à jour avec succès.');
-        } catch (\Throwable $th) {
-            DB::rollBack();
-            return redirect()->route('transfers.index')->with('error', $th->getMessage());
+        if ((int) $request->product_id && (int) $request->product_id !== (int) $transfer->product_id
+            || (int) $request->from_store_id && (int) $request->from_store_id !== (int) $transfer->from_store_id
+            || (int) $request->to_store_id && (int) $request->to_store_id !== (int) $transfer->to_store_id) {
+            return redirect()->route('transfers.index')->with('error', 'Le produit, la source et la destination d\'un transfert ne se modifient pas : annulez-le ou créez un transfert inverse.');
         }
+
+        return $this->step(
+            fn () => $this->transfers->correctQuantity(auth()->user(), $transfer, (int) $request->quantity, $request->input('reason')),
+            "Transfert {$transfer->reference} corrigé."
+        );
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  \App\Models\StoreProduct  $storeProduct
-     * @return \Illuminate\Http\Response
-     */
     public function destroy(StoreProduct $storeProduct)
     {
-        //
+        abort(405, 'Un transfert ne se supprime pas : annulez-le.');
     }
 }

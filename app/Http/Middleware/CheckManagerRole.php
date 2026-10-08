@@ -20,6 +20,11 @@ class CheckManagerRole
             abort(403, 'Accès non autorisé.');
         }
 
+        // Un associé ne voit que son relevé (voir CheckIfAuthenticated).
+        if ($user->isAssociate() && ! $request->routeIs(CheckIfAuthenticated::ASSOCIATE_ROUTES)) {
+            abort(403, 'Accès non autorisé.');
+        }
+
         return $next($request);
     }
 }

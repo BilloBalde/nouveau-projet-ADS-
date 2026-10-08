@@ -364,11 +364,11 @@
                                     @if($company && $company->logo)
                                         <img src="{{ asset('companies/'.$company->logo) }}" alt="{{ $company->name ?? 'Logo' }}">
                                     @else
-                                        <img src="{{ asset('companies/ADK.png') }}" alt="{{ config('app.name') }}">
+                                        <img src="{{ asset('companies/telico.png') }}" alt="{{ config('app.name') }}">
                                     @endif
                                     <div class="document-title">
                                         <h1>BON DE COMMANDE</h1>
-                                        <h3>{{ $company?->name ?? 'Coleah Bandeya & Fils' }}</h3>
+                                        <h3>{{ $company?->name ?? 'TELICO' }}</h3>
                                     </div>
                                 </div>
                             </div>
@@ -484,7 +484,7 @@
                                 </div>
                                 <div class="bon-signature">
                                     <div class="bon-signature-line">
-                                        <strong>Pour {{ $company?->name ?? 'Coleah Bandeya & Fils' }}</strong><br>
+                                        <strong>Pour {{ $company?->name ?? 'TELICO' }}</strong><br>
                                         <small>{{ auth()->user()->name }}</small>
                                     </div>
                                 </div>

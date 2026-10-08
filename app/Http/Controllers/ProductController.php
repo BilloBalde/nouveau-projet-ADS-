@@ -42,16 +42,16 @@ class ProductController extends Controller
 
         $connectedUser = Auth::user()->role_id;
 
-        if ($connectedUser == 3) {
-            $userStoreId = Store::where('user_id', Auth::user()->id)->value('id');
+        if (Auth::user()->isStoreScoped()) {
+            $userStoreId = Auth::user()->assignedStoreId();
             $query->whereHas('stores', function ($q) use ($userStoreId) {
                 $q->where('store_id', $userStoreId);
             });
         }
         $allProducts = $query->with(['categories', 'stores'])->get();
 
-        $userStoreId = $connectedUser == 3
-            ? Store::where('user_id', Auth::user()->id)->value('id')
+        $userStoreId = Auth::user()->isStoreScoped()
+            ? Auth::user()->assignedStoreId()
             : null;
 
         return view('products.index', compact('allProducts', 'categories', 'userStoreId'))
@@ -248,7 +248,19 @@ class ProductController extends Controller
 
             // Ajout du stock dans le magasin sélectionné
             $storeId = $request->store_id;
-            $product->stores()->attach($storeId, ['quantity' => $request->stock_initial]);
+            // Stock initial, tracé dans le journal comme premier mouvement.
+            // products.pcs a déjà été renseigné ci-dessus : on le remet à zéro
+            // pour que l'incrément du service ne le compte pas deux fois.
+            $product->forceFill(['pcs' => 0])->save();
+            app(\App\Services\StockService::class)->increment((int) $storeId, (int) $product->id, (int) $request->stock_initial, [
+                'type'        => \App\Models\StockMovement::INITIAL,
+                'source_type' => 'product',
+                'source_id'   => $product->id,
+                'reason'      => 'Stock initial saisi à la création du produit',
+            ]);
+            // Stock initial nul : la ligne existe quand même, le produit reste
+            // rattaché au magasin choisi (comme avant).
+            StoreProduct::firstOrCreate(['store_id' => $storeId, 'product_id' => $product->id], ['quantity' => 0]);
 
             return redirect()->route('produits.index')->with('success', 'Produit crée avec succès.');
         } catch (\Exception $e) {
@@ -283,8 +295,8 @@ class ProductController extends Controller
         $stores = Store::select('id', 'store_name')->get();
 
         $user = Auth::user();
-        $userStoreId = ($user && $user->role_id == 3)
-            ? Store::where('user_id', $user->id)->value('id')
+        $userStoreId = ($user && $user->isStoreScoped())
+            ? $user->assignedStoreId()
             : null;
 
         $perStoreQuantities = $product->stores
@@ -356,10 +368,16 @@ class ProductController extends Controller
             // ✅ SUPPRIMÉ: tenant_id dans sync
             $product->categories()->sync($request->categories);
 
-            $storeProduct = StoreProduct::updateOrCreate(
-                ['product_id' => $id, 'store_id' => $storeId],
-                ['quantity' => $request->input('stock_restant')]
-            );
+            // Le stock saisi sur la fiche produit n'est plus écrasé en silence :
+            // l'écart avec le stock enregistré devient un mouvement d'ajustement
+            // tracé (auteur, date, avant/après), dans le périmètre de l'utilisateur.
+            $this->authorizeStore($storeId);
+            app(\App\Services\StockService::class)->adjustTo((int) $storeId, (int) $id, (int) $request->input('stock_restant'), [
+                'type'        => \App\Models\StockMovement::ADJUSTMENT,
+                'source_type' => 'product',
+                'source_id'   => (int) $id,
+                'reason'      => 'Stock modifié depuis la fiche produit',
+            ]);
 
             // Garde products.pcs (stock global e-commerce) en phase avec la somme des stocks par magasin
             $product->pcs = $product->stores()->sum('store_products.quantity');

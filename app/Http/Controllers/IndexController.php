@@ -72,13 +72,79 @@ class IndexController extends Controller
         return $combined;
     }
 
+    /**
+     * Chiffres multi-emplacements du tableau de bord. Requêtes agrégées : le
+     * coût ne dépend pas du nombre de magasins ou d'entrepôts.
+     */
+    private function locationOverview($user): array
+    {
+        $scope = fn ($q, $column = 'store_id') => $user->isStoreScoped() ? $q->whereIn($column, $user->accessibleStoreIds()) : $q;
+        $warehouseIds = Store::where('type', Store::TYPE_ENTREPOT)->pluck('id');
+
+        $periods = [
+            'jour'    => [Carbon::today(), Carbon::today()->endOfDay()],
+            'semaine' => [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()],
+            'mois'    => [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()],
+            'annee'   => [Carbon::now()->startOfYear(), Carbon::now()->endOfYear()],
+        ];
+
+        $sales = [];
+        foreach ($periods as $key => $range) {
+            $row = $scope(Sale::query())->whereBetween('created_at', $range)
+                ->selectRaw('COALESCE(SUM(prixTotal),0) as ca, COALESCE(SUM(interet),0) as marge')->first();
+            $direct = $scope(Sale::query())->whereBetween('created_at', $range)
+                ->whereIn('store_id', $warehouseIds)->sum('prixTotal');
+            // Part de ces ventes portant sur des marchandises financées par des
+            // associés (facturée ; leur résultat à partager est dans leurs relevés).
+            $associes = $scope(Sale::query())->whereBetween('created_at', $range)->whereNotNull('fund_id')
+                ->selectRaw('COALESCE(SUM(prixTotal),0) as ca, COALESCE(SUM(interet),0) as marge')->first();
+            $sales[$key] = [
+                'ca' => (float) $row->ca, 'marge' => (float) $row->marge, 'direct' => (float) $direct,
+                'assoc_ca' => (float) $associes->ca, 'assoc_marge' => (float) $associes->marge,
+            ];
+        }
+
+        // Synthèse des associés, pour le patron uniquement.
+        $associates = null;
+        if ($user->hasPermission('associates.manage') && \App\Models\Fund::exists()) {
+            $service = app(\App\Services\FundService::class);
+            $releves = \App\Models\Fund::where('active', true)->get()->map(fn ($f) => $service->statement($f));
+            $associates = [
+                'count'                => $releves->count(),
+                'capital_restant'      => (float) $releves->sum('capital_restant'),
+                'stock_valeur'         => (float) $releves->sum('stock_valeur'),
+                'benefice_a_verser'    => (float) $releves->sum('benefice_a_verser'),
+                'part_patron_restante' => (float) $releves->sum('part_patron_restante'),
+                'tresorerie'           => (float) $releves->sum('tresorerie'),
+            ];
+        }
+
+        $stockByType = $scope(StoreProduct::query()->join('stores', 'stores.id', '=', 'store_products.store_id'), 'store_products.store_id')
+            ->selectRaw('stores.type as type, SUM(store_products.quantity) as qty')
+            ->groupBy('stores.type')
+            ->pluck('qty', 'type');
+
+        $pendingTransfers = \App\Models\StockTransfer::visibleTo($user)
+            ->whereIn('status', [\App\Models\StockTransfer::PENDING, \App\Models\StockTransfer::APPROVED, \App\Models\StockTransfer::IN_TRANSIT])
+            ->count();
+
+        return [
+            'sales'             => $sales,
+            'stock_by_type'     => $stockByType,
+            'pending_transfers' => $pendingTransfers,
+            'locations'         => Store::visibleTo($user)->count(),
+            'associates'        => $associates,
+        ];
+    }
+
     public function index(Request $request)
     {
-        if (auth()->user()->role_id == 3) {
-            $userStoreId = auth()->user()->id;
-            try {
-                $store_id = Store::where('user_id', $userStoreId)->first()->id;
-            } catch (\Throwable $th) {
+        $user = auth()->user();
+        if ($user->isStoreScoped()) {
+            // Magasin d'affectation (users.store_id) et emplacements rattachés.
+            $store_id = $user->assignedStoreId();
+            $scopeIds = $user->accessibleStoreIds();
+            if (! $store_id) {
                 // Se déconnecter avant de rediriger vers /login est indispensable :
                 // sinon Authentification::login() voit un utilisateur toujours
                 // authentifié et le renvoie directement vers /home, qui échoue de
@@ -92,7 +158,7 @@ class IndexController extends Controller
             }
             $total_credits = Customer::where('balance', '>', 0)->sum('balance');
             $total_purchases = $this->totalPurchases($store_id);
-            $total_sales = Sale::where('store_id', $store_id)
+            $total_sales = Sale::whereIn('store_id', $scopeIds)
                 ->whereDate('created_at', Carbon::today())
                 ->sum('prixTotal');
             $total_sales_paid = Payment::whereHas('facture', function ($q) use ($store_id) {
@@ -106,7 +172,7 @@ class IndexController extends Controller
             })->where('paid_by', 'cash')->sum('versement');
             $total_expenses = Expense::sum('amount');
             $total_customers = Customer::count();
-            $total_quantities = StoreProduct::where('store_id', $store_id)->sum('quantity');
+            $total_quantities = StoreProduct::whereIn('store_id', $scopeIds)->sum('quantity');
             // Balance = total ventes (toutes dates confondues) - total achats - total
             // dépenses de CETTE boutique — contrairement à $total_sales (ventes du
             // jour) et $total_expenses (toutes boutiques confondues) utilisés par
@@ -192,9 +258,8 @@ class IndexController extends Controller
             $query->whereDate('created_at', $request->created_at);
         }
 
-        if (auth()->user()->role_id == 3) {
-            $store = Store::where('user_id', auth()->id())->first();
-            $query->where('store_id', $store->id);
+        if ($user->isStoreScoped()) {
+            $query->whereIn('store_id', $user->accessibleStoreIds());
         }
         
         // Les clients sont chargés ici, en une requête : la vue les cherchait
@@ -206,8 +271,8 @@ class IndexController extends Controller
         });
 
         $salesRankingQuery = Sale::query();
-        if (auth()->user()->role_id == 3 && isset($store_id)) {
-            $salesRankingQuery->where('store_id', $store_id);
+        if ($user->isStoreScoped()) {
+            $salesRankingQuery->whereIn('store_id', $user->accessibleStoreIds());
         }
 
         $topProducts = (clone $salesRankingQuery)
@@ -237,10 +302,14 @@ class IndexController extends Controller
             ->take(100)
             ->get(['id', 'libelle']);
 
-        // Uniquement calculée pour un gérant de boutique (role_id == 3) ; la vue admin
+        // Uniquement calculée pour un employé rattaché à un magasin ; la vue admin
         // affiche l'équivalent par boutique via sa propre boucle @foreach(Store::all()).
         $store_balance = $store_balance ?? null;
 
-        return view('index', compact('latestSales', 'total_purchases', 'total_sales', 'total_sales_paid', 'solde_orange_money', 'solde_cash', 'total_expenses', 'total_customers', 'total_quantities', 'total_purchase_invoices', 'total_sales_invoices', 'total_credits', 'gains', 'total_gains_all', 'sales', 'purchases', 'months', 'grouped', 'customers', 'topProducts', 'topProductsByRevenue', 'stockAlerts', 'total_third_party_interest', 'store_balance'));
+        // Vue globale multi-emplacements (ventes par période, ventes directes
+        // depuis les entrepôts, transferts en cours), limitée au périmètre.
+        $overview = $this->locationOverview($user);
+
+        return view('index', compact('overview', 'latestSales', 'total_purchases', 'total_sales', 'total_sales_paid', 'solde_orange_money', 'solde_cash', 'total_expenses', 'total_customers', 'total_quantities', 'total_purchase_invoices', 'total_sales_invoices', 'total_credits', 'gains', 'total_gains_all', 'sales', 'purchases', 'months', 'grouped', 'customers', 'topProducts', 'topProductsByRevenue', 'stockAlerts', 'total_third_party_interest', 'store_balance'));
     }
 }

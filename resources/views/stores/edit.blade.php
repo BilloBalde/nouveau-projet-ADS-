@@ -65,6 +65,7 @@
                         <span class="text-danger">{{ $message }}</span>
                         @enderror
                     </div>
+                    @include('stores.partials.location-fields')
                     <div class="col-12">
                         <div class="form-group">
                             <label><strong>Description</strong></label>
@@ -82,7 +83,7 @@
                             @if($store->store_picture)
                                 <img src="{{ asset('stores/' . $store->store_picture) }}" style="height: 200px" alt="{{ $store->store_name }}">
                             @else
-                                <div style="height: 200px; width: 240px; display: flex; align-items: center; justify-content: center; background: #f0f8f3; color: #1f6f43; border-radius: 8px;">
+                                <div style="height: 200px; width: 240px; display: flex; align-items: center; justify-content: center; background: #F4F5EC; color: #3E4C21; border-radius: 8px;">
                                     <i class="fas fa-store fa-3x"></i>
                                 </div>
                             @endif

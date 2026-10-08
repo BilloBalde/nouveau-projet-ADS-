@@ -3,24 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Coleah Bandeya & Fils — Connexion Manager</title>
+    <title>TELICO — Connexion Manager</title>
 
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Source+Sans+3:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            font-family: 'Poppins', sans-serif;
+            font-family: 'Source Sans 3', 'Segoe UI', sans-serif;
             min-height: 100vh;
             display: flex;
-            background: #f7faf8;
+            background: #F9F9F3;
         }
 
         /* ── Panneau gauche ── */
         .left-panel {
             flex: 0 0 45%;
-            background: linear-gradient(160deg, #061710 0%, #0c2c1c 45%, #195836 80%, #2e8b57 100%);
+            background: linear-gradient(160deg, #10150A 0%, #1C230D 45%, #323D1A 80%, #6B7A35 100%);
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -40,7 +40,7 @@
             content: '';
             position: absolute; bottom: -100px; left: -80px;
             width: 340px; height: 340px;
-            background: radial-gradient(circle, rgba(139,200,165,0.14) 0%, transparent 65%);
+            background: radial-gradient(circle, rgba(173,185,126,0.14) 0%, transparent 65%);
             border-radius: 50%;
             pointer-events: none;
         }
@@ -100,7 +100,7 @@
         }
         .left-title em {
             font-style: normal;
-            background: linear-gradient(90deg, #b9dfc8, #ffffff);
+            background: linear-gradient(90deg, #CED5AE, #ffffff);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
@@ -125,7 +125,7 @@
         }
         .stat-num {
             font-size: 1.5rem; font-weight: 800;
-            color: #8bc8a5;
+            color: #ADB97E;
         }
         .stat-lbl {
             font-size: 0.7rem; color: rgba(255,255,255,0.55);
@@ -215,14 +215,14 @@
         }
         .input-wrap .icon-left {
             position: absolute; left: 16px; top: 50%; transform: translateY(-50%);
-            color: #1f6f43; font-size: 15px;
+            color: #3E4C21; font-size: 15px;
             pointer-events: none;
         }
         .input-wrap input {
             width: 100%;
             padding: 13px 16px 13px 44px;
             font-size: 0.88rem;
-            font-family: 'Poppins', sans-serif;
+            font-family: 'Source Sans 3', 'Segoe UI', sans-serif;
             background: #fafafa;
             border: 1.5px solid #e5e7eb;
             border-radius: 12px;
@@ -232,8 +232,8 @@
         }
         .input-wrap input:focus {
             background: #fff;
-            border-color: #2e8b57;
-            box-shadow: 0 0 0 4px rgba(46,139,87,0.12);
+            border-color: #6B7A35;
+            box-shadow: 0 0 0 4px rgba(107,122,53,0.12);
         }
         .input-wrap input::placeholder { color: #c4c4c4; }
 
@@ -245,7 +245,7 @@
             transition: color 0.2s;
             padding: 4px;
         }
-        .toggle-pw:hover { color: #1f6f43; }
+        .toggle-pw:hover { color: #3E4C21; }
 
         /* Lien oublié */
         .forgot-row {
@@ -253,29 +253,29 @@
             margin-top: -8px; margin-bottom: 24px;
         }
         .forgot-row a {
-            font-size: 0.78rem; color: #1f6f43;
+            font-size: 0.78rem; color: #3E4C21;
             text-decoration: none; font-weight: 500;
             transition: color 0.2s;
         }
-        .forgot-row a:hover { color: #195836; }
+        .forgot-row a:hover { color: #323D1A; }
 
         /* Bouton submit */
         .btn-submit {
             width: 100%;
             padding: 14px;
-            background: linear-gradient(135deg, #1f6f43 0%, #195836 100%);
+            background: linear-gradient(135deg, #3E4C21 0%, #323D1A 100%);
             color: #fff; font-size: 0.95rem; font-weight: 700;
-            font-family: 'Poppins', sans-serif;
+            font-family: 'Source Sans 3', 'Segoe UI', sans-serif;
             border: none; border-radius: 12px;
             cursor: pointer;
             transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
-            box-shadow: 0 4px 16px rgba(31,111,67,0.35);
+            box-shadow: 0 4px 16px rgba(62,76,33,0.35);
             display: flex; align-items: center; justify-content: center; gap: 8px;
         }
         .btn-submit:hover {
             opacity: 0.93;
             transform: translateY(-1px);
-            box-shadow: 0 8px 24px rgba(31,111,67,0.45);
+            box-shadow: 0 8px 24px rgba(62,76,33,0.45);
         }
         .btn-submit:active { transform: translateY(0); }
 
@@ -287,7 +287,7 @@
             text-decoration: none;
             transition: color 0.2s;
         }
-        .back-link:hover { color: #1f6f43; }
+        .back-link:hover { color: #3E4C21; }
 
         /* Responsive */
         @media (max-width: 768px) {
@@ -295,6 +295,8 @@
             body { background: #fff; }
             .right-panel { padding: 32px 20px; }
         }
+            /* Identité TELICO : capitales gravées du logo pour les titres. */
+        .left-title, .form-title { font-family: 'Cinzel', Georgia, serif; letter-spacing: .02em; }
     </style>
 </head>
 <body>
@@ -310,10 +312,10 @@
         {{-- Logo --}}
         <div class="brand">
             <span class="brand-logo">
-                <img src="{{ asset('companies/ADK.png') }}" alt="Coleah Bandeya & Fils">
+                <img src="{{ asset('companies/telico.png') }}" alt="TELICO">
             </span>
             <div>
-                <div class="brand-name">Coleah Bandeya & Fils</div>
+                <div class="brand-name">TELICO</div>
                 <div class="brand-sub">Espace Manager</div>
             </div>
         </div>
@@ -349,7 +351,7 @@
         </div>
 
         <div class="left-footer">
-            &copy; {{ date('Y') }} Coleah Bandeya & Fils — Madina, Ecole Gare Routière Dabola Camion, Conakry
+            &copy; {{ date('Y') }} TELICO — Madina, Ecole Gare Routière Dabola Camion, Conakry
         </div>
     </div>
 
@@ -398,7 +400,7 @@
                         <i class="fas fa-envelope icon-left"></i>
                         <input type="email" id="email" name="email"
                                value="{{ old('email') }}"
-                               placeholder="manager@smh.com"
+                               placeholder="nom@exemple.com"
                                required autofocus>
                     </div>
                 </div>

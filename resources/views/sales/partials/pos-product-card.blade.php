@@ -1,11 +1,10 @@
 @php
-    // Quantité utilisée pour la vente (celle du magasin de l'utilisateur, ou le total si vue multi-magasins)
-    if ($userStoreId) {
-        $userStoreRow = $dataItem->stores->firstWhere('id', $userStoreId);
-        $quantity = $userStoreRow ? $userStoreRow->pivot->quantity : 0;
-    } else {
-        $quantity = $dataItem->stores->sum('pivot.quantity');
-    }
+    // Quantité vendable : somme des emplacements accessibles à l'utilisateur
+    // (son magasin, ses stocks internes et entrepôts rattachés ; tout pour
+    // une vue globale). L'emplacement exact se choisit ensuite ligne par ligne.
+    $quantity = $dataItem->stores
+        ->filter(fn ($s) => in_array($s->id, $locationIds ?? [], true))
+        ->sum('pivot.quantity');
 @endphp
 @if($quantity > 0)
 <div class="col-lg-4 col-sm-4 col-6 d-flex product-item"
@@ -41,7 +40,7 @@
             </span>
             @if(!$userStoreId)
                 <div class="store-stock-breakdown">
-                    @foreach ($dataItem->stores->where('pivot.quantity', '>', 0) as $store)
+                    @foreach ($dataItem->stores->where('pivot.quantity', '>', 0)->whereIn('id', $locationIds ?? []) as $store)
                         <span class="store-pill">
                             <i class="fa fa-shop"></i> {{ $store->store_name }} : {{ $store->pivot->quantity }}
                         </span>

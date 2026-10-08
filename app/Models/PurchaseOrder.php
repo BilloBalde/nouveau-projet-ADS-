@@ -25,4 +25,15 @@ class PurchaseOrder extends Model
     {
         return $this->hasMany(PurchaseOrderItem::class);
     }
+
+    /** Fournisseur (table partners, partagée avec les ventes tierces). */
+    public function supplier()
+    {
+        return $this->belongsTo(Partner::class, 'partner_id');
+    }
+
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
 }

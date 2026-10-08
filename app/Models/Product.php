@@ -56,13 +56,55 @@ class Product extends Model
 
     public function stores()
     {
-        return $this->belongsToMany(Store::class, 'store_products')->withPivot('quantity');
+        return $this->belongsToMany(Store::class, 'store_products')->withPivot('quantity', 'fund_id');
     }
 
     public function ligneCommande(){
         return $this->hasMany(LigneCommande::class);
     }
     
+    /**
+     * Coût d'achat unitaire (prix de revient), règle unique pour toutes les
+     * ventes : point de vente, facturation, commandes en ligne, devis.
+     *
+     * price_sale est synchronisé à chaque achat (ancien flux Purchase et module
+     * PurchaseOrder) : c'est la source la plus fiable et la plus à jour.
+     * L'ancienne chaîne LigneCommande/Purchase ne sert qu'en dernier recours,
+     * pour un produit jamais touché par un achat synchronisé. 0 = coût inconnu.
+     */
+    public function coutUnitaire(): float
+    {
+        if ($this->price_sale !== null && (float) $this->price_sale > 0) {
+            return (float) $this->price_sale;
+        }
+
+        $latest = $this->latestLigneCommande;
+        if ($latest && $latest->unit_price_purchase !== null) {
+            return (float) $latest->unit_price_purchase;
+        }
+        if ($latest && $latest->quantity > 0 && $latest->total_price_purchase !== null) {
+            return (float) ($latest->total_price_purchase / $latest->quantity);
+        }
+
+        $purchasePrice = Purchase::where('product_id', $this->id)->latest()->value('price');
+        if ($purchasePrice !== null) {
+            return (float) $purchasePrice;
+        }
+
+        return 0.0;
+    }
+
+    /**
+     * Intérêt d'une ligne vendue : (prix − coût) × quantité, ou 0 si le coût
+     * est inconnu — on ne compte pas tout le prix de vente comme bénéfice.
+     */
+    public function interetPour(float $prixUnitaire, int $quantite): float
+    {
+        $cout = $this->coutUnitaire();
+
+        return $cout > 0 ? ($prixUnitaire - $cout) * $quantite : 0.0;
+    }
+
     public function latestLigneCommande()
     {
         return $this->hasOne(LigneCommande::class)->latestOfMany(); // uses created_at or id

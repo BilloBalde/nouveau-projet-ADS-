@@ -18,7 +18,7 @@
                             <h6>Créez des rôles et cochez les actions qu'ils autorisent</h6>
                         </div>
                         <div class="page-btn">
-                            <a class="btn btn-added" href="{{ route('roles.create') }}" style="background-color:#1f6f43;border-color:#1f6f43;">
+                            <a class="btn btn-added" href="{{ route('roles.create') }}" style="background-color:#3E4C21;border-color:#3E4C21;">
                                 <img src="{{ asset('assets/img/icons/plus.svg') }}" alt="img" class="me-1">Ajouter un rôle
                             </a>
                         </div>
@@ -68,7 +68,7 @@
                                                 @elseif($d->slug === 'customer')
                                                     <span class="badge bg-secondary">Client e-commerce</span>
                                                 @else
-                                                    <span class="badge" style="background:#1f6f43;">{{ $d->permissions_count }} action(s)</span>
+                                                    <span class="badge" style="background:#3E4C21;">{{ $d->permissions_count }} action(s)</span>
                                                 @endif
                                             </td>
                                             <td>{{ $d->users_count }}</td>

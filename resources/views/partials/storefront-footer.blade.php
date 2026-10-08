@@ -16,9 +16,9 @@
                          le logo à 0px de large. Pastille blanche pour la même raison que
                          dans le bandeau : le fond du PNG est opaque. --}}
                     <span class="flex items-center justify-center bg-white rounded-lg px-2 py-1 shrink-0">
-                        <img src="{{ asset('companies/ADK.png') }}" alt="Coleah Bandeya & Fils" class="h-6 w-auto object-contain">
+                        <img src="{{ asset('companies/telico.png') }}" alt="TELICO" class="h-14 w-auto object-contain">
                     </span>
-                    <span class="font-bold text-white">Coleah Bandeya & Fils</span>
+                    <span class="text-xl font-semibold text-white" style="font-family:'Cinzel',Georgia,serif;letter-spacing:.18em;">TELICO</span>
                 </div>
                 <p class="text-sm text-gray-400 mb-4">Quincaillerie générale — peinture, outillage, serrurerie, plomberie et électricité — basée à Conakry, Guinée.</p>
                 <p class="text-sm text-gray-400">
@@ -108,8 +108,8 @@
         </div>
         <div class="border-t border-white/10 pt-8 text-center">
             <div class="text-sm text-gray-400">
-                <p>&copy; {{ date('Y') }} Coleah Bandeya & Fils. Tous droits réservés. Conakry, Guinée.</p>
-                <p class="mt-2">Chez Coleah Bandeya & Fils, au-delà de la qualité des autres.</p>
+                <p>&copy; {{ date('Y') }} TELICO. Tous droits réservés. Conakry, Guinée.</p>
+                <p class="mt-2">Chez TELICO, au-delà de la qualité des autres.</p>
             </div>
         </div>
     </div>

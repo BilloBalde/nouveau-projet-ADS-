@@ -92,8 +92,8 @@ class NewExportController extends Controller
         $products = Product::with(['categories', 'stores'])->get();
         
         // Optionnel: Filtrer les produits par boutique si nécessaire
-        if (auth()->check() && auth()->user()->role_id == 3) {
-            $storeId = Store::where('user_id', auth()->id())->value('id');
+        if (auth()->check() && auth()->user()->isStoreScoped()) {
+            $storeId = auth()->user()->assignedStoreId();
             // Vous pouvez ajouter un filtre ici si besoin
         }
         
@@ -215,8 +215,8 @@ class NewExportController extends Controller
      */
     private function calculateQuantity($product)
     {
-        if (auth()->check() && auth()->user()->role_id == 3) {
-            $storeId = Store::where('user_id', auth()->id())->value('id');
+        if (auth()->check() && auth()->user()->isStoreScoped()) {
+            $storeId = auth()->user()->assignedStoreId();
             $store = $product->stores->firstWhere('id', $storeId);
             return $store ? $store->pivot->quantity : 0;
         }

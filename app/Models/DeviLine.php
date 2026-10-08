@@ -31,6 +31,12 @@ class DeviLine extends Model
         return $this->belongsTo(Devi::class, 'devis_id');
     }
 
+    /** Emplacement source de la ligne (null = emplacement du devis). */
+    public function store()
+    {
+        return $this->belongsTo(Store::class);
+    }
+
     public function product()
     {
         return $this->belongsTo(Product::class);

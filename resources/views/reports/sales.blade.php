@@ -40,6 +40,7 @@
                             <label for="period">Période</label>
                             <select id="period" name="period" class="form-control">
                                 <option value="daily" {{ $period === 'daily' ? 'selected' : '' }}>Journalier</option>
+                                <option value="weekly" {{ $period === 'weekly' ? 'selected' : '' }}>Hebdomadaire</option>
                                 <option value="monthly" {{ $period === 'monthly' ? 'selected' : '' }}>Mensuel</option>
                                 <option value="quarterly" {{ $period === 'quarterly' ? 'selected' : '' }}>Trimestriel</option>
                                 <option value="semestral" {{ $period === 'semestral' ? 'selected' : '' }}>Semestriel</option>
@@ -51,6 +52,12 @@
                         <div class="form-group">
                             <label for="date">Date</label>
                             <input type="date" id="date" name="date" value="{{ request('date', $start->toDateString()) }}" class="form-control">
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-sm-6 col-12 period-field" data-period="weekly">
+                        <div class="form-group">
+                            <label for="week_start">Un jour de la semaine</label>
+                            <input type="date" id="week_start" name="week_start" value="{{ request('week_start', $start->toDateString()) }}" class="form-control">
                         </div>
                     </div>
                     <div class="col-lg-3 col-sm-6 col-12 period-field" data-period="monthly">
@@ -90,7 +97,7 @@
                             <select id="store_id" name="store_id" class="form-control">
                                 @foreach ($stores as $store)
                                     <option value="{{ $store->id }}" {{ (int) $storeId === $store->id ? 'selected' : '' }}>
-                                        {{ $store->store_name }}
+                                        {{ $store->full_name }} ({{ $store->type_label }})
                                     </option>
                                 @endforeach
                             </select>

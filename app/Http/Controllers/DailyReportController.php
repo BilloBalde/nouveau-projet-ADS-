@@ -147,15 +147,17 @@ class DailyReportController extends Controller
 
         // Stores available to user
         $storesQuery = Store::query();
-        $isVendeur = auth()->user()->role_id == 3;
+        $isVendeur = auth()->user()->isStoreScoped();
         $userStoreId = $isVendeur
-            ? Store::where('user_id', auth()->id())->value('id')
+            ? auth()->user()->assignedStoreId()
             : null;
 
         // Vendeur: only see their store, ignore any store_id from request
-        if ($isVendeur && $userStoreId) {
-            $storesQuery->where('id', $userStoreId);
-            $storeId = $userStoreId; // Force vendeur to only see their store
+        // Sans magasin d'affectation, un employé rattaché ne voit rien (id 0),
+        // plutôt que de retomber sur la vue « toutes boutiques ».
+        if ($isVendeur) {
+            $storesQuery->where('id', $userStoreId ?? 0);
+            $storeId = $userStoreId ?? 0; // Force vendeur to only see their store
         } else {
             // Admin: can see all stores or filter by store_id
             $storeId = $request->input('store_id') ?: null;

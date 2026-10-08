@@ -217,6 +217,9 @@ Route::middleware(['auth', 'superuser'])->prefix('admin')->group(function () {
     Route::get('/orders/{order}', [OrderManagementController::class, 'show'])->name('admin.orders.show');
     Route::post('/orders/{order}/approve', [OrderManagementController::class, 'approve'])->middleware('permission:orders.validate')->name('admin.orders.approve');
     Route::post('/orders/{order}/reject', [OrderManagementController::class, 'reject'])->middleware('permission:orders.validate')->name('admin.orders.reject');
+    // Traitement au siège par défaut ; attribution possible à une boutique.
+    Route::post('/orders/{order}/assign', [OrderManagementController::class, 'assign'])->name('admin.orders.assign');
+    Route::post('/orders/{order}/release', [OrderManagementController::class, 'release'])->middleware('permission:orders.view')->name('admin.orders.release');
     Route::get('/orders/{order}/stock-check', [OrderManagementController::class, 'stockCheck'])->name('admin.orders.stock.check');
     Route::get('/orders/facture/{facture}/items', [OrderManagementController::class, 'getFactureItems'])->name('admin.orders.facture.items');
     Route::post('/orders/facture/{facture}/deliver', [OrderManagementController::class, 'partialDeliver'])->middleware('permission:orders.deliver')->name('admin.orders.facture.deliver');
@@ -393,6 +396,7 @@ Route::get('/receipts/transfers/{transfer}', [ReceiptController::class, 'transfe
 // =============================================
 
 Route::get('/reports/sales', [SalesReportController::class, 'index'])->name('reports.sales');
+Route::get('/reports/ventes-flash', [SalesReportController::class, 'flash'])->middleware(['auth.check', 'permission:reports.view'])->name('reports.flash');
 Route::get('/reports/daily', [DailyReportController::class, 'index'])->name('reports.daily');
 Route::get('/reports/daily/export/pdf', [DailyReportController::class, 'exportPDF'])->name('reports.daily.export.pdf');
 
@@ -420,6 +424,32 @@ Route::get('/logistics/export-pdf', [LogisticController::class, 'exportPDF'])->m
 // =============================================
 
 Route::resource('transfers', StoreProductController::class);
+// Associés : fonds, compte à part, relevé (lecture seule pour l'associé lui-même).
+Route::get('/associes/mon-releve', [\App\Http\Controllers\FundController::class, 'me'])->name('associates.me');
+Route::get('/associes', [\App\Http\Controllers\FundController::class, 'index'])->name('associates.index');
+Route::get('/associes/nouveau', [\App\Http\Controllers\FundController::class, 'create'])->name('associates.create');
+Route::post('/associes', [\App\Http\Controllers\FundController::class, 'store'])->name('associates.store');
+Route::get('/associes/{fund}', [\App\Http\Controllers\FundController::class, 'show'])->whereNumber('fund')->name('associates.show');
+Route::get('/associes/{fund}/modifier', [\App\Http\Controllers\FundController::class, 'edit'])->whereNumber('fund')->name('associates.edit');
+Route::put('/associes/{fund}', [\App\Http\Controllers\FundController::class, 'update'])->whereNumber('fund')->name('associates.update');
+Route::post('/associes/{fund}/mouvements', [\App\Http\Controllers\FundController::class, 'storeTransaction'])->whereNumber('fund')->name('associates.transactions.store');
+// Sections : entrepôt / magasin principal et chaque boutique. Le propriétaire
+// entre dans une section ou revient à la vue globale ; un employé reste dans la sienne.
+Route::get('/sections', [\App\Http\Controllers\SectionController::class, 'index'])->name('sections.index');
+Route::post('/sections/switch', [\App\Http\Controllers\SectionController::class, 'switch'])->name('sections.switch');
+// Stock par emplacement : vue globale, fiche emplacement, journal, traçabilité, inventaire.
+Route::get('/stock', [\App\Http\Controllers\StockController::class, 'index'])->name('stock.index');
+Route::get('/stock/mouvements', [\App\Http\Controllers\StockController::class, 'movements'])->name('stock.movements');
+Route::get('/stock/tracabilite', [\App\Http\Controllers\StockController::class, 'trace'])->name('stock.trace');
+Route::get('/stock/inventaire', [\App\Http\Controllers\StockController::class, 'adjustForm'])->name('stock.adjust.form');
+Route::post('/stock/inventaire', [\App\Http\Controllers\StockController::class, 'adjust'])->name('stock.adjust');
+Route::get('/stock/{store}', [\App\Http\Controllers\StockController::class, 'show'])->whereNumber('store')->name('stock.show');
+// Circuit : demandé → autorisé → expédié (sortie source) → réceptionné (entrée destination).
+Route::post('/transfers/{transfer}/approve', [StoreProductController::class, 'approve'])->name('transfers.approve');
+Route::post('/transfers/{transfer}/reject', [StoreProductController::class, 'reject'])->name('transfers.reject');
+Route::post('/transfers/{transfer}/ship', [StoreProductController::class, 'ship'])->name('transfers.ship');
+Route::post('/transfers/{transfer}/receive', [StoreProductController::class, 'receive'])->name('transfers.receive');
+Route::post('/transfers/{transfer}/cancel', [StoreProductController::class, 'cancel'])->middleware('auth.check')->name('transfers.cancel');
 
 // =============================================
 // 23. (ancien module Proformas/LigneCommande — retiré, remplacé par le module
@@ -481,7 +511,7 @@ Route::get('/produits/export-excel', function () {
     } catch (\Exception $e) {
         return response()->json(['error' => $e->getMessage()], 500);
     }
-})->name('produits.export-excel');
+})->middleware('auth.check')->name('produits.export-excel');
 
 Route::get('/produits/export-pdf', function () {
     ini_set('memory_limit', '512M');
@@ -506,7 +536,7 @@ Route::get('/produits/export-pdf', function () {
     } catch (\Exception $e) {
         return back()->with('error', 'Erreur: ' . $e->getMessage());
     }
-})->name('produits.export-pdf');
+})->middleware('auth.check')->name('produits.export-pdf');
 
 // Export « en file d'attente » retire, avec le travail ExportProductsJob :
 // aucun bouton n'y menait, le travail appelait auth()->loginUsingId() qui
@@ -551,7 +581,7 @@ Route::get('/produits/export-csv', function () {
     };
     
     return response()->stream($callback, 200, $headers);
-})->name('produits.export-csv');
+})->middleware('auth.check')->name('produits.export-csv');
 
 Route::get('/produits/download-export', function() {
     $file = session('export_file');
@@ -559,7 +589,7 @@ Route::get('/produits/download-export', function() {
         return response()->download(storage_path('app/public/' . str_replace('/storage/', '', $file)));
     }
     return back()->with('error', 'Fichier non trouvé');
-})->name('produits.download-export');
+})->middleware('auth.check')->name('produits.download-export');
 
 // Export Achats
 Route::get('/purchases/export-excel', function () {
@@ -576,14 +606,14 @@ Route::get('/purchases/export-pdf', function () {
 // 31. NOUVELLES ROUTES D'EXPORT
 // =============================================
 
-Route::prefix('new-exports')->name('new.')->group(function () {
+Route::prefix('new-exports')->middleware('auth.check')->name('new.')->group(function () {
     Route::get('/products/excel', [NewExportController::class, 'exportExcel'])->name('products.excel');
     Route::get('/products/pdf', [NewExportController::class, 'exportPdf'])->name('products.pdf');
     Route::get('/products/pdf-simple', [NewExportController::class, 'exportPdfSimple'])->name('products.pdf-simple');
     Route::get('/products/csv', [NewExportController::class, 'exportCsv'])->name('products.csv');
 });
 
-Route::get('/exports/products/html', [NewExportController::class, 'exportHtmlReport'])->name('exports.products.html');
+Route::get('/exports/products/html', [NewExportController::class, 'exportHtmlReport'])->middleware('auth.check')->name('exports.products.html');
 
 // =============================================
 // 32. ROUTES BASE DE DONNÉES

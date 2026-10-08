@@ -65,6 +65,7 @@
                         <span class="text-danger">{{ $message }}</span>
                         @enderror
                     </div>
+                    @include('stores.partials.location-fields')
                     <div class="col-12">
                         <div class="form-group">
                             <label><strong>Description</strong></label>

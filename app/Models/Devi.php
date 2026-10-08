@@ -102,42 +102,99 @@ class Devi extends Model
             throw new \Exception('Ce devis a déjà été validé.');
         }
 
-        // Create invoice
-        $facture = Facture::create([
-            'store_id' => $this->store_id,
-            'customer_id' => $this->customer_id,
-            'montant_total' => $this->total_amount,
-            'quantity' => $this->lines->sum('quantity'),
-            'notes' => 'Devis #' . $this->numero_devis . ' - ' . ($this->notes ?? ''),
-            'statut' => 'pending',
-            'livraison' => 'non livré',
-        ]);
-
-        // Create sales from devi lines
-        foreach ($this->lines as $line) {
-            Sale::create([
-                'numeroFacture' => $facture->numero_facture,
-                'product_id' => $line->product_id,
-                'prix' => $line->unit_price,
-                'quantity' => $line->quantity,
-                'prixTotal' => $line->total_price,
-                'store_id' => $this->store_id,
-                'user_id' => auth()->id(),
-            ]);
-
-            // Affect stock
-            StoreProduct::where('store_id', $this->store_id)
-                ->where('product_id', $line->product_id)
-                ->decrement('quantity', $line->quantity);
+        if (! $this->customer_id) {
+            throw new \Exception('Associez un client au devis avant de le valider : la facture est émise à son nom.');
         }
 
-        // Mark devis as validated
-        $this->update([
-            'validated_by' => auth()->id(),
-            'validated_at' => now(),
-            'status' => 'validated'
-        ]);
+        $this->loadMissing('lines.product');
 
-        return $facture;
+        // Chaque ligne sort de son propre emplacement (par défaut celui du devis).
+        $lineStore = fn ($line) => (int) ($line->store_id ?: $this->store_id);
+
+        $user = auth()->user();
+        foreach ($this->lines as $line) {
+            if ($user && ! $user->canAccessStore($lineStore($line))) {
+                throw new \Exception('Vous n\'êtes pas autorisé à puiser dans l\'emplacement d\'une des lignes.');
+            }
+        }
+
+        $stock = app(\App\Services\StockService::class);
+
+        // Avant : aucune vérification, un devis pouvait rendre le stock négatif,
+        // et la facture créée n'avait ni numéro ni avance (colonnes obligatoires),
+        // ce qui faisait échouer toute validation.
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($stock, $lineStore) {
+            // Chaque ligne puise dans le stock de son propriétaire (fonds propres
+            // si fund_id est vide, sinon le fonds de l'associé).
+            $stock->assertAvailable($this->lines->map(fn ($line) => [
+                'store_id'   => $lineStore($line),
+                'product_id' => $line->product_id,
+                'quantity'   => $line->quantity,
+                'fund_id'    => $line->fund_id,
+            ])->all());
+
+            $numero = Facture::prochainNumero();
+            $total = (float) $this->lines->sum('total_price');
+            $funds = app(\App\Services\FundService::class);
+
+            foreach ($this->lines as $line) {
+                $fundId = $line->fund_id ? (int) $line->fund_id : null;
+
+                $stock->decrementOrFail($lineStore($line), (int) $line->product_id, (int) $line->quantity, [
+                    'type'         => StockMovement::SALE,
+                    'source_type'  => 'devis',
+                    'source_id'    => $this->id,
+                    'document_ref' => $numero,
+                    'customer_id'  => $this->customer_id,
+                    'unit_price'   => $line->unit_price,
+                    'fund_id'      => $fundId,
+                ]);
+
+                // Marge au coût du propriétaire ; 0 si le coût est inconnu,
+                // plutôt qu'une marge fictive égale au prix de vente.
+                $coutFonds = $fundId ? $funds->unitCost($fundId, (int) $line->product_id) : null;
+                $interet = $fundId
+                    ? ($coutFonds > 0 ? ((float) $line->unit_price - $coutFonds) * (int) $line->quantity : 0)
+                    : ($line->product ? $line->product->interetPour((float) $line->unit_price, (int) $line->quantity) : 0);
+
+                Sale::create([
+                    'numeroFacture' => $numero,
+                    'product_id'    => $line->product_id,
+                    'prix'          => $line->unit_price,
+                    'quantity'      => $line->quantity,
+                    'prixTotal'     => $line->total_price,
+                    'interet'       => $interet,
+                    'store_id'      => $lineStore($line),
+                    'user_id'       => auth()->id(),
+                    'fund_id'       => $fundId,
+                    'unit_cost'     => $fundId ? $coutFonds : null,
+                ]);
+            }
+
+            $facture = Facture::create([
+                'numero_facture' => $numero,
+                'store_id'       => $this->store_id,
+                'user_id'        => auth()->id(),
+                'channel'        => Facture::CHANNEL_DEVIS,
+                'customer_id'    => $this->customer_id,
+                'montant_total'  => $total,
+                'quantity'       => $this->lines->sum('quantity'),
+                'avance'         => 0,
+                'reste'          => $total,
+                'notes'          => 'Devis #' . $this->numero_devis . ' - ' . ($this->notes ?? ''),
+                'statut'         => 'non payé',
+                'livraison'      => 'non livré',
+            ]);
+
+            Customer::find($this->customer_id)?->recalculerCompteurs();
+
+            $this->update([
+                'validated_by' => auth()->id(),
+                'validated_at' => now(),
+                'status'       => 'validated',
+            ]);
+
+            return $facture;
+        });
     }
 }

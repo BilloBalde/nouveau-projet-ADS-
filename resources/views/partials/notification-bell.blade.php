@@ -27,7 +27,7 @@
         display: inline-flex; align-items: center; justify-content: center;
         transition: background .15s, color .15s;
     }
-    .notif-bell-btn:hover { background: #f0f8f3; color: #1f6f43; }
+    .notif-bell-btn:hover { background: #F4F5EC; color: #3E4C21; }
     .notif-badge {
         position: absolute; top: 1px; right: 0;
         min-width: 16px; height: 16px; padding: 0 4px;
@@ -50,7 +50,7 @@
     }
     .notif-mark-all {
         border: none; background: none; cursor: pointer;
-        color: #1f6f43; font-size: 12px; font-weight: 600; padding: 0;
+        color: #3E4C21; font-size: 12px; font-weight: 600; padding: 0;
     }
     .notif-mark-all:hover { text-decoration: underline; }
     .notif-list { max-height: 320px; overflow-y: auto; }
@@ -59,17 +59,17 @@
         padding: 11px 16px; border-bottom: 1px solid #f8f8f8;
         font-size: 13px; color: #374151; line-height: 1.45;
     }
-    .notif-item:hover { background: #f0f8f3; }
-    .notif-item.unread { background: #dcefe3; font-weight: 600; }
-    .notif-item.unread:hover { background: #b9dfc8; }
+    .notif-item:hover { background: #F4F5EC; }
+    .notif-item.unread { background: #E6E9D5; font-weight: 600; }
+    .notif-item.unread:hover { background: #CED5AE; }
     .notif-item .notif-time { display: block; font-size: 11px; color: #9ca3af; font-weight: 400; margin-top: 3px; }
     .notif-empty { padding: 26px 16px; text-align: center; color: #9ca3af; font-size: 13px; }
     .notif-see-all {
         display: block; padding: 11px 16px; text-align: center;
-        font-size: 13px; font-weight: 600; color: #1f6f43;
+        font-size: 13px; font-weight: 600; color: #3E4C21;
         border-top: 1px solid #f3f4f6; text-decoration: none; background: #fff;
     }
-    .notif-see-all:hover { background: #f0f8f3; color: #195836; }
+    .notif-see-all:hover { background: #F4F5EC; color: #323D1A; }
 </style>
 
 <script>

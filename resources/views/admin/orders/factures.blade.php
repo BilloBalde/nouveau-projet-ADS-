@@ -219,14 +219,14 @@
                             const remaining = item.quantity_remaining;
                             const alreadyDone = item.quantity_delivered || 0;
                             html += `
-                                <div style="margin-bottom:12px;padding:12px;background:#f9fafb;border-radius:8px;border-left:3px solid #1f6f43;">
+                                <div style="margin-bottom:12px;padding:12px;background:#f9fafb;border-radius:8px;border-left:3px solid #3E4C21;">
                                     <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
                                         <strong style="font-size:13px;">${item.product_name}</strong>
                                         <span style="color:#9ca3af;font-size:12px;">Total commandé : ${item.quantity}</span>
                                     </div>
                                     <div style="font-size:12px;color:#6b7280;margin-bottom:8px;">
                                         Déjà livré : <strong style="color:#10b981;">${alreadyDone}</strong>
-                                        &nbsp;|&nbsp; Reste à livrer : <strong style="color:#1f6f43;">${remaining}</strong>
+                                        &nbsp;|&nbsp; Reste à livrer : <strong style="color:#3E4C21;">${remaining}</strong>
                                     </div>
                                     ${remaining > 0 ? `
                                     <div style="display:flex;align-items:center;gap:8px;">
@@ -249,7 +249,7 @@
                             html: html,
                             icon: 'info',
                             showCancelButton: true,
-                            confirmButtonColor: '#1f6f43',
+                            confirmButtonColor: '#3E4C21',
                             cancelButtonColor: '#6b7280',
                             buttonsStyling: false,
                             customClass: { confirmButton: 'btn btn-warning ms-2', cancelButton: 'btn btn-secondary' },

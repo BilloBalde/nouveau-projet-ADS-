@@ -13,10 +13,10 @@
                         background: #fff;
                         border-radius: 12px;
                         box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
-                        border: 1px solid #dcefe3;
+                        border: 1px solid #E6E9D5;
                     }
                     .receipt-header {
-                        background: linear-gradient(135deg, #0c2c1c, #1f6f43);
+                        background: linear-gradient(135deg, #1C230D, #3E4C21);
                         color: #fff;
                         padding: 18px 20px;
                         border-radius: 10px;
@@ -28,29 +28,29 @@
                     }
                     .receipt-section-title {
                         font-weight: 600;
-                        color: #0c2c1c;
+                        color: #1C230D;
                         margin-bottom: 8px;
                     }
                     .receipt-kv {
                         display: flex;
                         justify-content: space-between;
                         padding: 8px 0;
-                        border-bottom: 1px dashed #dcefe3;
+                        border-bottom: 1px dashed #E6E9D5;
                         font-size: 14px;
                     }
                     .receipt-kv:last-child {
                         border-bottom: 0;
                     }
                     .receipt-badge {
-                        background: #dcefe3;
-                        color: #0c2c1c;
+                        background: #E6E9D5;
+                        color: #1C230D;
                         padding: 6px 12px;
                         border-radius: 999px;
                         font-weight: 600;
                         display: inline-block;
                     }
                     .receipt-table th {
-                        background: #f7faf8;
+                        background: #F9F9F3;
                     }
                 </style>
                 <div class="page-header">

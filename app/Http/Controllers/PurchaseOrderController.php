@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\CurrencySetting;
+use App\Models\Partner;
 use App\Models\Place;
 use App\Models\Product;
 use App\Models\PurchaseOrder;
@@ -18,11 +19,26 @@ class PurchaseOrderController extends Controller
     public function __construct()
     {
         $this->middleware('auth.check');
+        // Route::resource('purchase-orders', …) n'appliquait aucune permission.
+        $this->middleware('permission:purchases.view')->only(['index', 'show']);
+        $this->middleware('permission:purchases.create')->only(['create', 'store']);
+        $this->middleware('permission:purchases.edit')->only(['edit', 'update']);
+        $this->middleware('permission:purchases.delete')->only(['destroy']);
     }
 
     public function index(Request $request)
     {
-        $query = PurchaseOrder::with(['store', 'items']);
+        $query = PurchaseOrder::with(['store', 'items', 'supplier']);
+
+        // Un employé rattaché à un magasin ne voit que les achats reçus dans son périmètre.
+        $user = auth()->user();
+        if ($user->isStoreScoped()) {
+            $query->whereIn('store_id', $user->accessibleStoreIds());
+        }
+
+        if ($request->filled('partner_id')) {
+            $query->where('partner_id', $request->input('partner_id'));
+        }
 
         if ($request->filled('reference')) {
             $query->where('reference', 'like', '%' . $request->input('reference') . '%');
@@ -41,7 +57,7 @@ class PurchaseOrderController extends Controller
         }
 
         $dataTable = $query->latest()->paginate(20)->appends($request->query());
-        $stores = Store::all();
+        $stores = Store::optionsFor($user, false);
 
         return view('purchase_orders.index', compact('dataTable', 'stores'));
     }
@@ -80,9 +96,44 @@ class PurchaseOrderController extends Controller
         return Carbon::parse($dateRecu)->lte(Carbon::today()) ? 'received' : 'pending';
     }
 
+    /**
+     * Coût total estimé d'un achat avant enregistrement (prix × quantité,
+     * converti si achat en devise, + transport, douane et frais) : sert à
+     * vérifier que le capital non investi de l'associé le couvre.
+     */
+    private function estimatedTotal(array $validated): float
+    {
+        $rate = $validated['origin'] === 'chine' ? (float) ($validated['exchange_rate_used'] ?? 1) : 1.0;
+        $lines = collect($validated['lines'])->sum(fn ($l) => (float) ($l['unit_price_foreign'] ?? 0) * $rate * (int) $l['quantity']);
+
+        return $lines + (float) ($validated['transport_cost_gnf'] ?? 0) + (float) ($validated['customs_cost_gnf'] ?? 0) + (float) ($validated['other_fees_gnf'] ?? 0);
+    }
+
+    /** Refuse un achat d'associé qui dépasserait ses apports non investis. */
+    private function assertFundCovers(?int $fundId, float $total, ?int $exceptOrderId = null): void
+    {
+        if (! $fundId) {
+            return;
+        }
+
+        $disponible = app(\App\Services\FundService::class)->capitalAvailable($fundId, $exceptOrderId);
+        if ($total > $disponible + 0.01) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'fund_id' => sprintf(
+                    'Capital insuffisant pour %s : %s FG disponibles (apports non investis), achat estimé à %s FG.',
+                    \App\Models\Fund::labelFor($fundId),
+                    number_format($disponible, 0, ',', ' '),
+                    number_format($total, 0, ',', ' ')
+                ),
+            ]);
+        }
+    }
+
     public function create()
     {
-        $stores = Store::all();
+        $stores = Store::optionsFor(auth()->user());
+        $suppliers = Partner::orderBy('name')->get();
+        $funds = \App\Models\Fund::active()->orderBy('name')->get();
         $products = Product::orderBy('libelle')->get(['id', 'libelle', 'sku']);
         $currencies = CurrencySetting::whereNotNull('rate_to_gnf')->where('currencyCode', '!=', 'GNF')->get();
         $reference = $this->nextReference();
@@ -91,7 +142,7 @@ class PurchaseOrderController extends Controller
         $storeManagers = User::where('id', '>', 2)->get();
         $categories = Category::orderBy('category_type')->get();
 
-        return view('purchase_orders.create', compact('stores', 'products', 'currencies', 'reference', 'places', 'storeManagers', 'categories'));
+        return view('purchase_orders.create', compact('stores', 'products', 'currencies', 'reference', 'places', 'storeManagers', 'categories', 'suppliers', 'funds'));
     }
 
     public function store(Request $request, PurchaseOrderCostingService $costingService)
@@ -99,6 +150,9 @@ class PurchaseOrderController extends Controller
         $validated = $request->validate([
             'reference' => 'required|string|unique:purchase_orders,reference',
             'store_id' => 'required|exists:stores,id',
+            'partner_id' => 'nullable|exists:partners,id',
+            // Financé par : vide = fonds propres, sinon le fonds d'un associé.
+            'fund_id' => 'nullable|exists:funds,id',
             'origin' => 'required|in:chine,guinee',
             // La table s'appelle `currency_settings` (pas `currencies` : ce nom n'existe
             // pas en base et faisait planter la validation dès qu'une devise était
@@ -126,9 +180,16 @@ class PurchaseOrderController extends Controller
             'exchange_rate_used.required_with' => 'Le taux du jour est obligatoire quand une devise est sélectionnée.',
         ]);
 
+        // La destination doit appartenir au périmètre de l'utilisateur.
+        $this->authorizeStore($validated['store_id']);
+        $this->assertFundCovers($validated['fund_id'] ?? null, $this->estimatedTotal($validated));
+
         $order = PurchaseOrder::create([
             'reference' => $validated['reference'],
             'store_id' => $validated['store_id'],
+            'partner_id' => $validated['partner_id'] ?? null,
+            'fund_id' => $validated['fund_id'] ?? null,
+            'created_by' => auth()->id(),
             'origin' => $validated['origin'],
             'currency_code' => $validated['origin'] === 'chine' ? $validated['currency_code'] : null,
             // 'exchange_rate_used' => $validated['origin'] === 'chine' ? $validated['exchange_rate_used'] : null,
@@ -150,7 +211,8 @@ class PurchaseOrderController extends Controller
 
     public function show($id)
     {
-        $order = PurchaseOrder::with(['store', 'items.product'])->findOrFail($id);
+        $order = PurchaseOrder::with(['store', 'items.product', 'supplier', 'creator'])->findOrFail($id);
+        $this->authorizeStore($order->store_id);
 
         return view('purchase_orders.show', compact('order'));
     }
@@ -158,7 +220,10 @@ class PurchaseOrderController extends Controller
     public function edit($id)
     {
         $order = PurchaseOrder::with('items')->findOrFail($id);
-        $stores = Store::all();
+        $this->authorizeStore($order->store_id);
+        $stores = Store::optionsFor(auth()->user());
+        $suppliers = Partner::orderBy('name')->get();
+        $funds = \App\Models\Fund::orderBy('name')->get();
         $products = Product::orderBy('libelle')->get(['id', 'libelle', 'sku']);
         $currencies = CurrencySetting::whereNotNull('rate_to_gnf')->where('currencyCode', '!=', 'GNF')->get();
         // Pour les modales "Nouvelle boutique" / "Nouveau produit" du formulaire.
@@ -166,7 +231,7 @@ class PurchaseOrderController extends Controller
         $storeManagers = User::where('id', '>', 2)->get();
         $categories = Category::orderBy('category_type')->get();
 
-        return view('purchase_orders.edit', compact('order', 'stores', 'products', 'currencies', 'places', 'storeManagers', 'categories'));
+        return view('purchase_orders.edit', compact('order', 'stores', 'products', 'currencies', 'places', 'storeManagers', 'categories', 'suppliers', 'funds'));
     }
 
     public function update(Request $request, $id, PurchaseOrderCostingService $costingService)
@@ -177,8 +242,12 @@ class PurchaseOrderController extends Controller
             return back()->with('error', 'Cet achat est annulé, il ne peut plus être modifié.');
         }
 
+        $this->authorizeStore($order->store_id);
+
         $validated = $request->validate([
             'store_id' => 'required|exists:stores,id',
+            'partner_id' => 'nullable|exists:partners,id',
+            'fund_id' => 'nullable|exists:funds,id',
             'origin' => 'required|in:chine,guinee',
             'currency_code' => 'nullable|string|exists:currency_settings,currencyCode',
             // Obligatoire dès qu'une devise est choisie : le taux n'est plus pré-rempli
@@ -202,8 +271,15 @@ class PurchaseOrderController extends Controller
             'exchange_rate_used.required_with' => 'Le taux du jour est obligatoire quand une devise est sélectionnée.',
         ]);
 
+        $this->authorizeStore($validated['store_id']);
+        $this->assertFundCovers($validated['fund_id'] ?? null, $this->estimatedTotal($validated), $order->id);
+        $previousStoreId = (int) $order->store_id;
+        $previousFundId = $order->fund_id;
+
         $order->update([
             'store_id' => $validated['store_id'],
+            'partner_id' => $validated['partner_id'] ?? null,
+            'fund_id' => $validated['fund_id'] ?? null,
             'origin' => $validated['origin'],
             'currency_code' => $validated['origin'] === 'chine' ? $validated['currency_code'] : null,
             ///'exchange_rate_used' => $validated['origin'] === 'chine' ? $validated['exchange_rate_used'] : null,
@@ -217,7 +293,7 @@ class PurchaseOrderController extends Controller
             'notes' => $validated['notes'] ?? null,
         ]);
 
-        $costingService->costOrder($order, $validated['lines']);
+        $costingService->costOrder($order, $validated['lines'], $previousStoreId, $previousFundId);
 
         return redirect()->route('purchase-orders.show', $order->id)
             ->with('success', 'Achat mis à jour avec succès.');
@@ -235,10 +311,17 @@ class PurchaseOrderController extends Controller
             // Retire du stock exactement ce que cet achat y avait ajouté.
             // (Le prix de revient du produit n'est pas "annulé" — s'il a été mis à jour
             // par un achat plus récent depuis, revenir en arrière serait incorrect.)
+            $stock = app(\App\Services\StockService::class);
             foreach ($order->items as $item) {
-                \App\Models\StoreProduct::where('store_id', $order->store_id)
-                    ->where('product_id', $item->product_id)
-                    ->decrement('quantity', $item->quantity);
+                $stock->forceDecrement((int) $order->store_id, (int) $item->product_id, (int) $item->quantity, [
+                    'type'         => \App\Models\StockMovement::PURCHASE_CANCEL,
+                    'source_type'  => 'purchase_order',
+                    'source_id'    => $order->id,
+                    'document_ref' => $order->reference,
+                    'supplier_id'  => $order->partner_id,
+                    'fund_id'      => $order->fund_id,
+                    'reason'       => 'Annulation de l\'achat ' . $order->reference,
+                ]);
             }
 
             $order->update(['status' => 'cancelled']);

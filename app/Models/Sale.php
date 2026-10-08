@@ -37,4 +37,14 @@ class Sale extends Model
         return $this->belongsTo(User::class);
     }
 
+    /** Lignes dont l'emplacement source est visible par l'utilisateur. */
+    public function scopeVisibleTo(\Illuminate\Database\Eloquent\Builder $query, ?User $user)
+    {
+        if (! $user || ! $user->isStoreScoped()) {
+            return $query;
+        }
+
+        return $query->whereIn('store_id', $user->accessibleStoreIds());
+    }
+
 }

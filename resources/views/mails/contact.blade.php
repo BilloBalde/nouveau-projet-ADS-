@@ -525,7 +525,7 @@
                     Nous avons bien reçu votre message et vous remercions de nous avoir contactés.<br>
                     Notre équipe va étudier votre demande et vous répondra dans les plus brefs délais.<br><br>
                     Cordialement,<br>
-                    L'équipe Coleah Bandeya & Fils
+                    L'équipe TELICO
                 </div>
             </div>
         </div>
@@ -533,7 +533,7 @@
         <!-- Footer -->
         <div class="email-footer">
             <div class="company-name">
-                ⚡ Coleah Bandeya & Fils
+                ⚡ TELICO
             </div>
             
             <div class="contact-info">
@@ -565,8 +565,8 @@
             </div>
             
             <div class="copyright">
-                © {{ $year ?? date('Y') }} Coleah Bandeya & Fils. Tous droits réservés.<br>
-                Ce message est confidentiel et destiné uniquement à l'équipe Coleah Bandeya & Fils.
+                © {{ $year ?? date('Y') }} TELICO. Tous droits réservés.<br>
+                Ce message est confidentiel et destiné uniquement à l'équipe TELICO.
             </div>
         </div>
     </div>

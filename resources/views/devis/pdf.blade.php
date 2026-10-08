@@ -374,7 +374,7 @@
                                     @endif
                                     <div class="document-title">
                                         <h1>DEVIS</h1>
-                                        <h3>{{ $company?->name ?? 'Coleah Bandeya & Fils' }}</h3>
+                                        <h3>{{ $company?->name ?? 'TELICO' }}</h3>
                                     </div>
                                 </div>
                             </div>
@@ -482,7 +482,7 @@
                                 </div>
                                 <div class="signature-box">
                                     <div class="signature-line"></div>
-                                    <strong>Pour {{ $company?->name ?? 'Coleah Bandeya & Fils' }}</strong><br>
+                                    <strong>Pour {{ $company?->name ?? 'TELICO' }}</strong><br>
                                     <small>{{ $devis->createdBy?->name ?? auth()->user()->name }}</small>
                                 </div>
                             </div>

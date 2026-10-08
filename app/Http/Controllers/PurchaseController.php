@@ -108,16 +108,16 @@ class PurchaseController extends Controller
         //dd($purchasesData);
         // Insert multiple rows
         foreach ($purchasesData as $data) {
-            Purchase::create($data);
-            StoreProduct::updateOrCreate(
-                [
-                    'store_id' => $data['store_id'], // Assume store_id is part of the request data
-                    'product_id' => $data['product_id'],
-                ],
-                [
-                    'quantity' => \DB::raw("quantity + {$data['quantity']}"), // Increment the stock
-                ]
-            );
+            $this->authorizeStore($data['store_id']);
+            $purchase = Purchase::create($data);
+            // Entrée en stock tracée dans le journal des mouvements.
+            app(\App\Services\StockService::class)->increment((int) $data['store_id'], (int) $data['product_id'], (int) $data['quantity'], [
+                'type'         => \App\Models\StockMovement::PURCHASE,
+                'source_type'  => 'purchase',
+                'source_id'    => $purchase->id,
+                'document_ref' => $purchase->numeroPurchase,
+                'unit_price'   => $data['price'] ?? null,
+            ]);
 
             // Garde le "Prix de Revient" du produit aligné sur le dernier achat réel
             Product::where('id', $data['product_id'])->update(['price_sale' => $data['price']]);
@@ -164,15 +164,20 @@ class PurchaseController extends Controller
             $reste = $purchase->quantity - $request->quantity;
             $logistic->quantity = $logistic->quantity - $reste;
             $logistic->save();
-            StoreProduct::updateOrCreate(
-                [
-                    'store_id' => $purchase->store_id, // Assume store_id is part of the request data
-                    'product_id' => $purchase->product_id,
-                ],
-                [
-                    'quantity' => \DB::raw("quantity - {$reste}"), // Increment the stock
-                ]
-            );
+            $this->authorizeStore($purchase->store_id);
+            // Écart de quantité appliqué par un mouvement de correction tracé.
+            $correction = [
+                'type'         => \App\Models\StockMovement::CORRECTION,
+                'source_type'  => 'purchase',
+                'source_id'    => $purchase->id,
+                'document_ref' => $purchase->numeroPurchase,
+                'reason'       => 'Modification de l\'achat : quantité ' . $purchase->quantity . ' → ' . $request->quantity,
+            ];
+            if ($reste > 0) {
+                app(\App\Services\StockService::class)->forceDecrement((int) $purchase->store_id, (int) $purchase->product_id, (int) $reste, $correction);
+            } elseif ($reste < 0) {
+                app(\App\Services\StockService::class)->increment((int) $purchase->store_id, (int) $purchase->product_id, (int) -$reste, $correction);
+            }
             $purchase->price = $request->price;
             $purchase->quantity = $request->quantity;
             $purchase->save();
