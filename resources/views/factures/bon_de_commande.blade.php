@@ -431,8 +431,8 @@
                                     <tr>
                                         <td>{{ $loop->iteration }}</td>
                                         <td style="text-align: left;">{{ $item->produit }}</td>
-                                        <td>{{ $item->quantity }}</td>
-                                        <td>{{ number_format($item->prix, 0, ',', ' ') }} FG</td>
+                                        <td>{{ $item->quantite_affichee }}</td>
+                                        <td>{{ number_format($item->prix_affiche, 0, ',', ' ') }} FG</td>
                                         <td>{{ number_format($item->prixTotal, 0, ',', ' ') }} FG</td>
                                     </tr>
                                     @endforeach

@@ -179,11 +179,13 @@
                     <p class="text-gray-600 text-sm leading-relaxed mb-5">{{ $product->description }}</p>
                     @endif
 
-                    {{-- Infos carton --}}
-                    @if($product->pcs)
+                    {{-- Conditionnements proposés (carton de 24, paquet de 10, rouleau de 100 m…).
+                         products.pcs est le stock global, pas un nombre de pièces par carton. --}}
+                    @php $conditionnements = collect($product->unitesDisponibles())->except('pcs'); @endphp
+                    @if($conditionnements->isNotEmpty())
                     <div class="flex items-center gap-2 mb-2 text-sm text-gray-500">
                         <i class="fas fa-box text-brand-400"></i>
-                        <span>Pièces / carton : <strong class="text-gray-700">{{ $product->pcs }} pcs</strong></span>
+                        <span>Vendu aussi par : <strong class="text-gray-700">{{ $conditionnements->pluck('libelle')->implode(', ') }}</strong></span>
                     </div>
                     @endif
                 </div>

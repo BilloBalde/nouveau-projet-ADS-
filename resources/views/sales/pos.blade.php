@@ -878,7 +878,7 @@
                                     </span>
                                 </div>
                                 <button type="button" class="btn btn-pos-secondary" data-bs-toggle="modal" data-bs-target="#thirdPartyQuickModal">
-                                    <i class="fa fa-plus me-1"></i> Vente tierce rapide
+                                    <i class="fa fa-plus me-1"></i> Vente Eclaire
                                 </button>
                             </div>
                             @include('layouts.flash')
@@ -1420,6 +1420,15 @@
                 // chaque ligne. Le contrôle qui fait foi reste celui du serveur.
                 const stockByProduct = @json($stockByProduct);
                 const locationLabels = @json($locationLabels);
+                // Unités de vente de chaque produit : [{code, libelle, facteur}].
+                // Le stock et les prix des cartes sont à la pièce (ou au rouleau).
+                const unitesByProduct = @json($unitesByProduct);
+                function uniteOptions(productId) {
+                    const unites = unitesByProduct[productId] || [{ code: 'pcs', libelle: 'Pièce', facteur: 1 }];
+                    return unites.map(function (u) {
+                        return '<option value="' + u.code + '" data-facteur="' + u.facteur + '">' + u.libelle + '</option>';
+                    }).join('');
+                }
                 // Origine du stock → magasin qui facture (l'entrepôt d'un magasin
                 // facture pour ce magasin). Sert à préremplir le magasin de vente
                 // tant que le vendeur ne l'a pas choisi lui-même.
@@ -1554,6 +1563,12 @@
                             '</div>' +
                         '</li>' +
                         '<li class="qty-price-group">' +
+                            '<div class="unite-group form-group"' + ((unitesByProduct[product_id] || []).length > 1 ? '' : ' style="display:none"') + '>' +
+                                '<h6>Unité</h6>' +
+                                '<select name="sales[' + i + '][unite]" class="form-control unite-select">' +
+                                    uniteOptions(product_id) +
+                                '</select>' +
+                            '</div>' +
                             '<div class="quantity-set form-group">' +
                                 '<h6>Qté</h6>' +
                                 '<div class="qty-stepper">' +
@@ -1579,7 +1594,7 @@
                         '<li style="width:100%; margin-top:8px;">' +
                             '<label style="font-size:13px; cursor:pointer; display:flex; align-items:center;">' +
                                 '<input type="checkbox" class="third-party-check" style="margin-right:6px; accent-color:#3E4C21;">' +
-                                'Vente pour un tiers' +
+                                'Vente Eclaire' +
                             '</label>' +
                             '<div class="third-party-fields mt-2" style="display:none; background:#F9F9F3; padding:10px; border-radius:8px; border:1px solid #CED5AE;">' +
                                 '<div style="display:flex; gap:8px; margin-bottom:8px;">' +
@@ -1621,6 +1636,21 @@
                     const thirdPartyFlag = row.querySelector('.third-party-flag');
                     const addPartnerBtn = row.querySelector('.btn-add-partner');
                     const partnerSelect = row.querySelector('.partner-select');
+                    // Facteur de l'unité choisie : 1 pour la pièce, 12 pour la
+                    // douzaine, le nombre de pièces du carton ou du paquet.
+                    const uniteSelect = row.querySelector('.unite-select');
+                    function facteur() {
+                        return parseInt(uniteSelect?.selectedOptions[0]?.dataset.facteur || '1', 10) || 1;
+                    }
+                    function libelleUnite() {
+                        return uniteSelect?.selectedOptions[0]?.textContent || 'Pièce';
+                    }
+                    uniteSelect?.addEventListener('change', function () {
+                        // Le prix proposé suit l'unité : carton de 24 = 24 × prix pièce,
+                        // arrondi au franc supérieur (jamais sous le prix affiché).
+                        priceField.value = facteur() > 1 ? Math.ceil(productPrice * facteur() - 0.001) : productPrice;
+                        controlerPrix();
+                    });
 
                     if (thirdPartyCheck) {
                         thirdPartyCheck.addEventListener('change', function() {
@@ -1673,12 +1703,13 @@
                         const fundInput = row.querySelector('.fund-input');
                         if (fundInput) fundInput.value = tierce ? '' : (opt?.dataset.fund || '');
                         const dispo = parseInt(opt?.dataset.available || '0', 10);
-                        const qty = parseInt(quantityField.value, 10) || 0;
+                        const qty = (parseInt(quantityField.value, 10) || 0) * facteur();
                         if (!tierce && qty > dispo) {
                             originSelect.dataset.stockError = '1';
                             originSelect.classList.add('is-invalid');
                             originError.textContent = 'Stock insuffisant : ' + dispo.toLocaleString('fr-FR')
-                                + ' disponible(s) à cet emplacement, ' + qty.toLocaleString('fr-FR') + ' demandé(s).';
+                                + ' disponible(s) à cet emplacement, ' + qty.toLocaleString('fr-FR') + ' demandé(s)'
+                                + (facteur() > 1 ? ' (' + quantityField.value + ' × ' + libelleUnite() + ')' : '') + '.';
                             originError.style.display = 'block';
                         } else {
                             delete originSelect.dataset.stockError;
@@ -1707,7 +1738,7 @@
                             const achat = parseFloat(row.querySelector('input[name*="purchase_price_from_partner"]')?.value) || 0;
                             return { valeur: achat, origine: "prix d'achat au partenaire" };
                         }
-                        return { valeur: productCost, origine: 'prix de revient' };
+                        return { valeur: productCost * facteur(), origine: 'prix de revient' + (facteur() > 1 ? ' par ' + libelleUnite().toLowerCase() : '') };
                     }
 
                     // Deux situations distinctes, qu'il ne faut pas confondre :
@@ -1718,7 +1749,8 @@
                         const priceError = row.querySelector('.price-error');
                         const plancher = plancherDeLaLigne();
 
-                        if (plancher.valeur > 0 && saisi < plancher.valeur) {
+                        // Tolérance d'un centime : 24 × 6 666,67 ne tombe pas juste en virgule flottante.
+                        if (plancher.valeur > 0 && saisi < plancher.valeur - 0.01) {
                             priceField.dataset.belowCost = '1';
                             priceField.classList.add('is-invalid');
                             if (priceError) {
@@ -1727,12 +1759,12 @@
                                 priceError.style.color = '#d92d20';
                                 priceError.style.display = 'block';
                             }
-                        } else if (saisi < productPrice) {
+                        } else if (saisi < productPrice * facteur() - 0.01) {
                             delete priceField.dataset.belowCost;
                             priceField.classList.remove('is-invalid');
                             if (priceError) {
                                 priceError.textContent = 'Remise appliquée — prix affiché : '
-                                    + productPrice.toLocaleString('fr-FR') + ' GNF';
+                                    + (productPrice * facteur()).toLocaleString('fr-FR') + ' GNF';
                                 priceError.style.color = '#b45309';
                                 priceError.style.display = 'block';
                             }

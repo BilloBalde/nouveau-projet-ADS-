@@ -523,6 +523,27 @@ class MultiLocationTest extends TestCase
         $this->assertSame(2, $vuJean->viewData('totals')['nb']);
     }
 
+    public function test_14b_vente_tierce_comptee_dans_les_ventes_flash(): void
+    {
+        $ami = Partner::create(['name' => 'Ami fournisseur']);
+        $jean = $this->user('Jean Tierce', User::ROLE_STORE_MANAGER, $this->madina->id);
+
+        $this->actingAs($jean)->postJson(route('pos.storeQuickThirdParty'), [
+            'customer_id' => $this->client->id, 'avance' => 0,
+            'lignes' => [['libelle' => 'Tuyau PVC 50 mm', 'sku' => 'TRC-001', 'prix' => 12000,
+                'purchase_price_from_partner' => 10000, 'partner_id' => $ami->id, 'quantity' => 3]],
+        ])->assertOk()->assertJson(['success' => true]);
+
+        $page = $this->actingAs($this->admin)->get(route('reports.flash', ['period' => 'daily']))->assertOk();
+        $this->assertSame(1, $page->viewData('totals')['nb']);
+        $this->assertSame(3, $page->viewData('totals')['qty']);
+        $this->assertEquals(36000, $page->viewData('totals')['ca']);
+        $this->assertEquals(6000, $page->viewData('totals')['marge']);
+        $page->assertSee('Jean Tierce')->assertSee('Vente tierce');
+
+        $this->assertSame(1, $this->actingAs($jean)->get(route('reports.flash', ['period' => 'daily']))->viewData('totals')['nb']);
+    }
+
     public function test_15_rapports_jour_semaine_mois_annee(): void
     {
         $this->approvisionner($this->madina, $this->ciment, 100);

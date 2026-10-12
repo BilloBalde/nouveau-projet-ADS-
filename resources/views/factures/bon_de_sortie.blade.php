@@ -537,7 +537,7 @@
                                             @endif
                                         </td>
                                         <td style="text-align: left;">{{ $item->produit }}</td>
-                                        <td>{{ $item->quantity }}</td>
+                                        <td>{{ $item->quantite_affichee }}</td>
                                     </tr>
                                     @endforeach
                                 </tbody>

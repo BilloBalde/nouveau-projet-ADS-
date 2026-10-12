@@ -236,8 +236,8 @@
                                                 </a>
                                                 <a href="javascript:void(0);" onclick="showProductDetails({{ $data->product_id }})">{{ $data->produit }}</a>
                                             </td>
-                                            <td>{{ $data->quantity }}</td>
-                                            <td>{{ $data->prix }}</td>
+                                            <td>{{ $data->quantite_affichee }}</td>
+                                            <td>{{ $data->prix_affiche }}</td>
                                             <td>{{ $data->prixTotal }}</td>
                                             <td>{{ $data->interet }}</td>
                                             <td>{{ $data->user?->username ?? $data->user?->name ?? '-' }}</td>

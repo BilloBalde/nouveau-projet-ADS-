@@ -123,9 +123,55 @@ class ProductController extends Controller
         return view('products.create', compact('categories', 'stores'));
     }
 
+    /** Règles des unités de vente, communes à la création et à la modification. */
+    private function reglesUnites(): array
+    {
+        $coche = fn (string $code) => \Illuminate\Validation\Rule::requiredIf(
+            fn () => in_array($code, (array) request()->input('unites_vente', []), true)
+        );
+
+        return [
+            'unites_vente'      => ['required', 'array', 'min:1', function ($attr, $valeur, $echec) {
+                if (in_array('rouleau', (array) $valeur, true) && count((array) $valeur) > 1) {
+                    $echec('Un produit vendu au rouleau a son stock compté en rouleaux : il ne peut pas être vendu aussi à la pièce, à la douzaine, au carton ou au paquet.');
+                }
+            }],
+            'unites_vente.*'    => 'in:'.implode(',', array_keys(Product::UNITES)),
+            'pcs_par_carton'    => ['nullable', $coche('carton'), 'integer', 'min:2'],
+            'pcs_par_paquet'    => ['nullable', $coche('paquet'), 'integer', 'min:2'],
+            'dimension_rouleau' => ['nullable', $coche('rouleau'), 'string', 'max:60'],
+        ];
+    }
+
+    private function messagesUnites(): array
+    {
+        return [
+            'unites_vente.required'      => 'Choisissez au moins une unité de vente.',
+            'pcs_par_carton.required' => 'Indiquez le nombre de pièces par carton.',
+            'pcs_par_carton.min'         => 'Un carton contient au moins 2 pièces.',
+            'pcs_par_paquet.required' => 'Indiquez le nombre de pièces par paquet.',
+            'pcs_par_paquet.min'         => 'Un paquet contient au moins 2 pièces.',
+            'dimension_rouleau.required' => 'Indiquez la dimension du rouleau.',
+        ];
+    }
+
+    /** Valeurs à enregistrer : les champs d'une unité décochée sont vidés. */
+    private function valeursUnites(Request $request): array
+    {
+        $unites = array_values(array_intersect(array_keys(Product::UNITES), (array) $request->input('unites_vente', ['pcs'])));
+
+        return [
+            'unites_vente'      => $unites ?: ['pcs'],
+            'pcs_par_carton'    => in_array('carton', $unites, true) ? (int) $request->pcs_par_carton : null,
+            'pcs_par_paquet'    => in_array('paquet', $unites, true) ? (int) $request->pcs_par_paquet : null,
+            'dimension_rouleau' => in_array('rouleau', $unites, true) ? trim((string) $request->dimension_rouleau) : null,
+        ];
+    }
+
     public function validation(Request $request)
     {
         return $request->validate([
+            ...$this->reglesUnites(),
             'categories' => 'required|array',
             'categories.*' => 'exists:categories,id',
             'libelle' => 'required|string|max:225',
@@ -157,6 +203,7 @@ class ProductController extends Controller
             'image.image' => 'champ image ne prend que des images',
             'promo_percent.max' => 'Le pourcentage de promotion ne peut pas dépasser 100.',
             'promo_end_date.after_or_equal' => 'La date de fin de promo doit être après la date de début.',
+            ...$this->messagesUnites(),
         ]);
     }
 
@@ -242,6 +289,7 @@ class ProductController extends Controller
                 'promo_price' => $this->computePromoPrice($request, $price),
                 'promo_start_date' => $request->promo_start_date ?? null,
                 'promo_end_date' => $request->promo_end_date ?? null,
+                ...$this->valeursUnites($request),
             ]);
 
             $product->categories()->attach($request->categories);
@@ -337,9 +385,11 @@ class ProductController extends Controller
             'promo_percent' => 'nullable|numeric|min:0|max:100',
             'promo_start_date' => 'nullable|date',
             'promo_end_date' => 'nullable|date|after_or_equal:promo_start_date',
+            ...$this->reglesUnites(),
         ], [
             'promo_percent.max' => 'Le pourcentage de promotion ne peut pas dépasser 100.',
             'promo_end_date.after_or_equal' => 'La date de fin de promo doit être après la date de début.',
+            ...$this->messagesUnites(),
         ]);
 
         try {
@@ -356,6 +406,7 @@ class ProductController extends Controller
             $product->promo_price = $this->computePromoPrice($request, (float) $request->price);
             $product->promo_start_date = $request->promo_start_date ?? null;
             $product->promo_end_date = $request->promo_end_date ?? null;
+            $product->fill($this->valeursUnites($request));
 
             $product->save();
 

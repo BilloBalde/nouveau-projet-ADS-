@@ -212,6 +212,8 @@
                                     </div>
                                 </div>
 
+                                @include('products.partials.unites')
+
                                 <div class="form-section">
                                     <div class="form-section-title"><i class="fa fa-tag"></i> Tarification</div>
                                     <div class="row">

@@ -478,8 +478,8 @@
                                             <tr>
                                                 <td>{{ $loop->iteration }}</td>
                                                 <td>{{ $item->produit }}</td>
-                                                <td>{{ $item->quantity }} PCS</td>
-                                                <td>{{ numberDelimiter($item->prix) }} FG</td>
+                                                <td>{{ $item->quantite_affichee }}</td>
+                                                <td>{{ numberDelimiter($item->prix_affiche) }} FG</td>
                                                 <td>{{ numberDelimiter($item->prixTotal) }} FG</td>
                                             </tr>
                                         @endforeach

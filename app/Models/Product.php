@@ -13,7 +13,82 @@ class Product extends Model
     protected $casts = [
         'promo_start_date' => 'date',
         'promo_end_date' => 'date',
+        'unites_vente' => 'array',
     ];
+
+    /**
+     * Unités dans lesquelles un produit peut se vendre. Le stock est compté
+     * dans l'unité de base : la pièce, ou le rouleau pour un produit vendu au
+     * rouleau (un rouleau ne se combine donc pas avec les autres unités).
+     */
+    public const UNITES = [
+        'pcs'      => ['libelle' => 'Pièce',    'pluriel' => 'pièces'],
+        'douzaine' => ['libelle' => 'Douzaine', 'pluriel' => 'douzaines'],
+        'carton'   => ['libelle' => 'Carton',   'pluriel' => 'cartons'],
+        'paquet'   => ['libelle' => 'Paquet',   'pluriel' => 'paquets'],
+        'rouleau'  => ['libelle' => 'Rouleau',  'pluriel' => 'rouleaux'],
+    ];
+
+    /** Codes d'unité activés, dans l'ordre de UNITES ; « pcs » par défaut. */
+    public function codesUnites(): array
+    {
+        $codes = array_values(array_intersect(array_keys(self::UNITES), (array) ($this->unites_vente ?: [])));
+
+        return $codes ?: ['pcs'];
+    }
+
+    /**
+     * Nombre d'unités de base contenues dans une unité de vente, ou null si
+     * l'unité n'est pas proposée pour ce produit (ou mal renseignée).
+     */
+    public function facteurUnite(string $code): ?int
+    {
+        if (! in_array($code, $this->codesUnites(), true)) {
+            return null;
+        }
+
+        return match ($code) {
+            'pcs', 'rouleau' => 1,
+            'douzaine'       => 12,
+            'carton'         => $this->pcs_par_carton ? (int) $this->pcs_par_carton : null,
+            'paquet'         => $this->pcs_par_paquet ? (int) $this->pcs_par_paquet : null,
+            default          => null,
+        };
+    }
+
+    /** Unité de base du stock : « rouleau » pour un produit vendu au rouleau. */
+    public function uniteDeBase(): string
+    {
+        return $this->codesUnites() === ['rouleau'] ? 'rouleau' : 'pcs';
+    }
+
+    /**
+     * Unités proposées à la vente : code => libellé détaillé, facteur.
+     * Ex. « Carton (24 pcs) », « Rouleau (50 m) ».
+     */
+    public function unitesDisponibles(): array
+    {
+        $unites = [];
+        foreach ($this->codesUnites() as $code) {
+            $facteur = $this->facteurUnite($code);
+            if (! $facteur) {
+                continue;
+            }
+            $detail = match ($code) {
+                'douzaine' => '12 pcs',
+                'carton', 'paquet' => $facteur.' pcs',
+                'rouleau' => $this->dimension_rouleau,
+                default => null,
+            };
+            $unites[$code] = [
+                'code'    => $code,
+                'libelle' => self::UNITES[$code]['libelle'].($detail ? ' ('.$detail.')' : ''),
+                'facteur' => $facteur,
+            ];
+        }
+
+        return $unites ?: ['pcs' => ['code' => 'pcs', 'libelle' => 'Pièce', 'facteur' => 1]];
+    }
 
     /**
      * Une promo peut être configurée à l'avance ou laissée expirer sans être

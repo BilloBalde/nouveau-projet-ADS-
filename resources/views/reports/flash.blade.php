@@ -4,7 +4,7 @@
     <div class="page-header">
         <div class="page-title">
             <h4>Ventes flash</h4>
-            <h6>Ventes encaissées en caisse (point de vente) — {{ $label }}</h6>
+            <h6>Ventes encaissées en caisse (point de vente), ventes tierces comprises — {{ $label }}</h6>
             <span class="text-muted">Période : {{ $start->format('d/m/Y H:i') }} → {{ $end->format('d/m/Y H:i') }}</span>
         </div>
     </div>
@@ -147,7 +147,7 @@
                         <td>{{ $s->numeroFacture }}</td>
                         <td>{{ $s->user?->name ?? '—' }}</td>
                         <td>{{ $s->store?->store_name }}</td>
-                        <td>{{ $s->product?->libelle }}</td>
+                        <td>{{ $s->product?->libelle }}@if ($s->is_third_party) <span class="badge bg-light text-dark" style="border:1px solid #C7A150;font-size:11px;">Vente tierce</span>@endif</td>
                         <td class="text-end">{{ $s->quantity }}</td>
                         <td class="text-end">{{ numberDelimiter($s->prix) }}</td>
                         <td class="text-end">{{ numberDelimiter($s->prixTotal) }}</td>

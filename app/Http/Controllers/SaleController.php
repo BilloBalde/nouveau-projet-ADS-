@@ -393,6 +393,9 @@ class SaleController extends Controller
             // sinon le fonds d'un associé (choisi par le vendeur, ligne par ligne).
             'sales.*.fund_id'                    => 'nullable|exists:funds,id',
             'sales.*.quantity'                   => 'required|integer|min:1',
+            // Unité choisie par le vendeur (pièce, douzaine, carton, paquet,
+            // rouleau). La quantité et le prix saisis sont dans cette unité.
+            'sales.*.unite'                      => 'nullable|in:'.implode(',', array_keys(Product::UNITES)),
             'sales.*.prix'                       => 'required|numeric|min:0',
             'sales.*.partner_id'                 => 'nullable|exists:partners,id',
             'sales.*.purchase_price_from_partner'=> 'nullable|numeric|min:0',
@@ -437,6 +440,31 @@ class SaleController extends Controller
             }
             $salesData[$index]['store_id'] = $lineStoreId;
         }
+
+        // Conversion dans l'unité de base du stock, d'après la fiche produit
+        // (jamais d'après le navigateur) : 2 cartons de 24 à 120 000 GNF
+        // = 48 pièces à 5 000 GNF. La saisie d'origine est gardée pour la facture.
+        foreach ($salesData as $index => $data) {
+            $produit = Product::find($data['product_id']);
+            $unite = ($data['unite'] ?? null) ?: 'pcs';
+            $facteur = $produit?->facteurUnite($unite);
+            if (! $facteur) {
+                return redirect()->back()
+                    ->with('error', sprintf('« %s » ne se vend pas en %s.', $produit?->libelle ?? 'Ce produit', mb_strtolower(Product::UNITES[$unite]['libelle'] ?? $unite)))
+                    ->withInput();
+            }
+            $salesData[$index] = array_merge($data, [
+                'unite'          => $unite,
+                'quantite_unite' => (int) $data['quantity'],
+                'facteur_unite'  => $facteur,
+                'prix_unite'     => (float) $data['prix'],
+                'quantity'       => (int) $data['quantity'] * $facteur,
+                'prix'           => (float) $data['prix'] / $facteur,
+                'purchase_price_from_partner' => isset($data['purchase_price_from_partner']) && $data['purchase_price_from_partner'] !== ''
+                    ? (float) $data['purchase_price_from_partner'] / $facteur
+                    : null,
+            ]);
+        }
         if (! $user->canAccessStore((int) $request->store_id)) {
             return redirect()->back()->with('error', "Vous n'êtes pas autorisé à vendre pour ce magasin.")->withInput();
         }
@@ -461,7 +489,7 @@ class SaleController extends Controller
             foreach ($salesData as $data) {
                 $isThirdParty = !empty($data['is_third_party']) && $data['is_third_party'] == "1";
 
-                $data['prixTotal'] = $data['prix'] * $data['quantity'];
+                $data['prixTotal'] = $data['prix_unite'] * $data['quantite_unite'];
 
                 $product = Product::find($data['product_id']);
                 $libelle = $product?->libelle ?? 'Produit inconnu';
@@ -473,9 +501,9 @@ class SaleController extends Controller
                     }
 
                     $prixAmi = (float) $data['purchase_price_from_partner'];
-                    $this->assertPriceCoversCost($libelle, (float) $data['prix'], $prixAmi);
+                    $this->assertPriceCoversCost($libelle, $data['prix_unite'], $prixAmi * $data['facteur_unite']);
 
-                    $data['interet'] = ($data['prix'] - $prixAmi) * $data['quantity'];
+                    $data['interet'] = $data['prixTotal'] - $prixAmi * $data['quantity'];
                     $data['is_third_party'] = true;
 
                 } else {
@@ -488,7 +516,7 @@ class SaleController extends Controller
                     $prix_achat = $fundId
                         ? $funds->unitCost($fundId, (int) $data['product_id'])
                         : ($product ? $this->resolveUnitCost($product) : 0.0);
-                    $this->assertPriceCoversCost($libelle, (float) $data['prix'], $prix_achat);
+                    $this->assertPriceCoversCost($libelle, $data['prix_unite'], $prix_achat * $data['facteur_unite']);
                     $data['fund_id'] = $fundId;
                     $data['unit_cost'] = $prix_achat > 0 ? $prix_achat : null;
 
@@ -502,7 +530,7 @@ class SaleController extends Controller
                     ]);
 
                     // Coût inconnu : intérêt 0 plutôt qu'une marge fictive de 100 %.
-                    $data['interet'] = $prix_achat > 0 ? ($data['prix'] - $prix_achat) * $data['quantity'] : 0;
+                    $data['interet'] = $prix_achat > 0 ? $data['prixTotal'] - $prix_achat * $data['quantity'] : 0;
                     $data['is_third_party'] = false;
                 }
 
@@ -514,6 +542,10 @@ class SaleController extends Controller
                     'product_id'                  => $data['product_id'],
                     'prix'                        => $data['prix'],
                     'quantity'                    => $data['quantity'],
+                    'unite'                       => $data['unite'],
+                    'quantite_unite'              => $data['quantite_unite'],
+                    'facteur_unite'               => $data['facteur_unite'],
+                    'prix_unite'                  => $data['prix_unite'],
                     'prixTotal'                   => $data['prixTotal'],
                     'interet'                     => $data['interet'],
                     'store_id'                    => $data['store_id'],
@@ -639,10 +671,13 @@ class SaleController extends Controller
                 ->values(),
         ]);
         $locationLabels = $locations->mapWithKeys(fn ($s) => [$s->id => $s->full_name . ' (' . $s->type_label . ')']);
+        // Unités de vente de chaque produit (pièce, carton de 24…), pour le
+        // choix d'unité sur chaque ligne.
+        $unitesByProduct = $produits->mapWithKeys(fn ($p) => [$p->id => array_values($p->unitesDisponibles())]);
         $customers = Customer::all();
         $partners = Partner::all();
         $numeroFacture = $this->prochainNumeroFacture();
-        return view('sales.pos', compact('produits', 'boutiques', 'customers', 'categories', 'userStoreId', 'numeroFacture', 'partners', 'stockByProduct', 'locationLabels', 'locationIds', 'caisseParOrigine'));
+        return view('sales.pos', compact('produits', 'boutiques', 'customers', 'categories', 'userStoreId', 'numeroFacture', 'partners', 'stockByProduct', 'locationLabels', 'locationIds', 'caisseParOrigine', 'unitesByProduct'));
     }
 
     /**
@@ -793,7 +828,9 @@ class SaleController extends Controller
      */
     private function assertPriceCoversCost(string $libelle, float $prixVente, float $cout): void
     {
-        if ($cout > 0 && $prixVente < $cout) {
+        // Tolérance d'un centime : un coût par carton (24 × 6 666,67) ne tombe
+        // pas juste en virgule flottante.
+        if ($cout > 0 && $prixVente < $cout - 0.01) {
             throw new \RuntimeException(sprintf(
                 'Vente à perte refusée pour « %s » : le prix de vente (%s GNF) est inférieur au prix de revient (%s GNF).',
                 $libelle,

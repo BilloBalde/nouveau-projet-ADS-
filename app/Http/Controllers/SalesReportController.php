@@ -74,7 +74,9 @@ class SalesReportController extends Controller
         $lines = \App\Models\Sale::query()
             ->join('factures', 'factures.numero_facture', '=', 'sales.numeroFacture')
             ->whereNull('factures.deleted_at')
-            ->where('factures.channel', \App\Models\Facture::CHANNEL_POS)
+            // Ventes faites au comptoir : caisse ET ventes tierces (produits d'un
+            // partenaire revendus depuis le point de vente, facturées à part).
+            ->whereIn('factures.channel', [\App\Models\Facture::CHANNEL_POS, \App\Models\Facture::CHANNEL_TIERS])
             ->whereBetween('sales.created_at', [$start, $end])
             ->when($user->isStoreScoped(), fn ($q) => $q->whereIn('sales.store_id', $user->accessibleStoreIds()))
             ->when($request->filled('user_id'), fn ($q) => $q->where('sales.user_id', $request->input('user_id')))
