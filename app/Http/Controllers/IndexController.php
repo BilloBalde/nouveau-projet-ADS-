@@ -46,21 +46,48 @@ class IndexController extends Controller
     }
 
     /**
+     * Numéro du mois (1-12) d'une colonne date, dans le dialecte du serveur.
+     *
+     * MONTH() est propre à MySQL : sous SQLite — le moteur de la suite de
+     * tests — la requête échoue avec « no such function: MONTH », ce qui
+     * rendait le tableau de bord intestable, donc sans filet de sécurité
+     * alors que c'est l'écran le plus consulté.
+     *
+     * $colonne est un nom de colonne écrit dans ce fichier, jamais une valeur
+     * venant d'une requête HTTP.
+     */
+    private function moisSql(string $colonne): string
+    {
+        return DB::connection()->getDriverName() === 'sqlite'
+            ? "CAST(strftime('%m', $colonne) AS INTEGER)"
+            : "MONTH($colonne)";
+    }
+
+    /**
      * Même total que totalPurchases(), réparti par mois (1-12) pour le graphique
      * "Ventes & Achats".
+     *
+     * Le graphique est étiqueté Jan…Déc : il porte sur une seule année, d'où le
+     * filtre. Sans lui, le groupement par mois additionnait janvier de toutes
+     * les années confondues — invisible la première année, faux dès la seconde.
      */
-    private function monthlyPurchases(?int $storeId = null): array
+    private function monthlyPurchases(?int $storeId = null, ?int $annee = null): array
     {
+        $annee ??= Carbon::now()->year;
+        $mois = $this->moisSql('created_at');
+
         $fromPurchases = DB::table('purchases')
             ->when($storeId, fn ($q) => $q->where('store_id', $storeId))
-            ->selectRaw('SUM(price * quantity) as total, MONTH(created_at) as month')
+            ->whereYear('created_at', $annee)
+            ->selectRaw("SUM(price * quantity) as total, $mois as month")
             ->groupBy('month')
             ->pluck('total', 'month');
 
         $fromOrders = DB::table('purchase_orders')
             ->where('status', '!=', 'cancelled')
             ->when($storeId, fn ($q) => $q->where('store_id', $storeId))
-            ->selectRaw('SUM(total_landed_cost_gnf) as total, MONTH(created_at) as month')
+            ->whereYear('created_at', $annee)
+            ->selectRaw("SUM(total_landed_cost_gnf) as total, $mois as month")
             ->groupBy('month')
             ->pluck('total', 'month');
 
@@ -202,7 +229,8 @@ class IndexController extends Controller
             $salesData = DB::table('factures')
                 ->whereNull('deleted_at')
                 ->where('store_id', $store_id)
-                ->select(DB::raw('SUM(montant_total) as total'), DB::raw('MONTH(created_at) as month'))
+                ->whereYear('created_at', Carbon::now()->year)
+                ->selectRaw('SUM(montant_total) as total, '.$this->moisSql('created_at').' as month')
                 ->groupBy('month')
                 ->pluck('total', 'month')
                 ->toArray();
@@ -239,7 +267,8 @@ class IndexController extends Controller
             // whereNull('deleted_at') : voir plus haut, même raison.
             $salesData = DB::table('factures')
                 ->whereNull('deleted_at')
-                ->select(DB::raw('SUM(montant_total) as total'), DB::raw('MONTH(created_at) as month'))
+                ->whereYear('created_at', Carbon::now()->year)
+                ->selectRaw('SUM(montant_total) as total, '.$this->moisSql('created_at').' as month')
                 ->groupBy('month')
                 ->pluck('total', 'month')
                 ->toArray();
@@ -304,11 +333,21 @@ class IndexController extends Controller
         // store_products (cf. achats qui ne le réalimentent jamais) : on calcule le stock
         // réel à la volée en sommant store_products.quantity plutôt que de faire confiance
         // à la colonne stockée.
-        $stockAlerts = Product::withSum('stores as pcs', 'store_products.quantity')
-            ->having('pcs', '<=', 100)
+        // Le seuil se pose sur la sous-requête elle-même, pas sur son alias par
+        // HAVING : HAVING sans GROUP BY est accepté par MySQL mais refusé par
+        // d'autres moteurs (« HAVING clause on a non-aggregate query »), ce qui
+        // interdisait tout test de cet écran.
+        $stockReel = DB::table('store_products')
+            ->selectRaw('COALESCE(SUM(store_products.quantity), 0)')
+            ->whereColumn('store_products.product_id', 'products.id');
+
+        $stockAlerts = Product::query()
+            ->select(['id', 'libelle', 'unite'])
+            ->selectSub($stockReel, 'pcs')
+            ->where($stockReel, '<=', 100)
             ->orderBy('pcs')
             ->take(100)
-            ->get(['id', 'libelle', 'unite']);
+            ->get();
 
         // Uniquement calculée pour un employé rattaché à un magasin ; la vue admin
         // affiche l'équivalent par boutique via sa propre boucle @foreach(Store::all()).
