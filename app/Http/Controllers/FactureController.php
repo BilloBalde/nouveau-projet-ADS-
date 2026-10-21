@@ -27,6 +27,17 @@ class FactureController extends Controller
     public function __construct(StockService $stock)
     {
         $this->middleware('auth.check');
+        // Une facture est un document de vente : elle suit les permissions du
+        // module Ventes, comme le fait déjà le menu (« Liste des factures » est
+        // dans le menu Ventes, derrière sales.view). Aucune permission n'était
+        // vérifiée ici : tout employé connecté pouvait facturer et supprimer
+        // une facture — ce qui remet la marchandise en stock.
+        $this->middleware('permission:sales.view')->only(['index', 'show', 'printPdf', 'bonDeCommande', 'bonDeSortie']);
+        $this->middleware('permission:sales.create')->only(['facturationForm', 'facturationStore', 'store']);
+        $this->middleware('permission:sales.edit')->only(['edit', 'update']);
+        $this->middleware('permission:sales.delete')->only(['destroy']);
+        // Création rapide d'un client depuis l'écran de facturation.
+        $this->middleware('permission:customers.create')->only(['storeCustomer']);
         $this->stock = $stock;
     }
 

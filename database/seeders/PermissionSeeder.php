@@ -49,6 +49,23 @@ class PermissionSeeder extends Seeder
                 'payments.edit'   => 'Modifier un paiement',
                 'payments.delete' => 'Supprimer un paiement',
             ],
+            // Un devis suit son propre circuit (brouillon → validé → facture) :
+            // ses permissions sont distinctes de celles des ventes.
+            'Devis' => [
+                'devis.view'     => 'Voir les devis',
+                'devis.create'   => 'Créer un devis',
+                'devis.edit'     => 'Modifier un devis',
+                'devis.delete'   => 'Supprimer un devis',
+                'devis.validate' => 'Valider un devis (le transformer en facture)',
+            ],
+            // Une dépense est une sortie d'argent : la supprimer efface une
+            // écriture financière, d'où une permission à part.
+            'Dépenses' => [
+                'expenses.view'   => 'Voir les dépenses',
+                'expenses.create' => 'Enregistrer une dépense',
+                'expenses.edit'   => 'Modifier une dépense',
+                'expenses.delete' => 'Supprimer une dépense',
+            ],
             'Rapports' => [
                 'reports.view'   => 'Voir les rapports',
                 'reports.export' => 'Exporter les rapports',
@@ -106,6 +123,10 @@ class PermissionSeeder extends Seeder
                 'payments.view', 'payments.create',
                 'reports.view',
                 'orders.view', 'orders.validate', 'orders.deliver', // validate : commandes attribuées à sa boutique uniquement
+                'devis.view', 'devis.create', 'devis.edit', 'devis.delete', 'devis.validate',
+                // Dépenses de sa boutique : il les saisit et les corrige ; les
+                // supprimer reste réservé à la direction et à la comptabilité.
+                'expenses.view', 'expenses.create', 'expenses.edit',
             ],
             // comptable : finances
             $comptable->id => [
@@ -113,12 +134,17 @@ class PermissionSeeder extends Seeder
                 'payments.view', 'payments.create', 'payments.edit', 'payments.delete',
                 'reports.view', 'reports.export',
                 'sales.view', 'customers.view',
+                'expenses.view', 'expenses.create', 'expenses.edit', 'expenses.delete',
+                'devis.view',
             ],
             // responsable achats : approvisionnement
             $achat->id => [
                 'dashboard.view',
                 'purchases.view', 'purchases.create', 'purchases.edit', 'purchases.delete',
                 'products.view', 'stores.view',
+                // Consultation des dépenses : les frais rattachés aux achats
+                // (transport, douane) se lisent depuis cet écran.
+                'expenses.view',
             ],
         ];
 

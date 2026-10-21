@@ -15,6 +15,13 @@ class CustomerController extends Controller
     public function __construct()
     {
         $this->middleware('auth.check');
+        // Les permissions clients existaient et n'étaient vérifiées nulle part :
+        // n'importe quel employé connecté pouvait créer, modifier, archiver et
+        // même supprimer définitivement un client, avec ses factures.
+        $this->middleware('permission:customers.view')->only(['index', 'creditors', 'show', 'search']);
+        $this->middleware('permission:customers.create')->only(['create', 'store', 'quickAdd']);
+        $this->middleware('permission:customers.edit')->only(['edit', 'update', 'restore']);
+        $this->middleware('permission:customers.delete')->only(['destroy', 'forceDelete']);
     }
     /**
      * Display a listing of the resource.
@@ -297,28 +304,35 @@ public function forceDelete($id)
             ));
         }
 
-        // Get invoice IDs before deleting
-        $invoiceIds = $customer->factures()->pluck('id')->toArray();
-        
-        // Permanently delete related payments
-        if (!empty($invoiceIds)) {
+        // Corbeille comprise : une facture archivée reste rattachée au client,
+        // et ses paiements n'ont pas de suppression douce. Les laisser derrière
+        // nous ferait des factures sans client.
+        $invoiceIds = $customer->factures()->withTrashed()->pluck('id')->all();
+
+        if (! empty($invoiceIds)) {
             Payment::whereIn('facture_id', $invoiceIds)->delete();
         }
-        
-        // Permanently delete related invoices
-        $customer->factures()->delete();
-        
-        // Permanently delete the customer
+
+        // forceDelete() et non delete() : `Facture` a une suppression douce, donc
+        // delete() ne faisait que les archiver. Le client, lui, disparaissait
+        // pour de bon — il restait des factures pointant un client inexistant.
+        $customer->factures()->withTrashed()->forceDelete();
+
         $customer->forceDelete();
-        
+
         DB::commit();
-        
-        return redirect()->route('customers.trashed')
+
+        // La page « corbeille » n'existe pas (CustomerController n'a pas de
+        // méthode trashed() et aucune vue ne l'accompagne) : rediriger vers
+        // `customers.trashed` levait une RouteNotFoundException, donc une erreur
+        // 500 juste après une suppression définitive réussie — et le bloc catch
+        // visait la même route, ce qui masquait au passage le message d'erreur.
+        return redirect()->route('customers.index')
                         ->with('success', "Le client '{$customerName}' a été définitivement supprimé.");
-                        
+
     } catch (\Throwable $th) {
         DB::rollBack();
-        return redirect()->route('customers.trashed')
+        return redirect()->route('customers.index')
                         ->with('error', 'Erreur : ' . $th->getMessage());
     }
 }

@@ -17,6 +17,14 @@ class DeviController extends Controller
     public function __construct()
     {
         $this->middleware('auth.check');
+        // Aucune permission n'était vérifiée : tout employé connecté pouvait
+        // créer un devis, le supprimer, et surtout le valider — ce qui émet la
+        // facture et sort la marchandise du stock.
+        $this->middleware('permission:devis.view')->only(['index', 'show', 'showPdf', 'downloadPdf']);
+        $this->middleware('permission:devis.create')->only(['create', 'store']);
+        $this->middleware('permission:devis.edit')->only(['edit', 'update', 'changeStatus']);
+        $this->middleware('permission:devis.delete')->only(['destroy']);
+        $this->middleware('permission:devis.validate')->only(['validateDevis']);
     }
 
     public function index(Request $request)

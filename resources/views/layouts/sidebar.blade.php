@@ -90,6 +90,7 @@
                     </ul>
                 </li>
                 @endpermission
+                @permission('expenses.view')
                 <li class="submenu">
                     <a class="{{ isActiveRoute(['expenses.index', 'expensesCategory.index']) }}" href="javascript:void(0);"><img src="{{ asset('assets/img/icons/expense1.svg') }}" alt="img"><span>Depenses</span> <span class="menu-arrow"></span></a>
                     <ul>
@@ -97,6 +98,7 @@
                         <li><a href="{{ route('expensesCategory.index') }}">Depense Category</a></li>
                     </ul>
                 </li>
+                @endpermission
                 @if (Auth::check() && (Auth::user()->hasPermission('users.view') || (Auth::user()->hasPermission('customers.view') && ! Auth::user()->isRestrictedToStore())))
                 <li class="submenu">
                     <a  class="{{ isActiveRoute(['customers.index', 'users.index']) }}" href="javascript:void(0);"><img src="{{ asset('assets/img/icons/users1.svg') }}" alt="img"><span>Personnes</span> <span class="menu-arrow"></span></a>

@@ -13,6 +13,12 @@ class ExpenseController extends Controller
     public function __construct()
     {
         $this->middleware('auth.check');
+        // Aucune permission n'était vérifiée : tout employé connecté pouvait
+        // enregistrer et supprimer une dépense, donc une écriture financière.
+        $this->middleware('permission:expenses.view')->only(['index']);
+        $this->middleware('permission:expenses.create')->only(['create', 'store']);
+        $this->middleware('permission:expenses.edit')->only(['edit', 'update']);
+        $this->middleware('permission:expenses.delete')->only(['destroy']);
     }
 
     /**

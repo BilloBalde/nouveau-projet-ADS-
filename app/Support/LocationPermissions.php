@@ -77,6 +77,10 @@ class LocationPermissions
             'customers.view', 'customers.create',
             'payments.view', 'payments.create',
             'reports.view', 'reports.export',
+            // Devis et dépenses de sa boutique (la suppression d'une dépense
+            // reste à la direction et à la comptabilité).
+            'devis.view', 'devis.create', 'devis.edit', 'devis.validate',
+            'expenses.view', 'expenses.create', 'expenses.edit',
             // Commandes attribuées à sa boutique : il les voit, les approuve
             // (depuis le stock de sa boutique) et les livre.
             'orders.view', 'orders.validate', 'orders.deliver',

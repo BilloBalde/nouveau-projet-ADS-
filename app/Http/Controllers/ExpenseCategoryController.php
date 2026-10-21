@@ -10,6 +10,11 @@ class ExpenseCategoryController extends Controller
     public function __construct()
     {
         $this->middleware('auth.check');
+        // Les catégories font partie du module Dépenses et suivent ses permissions.
+        $this->middleware('permission:expenses.view')->only(['index', 'show']);
+        $this->middleware('permission:expenses.create')->only(['create', 'store']);
+        $this->middleware('permission:expenses.edit')->only(['edit', 'update']);
+        $this->middleware('permission:expenses.delete')->only(['destroy']);
     }
     /**
      * Display a listing of the resource.
