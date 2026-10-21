@@ -15,6 +15,8 @@ use App\Models\StockTransfer;
 use App\Models\Store;
 use App\Models\StoreProduct;
 use App\Services\FundService;
+use App\Services\InventaireRapportService;
+use App\Support\ModeDeVente;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -170,9 +172,69 @@ class IndexController extends Controller
         ];
     }
 
+    /**
+     * Produits dont le stock total est au plus bas, toutes boutiques
+     * confondues. Partagée par les deux tableaux de bord.
+     *
+     * Le seuil se pose sur la sous-requête elle-même, pas sur son alias par
+     * HAVING : HAVING sans GROUP BY est accepté par MySQL mais refusé par
+     * d'autres moteurs (« HAVING clause on a non-aggregate query »), ce qui
+     * interdisait tout test de cet écran.
+     */
+    private function alertesDeStock(int $seuil = 100, int $limite = 100)
+    {
+        $stockReel = DB::table('store_products')
+            ->selectRaw('COALESCE(SUM(store_products.quantity), 0)')
+            ->whereColumn('store_products.product_id', 'products.id');
+
+        return Product::query()
+            ->select(['id', 'libelle', 'unite'])
+            ->selectSub($stockReel, 'stock_total')
+            ->where($stockReel, '<=', $seuil)
+            ->orderBy('stock_total')
+            ->take($limite)
+            ->get();
+    }
+
+    /**
+     * Tableau de bord d'une installation qui compte son stock au lieu de
+     * saisir ses ventes : les chiffres viennent des séances d'inventaire
+     * validées, pas des ventes.
+     */
+    private function tableauDeBordInventaire($user)
+    {
+        $scopeIds = $user->isStoreScoped() ? $user->accessibleStoreIds() : null;
+        $rapport = app(InventaireRapportService::class);
+
+        $chiffres = $rapport->tableauDeBord($scopeIds);
+        $annee = $chiffres['annee'];
+
+        return view('index-inventaire', $chiffres + [
+            'meilleuresVentes' => $rapport->meilleuresVentes(
+                $scopeIds,
+                Carbon::create($annee, 1, 1)->startOfDay(),
+                Carbon::create($annee, 12, 31)->endOfDay()
+            ),
+            'achats_par_mois' => $this->monthlyPurchases($user->isStoreScoped() ? $user->assignedStoreId() : null, $annee),
+            'total_achats' => $this->totalPurchases($user->isStoreScoped() ? $user->assignedStoreId() : null),
+            'total_depenses' => Expense::when($scopeIds !== null, fn ($q) => $q->whereIn('store_id', $scopeIds))->sum('amount'),
+            'total_stock' => Product::resumeStock($scopeIds),
+            'stockAlerts' => $this->alertesDeStock(),
+            'mois' => ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'],
+        ]);
+    }
+
     public function index(Request $request)
     {
         $user = auth()->user();
+
+        // Quand le chiffre d'affaires se déduit des comptages de stock, les
+        // écrans de la caisse n'ont rien à montrer : la table des ventes est
+        // vide par construction. Ce tableau de bord-là lirait zéro partout
+        // alors que la boutique a vendu. Il a donc le sien.
+        if (ModeDeVente::parInventaire()) {
+            return $this->tableauDeBordInventaire($user);
+        }
         if ($user->isStoreScoped()) {
             // Magasin d'affectation (users.store_id) et emplacements rattachés.
             $store_id = $user->assignedStoreId();
@@ -331,21 +393,7 @@ class IndexController extends Controller
             ->get();
 
         // Stock réel sommé depuis store_products, seule source de vérité.
-        // Le seuil se pose sur la sous-requête elle-même, pas sur son alias par
-        // HAVING : HAVING sans GROUP BY est accepté par MySQL mais refusé par
-        // d'autres moteurs (« HAVING clause on a non-aggregate query »), ce qui
-        // interdisait tout test de cet écran.
-        $stockReel = DB::table('store_products')
-            ->selectRaw('COALESCE(SUM(store_products.quantity), 0)')
-            ->whereColumn('store_products.product_id', 'products.id');
-
-        $stockAlerts = Product::query()
-            ->select(['id', 'libelle', 'unite'])
-            ->selectSub($stockReel, 'stock_total')
-            ->where($stockReel, '<=', 100)
-            ->orderBy('stock_total')
-            ->take(100)
-            ->get();
+        $stockAlerts = $this->alertesDeStock();
 
         // Uniquement calculée pour un employé rattaché à un magasin ; la vue admin
         // affiche l'équivalent par boutique via sa propre boucle @foreach(Store::all()).

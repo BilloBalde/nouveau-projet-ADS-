@@ -208,7 +208,9 @@ class InventaireService
 
             $totalCa = 0.0;
             $totalPertes = 0.0;
+            $totalMarge = 0.0;
             $totalVendu = 0;
+            $fonds = app(FundService::class);
 
             foreach ($comptages as $comptage) {
                 $productId = (int) $comptage['product_id'];
@@ -228,8 +230,22 @@ class InventaireService
                 // Une première séance ne déduit rien : elle constate le stock de
                 // départ. Sans séance précédente, il n'existe aucune borne et
                 // tout le stock compté passerait pour une vente.
+                // Prix de revient figé lui aussi : un achat postérieur change le
+                // coût du produit, et la marge d'une période close ne doit pas
+                // bouger derrière. Marchandise d'un associé : son coût à lui.
+                $cout = $fundId
+                    ? (float) $fonds->unitCost($fundId, $productId)
+                    : (float) $produit->coutUnitaire();
+
+                // Une première séance ne déduit rien : elle constate le stock de
+                // départ. Sans séance précédente, il n'existe aucune borne et
+                // tout le stock compté passerait pour une vente.
                 $vendu = $premiere ? 0 : max(0, $t['opening'] + $t['purchased'] + $t['transfer_in']
                     - $t['transfer_out'] - $perte + $t['other'] - $compte);
+
+                // Marge inconnue plutôt que fausse : sans coût connu, on ne
+                // compte pas tout le prix de vente comme bénéfice.
+                $marge = $cout > 0 ? ($prix - $cout) * $vendu : 0.0;
 
                 if ($perte > $t['theorique']) {
                     throw new RuntimeException(sprintf(
@@ -249,6 +265,7 @@ class InventaireService
                     'loss_quantity' => $perte,
                     'loss_reason' => $comptage['loss_reason'] ?? null,
                     'unit_price_gnf' => $prix,
+                    'unit_cost_gnf' => $cout,
                     'opening_quantity' => $t['opening'],
                     'purchased_quantity' => $t['purchased'],
                     'transfer_in_quantity' => $t['transfer_in'],
@@ -256,11 +273,15 @@ class InventaireService
                     'other_quantity' => $t['other'],
                     'sold_quantity' => $vendu,
                     'revenue_gnf' => $vendu * $prix,
+                    'margin_gnf' => $marge,
                 ]);
 
                 $totalVendu += $vendu;
                 $totalCa += $vendu * $prix;
-                $totalPertes += $perte * $prix;
+                $totalMarge += $marge;
+                // Une perte se chiffre à ce qu'elle a coûté, pas à ce qu'elle
+                // aurait rapporté : la marchandise perdue n'a jamais été vendue.
+                $totalPertes += $perte * ($cout > 0 ? $cout : $prix);
 
                 $this->tracerEtAligner($session, $produit, $fundId, $compte, $vendu, $perte, $prix, $comptage['loss_reason'] ?? null);
             }
@@ -270,6 +291,7 @@ class InventaireService
                 'validated_by' => $userId ?? auth()->id(),
                 'validated_at' => now(),
                 'total_revenue_gnf' => $totalCa,
+                'total_margin_gnf' => $totalMarge,
                 'total_loss_gnf' => $totalPertes,
                 'total_sold_quantity' => $totalVendu,
             ]);

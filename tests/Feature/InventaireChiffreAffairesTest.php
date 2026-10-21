@@ -203,7 +203,11 @@ class InventaireChiffreAffairesTest extends TestCase
         $this->assertSame(25, (int) $ligne->sold_quantity);
         $this->assertSame(5, (int) $ligne->loss_quantity);
         $this->assertEquals(300_000, $ligne->revenue_gnf, '25 × 12 000');
-        $this->assertEquals(60_000, $seance->total_loss_gnf, '5 × 12 000, hors chiffre d\'affaires');
+        // Une perte se chiffre à ce qu'elle a coûté (9 000), pas à ce qu'elle
+        // aurait rapporté : la marchandise perdue n'a jamais été vendue, et
+        // compter le prix de vente mélangerait une perte réelle avec un
+        // manque à gagner.
+        $this->assertEquals(45_000, $seance->total_loss_gnf, '5 × 9 000 de prix de revient, hors chiffre d\'affaires');
         $this->assertTrue($ligne->calculCoherent());
 
         // Le journal distingue la vente de la perte.
@@ -441,5 +445,44 @@ class InventaireChiffreAffairesTest extends TestCase
         $this->assertEquals(55_000, $ligne->unit_price_gnf);
         $this->assertEquals(825_000, $ligne->revenue_gnf, '15 × 55 000');
         $this->assertEquals(50_000, $this->ciment->fresh()->price, 'La fiche produit n\'est pas modifiée par le comptage.');
+    }
+
+    /**
+     * La marge est figée au comptage, comme le prix : un achat postérieur
+     * change le prix de revient du produit, et la marge d'une période close
+     * ne doit pas bouger derrière.
+     */
+    public function test_la_marge_est_calculee_et_figee(): void
+    {
+        // Revient 38 000, vente 50 000 → 12 000 de marge par sac.
+        $this->comptageInitial($this->madina, ['CIM' => 50], '2027-04-01');
+
+        $seance = $this->service()->preparer($this->madina->id, '2027-04-30');
+        $seance = $this->service()->valider($seance, [['product_id' => $this->ciment->id, 'counted' => 20]]);
+
+        $ligne = $seance->lines->sole();
+        $this->assertEquals(38_000, $ligne->unit_cost_gnf);
+        $this->assertEquals(360_000, $ligne->margin_gnf, '30 vendus × (50 000 − 38 000)');
+        $this->assertEquals(360_000, $seance->total_margin_gnf);
+
+        // Le prix de revient du produit change ensuite : la marge ne bouge pas.
+        $this->ciment->update(['price_sale' => 49_000]);
+        $this->assertEquals(360_000, $seance->fresh()->total_margin_gnf);
+    }
+
+    /** Sans coût connu, pas de marge inventée. */
+    public function test_sans_prix_de_revient_la_marge_reste_a_zero(): void
+    {
+        $sansCout = Product::create(['libelle' => 'Don', 'sku' => 'DON', 'description' => 'x',
+            'unite' => 'pcs', 'price' => 10_000, 'price_sale' => 0, 'price_manuel' => true]);
+        StoreProduct::create(['store_id' => $this->madina->id, 'product_id' => $sansCout->id, 'quantity' => 10]);
+
+        $this->comptageInitial($this->madina, ['DON' => 10], '2027-05-01');
+        $seance = $this->service()->preparer($this->madina->id, '2027-05-31');
+        $seance = $this->service()->valider($seance, [['product_id' => $sansCout->id, 'counted' => 4]]);
+
+        $ligne = $seance->lines->sole();
+        $this->assertEquals(60_000, $ligne->revenue_gnf, '6 × 10 000 : le chiffre d\'affaires, lui, est connu');
+        $this->assertEquals(0, $ligne->margin_gnf, 'Aucune marge inventée faute de prix de revient.');
     }
 }

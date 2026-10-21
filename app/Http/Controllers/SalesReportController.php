@@ -12,6 +12,8 @@ use App\Models\Product;
 use App\Models\Sale;
 use App\Models\Store;
 use App\Models\User;
+use App\Services\InventaireRapportService;
+use App\Support\ModeDeVente;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -25,10 +27,59 @@ class SalesReportController extends Controller
         $this->middleware('auth.check');
     }
 
+    /**
+     * Rapport des ventes d'une installation qui compte son stock.
+     *
+     * Il totalise les périodes closes sur la plage demandée, TOUTES BOUTIQUES
+     * confondues par défaut : sans ça, le gérant doit additionner ses
+     * comptages à la main pour connaître son chiffre du mois.
+     */
+    private function rapportInventaire(Request $request, string $period, Carbon $now)
+    {
+        $user = auth()->user();
+        $stores = Store::visibleTo($user)->orderBy('store_name')->get();
+
+        // « Toutes les boutiques » n'est proposé qu'à qui les voit toutes.
+        $demande = $request->input('store_id');
+        $storeId = $demande !== null && $demande !== '' && $stores->contains('id', (int) $demande)
+            ? (int) $demande
+            : ($user->forcedStoreId() ?: null);
+
+        $perimetre = $storeId ? [$storeId] : ($user->isStoreScoped() ? $user->accessibleStoreIds() : null);
+
+        [$start, $end, $label] = $this->resolvePeriod($period, $request, $now);
+
+        $rapport = app(InventaireRapportService::class);
+        $seances = $rapport->seances($perimetre, $start, $end);
+        $produits = $rapport->detailParProduit($perimetre, $start, $end);
+
+        return view('reports.sales-inventaire', [
+            'seances' => $seances,
+            'produits' => $produits,
+            'stores' => $stores,
+            'storeId' => $storeId,
+            'period' => $period,
+            'label' => $label,
+            'start' => $start,
+            'end' => $end,
+            'totalAmount' => (float) $seances->sum('total_revenue_gnf'),
+            'totalMargin' => (float) $seances->sum('total_margin_gnf'),
+            'totalLoss' => (float) $seances->sum('total_loss_gnf'),
+            'totalQuantity' => (int) $seances->sum('total_sold_quantity'),
+        ]);
+    }
+
     public function index(Request $request)
     {
         $period = $request->input('period', 'daily');
         $now = Carbon::now();
+
+        // Installation qui déduit son chiffre d'affaires des comptages : la
+        // table des ventes est vide par construction, ce rapport-là serait
+        // vide lui aussi. Le chiffre vit dans les séances d'inventaire.
+        if (ModeDeVente::parInventaire()) {
+            return $this->rapportInventaire($request, $period, $now);
+        }
 
         $user = auth()->user();
         // Emplacements du périmètre de l'utilisateur ; un employé rattaché ne
