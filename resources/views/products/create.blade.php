@@ -192,7 +192,7 @@
                                         </div>
                                         <div class="col-lg-4 col-sm-6 col-12">
                                             <div class="form-group">
-                                                <label for="price">Prix de Vente par <span data-unite-singulier>pièce</span> (FG) <small class="text-muted">— calculé automatiquement (+30%)</small></label>
+                                                <label for="price">Prix de Vente par <span data-unite-singulier>pièce</span> (FG) <small class="text-muted">— calculé automatiquement (+{{ (int) \App\Models\Product::margeDeVente() }}%)</small></label>
                                                 <input type="text" id="price" name="price" class="form-control" value="{{ old('price') }}" readonly style="background:#f5f5f5">
                                                 @error('price')
                                                 <span class="text-danger">{{ $message }}</span>
@@ -286,11 +286,14 @@
                 const priceSaleInput = document.getElementById('price_sale');
                 const percentInput = document.getElementById('promo_percent');
 
-                // Prix de vente = prix de revient + 30% de marge (même règle que pour
-                // le calcul du coût de revient à l'achat).
+                // Prix de vente = prix de revient + la marge configurée (même règle que pour
+                // le calcul du coût de revient à l'achat). Le serveur recalcule de toute
+                // façon la valeur : ce champ n'est qu'un aperçu pour le gérant.
+                const MARGE_DE_VENTE = {{ 1 + \App\Models\Product::margeDeVente() / 100 }};
+
                 function recomputeSalePrice() {
                     const priceSale = parseFloat(priceSaleInput.value) || 0;
-                    priceInput.value = priceSale > 0 ? Math.round(priceSale * 1.3) : '';
+                    priceInput.value = priceSale > 0 ? Math.round(priceSale * MARGE_DE_VENTE) : '';
                     updatePromoUI();
                 }
                 priceSaleInput.addEventListener('input', recomputeSalePrice);

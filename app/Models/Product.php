@@ -226,6 +226,35 @@ class Product extends Model
     }
 
     /**
+     * Marge ajoutée au prix de revient pour proposer le prix de vente, en
+     * pourcentage (voir config/pricing.php).
+     */
+    public static function margeDeVente(): float
+    {
+        return (float) config('pricing.sale_margin_percent', 30);
+    }
+
+    /**
+     * Prix de vente conseillé pour un prix de revient donné. Une seule
+     * définition, partagée par la fiche produit et le calcul d'un achat :
+     * la marge était écrite en dur des deux côtés, elles pouvaient diverger.
+     */
+    public static function prixDeVenteConseille(float $cout): float
+    {
+        return round($cout * (1 + self::margeDeVente() / 100), 2);
+    }
+
+    /**
+     * Le prix de vente a-t-il été fixé à la main ? Dans ce cas un achat ne le
+     * recalcule pas : la décision du gérant tient, seul le prix de revient
+     * suit le dernier achat.
+     */
+    public function prixFixeALaMain(): bool
+    {
+        return (bool) $this->price_manuel;
+    }
+
+    /**
      * Prix plancher de vente par unité : le plus haut du prix de vente minimum
      * fixé par le gérant et du prix de revient. Règle unique pour la caisse, la
      * facturation et les devis. $cout : coût du propriétaire de la marchandise

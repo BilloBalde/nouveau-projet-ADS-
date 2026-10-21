@@ -19,4 +19,22 @@ return [
 
     'tiers_enabled' => env('PRICING_TIERS_ENABLED', false),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Marge appliquée au prix de revient
+    |--------------------------------------------------------------------------
+    |
+    | Pourcentage ajouté au prix de revient pour proposer le prix de vente,
+    | à la création d'un produit comme à chaque achat qui le réapprovisionne.
+    |
+    | Cette valeur était écrite en dur à trois endroits (la fiche produit, le
+    | calcul du prix de revient d'un achat, et le libellé du formulaire), ce
+    | qui rendait tout changement de politique commerciale impossible sans
+    | toucher au code. Un prix de vente fixé à la main sur une fiche produit
+    | n'est plus recalculé : voir products.price_manuel.
+    |
+    */
+
+    'sale_margin_percent' => (float) env('PRICING_SALE_MARGIN', 30),
+
 ];

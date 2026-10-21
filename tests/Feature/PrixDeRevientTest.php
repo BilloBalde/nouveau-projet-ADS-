@@ -365,4 +365,89 @@ class PrixDeRevientTest extends TestCase
         $this->assertSame(10, $this->stock($this->entrepot, $this->ciment));
         $this->assertSame('received', $achat->status);
     }
+
+    // -----------------------------------------------------------------
+    // Marge et prix de vente
+    // -----------------------------------------------------------------
+
+    /** La marge vient de la configuration, plus du code. */
+    public function test_la_marge_appliquee_est_celle_de_la_configuration(): void
+    {
+        config(['pricing.sale_margin_percent' => 50]);
+
+        $achat = $this->achat();
+        $this->service()->costOrder($achat, [
+            ['product_id' => $this->ciment->id, 'quantity' => 10, 'unit_price_foreign' => 10],
+        ]);
+
+        // 10 CNY × 1 300 = 13 000 de revient, +50 % = 19 500
+        $this->ciment->refresh();
+        $this->assertEquals(13_000, $this->ciment->price_sale);
+        $this->assertEquals(19_500, $this->ciment->price);
+    }
+
+    public function test_sans_prix_fixe_a_la_main_l_achat_recalcule_le_prix_de_vente(): void
+    {
+        config(['pricing.sale_margin_percent' => 30]);
+        $this->ciment->update(['price_sale' => 1_000, 'price' => 1_300, 'price_manuel' => false]);
+
+        $achat = $this->achat();
+        $this->service()->costOrder($achat, [
+            ['product_id' => $this->ciment->id, 'quantity' => 10, 'unit_price_foreign' => 10],
+        ]);
+
+        $this->ciment->refresh();
+        $this->assertEquals(13_000, $this->ciment->price_sale);
+        $this->assertEquals(16_900, $this->ciment->price, '13 000 + 30 %');
+    }
+
+    /**
+     * Un prix de vente décidé par le gérant ne doit pas être remis à
+     * « revient + marge » au prochain réapprovisionnement : c'était le cas,
+     * sans avertissement.
+     */
+    public function test_un_prix_fixe_a_la_main_survit_a_un_achat(): void
+    {
+        $this->ciment->update(['price_sale' => 1_000, 'price' => 9_999, 'price_manuel' => true]);
+
+        $achat = $this->achat();
+        $this->service()->costOrder($achat, [
+            ['product_id' => $this->ciment->id, 'quantity' => 10, 'unit_price_foreign' => 10],
+        ]);
+
+        $this->ciment->refresh();
+        $this->assertEquals(13_000, $this->ciment->price_sale, 'Le prix de revient doit toujours suivre le dernier achat.');
+        $this->assertEquals(9_999, $this->ciment->price, 'Le prix de vente fixé à la main a été écrasé.');
+    }
+
+    /**
+     * Le drapeau se déduit du chiffre saisi : s'écarter du prix conseillé
+     * passe le produit en manuel, resaisir le prix conseillé le remet en
+     * automatique. Aucune case à cocher à comprendre.
+     */
+    public function test_la_fiche_produit_marque_le_prix_comme_manuel_quand_il_s_ecarte_du_conseille(): void
+    {
+        config(['pricing.sale_margin_percent' => 30]);
+
+        $categorie = \App\Models\Category::forceCreate(['slug' => 'materiaux', 'category_type' => 'produit', 'description' => 'x']);
+
+        $enregistrer = function (int $prix) use ($categorie) {
+            $this->put(route('produits.update', $this->ciment->id), [
+                'libelle' => 'Ciment', 'sku' => 'CIM', 'description' => 'x', 'unite' => 'pcs',
+                'categories' => [$categorie->id], 'price_sale' => 10_000, 'price' => $prix,
+                'store_id' => $this->entrepot->id, 'stock_restant' => 0,
+            ])->assertSessionHasNoErrors()->assertRedirect(route('produits.index'));
+
+            return $this->ciment->fresh();
+        };
+
+        // Prix conseillé (13 000) : reste en automatique.
+        $this->assertFalse($enregistrer(13_000)->prixFixeALaMain());
+
+        // Prix décidé par le gérant : passe en manuel.
+        $this->assertTrue($enregistrer(15_000)->prixFixeALaMain());
+
+        // Retour au prix conseillé : repasse en automatique.
+        $this->assertFalse($enregistrer(13_000)->prixFixeALaMain());
+    }
 }

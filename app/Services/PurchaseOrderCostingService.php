@@ -12,12 +12,6 @@ use Illuminate\Support\Facades\DB;
 class PurchaseOrderCostingService
 {
     /**
-     * Marge appliquée automatiquement sur le prix de revient (landed_unit_cost_gnf)
-     * pour obtenir le prix de vente d'un produit, à chaque achat qui le concerne.
-     */
-    private const SALE_MARGIN = 0.30;
-
-    /**
      * @param  array<int, array{product_id:int, quantity:int, cartons?:int|null, pieces_per_carton?:int|null, unit_price_foreign?:float|null, cbm_per_carton?:float|null, description?:string|null}>  $lines
      */
     public function __construct(private ?StockService $stock = null)
@@ -155,15 +149,26 @@ class PurchaseOrderCostingService
                 // `price_sale` sert en réalité de base de coût dans ce modèle (cf.
                 // SaleController::resolveUnitCost) et `price` est le prix de vente
                 // affiché au client — nommage historique trompeur, pas une erreur ici.
-                // Le prix de vente se recalcule à chaque achat pour rester à 30% de
-                // marge sur le dernier coût de revient connu.
+                //
+                // Le prix de revient suit toujours le dernier achat : c'est un fait,
+                // pas une décision. Le prix de vente, lui, n'est recalculé que s'il
+                // n'a pas été fixé à la main : sinon l'ajustement du gérant était
+                // écrasé au prochain réapprovisionnement, sans avertissement.
+                //
                 // Un achat financé par un associé ne touche pas au prix de revient
                 // des fonds propres : son coût est suivi à part (FundService).
                 if (! $order->fund_id) {
-                    Product::where('id', $item['product_id'])->update([
-                        'price_sale' => $item['landed_unit_cost_gnf'],
-                        'price' => round($item['landed_unit_cost_gnf'] * (1 + self::SALE_MARGIN), 2),
-                    ]);
+                    $produit = Product::find($item['product_id']);
+
+                    if ($produit) {
+                        $produit->price_sale = $item['landed_unit_cost_gnf'];
+
+                        if (! $produit->prixFixeALaMain()) {
+                            $produit->price = Product::prixDeVenteConseille((float) $item['landed_unit_cost_gnf']);
+                        }
+
+                        $produit->save();
+                    }
                 }
 
                 // Entrée en stock à l'emplacement exact choisi comme destination.

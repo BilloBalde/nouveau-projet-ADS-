@@ -323,11 +323,12 @@ class ProductController extends Controller
             request()->image->move(public_path('products'), $productName);
         }
         try {
-            // Prix de vente = prix de revient + 30% de marge, calculé ici (jamais fait
-            // confiance au champ "price" du formulaire, en lecture seule côté client)
-            // pour garantir la cohérence même si le JS est désactivé ou contourné.
+            // Prix de vente = prix de revient + la marge configurée, calculé ici
+            // (jamais fait confiance au champ "price" du formulaire, en lecture
+            // seule côté client) pour garantir la cohérence même si le JS est
+            // désactivé ou contourné.
             $priceSale = (float) $request->price_sale;
-            $price = round($priceSale * 1.3, 2);
+            $price = Product::prixDeVenteConseille($priceSale);
 
             $product = Product::create([
                 'libelle' => $request->libelle,
@@ -455,6 +456,14 @@ class ProductController extends Controller
                 'libelle', 'sku', 'description', 'price', 'price_sale',
             ]));
             $product->price_sale_minimum = $this->valeurMinimum($request);
+
+            // Le prix de vente saisi s'écarte-t-il du prix conseillé (prix de
+            // revient + marge) ? Alors c'est une décision du gérant, et les
+            // achats suivants ne la recalculeront plus. Resaisir exactement le
+            // prix conseillé remet le produit en automatique : pas de case à
+            // cocher à comprendre, le chiffre saisi suffit à exprimer l'intention.
+            $product->price_manuel = (float) $product->price
+                !== Product::prixDeVenteConseille((float) $product->price_sale);
 
             $product->is_promo = $request->boolean('is_promo');
             $product->promo_percent = $request->promo_percent ?? null;
