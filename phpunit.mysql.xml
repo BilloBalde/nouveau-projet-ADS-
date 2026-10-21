@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Configuration de test sur MySQL, le moteur de production.
+
+  La suite tourne sur SQLite en mémoire (phpunit.xml) pour sa rapidité. Cet
+  écart avec la production avait laissé passer des requêtes acceptées par un
+  seul des deux moteurs. Ce fichier rejoue la même suite sur MySQL ; il est
+  utilisé par le job « Tests (mysql) » de l'intégration continue.
+
+  force="true" est indispensable : sans lui, PHPUnit ne remplace pas une
+  variable d'environnement déjà définie, et la connexion resterait celle du
+  fichier principal.
+-->
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="./vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="vendor/autoload.php"
+         colors="true"
+>
+    <testsuites>
+        <testsuite name="Unit">
+            <directory suffix="Test.php">./tests/Unit</directory>
+        </testsuite>
+        <testsuite name="Feature">
+            <directory suffix="Test.php">./tests/Feature</directory>
+        </testsuite>
+    </testsuites>
+    <php>
+        <env name="APP_ENV" value="testing" force="true"/>
+        <env name="BCRYPT_ROUNDS" value="4" force="true"/>
+        <env name="CACHE_DRIVER" value="array" force="true"/>
+        <env name="DB_CONNECTION" value="mysql" force="true"/>
+        <env name="MAIL_MAILER" value="array" force="true"/>
+        <env name="QUEUE_CONNECTION" value="sync" force="true"/>
+        <env name="SESSION_DRIVER" value="array" force="true"/>
+    </php>
+</phpunit>
