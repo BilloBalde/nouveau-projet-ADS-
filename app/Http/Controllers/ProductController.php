@@ -333,7 +333,6 @@ class ProductController extends Controller
                 'libelle' => $request->libelle,
                 'sku' => $request->sku,
                 'description' => $request->description,
-                'pcs' => $request->stock_initial, // stock global e-commerce, initialisé au stock du premier magasin
                 'price' => $price,
                 'price_sale' => $priceSale,
                 'price_sale_minimum' => $this->valeurMinimum($request),
@@ -354,9 +353,6 @@ class ProductController extends Controller
             // Ajout du stock dans le magasin sélectionné
             $storeId = $request->store_id;
             // Stock initial, tracé dans le journal comme premier mouvement.
-            // products.pcs a déjà été renseigné ci-dessus : on le remet à zéro
-            // pour que l'incrément du service ne le compte pas deux fois.
-            $product->forceFill(['pcs' => 0])->save();
             app(\App\Services\StockService::class)->increment((int) $storeId, (int) $product->id, (int) $request->stock_initial, [
                 'type'        => \App\Models\StockMovement::INITIAL,
                 'source_type' => 'product',
@@ -488,10 +484,6 @@ class ProductController extends Controller
                 'source_id'   => (int) $id,
                 'reason'      => 'Stock modifié depuis la fiche produit',
             ]);
-
-            // Garde products.pcs (stock global e-commerce) en phase avec la somme des stocks par magasin
-            $product->pcs = $product->stores()->sum('store_products.quantity');
-            $product->save();
 
             return redirect()
                 ->route('produits.index')

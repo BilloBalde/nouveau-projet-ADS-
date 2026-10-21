@@ -56,7 +56,6 @@ class StockService
             return false;
         }
 
-        $this->decrementGlobalStock($productId, $quantity);
         $this->record($storeId, $productId, -$quantity, $context + ['type' => StockMovement::ADJUSTMENT]);
 
         return true;
@@ -122,10 +121,12 @@ class StockService
     }
 
     /**
-     * Stock total d'un produit, tous emplacements confondus. Calculé à la volée à partir
-     * de store_products (la seule table alimentée de façon fiable par ventes/achats/
-     * transferts) plutôt que lu depuis products.pcs, qui n'est pas gardé synchronisé par
-     * les achats et dérive donc de la réalité au fil du temps.
+     * Stock total d'un produit, tous emplacements confondus.
+     *
+     * store_products est la seule source de vérité du stock. Une colonne
+     * products.pcs tenait en parallèle un total global, que les achats ne
+     * réalimentaient pas : elle dérivait de la réalité, aucune lecture ne s'y
+     * fiait plus, et elle a été retirée.
      */
     public function totalAvailable(int $productId): int
     {
@@ -173,7 +174,6 @@ class StockService
         );
 
         $row->increment('quantity', $quantity);
-        $this->incrementGlobalStock($productId, $quantity);
         $this->record($storeId, $productId, $quantity, $context + ['type' => StockMovement::ADJUSTMENT]);
     }
 
@@ -195,7 +195,6 @@ class StockService
         );
 
         $row->decrement('quantity', $quantity);
-        $this->decrementGlobalStock($productId, $quantity);
         $this->record($storeId, $productId, -$quantity, $context + ['type' => StockMovement::CORRECTION]);
     }
 
@@ -268,28 +267,6 @@ class StockService
             \App\Models\Product::quantiteEnUnite($available, $unite),
             \App\Models\Product::quantiteEnUnite($requested, $unite)
         );
-    }
-
-    private function decrementGlobalStock(int $productId, int $quantity): void
-    {
-        if (! DB::getSchemaBuilder()->hasColumn('products', 'pcs')) {
-            return;
-        }
-
-        DB::table('products')
-            ->where('id', $productId)
-            ->decrement('pcs', $quantity);
-    }
-
-    private function incrementGlobalStock(int $productId, int $quantity): void
-    {
-        if (! DB::getSchemaBuilder()->hasColumn('products', 'pcs')) {
-            return;
-        }
-
-        DB::table('products')
-            ->where('id', $productId)
-            ->increment('pcs', $quantity);
     }
 
     /**

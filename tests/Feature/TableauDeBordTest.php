@@ -193,12 +193,12 @@ class TableauDeBordTest extends TestCase
 
     /**
      * Les alertes de stock se calculent depuis store_products, pas depuis la
-     * colonne products.pcs qui n'est pas tenue à jour de façon fiable.
+     * colonne products.pcs, qui a été retirée pour cette raison.
      */
     public function test_les_alertes_de_stock_viennent_du_stock_par_emplacement(): void
     {
         $alertes = $this->actingAs($this->admin)->get(route('home'))->assertOk()->viewData('stockAlerts');
 
-        $this->assertSame(80, (int) $alertes->firstWhere('id', $this->ciment->id)->pcs);
+        $this->assertSame(80, (int) $alertes->firstWhere("id", $this->ciment->id)->stock_total);
     }
 }

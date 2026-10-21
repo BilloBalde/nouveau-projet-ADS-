@@ -329,10 +329,7 @@ class IndexController extends Controller
             ->with('product:id,libelle')
             ->get();
 
-        // products.pcs (stock global mis en cache) n'est pas fiablement synchronisé avec
-        // store_products (cf. achats qui ne le réalimentent jamais) : on calcule le stock
-        // réel à la volée en sommant store_products.quantity plutôt que de faire confiance
-        // à la colonne stockée.
+        // Stock réel sommé depuis store_products, seule source de vérité.
         // Le seuil se pose sur la sous-requête elle-même, pas sur son alias par
         // HAVING : HAVING sans GROUP BY est accepté par MySQL mais refusé par
         // d'autres moteurs (« HAVING clause on a non-aggregate query »), ce qui
@@ -343,9 +340,9 @@ class IndexController extends Controller
 
         $stockAlerts = Product::query()
             ->select(['id', 'libelle', 'unite'])
-            ->selectSub($stockReel, 'pcs')
+            ->selectSub($stockReel, 'stock_total')
             ->where($stockReel, '<=', 100)
-            ->orderBy('pcs')
+            ->orderBy('stock_total')
             ->take(100)
             ->get();
 

@@ -591,9 +591,9 @@
                                 @forelse ($stockAlerts as $item)
                                 <tr>
                                     <td class="fw-medium">{{ $item->libelle }}</td>
-                                    <td class="text-end">{{ $item->quantiteAvecUnite($item->pcs) }}</td>
+                                    <td class="text-end">{{ $item->quantiteAvecUnite($item->stock_total) }}</td>
                                     <td>
-                                        @if($item->pcs <= 0)
+                                        @if($item->stock_total <= 0)
                                         <span class="badge bg-danger">Rupture de stock</span>
                                         @else
                                         <span class="badge bg-warning text-dark">Stock faible (&le; 100)</span>
@@ -981,7 +981,7 @@
                 series: [
                     {
                         name: 'Quantité en stock',
-                        data: @json($stockAlerts->pluck('pcs')),
+                        data: @json($stockAlerts->pluck('stock_total')),
                     }
                 ],
                 chart: {

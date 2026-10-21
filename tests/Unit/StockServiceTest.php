@@ -24,7 +24,6 @@ class StockServiceTest extends TestCase
 
         Schema::create('products', function ($table) {
             $table->id();
-            $table->integer('pcs')->default(0);
             $table->string('unite', 20)->default('pcs');
             $table->timestamps();
         });
@@ -71,9 +70,9 @@ class StockServiceTest extends TestCase
         parent::tearDown();
     }
 
-    public function test_decrement_if_available_updates_store_and_global_stock(): void
+    public function test_decrement_if_available_updates_store_stock(): void
     {
-        DB::table('products')->insert(['id' => 1, 'pcs' => 10]);
+        DB::table('products')->insert(['id' => 1]);
         DB::table('store_products')->insert([
             'id' => 1,
             'store_id' => 7,
@@ -85,7 +84,9 @@ class StockServiceTest extends TestCase
 
         $this->assertTrue($service->decrementIfAvailable(7, 1, 3));
         $this->assertSame(7, DB::table('store_products')->where('product_id', 1)->where('store_id', 7)->value('quantity'));
-        $this->assertSame(7, DB::table('products')->where('id', 1)->value('pcs'));
+        // Le stock vit dans store_products et nulle part ailleurs : aucun total
+        // global n'est tenu en parallèle (products.pcs a été retiré).
+        $this->assertSame(7, $service->totalAvailable(1));
 
         $mouvement = DB::table('stock_movements')->first();
         $this->assertSame(-3, (int) $mouvement->quantity);
@@ -95,7 +96,7 @@ class StockServiceTest extends TestCase
 
     public function test_decrement_if_available_refuses_and_leaves_stock_untouched_when_insufficient(): void
     {
-        DB::table('products')->insert(['id' => 1, 'pcs' => 5]);
+        DB::table('products')->insert(['id' => 1]);
         DB::table('store_products')->insert([
             'id' => 1,
             'store_id' => 7,
@@ -106,15 +107,15 @@ class StockServiceTest extends TestCase
         $service = new StockService();
 
         $this->assertFalse($service->decrementIfAvailable(7, 1, 6));
-        // Aucune écriture ne doit avoir eu lieu, ni au niveau boutique ni au global.
+        // Aucune écriture ne doit avoir eu lieu, pas même dans le journal.
         $this->assertSame(5, DB::table('store_products')->where('product_id', 1)->where('store_id', 7)->value('quantity'));
-        $this->assertSame(5, DB::table('products')->where('id', 1)->value('pcs'));
         $this->assertSame(0, DB::table('stock_movements')->count());
     }
 
-    public function test_increment_creates_row_when_missing_and_updates_global_stock(): void
+    public function test_increment_creates_row_when_missing(): void
     {
-        DB::table('products')->insert(['id' => 1, 'pcs' => 2]);
+        DB::table('products')->insert(['id' => 1]);
+        DB::table('store_products')->insert(['id' => 1, 'store_id' => 7, 'product_id' => 1, 'quantity' => 2]);
 
         $service = new StockService();
 
@@ -122,6 +123,7 @@ class StockServiceTest extends TestCase
         $service->increment(9, 1, 4);
 
         $this->assertSame(4, DB::table('store_products')->where('product_id', 1)->where('store_id', 9)->value('quantity'));
-        $this->assertSame(6, DB::table('products')->where('id', 1)->value('pcs'));
+        // Le total du produit est la somme des emplacements, calculée à la volée.
+        $this->assertSame(6, $service->totalAvailable(1));
     }
 }
