@@ -2,13 +2,17 @@
 
 namespace Tests\Feature;
 
+use App\Models\Category;
+use App\Models\Partner;
 use App\Models\Place;
 use App\Models\Product;
+use App\Models\PurchaseOrder;
 use App\Models\Role;
 use App\Models\Store;
 use App\Models\StoreProduct;
 use App\Models\User;
 use App\Services\InventaireService;
+use App\Services\PurchaseOrderCostingService;
 use App\Support\ModeDeVente;
 use Database\Seeders\PermissionSeeder;
 use Database\Seeders\RolesSeeder;
@@ -217,5 +221,90 @@ class InventaireTableauDeBordTest extends TestCase
 
         $rapport = $this->get(route('reports.sales'))->assertOk();
         $this->assertNotNull($rapport->viewData('sales'));
+    }
+
+    // -----------------------------------------------------------------
+    // Le prix de vente, seule source du chiffre d'affaires
+    // -----------------------------------------------------------------
+
+    /**
+     * Un achat ne doit JAMAIS recalculer le prix de vente dans ce mode : il
+     * est la seule chose qui transforme « 120 sacs manquants » en francs. Le
+     * laisser suivre le dernier prix de revient ferait varier le chiffre
+     * d'affaires d'une période au gré des achats, sans décision de personne.
+     */
+    public function test_un_achat_ne_touche_jamais_au_prix_de_vente(): void
+    {
+        // Produit qui n'a PAS le drapeau « prix fixé à la main » : en mode
+        // caisse, un achat le recalculerait.
+        $riz = Product::create(['libelle' => 'Riz', 'sku' => 'RIZ', 'description' => 'x',
+            'unite' => 'carton', 'price' => 80_000, 'price_sale' => 60_000, 'price_manuel' => false]);
+
+        $achat = PurchaseOrder::create([
+            'reference' => 'ACH-'.uniqid(), 'store_id' => $this->madina->id,
+            'partner_id' => Partner::firstOrCreate(['name' => 'F'])->id,
+            'created_by' => $this->admin->id, 'origin' => 'guinee', 'exchange_rate_used' => 1,
+            'transport_cost_gnf' => 0, 'customs_cost_gnf' => 0, 'other_fees_gnf' => 0,
+            'status' => 'received', 'date_emis' => now()->toDateString(),
+        ]);
+        app(PurchaseOrderCostingService::class)->costOrder($achat, [
+            ['product_id' => $riz->id, 'quantity' => 10, 'unit_price_foreign' => 1_000],
+        ]);
+
+        $riz->refresh();
+        $this->assertEquals(1_000, $riz->price_sale, 'Le prix de revient doit suivre le dernier achat.');
+        $this->assertEquals(80_000, $riz->price, 'Le prix de vente a été recalculé alors qu\'il valorise les inventaires.');
+    }
+
+    /** Le même achat, en mode caisse, recalcule bien le prix : rien n'a changé là-bas. */
+    public function test_en_mode_caisse_un_achat_recalcule_toujours_le_prix(): void
+    {
+        config(['sales.mode' => ModeDeVente::CAISSE, 'pricing.sale_margin_percent' => 30]);
+
+        $riz = Product::create(['libelle' => 'Riz', 'sku' => 'RIZ', 'description' => 'x',
+            'unite' => 'carton', 'price' => 80_000, 'price_sale' => 60_000, 'price_manuel' => false]);
+
+        $achat = PurchaseOrder::create([
+            'reference' => 'ACH-'.uniqid(), 'store_id' => $this->madina->id,
+            'partner_id' => Partner::firstOrCreate(['name' => 'F'])->id,
+            'created_by' => $this->admin->id, 'origin' => 'guinee', 'exchange_rate_used' => 1,
+            'transport_cost_gnf' => 0, 'customs_cost_gnf' => 0, 'other_fees_gnf' => 0,
+            'status' => 'received', 'date_emis' => now()->toDateString(),
+        ]);
+        app(PurchaseOrderCostingService::class)->costOrder($achat, [
+            ['product_id' => $riz->id, 'quantity' => 10, 'unit_price_foreign' => 1_000],
+        ]);
+
+        $this->assertEquals(1_300, $riz->fresh()->price, '1 000 + 30 % : le comportement historique.');
+    }
+
+    /** À la création d'un produit, le gérant saisit son prix et il est conservé. */
+    public function test_le_prix_saisi_a_la_creation_est_conserve(): void
+    {
+        $categorie = Category::forceCreate(['slug' => 'materiaux', 'category_type' => 'produit', 'description' => 'x']);
+
+        $this->post(route('produits.store'), [
+            'libelle' => 'Tôle', 'sku' => 'TOL', 'description' => 'x', 'unite' => 'pcs',
+            'categories' => [$categorie->id],
+            'price_sale' => 60_000,
+            'price' => 95_000,          // décidé par le gérant, pas 60 000 + 30 %
+            'stock_initial' => 10,
+            'store_id' => $this->madina->id,
+        ])->assertSessionHasNoErrors()->assertRedirect();
+
+        $produit = Product::where('sku', 'TOL')->sole();
+        $this->assertEquals(95_000, $produit->price, 'Le prix saisi doit être conservé tel quel.');
+        $this->assertEquals(60_000, $produit->price_sale);
+        $this->assertTrue($produit->prixFixeALaMain());
+    }
+
+    /** Et le formulaire le laisse saisir, au lieu de l'afficher en lecture seule. */
+    public function test_le_formulaire_laisse_saisir_le_prix_de_vente(): void
+    {
+        $html = $this->get(route('produits.create'))->assertOk()->getContent();
+
+        $this->assertMatchesRegularExpression('/<input[^>]+id="price"[^>]+required/', $html, 'Le prix doit être saisissable.');
+        $this->assertDoesNotMatchRegularExpression('/<input[^>]+id="price"[^>]+readonly/', $html);
+        $this->assertStringContainsString('c\'est lui qui valorise vos inventaires', $html);
     }
 }

@@ -9,6 +9,7 @@ use App\Models\StockMovement;
 use App\Models\Store;
 use App\Models\StoreProduct;
 use App\Services\StockService;
+use App\Support\ModeDeVente;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
@@ -219,6 +220,23 @@ class ProductController extends Controller
         return $request->filled('price_sale_minimum') ? round((float) $request->input('price_sale_minimum'), 2) : null;
     }
 
+    /**
+     * Prix de vente d'un produit à sa création.
+     *
+     * En mode caisse, il se calcule à partir du prix de revient et de la marge
+     * configurée : le champ du formulaire est en lecture seule, on ne lui fait
+     * pas confiance (JS désactivé ou contourné).
+     *
+     * En mode inventaire, c'est le gérant qui le saisit — il est la seule
+     * source du chiffre d'affaires, le déduire d'une marge le rendrait faux.
+     */
+    private function prixDeVenteALaCreation(Request $request): float
+    {
+        return ModeDeVente::parInventaire()
+            ? (float) $request->input('price', 0)
+            : Product::prixDeVenteConseille((float) $request->input('price_sale', 0));
+    }
+
     public function validation(Request $request)
     {
         return $request->validate([
@@ -229,7 +247,10 @@ class ProductController extends Controller
             'sku' => 'required|string|max:225',
             'description' => 'required|string',
             'price_sale' => 'required|numeric|min:0',
-            'price_sale_minimum' => $this->regleMinimum($request, round((float) $request->input('price_sale') * 1.3, 2)),
+            // En mode inventaire, le prix de vente est saisi par le gérant : il
+            // est la seule source du chiffre d'affaires, on ne le devine pas.
+            'price' => ModeDeVente::parInventaire() ? 'required|numeric|min:0' : 'nullable|numeric|min:0',
+            'price_sale_minimum' => $this->regleMinimum($request, $this->prixDeVenteALaCreation($request)),
             'stock_initial' => 'required|integer|min:0',
             'store_id' => 'required|exists:stores,id',
             'image' => 'image',
@@ -328,12 +349,8 @@ class ProductController extends Controller
             request()->image->move(public_path('products'), $productName);
         }
         try {
-            // Prix de vente = prix de revient + la marge configurée, calculé ici
-            // (jamais fait confiance au champ "price" du formulaire, en lecture
-            // seule côté client) pour garantir la cohérence même si le JS est
-            // désactivé ou contourné.
             $priceSale = (float) $request->price_sale;
-            $price = Product::prixDeVenteConseille($priceSale);
+            $price = $this->prixDeVenteALaCreation($request);
 
             $product = Product::create([
                 'libelle' => $request->libelle,
@@ -341,6 +358,7 @@ class ProductController extends Controller
                 'description' => $request->description,
                 'price' => $price,
                 'price_sale' => $priceSale,
+                'price_manuel' => ModeDeVente::parInventaire(),
                 'price_sale_minimum' => $this->valeurMinimum($request),
                 // Sans upload, on stocke une valeur vide : les vues basculent alors
                 // sur leur visuel de repli. Pointer vers un "ib profile.jpg" qui

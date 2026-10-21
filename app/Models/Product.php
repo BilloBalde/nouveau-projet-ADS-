@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\ModeDeVente;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
@@ -255,7 +256,13 @@ class Product extends Model
      */
     public function prixFixeALaMain(): bool
     {
-        return (bool) $this->price_manuel;
+        // Quand le chiffre d'affaires se déduit des comptages de stock, le prix
+        // de vente en est la SEULE source : c'est lui qui transforme « 120 sacs
+        // manquants » en « 6 000 000 GNF ». Le laisser suivre le dernier prix
+        // de revient ferait varier le chiffre d'affaires d'une période au gré
+        // des achats, sans que personne l'ait décidé. Dans ce mode, tout prix
+        // est donc une décision du gérant, qu'il ait coché quoi que ce soit.
+        return (bool) $this->price_manuel || ModeDeVente::parInventaire();
     }
 
     /**

@@ -192,8 +192,15 @@
                                         </div>
                                         <div class="col-lg-4 col-sm-6 col-12">
                                             <div class="form-group">
+                                                @if (\App\Support\ModeDeVente::parInventaire())
+                                                {{-- Le chiffre d'affaires se déduit des comptages : ce prix en est la
+                                                     seule source, c'est au gérant de le fixer, pas à une marge de le deviner. --}}
+                                                <label for="price">Prix de Vente par <span data-unite-singulier>pièce</span> (FG) <small class="text-muted">— c'est lui qui valorise vos inventaires</small></label>
+                                                <input type="number" min="0" step="1" id="price" name="price" class="form-control" value="{{ old('price') }}" required>
+                                                @else
                                                 <label for="price">Prix de Vente par <span data-unite-singulier>pièce</span> (FG) <small class="text-muted">— calculé automatiquement (+{{ (int) \App\Models\Product::margeDeVente() }}%)</small></label>
                                                 <input type="text" id="price" name="price" class="form-control" value="{{ old('price') }}" readonly style="background:#f5f5f5">
+                                                @endif
                                                 @error('price')
                                                 <span class="text-danger">{{ $message }}</span>
                                                 @enderror
@@ -292,6 +299,12 @@
                 const MARGE_DE_VENTE = {{ 1 + \App\Models\Product::margeDeVente() / 100 }};
 
                 function recomputeSalePrice() {
+                    // En mode inventaire le prix est saisi à la main : on ne
+                    // l'écrase pas (le champ n'est alors pas en lecture seule).
+                    if (!priceInput.readOnly) {
+                        updatePromoUI();
+                        return;
+                    }
                     const priceSale = parseFloat(priceSaleInput.value) || 0;
                     priceInput.value = priceSale > 0 ? Math.round(priceSale * MARGE_DE_VENTE) : '';
                     updatePromoUI();
