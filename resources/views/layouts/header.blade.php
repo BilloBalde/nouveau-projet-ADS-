@@ -69,7 +69,7 @@
         <li class="nav-item" style="display:flex;align-items:center;">
             @include('partials.notification-bell')
         </li>
-        @unless (Auth::check() && Auth::user()->isAssociate())
+        @unless ((Auth::check() && Auth::user()->isAssociate()) || \App\Support\ModeDeVente::parInventaire())
         <li class="nav-item has-arrow flag-nav">
             <a class="nav-link" href="{{ route('pos') }}" style="background-color: #3E4C21; color: #fff;">
                 <img src="{{ asset('assets/img/icons/sales1.svg') }}" alt="" height="20">POS
@@ -135,9 +135,11 @@
                 </script>
                 @endif
             </a>
+            @unless (\App\Support\ModeDeVente::parInventaire())
             <a class="dropdown-item" href="{{ route('pos') }}" style="background-color: #3E4C21; color: #fff;">
                 <img src="{{ asset('assets/img/icons/sales1.svg') }}" class="me-2" alt="" height="20">POS
             </a>
+            @endunless
             <a class="dropdown-item" href="{{ route('accueil') }}"><i class="me-2" data-feather="home"></i>Voir Site</a>
             <a class="dropdown-item" href="{{ route('profile') }}"> <i class="me-2" data-feather="user"></i>Mon Profile</a>
             <form action="{{ route('logout') }}" method="POST" class="p-0 m-0">

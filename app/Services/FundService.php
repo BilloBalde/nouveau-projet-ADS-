@@ -131,7 +131,7 @@ class FundService
 
         // Pertes / écarts d'inventaire sur le stock du fonds, valorisés au coût.
         $ecarts = StockMovement::where('fund_id', $fundId)
-            ->whereIn('type', [StockMovement::INVENTORY, StockMovement::ADJUSTMENT])
+            ->whereIn('type', [StockMovement::INVENTORY, StockMovement::ADJUSTMENT, StockMovement::LOSS])
             ->get(['product_id', 'quantity', 'unit_price'])
             ->sum(fn ($m) => (int) $m->quantity * (float) ($m->unit_price ?? ($costs[$m->product_id] ?? 0)));
 

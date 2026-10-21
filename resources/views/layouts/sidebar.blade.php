@@ -37,6 +37,12 @@
                         <li><a href="{{ route('stock.movements') }}">Journal des mouvements</a></li>
                         <li><a href="{{ route('stock.trace') }}">Traçabilité produit</a></li>
                         @endpermission
+                        @if (\App\Support\ModeDeVente::parInventaire())
+                        {{-- Mode inventaire : le comptage complet d'une boutique remplace
+                             l'ajustement produit par produit, et c'est lui qui établit le
+                             chiffre d'affaires de la période. --}}
+                        <li><a href="{{ route('inventaires.index') }}">Inventaires et chiffre d'affaires</a></li>
+                        @endif
                         @permission('stock.adjust')
                         <li><a href="{{ route('stock.adjust.form') }}">Inventaire / ajustement</a></li>
                         @endpermission
@@ -67,8 +73,13 @@
                 <li class="submenu">
                     <a  class="{{ isActiveRoute(['sales.index', 'factures.index', 'payments.index']) }}" href="javascript:void(0);"><img src="{{ asset('assets/img/icons/sales1.svg') }}" alt="img"><span> Ventes</span> <span class="menu-arrow"></span></a>
                     <ul>
+                        {{-- En mode inventaire, aucune vente n'est saisie : ces deux écrans
+                             resteraient vides. Les paiements et les dettes, eux, servent
+                             toujours (un client peut devoir de l'argent). --}}
+                        @if (\App\Support\ModeDeVente::parCaisse())
                         <li><a href="{{ route('sales.index') }}">Liste des ventes</a></li>
                         <li><a href="{{ route('factures.index') }}">Liste des factures</a></li>
+                        @endif
                         @permission('payments.view')
                         <li><a href="{{ route('payments.index') }}">Liste des paiements</a></li>
                         <li><a href="{{ route('admin.debt-reminders.index') }}">Rappels de dettes</a></li>

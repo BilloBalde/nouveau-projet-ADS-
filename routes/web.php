@@ -23,6 +23,7 @@ use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\FactureController;
 use App\Http\Controllers\FundController;
 use App\Http\Controllers\IndexController;
+use App\Http\Controllers\InventorySessionController;
 use App\Http\Controllers\JournalierController;
 use App\Http\Controllers\LogisticController;
 use App\Http\Controllers\MovementController;
@@ -461,6 +462,26 @@ Route::post('/transfers/{transfer}/reject', [StoreProductController::class, 'rej
 Route::post('/transfers/{transfer}/ship', [StoreProductController::class, 'ship'])->name('transfers.ship');
 Route::post('/transfers/{transfer}/receive', [StoreProductController::class, 'receive'])->name('transfers.receive');
 Route::post('/transfers/{transfer}/cancel', [StoreProductController::class, 'cancel'])->middleware('auth.check')->name('transfers.cancel');
+
+// =============================================
+// 22 bis. INVENTAIRES — chiffre d'affaires déduit du stock
+//
+// Mode de vente « inventaire » (config/sales.php) : la boutique vend sans
+// rien saisir, puis compte son stock. Ce qui a disparu entre deux comptages,
+// achats et transferts déduits, a été vendu. Le middleware `mode:inventaire`
+// est posé dans le contrôleur : masquer l'entrée de menu ne suffirait pas,
+// l'adresse resterait accessible.
+// =============================================
+
+Route::get('/inventaires', [InventorySessionController::class, 'index'])->name('inventaires.index');
+Route::get('/inventaires/nouveau', [InventorySessionController::class, 'create'])->name('inventaires.create');
+Route::post('/inventaires', [InventorySessionController::class, 'store'])->name('inventaires.store');
+Route::get('/inventaires/{inventaire}/feuille', [InventorySessionController::class, 'feuille'])->whereNumber('inventaire')->name('inventaires.feuille');
+Route::get('/inventaires/{inventaire}/saisie', [InventorySessionController::class, 'edit'])->whereNumber('inventaire')->name('inventaires.edit');
+Route::post('/inventaires/{inventaire}/valider', [InventorySessionController::class, 'valider'])->whereNumber('inventaire')->name('inventaires.valider');
+Route::get('/inventaires/{inventaire}', [InventorySessionController::class, 'show'])->whereNumber('inventaire')->name('inventaires.show');
+Route::get('/inventaires/{inventaire}/rapport-pdf', [InventorySessionController::class, 'rapportPdf'])->whereNumber('inventaire')->name('inventaires.rapport-pdf');
+Route::delete('/inventaires/{inventaire}', [InventorySessionController::class, 'destroy'])->whereNumber('inventaire')->name('inventaires.destroy');
 
 // =============================================
 // 23. (ancien module Proformas/LigneCommande — retiré, remplacé par le module

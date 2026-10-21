@@ -8,6 +8,7 @@ use App\Http\Middleware\CheckManagerRole;
 use App\Http\Middleware\CheckPermission;
 use App\Http\Middleware\EncryptCookies;
 use App\Http\Middleware\EnsureCustomer;
+use App\Http\Middleware\EnsureSalesMode;
 use App\Http\Middleware\PreventRequestsDuringMaintenance;
 use App\Http\Middleware\RedirectIfAuthenticated;
 use App\Http\Middleware\TrimStrings;
@@ -93,5 +94,6 @@ class Kernel extends HttpKernel
         'customer' => EnsureCustomer::class,
         'superuser' => CheckManagerRole::class,
         'permission' => CheckPermission::class,
+        'mode' => EnsureSalesMode::class,
     ];
 }

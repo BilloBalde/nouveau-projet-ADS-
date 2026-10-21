@@ -38,6 +38,10 @@ class SaleController extends Controller
         // comptable ou un responsable achats (sans aucun sales.* dans son preset)
         // pouvait créer/modifier des ventes, alors que seuls admin/manager/vendeur
         // le devraient (comptable n'a que sales.view en lecture).
+        // La caisse et la saisie des ventes n'ont pas cours quand le chiffre
+        // d'affaires se déduit des comptages de stock : une seule source de
+        // chiffre d'affaires par installation (voir App\Support\ModeDeVente).
+        $this->middleware('mode:caisse')->only(['pos', 'storeCustomer', 'storePartner', 'storeQuickThirdParty', 'store', 'update', 'ajout', 'exitSale']);
         $this->middleware('permission:sales.view')->only(['index', 'show']);
         $this->middleware('permission:sales.create')->only(['create', 'store']);
         $this->middleware('permission:sales.edit')->only(['edit', 'update']);

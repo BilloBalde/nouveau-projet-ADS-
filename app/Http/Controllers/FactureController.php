@@ -33,6 +33,8 @@ class FactureController extends Controller
         // dans le menu Ventes, derrière sales.view). Aucune permission n'était
         // vérifiée ici : tout employé connecté pouvait facturer et supprimer
         // une facture — ce qui remet la marchandise en stock.
+        // Facturer, c'est vendre : réservé au mode caisse.
+        $this->middleware('mode:caisse')->only(['facturationForm', 'facturationStore', 'store', 'update']);
         $this->middleware('permission:sales.view')->only(['index', 'show', 'printPdf', 'bonDeCommande', 'bonDeSortie']);
         $this->middleware('permission:sales.create')->only(['facturationForm', 'facturationStore', 'store']);
         $this->middleware('permission:sales.edit')->only(['edit', 'update']);
@@ -151,12 +153,12 @@ class FactureController extends Controller
         ))
             ->setPaper('a4', 'portrait')
             ->setOptions([
-            'defaultFont' => 'DejaVu Sans',
-            'isHtml5ParserEnabled' => true,
-            'isRemoteEnabled' => true,
-            'dpi' => 150,
-            'enable_javascript' => true,
-        ]);
+                'defaultFont' => 'DejaVu Sans',
+                'isHtml5ParserEnabled' => true,
+                'isRemoteEnabled' => true,
+                'dpi' => 150,
+                'enable_javascript' => true,
+            ]);
 
         return $pdf->stream("Facture_{$facture}.pdf");
     }

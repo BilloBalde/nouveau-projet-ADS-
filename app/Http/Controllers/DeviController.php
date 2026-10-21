@@ -29,6 +29,9 @@ class DeviController extends Controller
         $this->middleware('permission:devis.edit')->only(['edit', 'update', 'changeStatus']);
         $this->middleware('permission:devis.delete')->only(['destroy']);
         $this->middleware('permission:devis.validate')->only(['validateDevis']);
+        // Valider un devis émet la facture et sort la marchandise du stock :
+        // c'est une vente saisie, donc réservé au mode caisse.
+        $this->middleware('mode:caisse')->only(['validateDevis']);
     }
 
     public function index(Request $request)

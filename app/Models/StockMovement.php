@@ -36,6 +36,13 @@ class StockMovement extends Model
 
     public const INITIAL = 'INITIAL';
 
+    /**
+     * Perte constatée : casse, vol, péremption. Distincte de l'inventaire, qui
+     * ne fait qu'aligner le stock sur le comptage, et de la vente : une perte
+     * sort du stock sans produire de chiffre d'affaires.
+     */
+    public const LOSS = 'LOSS';
+
     public const LABELS = [
         self::PURCHASE => 'Achat',
         self::PURCHASE_CANCEL => 'Annulation d\'achat',
@@ -47,6 +54,7 @@ class StockMovement extends Model
         self::INVENTORY => 'Inventaire',
         self::CORRECTION => 'Correction',
         self::INITIAL => 'Stock initial',
+        self::LOSS => 'Perte (casse, vol, péremption)',
     ];
 
     protected $fillable = [
