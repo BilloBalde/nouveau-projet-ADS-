@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Product;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
@@ -51,8 +52,8 @@ class ProductsSeeder extends Seeder
                     // valeur et affichent leur visuel de repli, sans requête 404.
                     'image' => '',
                     'price_sale' => $product['revient'],
-                    'price' => round($product['revient'] * 1.3, 2),
-                    'pcs' => 0,
+                    // Même marge que partout ailleurs, lue dans la configuration.
+                    'price' => Product::prixDeVenteConseille((float) $product['revient']),
                 ]
             );
         }
