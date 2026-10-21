@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\ProductsExport;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\Store;
 use App\Models\StoreProduct;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ProductController extends Controller
 {
@@ -18,10 +21,22 @@ class ProductController extends Controller
         // rôle connecté pouvait créer/modifier/supprimer des produits, alors que
         // le preset PermissionSeeder réserve products.create/.edit/.delete à
         // admin/manager (vendeur et achats n'ont que products.view).
-        $this->middleware('permission:products.view')->only(['index', 'show']);
+        $this->middleware('permission:products.view')->only(['index', 'show', 'exportExcel', 'exportPdf', 'exportCsv']);
         $this->middleware('permission:products.create')->only(['create', 'store']);
         $this->middleware('permission:products.edit')->only(['edit', 'update']);
         $this->middleware('permission:products.delete')->only(['destroy']);
+    }
+
+    /**
+     * Emplacement auquel l'utilisateur est limité, ou null s'il a une vue
+     * globale. Même règle que la liste et la fiche produit : tout ce qui
+     * affiche du stock passe par ici.
+     */
+    private function emplacementImpose(): ?int
+    {
+        $user = Auth::user();
+
+        return ($user && $user->isStoreScoped()) ? $user->assignedStoreId() : null;
     }
 
     public function index(Request $request)
@@ -485,6 +500,89 @@ class ProductController extends Controller
         } catch (\Exception $e) {
             return back()->with('fall', 'Erreur: ' . $e->getMessage());
         }
+    }
+
+    // -----------------------------------------------------------------
+    // Exports
+    //
+    // Ces trois exports vivaient dans des closures de routes/web.php, où ils
+    // avaient gardé l'ancien couplage « role_id == 3 + stores.user_id » alors
+    // que le reste du projet est passé à isStoreScoped()/assignedStoreId().
+    // Conséquence : un vendeur affecté par le mécanisme actuel obtenait un
+    // périmètre nul, donc le stock de TOUS les emplacements cumulés — alors
+    // que la liste à l'écran ne lui montrait que le sien — et les rôles créés
+    // ensuite (magasinier, responsable) n'étaient pas limités du tout.
+    // Le même export existait en trois formats avec deux règles différentes.
+    // -----------------------------------------------------------------
+
+    public function exportExcel()
+    {
+        try {
+            return Excel::download(new ProductsExport, 'products.xlsx');
+        } catch (\Throwable $e) {
+            return back()->with('error', 'Erreur lors de l\'export : '.$e->getMessage());
+        }
+    }
+
+    public function exportPdf()
+    {
+        ini_set('memory_limit', '512M');
+        ini_set('max_execution_time', 300);
+
+        try {
+            $dataTable = Product::with('categories', 'stores')->get();
+            $userStoreId = $this->emplacementImpose();
+
+            $pdf = Pdf::loadView('products.export', compact('dataTable', 'userStoreId'));
+            $pdf->setPaper('A4', 'landscape');
+            $pdf->setOptions([
+                'defaultFont' => 'sans-serif',
+                'isHtml5ParserEnabled' => true,
+                'isRemoteEnabled' => true,
+                'chroot' => public_path(),
+            ]);
+
+            return $pdf->download('products_'.date('Y-m-d').'.pdf');
+        } catch (\Throwable $e) {
+            return back()->with('error', 'Erreur: '.$e->getMessage());
+        }
+    }
+
+    public function exportCsv()
+    {
+        $filename = 'products_'.date('Y-m-d').'.csv';
+        $userStoreId = $this->emplacementImpose();
+
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"$filename\"",
+        ];
+
+        $callback = function () use ($userStoreId) {
+            $handle = fopen('php://output', 'w');
+            fputcsv($handle, ['Nom', 'SKU', 'Catégories', 'Stock', 'Unité', 'Prix']);
+
+            Product::with('categories', 'stores')->chunk(100, function ($products) use ($handle, $userStoreId) {
+                foreach ($products as $product) {
+                    $stock = $userStoreId
+                        ? (int) ($product->stores->firstWhere('id', $userStoreId)?->pivot->quantity ?? 0)
+                        : (int) $product->stores->sum('pivot.quantity');
+
+                    fputcsv($handle, [
+                        $product->libelle,
+                        $product->sku,
+                        $product->categories->pluck('slug')->implode('|'),
+                        $stock,
+                        Product::motUnite($product->unite, $stock),
+                        $product->price ?? 0,
+                    ]);
+                }
+            });
+
+            fclose($handle);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 
     public function destroy($id)

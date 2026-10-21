@@ -1,6 +1,5 @@
 <?php
 
-use App\Exports\ProductsExport;
 use App\Exports\PurchasesExport;
 use App\Http\Controllers\Admin\OrderManagementController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
@@ -42,9 +41,6 @@ use App\Http\Controllers\VisitController;
 use App\Http\Controllers\DeviController;
 use App\Http\Controllers\NewExportController;
 use App\Http\Controllers\PurchaseOrderController;
-use App\Models\Category;
-use App\Models\Product;
-use App\Models\Store;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
@@ -509,92 +505,20 @@ Route::post('/pos/quick-third-party', [SaleController::class, 'storeQuickThirdPa
 // 30. ROUTES EXPORTS (Combinées)
 // =============================================
 
-// Export Produits
-Route::get('/produits/export-excel', function () {
-    try {
-        return Excel::download(new ProductsExport, 'products.xlsx');
-    } catch (\Exception $e) {
-        return response()->json(['error' => $e->getMessage()], 500);
-    }
-})->middleware('auth.check')->name('produits.export-excel');
+// Export Produits — la logique est dans ProductController : ces exports
+// avaient gardé, ici, l'ancien couplage « role_id == 3 + stores.user_id »
+// pendant que le reste du projet passait à isStoreScoped(). Un vendeur y
+// recevait le stock de tous les emplacements.
+Route::get('/produits/export-excel', [ProductController::class, 'exportExcel'])->middleware('auth.check')->name('produits.export-excel');
+Route::get('/produits/export-pdf', [ProductController::class, 'exportPdf'])->middleware('auth.check')->name('produits.export-pdf');
+Route::get('/produits/export-csv', [ProductController::class, 'exportCsv'])->middleware('auth.check')->name('produits.export-csv');
 
-Route::get('/produits/export-pdf', function () {
-    ini_set('memory_limit', '512M');
-    ini_set('max_execution_time', 300);
-    
-    try {
-        $dataTable = Product::with('categories', 'stores')->get();
-        $userStoreId = auth()->user()->role_id == 3
-                ? Store::where('user_id', auth()->user()->id)->value('id')
-                : null;
-        
-        $pdf = Pdf::loadView('products.export', compact('dataTable', 'userStoreId'));
-        $pdf->setPaper('A4', 'landscape');
-        $pdf->setOptions([
-            'defaultFont' => 'sans-serif',
-            'isHtml5ParserEnabled' => true,
-            'isRemoteEnabled' => true,
-            'chroot' => public_path(),
-        ]);
-        
-        return $pdf->download('products_' . date('Y-m-d') . '.pdf');
-    } catch (\Exception $e) {
-        return back()->with('error', 'Erreur: ' . $e->getMessage());
-    }
-})->middleware('auth.check')->name('produits.export-pdf');
-
-// Export « en file d'attente » retire, avec le travail ExportProductsJob :
-// aucun bouton n'y menait, le travail appelait auth()->loginUsingId() qui
-// n'existe pas hors session, et QUEUE_CONNECTION=sync l'executait de toute
-// facon en ligne. L'export direct /produits/export-excel fait le travail.
-
-Route::get('/produits/export-csv', function () {
-    $filename = 'products_' . date('Y-m-d') . '.csv';
-    
-    $headers = [
-        'Content-Type' => 'text/csv',
-        'Content-Disposition' => "attachment; filename=\"$filename\"",
-    ];
-    
-    $callback = function() {
-        $handle = fopen('php://output', 'w');
-        fputcsv($handle, ['Nom', 'SKU', 'Catégories', 'Stock', 'Prix']);
-        
-        Product::with('categories', 'stores')->chunk(100, function($products) use ($handle) {
-            foreach ($products as $product) {
-                if (auth()->user()->role_id == 3) {
-                    $storeId = Store::where('user_id', auth()->id())->value('id');
-                    $store = $product->stores->firstWhere('id', $storeId);
-                    $stock = $store ? $store->pivot->quantity : 0;
-                } else {
-                    $stock = $product->stores->sum('pivot.quantity');
-                }
-                
-                $categories = $product->categories->pluck('slug')->implode('|');
-                
-                fputcsv($handle, [
-                    $product->libelle,
-                    $product->sku,
-                    $categories,
-                    $stock,
-                    $product->price_sale_ctn ?? 0
-                ]);
-            }
-        });
-        
-        fclose($handle);
-    };
-    
-    return response()->stream($callback, 200, $headers);
-})->middleware('auth.check')->name('produits.export-csv');
-
-Route::get('/produits/download-export', function() {
-    $file = session('export_file');
-    if ($file && Storage::exists(str_replace('/storage', 'public', $file))) {
-        return response()->download(storage_path('app/public/' . str_replace('/storage/', '', $file)));
-    }
-    return back()->with('error', 'Fichier non trouvé');
-})->middleware('auth.check')->name('produits.download-export');
+// L'export « en file d'attente » et sa route de téléchargement ont été
+// retirés avec le travail ExportProductsJob : aucun bouton n'y menait, le
+// travail appelait auth()->loginUsingId() qui n'existe pas hors session, et
+// QUEUE_CONNECTION=sync l'exécutait de toute façon en ligne. La route
+// /produits/download-export ne lisait qu'une clé de session que seul ce
+// travail écrivait : elle ne pouvait plus rien trouver.
 
 // Export Achats
 Route::get('/purchases/export-excel', function () {
