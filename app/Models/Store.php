@@ -172,6 +172,23 @@ class Store extends Model
     }
 
     /**
+     * Vrai s'il existe plus d'une section, c'est-à-dire plus d'un emplacement
+     * de premier niveau.
+     *
+     * La notion de section n'a de sens qu'à partir de deux : une installation
+     * qui tient une seule boutique — avec ses stocks internes et son entrepôt
+     * rattachés — n'a rien à cloisonner. Le sélecteur de section et l'écran
+     * « Sections » disparaissent alors, et une valeur restée en session est
+     * ignorée. Dès qu'une deuxième boutique est créée, tout revient.
+     */
+    public static function plusieursSections(): bool
+    {
+        // limit(2) : on ne compte pas les emplacements, on répond à « y en a-t-il
+        // plus d'un ». Appelé une fois par rendu de page.
+        return static::whereNull('parent_id')->limit(2)->count() > 1;
+    }
+
+    /**
      * Sections : emplacements de premier niveau, chacun avec la liste des ids
      * qu'il couvre (lui-même et tout ce qui lui est rattaché), dans
      * l'attribut « section_ids ». Une seule requête pour tout l'arbre.

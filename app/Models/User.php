@@ -190,6 +190,13 @@ class User extends Authenticatable
             return null;
         }
 
+        // Une seule section : le sélecteur n'existe pas, et une valeur restée en
+        // session après une réorganisation des emplacements ne doit pas
+        // enfermer le propriétaire dans une section sans moyen d'en sortir.
+        if (! Store::plusieursSections()) {
+            return null;
+        }
+
         return $this->activeSectionCache[$id] ??= Store::whereKey($id)->exists() ? $id : null;
     }
 

@@ -18,12 +18,24 @@ use Illuminate\Support\Carbon;
  * peut « entrer » dans l'une d'elles : toute l'application se limite alors à
  * cette section, jusqu'au retour à la vue globale. Un employé est toujours
  * dans la section de son magasin d'affectation.
+ *
+ * Tout ceci ne vaut qu'à partir de deux sections. Une installation qui tient
+ * une seule boutique — avec ses stocks internes et son entrepôt rattachés —
+ * n'a rien à cloisonner : voir Store::plusieursSections().
  */
 class SectionController extends Controller
 {
     public function __construct()
     {
         $this->middleware('auth.check');
+
+        // Une installation d'une seule boutique n'a pas de sections : ces deux
+        // écrans n'ont plus d'objet et ne sont plus liés dans le menu. La route
+        // reste déclarée pour que tout revienne dès qu'une deuxième boutique de
+        // premier niveau est créée.
+        $this->middleware(function ($request, $next) {
+            return Store::plusieursSections() ? $next($request) : redirect()->route('home');
+        });
     }
 
     public function index()

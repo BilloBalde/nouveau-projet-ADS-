@@ -30,8 +30,16 @@
     </a>
     <ul class="nav user-menu">
         {{-- Section courante. Le propriétaire passe d'une section à l'autre ou
-             revient à la vue globale ; un employé voit sa section, sans choix. --}}
-        @if (Auth::check() && ! Auth::user()->isAssociate())
+             revient à la vue globale ; un employé voit sa section, sans choix.
+
+             Avec une seule section, il n'y a rien à choisir : le sélecteur
+             disparaît. L'employé rattaché garde le nom de son emplacement —
+             un entrepôt ou un stock interne de la boutique — mais en simple
+             texte, puisque l'écran « Sections » n'est plus accessible. --}}
+        @php
+            $plusieursSections = \App\Models\Store::plusieursSections();
+        @endphp
+        @if (Auth::check() && ! Auth::user()->isAssociate() && ($plusieursSections || Auth::user()->isRestrictedToStore()))
         @php
             $sectionCourante = Auth::user()->currentSection();
             $sectionsMenu = Auth::user()->isRestrictedToStore()
@@ -40,9 +48,15 @@
         @endphp
         <li class="nav-item dropdown" style="display:flex;align-items:center;margin-right:10px;">
             @if (Auth::user()->isRestrictedToStore())
+                @if ($plusieursSections)
                 <a class="nav-link" href="{{ route('sections.index') }}" style="font-weight:600;color:#3E4C21;white-space:nowrap;">
                     <i class="fas fa-store me-1"></i>{{ $sectionCourante?->store_name ?? 'Aucun magasin' }}
                 </a>
+                @else
+                <span class="nav-link" style="font-weight:600;color:#3E4C21;white-space:nowrap;">
+                    <i class="fas fa-store me-1"></i>{{ $sectionCourante?->store_name ?? 'Aucun magasin' }}
+                </span>
+                @endif
             @else
                 <a href="javascript:void(0);" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" style="font-weight:600;color:#3E4C21;white-space:nowrap;">
                     <i class="fas {{ $sectionCourante ? 'fa-store' : 'fa-globe' }} me-1"></i>
