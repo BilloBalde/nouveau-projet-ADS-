@@ -95,7 +95,7 @@ class ProfileController extends Controller
             return back()->with('fall', "Confirmation du mot de passe incorrecte.");
         }
 
-        $user->password = Hash::make((string) $request->password);
+        $user->definirMotDePasse((string) $request->password);
         try {
             $user->update();
             Auth::logout();

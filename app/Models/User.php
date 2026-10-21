@@ -6,6 +6,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Hash;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
@@ -295,6 +296,28 @@ class User extends Authenticatable
         $this->save();
 
         $this->accessibleStoreIdsCache = null;
+    }
+
+    // -----------------------------------------------------------------
+    // Mot de passe
+    // -----------------------------------------------------------------
+
+    /**
+     * Change le mot de passe en écrivant les DEUX colonnes : `password`, le
+     * hash qui authentifie, et `motdepasse`, la copie en clair que l'écran des
+     * utilisateurs affiche et que le formulaire de modification pré-remplit.
+     *
+     * Tout changement de mot de passe doit passer par ici. L'écran de profil et
+     * la réinitialisation par e-mail n'écrivaient que le hash : la copie en
+     * clair restait figée sur l'ancien mot de passe, donc l'écran des
+     * utilisateurs affichait une valeur fausse, et le formulaire de
+     * modification le pré-remplissait avec — ce qui faussait aussi la
+     * détection « le mot de passe a-t-il changé ? » dans Authentification.
+     */
+    public function definirMotDePasse(string $motDePasseClair): void
+    {
+        $this->password = Hash::make($motDePasseClair);
+        $this->motdepasse = $motDePasseClair;
     }
 
     /** Slugs de permissions effectifs, memoïsés pour la durée de la requête. */

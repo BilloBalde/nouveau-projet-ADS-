@@ -368,8 +368,7 @@ class Authentification extends Controller
                 'password.confirmed' => 'Le champ password confirmation ne correspond pas',
             ]);
 
-            $user->password = Hash::make($request->password);
-            $user->motdepasse = $request->password;
+            $user->definirMotDePasse((string) $request->password);
         }
 
         try {
