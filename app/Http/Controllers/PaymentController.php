@@ -66,6 +66,9 @@ class PaymentController extends Controller
     public function __construct()
     {
         $this->middleware('auth.check');
+        // Un paiement est rattaché à une facture. Sans ventes saisies ni boutique
+        // en ligne, il ne peut en exister aucune.
+        $this->middleware('mode:caisse');
         // Route::resource('payments', ...) n'appliquait aucune permission : un
         // responsable achats (sans aucun payments.* dans son preset) pouvait
         // enregistrer des paiements, alors que seuls admin/manager/comptable

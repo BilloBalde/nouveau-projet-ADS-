@@ -75,6 +75,7 @@
                 </li>
                 @endpermission
                 @permission('sales.view')
+                @if (\App\Support\ModeDeVente::parCaisse())
                 <li class="submenu">
                     <a  class="{{ isActiveRoute(['sales.index', 'factures.index', 'payments.index']) }}" href="javascript:void(0);"><img src="{{ asset('assets/img/icons/sales1.svg') }}" alt="img"><span> Ventes</span> <span class="menu-arrow"></span></a>
                     <ul>
@@ -85,14 +86,22 @@
                         <li><a href="{{ route('sales.index') }}">Liste des ventes</a></li>
                         <li><a href="{{ route('factures.index') }}">Liste des factures</a></li>
                         @endif
+                        {{-- Un paiement est rattaché à une facture (clé étrangère
+                             obligatoire). Sans ventes saisies ni boutique en ligne, il ne
+                             peut exister ni facture, ni paiement, ni dette. --}}
                         @permission('payments.view')
+                        @if (\App\Support\ModeDeVente::parCaisse())
                         <li><a href="{{ route('payments.index') }}">Liste des paiements</a></li>
                         <li><a href="{{ route('admin.debt-reminders.index') }}">Rappels de dettes</a></li>
+                        @endif
                         @endpermission
                   </ul>
                 </li>
+                @endif
                 @endpermission
+                {{-- Commandes en ligne : sans boutique en ligne, ces écrans restent vides. --}}
                 @permission('orders.view')
+                @if (\App\Support\ModeDeVente::parCaisse())
                 <li class="submenu">
                     <a  class="{{ isActiveRoute(['admin.orders.index', 'admin.orders.confirmed', 'admin.orders.factures']) }}" href="javascript:void(0);"><img src="{{ asset('assets/img/icons/order.svg') }}" alt="img"><span> Commandes</span> <span class="menu-arrow"></span></a>
                     <ul>
@@ -105,6 +114,7 @@
                         <li><a href="{{ route('contact.messages') }}">Messages reçus</a></li>
                     </ul>
                 </li>
+                @endif
                 @endpermission
                 @permission('expenses.view')
                 <li class="submenu">

@@ -91,6 +91,7 @@
                             <i class="fas fa-user-shield"></i>
                         </a>
                     @endauth
+@if (\App\Support\ModeDeVente::parCaisse())
                     <a href="{{ route('panier') }}" class="relative w-9 h-9 flex items-center justify-center rounded-full text-brand-700 hover:bg-brand-50 hover:text-brand-900 transition" title="Panier">
                         <i class="fas fa-shopping-bag"></i>
                         {{-- Liseré blanc : détache la pastille de l'icône sur le bandeau clair. --}}
@@ -98,6 +99,7 @@
                             {{ count(session('cart', [])) }}
                         </span>
                     </a>
+                    @endif
                 </div>
             </div>
         </div>

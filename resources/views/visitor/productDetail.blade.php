@@ -233,6 +233,7 @@
                     </div>
 
                     <div class="grid grid-cols-2 gap-3">
+                        @if (\App\Support\ModeDeVente::parCaisse())
                         <button type="button" class="btn-cart" onclick="addToCart({{ $product->id }}, this, detailQty())">
                             <i class="fas fa-shopping-bag"></i>
                             Ajouter
@@ -241,6 +242,7 @@
                             <i class="fas fa-bolt"></i>
                             Commander
                         </button>
+                        @endif
                     </div>
 
                     <a href="{{ url()->previous() === url()->current() ? route('accueil') : url()->previous() }}"

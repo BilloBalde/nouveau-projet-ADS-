@@ -397,6 +397,8 @@
                                 <span class="prod-price-old">{{ number_format($p['old_price'], 0, ',', ' ') }} GNF</span>
                             @endif
                         </div>
+                        {{-- Boutons d'achat : seulement si la boutique en ligne est ouverte. --}}
+                        @if (\App\Support\ModeDeVente::parCaisse())
                         <div class="prod-btns">
                             <button type="button" class="prod-btn" onclick="event.stopPropagation();addToCartWithQty({{ $p['id'] }}, this)">
                                 <i class="fas fa-shopping-bag mr-1"></i> Panier
@@ -405,6 +407,7 @@
                                 Commander
                             </button>
                         </div>
+                        @endif
                     </div>
                 </div>
                 @endforeach

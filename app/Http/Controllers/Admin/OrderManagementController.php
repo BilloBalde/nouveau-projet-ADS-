@@ -29,6 +29,9 @@ class OrderManagementController extends Controller
 {
     public function __construct(private StockService $stock)
     {
+        // Commandes de la boutique en ligne, fermée en mode inventaire.
+        $this->middleware('mode:caisse');
+
         // Les écrans ne vérifiaient que « est un employé » : n'importe quel
         // vendeur de n'importe quelle boutique voyait toutes les commandes.
         $this->middleware('permission:orders.view')->only(['index', 'confirmed', 'factures', 'show', 'stockCheck', 'getFactureItems']);

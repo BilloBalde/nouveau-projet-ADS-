@@ -159,9 +159,14 @@ Route::get('/beauty', [VisitController::class, 'index']);
 // 5. ROUTES SHOP - PANIER & COMMANDES
 // =============================================
 
-Route::get('/panier', [CartController::class, 'show'])->name('panier');
-Route::post('/cart/add/{id}', [CartController::class, 'add'])->name('cart.add');
-Route::get('/cart/remove/{id}', [CartController::class, 'remove'])->name('cart.remove');
+// Parcours d'achat de la boutique en ligne. Fermé en mode inventaire : les
+// écrans qui traitent les commandes y sont masqués, et une commande que
+// personne ne verrait passer serait pire qu'une boutique fermée.
+Route::middleware('mode:caisse')->group(function () {
+    Route::get('/panier', [CartController::class, 'show'])->name('panier');
+    Route::post('/cart/add/{id}', [CartController::class, 'add'])->name('cart.add');
+    Route::get('/cart/remove/{id}', [CartController::class, 'remove'])->name('cart.remove');
+});
 
 Route::prefix('shop')->group(function () {
     // Authentification OTP
@@ -175,8 +180,9 @@ Route::prefix('shop')->group(function () {
     // suffit de rétablir ces deux routes pour les remettre en service.
     Route::post('/logout', [AuthOtpController::class, 'logout'])->name('shop.logout');
 
-    // Routes client connecté
-    Route::middleware(['auth', 'customer'])->group(function () {
+    // Routes client connecté. `mode:caisse` : sans boutique en ligne, ni
+    // commande ni paiement ne doivent pouvoir être créés.
+    Route::middleware(['auth', 'customer', 'mode:caisse'])->group(function () {
         Route::get('/', [VisitController::class, 'shop'])->name('shop.home');
         Route::get('/addresses', [AddressController::class, 'index'])->name('addresses.index');
         Route::get('/addresses/create', [AddressController::class, 'create'])->name('addresses.create');

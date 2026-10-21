@@ -347,4 +347,69 @@ class InventaireTableauDeBordTest extends TestCase
         $this->get(route('reports.tiers'))->assertOk();
         $this->get(route('home'))->assertOk()->assertSee('Ventes flash');
     }
+
+    // -----------------------------------------------------------------
+    // Sans boutique en ligne : la chaîne facture → paiement → dette
+    // -----------------------------------------------------------------
+
+    /**
+     * payments.facture_id est une clé étrangère obligatoire : pas de facture,
+     * pas de paiement. Sans ventes saisies ni boutique en ligne, aucune
+     * facture ne peut naître — donc ni paiement, ni dette, ni commande.
+     */
+    public function test_les_ecrans_sans_objet_sont_fermes(): void
+    {
+        foreach (['payments.index', 'admin.debt-reminders.index', 'admin.orders.index',
+            'admin.orders.confirmed', 'admin.orders.factures'] as $route) {
+            $this->get(route($route))->assertForbidden();
+        }
+    }
+
+    public function test_le_menu_ne_propose_plus_ces_ecrans(): void
+    {
+        $reponse = $this->get(route('inventaires.index'))->assertOk();
+
+        foreach (['Liste des paiements', 'Rappels de dettes', 'Commandes à valider',
+            'Factures e-commerce', 'Liste des ventes'] as $entree) {
+            $reponse->assertDontSee($entree);
+        }
+    }
+
+    /**
+     * Le parcours d'achat du site public est fermé lui aussi : une commande
+     * passée que personne ne verrait dans l'administration serait pire qu'une
+     * boutique fermée.
+     */
+    public function test_le_parcours_d_achat_du_site_public_est_ferme(): void
+    {
+        $this->app['auth']->forgetGuards();
+
+        $this->get(route('panier'))->assertForbidden();
+        $this->post(route('cart.add', $this->ciment->id))->assertForbidden();
+    }
+
+    /** Et les boutons d'achat disparaissent des pages publiques. */
+    public function test_les_boutons_d_achat_disparaissent_du_site(): void
+    {
+        $reponse = $this->get(route('productDetail', $this->ciment->id))->assertOk();
+
+        // On vise les appels des boutons, sans ambiguïté : le mot « Ajouter »
+        // seul apparaît ailleurs dans la page.
+        $reponse->assertDontSee('onclick="addToCart(', false);
+        $reponse->assertDontSee('onclick="buyNow(', false);
+    }
+
+    /** En mode caisse, tout cela reste ouvert : rien n'a changé là-bas. */
+    public function test_en_mode_caisse_la_boutique_en_ligne_reste_ouverte(): void
+    {
+        config(['sales.mode' => ModeDeVente::CAISSE]);
+
+        $this->get(route('payments.index'))->assertOk();
+        $this->get(route('admin.orders.index'))->assertOk();
+        $this->get(route('home'))->assertOk()->assertSee('Liste des paiements');
+
+        $this->app['auth']->forgetGuards();
+        $this->get(route('panier'))->assertOk();
+        $this->get(route('productDetail', $this->ciment->id))->assertOk()->assertSee('onclick="buyNow(', false);
+    }
 }

@@ -10,7 +10,13 @@ use App\Services\SmsService;
 
 class DebtReminderController extends Controller
 {
-    public function __construct(private SmsService $sms) {}
+    public function __construct(private SmsService $sms)
+    {
+        // Les dettes naissent de factures impayées. Sans ventes saisies ni
+        // boutique en ligne, il n'existe aucune facture : cet écran ne peut
+        // rien contenir.
+        $this->middleware('mode:caisse');
+    }
 
     /**
      * Liste des rappels de dettes groupés par client, avec liens WhatsApp.

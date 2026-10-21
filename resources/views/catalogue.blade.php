@@ -295,6 +295,10 @@
     @include('partials.storefront-footer')
 
     <script>window.PRICING_TIERS_ENABLED = @json(\App\Support\PricingTiers::enabled());</script>
+    {{-- Boutique en ligne ouverte ? Les cartes produit sont construites en
+         JavaScript : le réglage leur est passé plutôt que d'insérer du Blade
+         au milieu d'un littéral de gabarit. --}}
+    <script>const BOUTIQUE_OUVERTE = @json(\App\Support\ModeDeVente::parCaisse());</script>
     <script src="{{ asset('assets/js/pricing-tiers.js') }}"></script>
     <script>
         const ALL_PRODUCTS = @json($allProducts);
@@ -341,6 +345,7 @@
                         <span class="prod-price" data-computed-price>${Number(p.price).toLocaleString('fr-FR')} GNF</span><span class="prod-unite">/ ${p.unite || 'pièce'}</span>
                         ${oldHTML}
                     </div>
+                    ${BOUTIQUE_OUVERTE ? `
                     <div class="prod-btns">
                         <button class="prod-btn" onclick="event.stopPropagation();addToCartWithQty(${p.id}, this)">
                             <i class="fas fa-shopping-bag mr-1"></i> Panier
@@ -348,7 +353,7 @@
                         <button class="prod-btn-order" onclick="event.stopPropagation();orderNowWithQty(${p.id}, this)">
                             <i class="fas fa-bolt mr-1"></i> Commander
                         </button>
-                    </div>
+                    </div>` : ''}
                 </div>
             </div>`;
         }
