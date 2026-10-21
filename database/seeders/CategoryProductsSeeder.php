@@ -23,13 +23,13 @@ class CategoryProductsSeeder extends Seeder
 
         foreach ($links as $slug => $skus) {
             $categoryId = $categories[$slug] ?? null;
-            if (!$categoryId) {
+            if (! $categoryId) {
                 continue;
             }
 
             foreach ($skus as $sku) {
                 $productId = $products[$sku] ?? null;
-                if (!$productId) {
+                if (! $productId) {
                     continue;
                 }
 

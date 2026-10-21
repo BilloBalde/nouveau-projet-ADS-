@@ -51,6 +51,7 @@ class AuthOtpController extends Controller
         if ($request->query('product_id')) {
             session(['buy_now_product_id' => $request->query('product_id')]);
         }
+
         return view('ecommerce.auth.login');
     }
 
@@ -122,7 +123,7 @@ class AuthOtpController extends Controller
     {
         $request->validate([
             'phone' => 'required|string',
-            'code'  => 'required|string|size:6',
+            'code' => 'required|string|size:6',
         ]);
 
         if (! $this->authService->verifyOtp($request->phone, $request->code)) {
@@ -137,6 +138,7 @@ class AuthOtpController extends Controller
     public function logout()
     {
         Auth::logout();
+
         return redirect()->route('accueil');
     }
 }

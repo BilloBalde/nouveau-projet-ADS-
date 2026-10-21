@@ -42,25 +42,25 @@ class OrangeMoneyController extends Controller
                 ->with('info', 'Cette commande est déjà payée.');
         }
 
-        if (!in_array($order->status, ['pending', 'processing'])) {
+        if (! in_array($order->status, ['pending', 'processing'])) {
             return redirect()->route('orders.show', $order->id)
                 ->with('error', 'Cette commande ne peut plus être payée.');
         }
 
         $result = $this->orangeMoney->initiatePayment(
-            amount:  (int) $order->total_amount,
-            orderId: 'SMH-' . $order->id,
-            user:    Auth::user(),
+            amount: (int) $order->total_amount,
+            orderId: 'SMH-'.$order->id,
+            user: Auth::user(),
         );
 
-        if (!$result['success']) {
+        if (! $result['success']) {
             Log::error('[OrangeMoney] Échec initiation depuis pay()', [
                 'order_id' => $order->id,
-                'error'    => $result['error'],
+                'error' => $result['error'],
             ]);
 
             return redirect()->route('orders.show', $order->id)
-                ->with('error', 'Impossible d\'initier le paiement : ' . $result['error']);
+                ->with('error', 'Impossible d\'initier le paiement : '.$result['error']);
         }
 
         $order->update(['transaction_id' => $result['pay_token']]);
@@ -81,7 +81,7 @@ class OrangeMoneyController extends Controller
     {
         // Orange redirige avec ?pay_token=xxx dans l'URL
         $payToken = $request->query('pay_token') ?? $request->query('token');
-        $order    = null;
+        $order = null;
 
         if ($payToken) {
             $order = Order::where('transaction_id', $payToken)
@@ -93,9 +93,9 @@ class OrangeMoneyController extends Controller
         }
 
         Log::info('[OrangeMoney] Utilisateur redirigé vers succès', [
-            'user_id'   => Auth::id(),
+            'user_id' => Auth::id(),
             'pay_token' => $payToken,
-            'order_id'  => $order?->id,
+            'order_id' => $order?->id,
         ]);
 
         return view('ecommerce.payment.success', compact('order'));
@@ -108,7 +108,7 @@ class OrangeMoneyController extends Controller
     public function cancel(Request $request)
     {
         $payToken = $request->query('pay_token') ?? $request->query('token');
-        $order    = null;
+        $order = null;
 
         if ($payToken) {
             $order = Order::where('transaction_id', $payToken)
@@ -119,9 +119,9 @@ class OrangeMoneyController extends Controller
         }
 
         Log::info('[OrangeMoney] Paiement annulé', [
-            'user_id'   => Auth::id(),
+            'user_id' => Auth::id(),
             'pay_token' => $payToken,
-            'order_id'  => $order?->id,
+            'order_id' => $order?->id,
         ]);
 
         return view('ecommerce.payment.cancel', compact('order'));
@@ -141,14 +141,14 @@ class OrangeMoneyController extends Controller
         $data = $request->all();
 
         Log::info('[OrangeMoney] Webhook reçu', [
-            'ip'   => $request->ip(),
+            'ip' => $request->ip(),
             'data' => $data,
         ]);
 
-        $payToken  = $data['pay_token']  ?? $data['token']    ?? null;
-        $reference = $data['reference']  ?? $data['order_id'] ?? null;
+        $payToken = $data['pay_token'] ?? $data['token'] ?? null;
+        $reference = $data['reference'] ?? $data['order_id'] ?? null;
 
-        if (empty($payToken) && !empty($reference)) {
+        if (empty($payToken) && ! empty($reference)) {
             $payToken = $this->resolvePayTokenFromReference($reference);
         }
 
@@ -156,33 +156,37 @@ class OrangeMoneyController extends Controller
         // (status/amount) : ce sont des valeurs postées par l'appelant, donc
         // falsifiables. Le paiement doit systématiquement être re-vérifié auprès
         // de l'API Orange Money avant de marquer une commande comme payée.
-        if (!$payToken) {
+        if (! $payToken) {
             Log::warning('[OrangeMoney] Webhook rejeté : transaction non initiée/introuvable', ['data' => $data]);
+
             return response()->json(['error' => 'Transaction introuvable ou non initiée.'], 400);
         }
 
         $status = $this->orangeMoney->getPaymentStatus($payToken);
 
-        if (!$status['success']) {
+        if (! $status['success']) {
             Log::error('[OrangeMoney] Vérification API impossible — webhook rejeté', ['pay_token' => $payToken]);
+
             return response()->json(['error' => 'Vérification du paiement impossible.'], 502);
         }
 
-        if (!$status['completed']) {
+        if (! $status['completed']) {
             Log::info('[OrangeMoney] Paiement non complété selon API', ['status' => $status['status']]);
+
             return response()->json(['status' => 'not_completed'], 200);
         }
 
-        $reference  = $status['reference'] ?: $reference;
+        $reference = $status['reference'] ?: $reference;
         $paidAmount = $status['amount'];
 
-        if (!$reference) {
+        if (! $reference) {
             Log::warning('[OrangeMoney] Webhook sans référence commande', ['data' => $data]);
+
             return response()->json(['error' => 'Référence manquante.'], 400);
         }
 
-        if (!Str::startsWith($reference, ['SMH-', 'FBK-'])) {
-            $reference = 'SMH-' . $reference;
+        if (! Str::startsWith($reference, ['SMH-', 'FBK-'])) {
+            $reference = 'SMH-'.$reference;
         }
 
         // ── Extraire l'ID de commande depuis "SMH-{id}" ──
@@ -193,9 +197,10 @@ class OrangeMoneyController extends Controller
         try {
             $order = Order::lockForUpdate()->find($orderId);
 
-            if (!$order) {
+            if (! $order) {
                 Log::error('[OrangeMoney] Commande introuvable', ['reference' => $reference, 'orderId' => $orderId]);
                 DB::rollBack();
+
                 return response()->json(['error' => 'Commande introuvable.'], 404);
             }
 
@@ -203,30 +208,32 @@ class OrangeMoneyController extends Controller
             if ($order->payment_status === 'paid') {
                 DB::rollBack();
                 Log::info('[OrangeMoney] Commande déjà payée — webhook ignoré', ['order_id' => $orderId]);
+
                 return response()->json(['status' => 'already_processed'], 200);
             }
 
             // Vérifier la cohérence du montant
             if ($paidAmount && $paidAmount !== (int) $order->total_amount) {
                 Log::error('[OrangeMoney] Montant incohérent', [
-                    'order_id'  => $orderId,
-                    'attendu'   => (int) $order->total_amount,
-                    'reçu'      => $paidAmount,
+                    'order_id' => $orderId,
+                    'attendu' => (int) $order->total_amount,
+                    'reçu' => $paidAmount,
                 ]);
                 DB::rollBack();
+
                 return response()->json(['error' => 'Montant incohérent.'], 422);
             }
 
             $order->update([
                 'payment_status' => 'paid',
-                'status'         => 'processing',
+                'status' => 'processing',
             ]);
 
             DB::commit();
 
             Log::info('[OrangeMoney] Commande marquée payée', [
                 'order_id' => $orderId,
-                'montant'  => $paidAmount,
+                'montant' => $paidAmount,
             ]);
 
             return response()->json(['status' => 'success'], 200);
@@ -235,8 +242,9 @@ class OrangeMoneyController extends Controller
             DB::rollBack();
             Log::error('[OrangeMoney] Erreur traitement webhook', [
                 'order_id' => $orderId ?? null,
-                'message'  => $e->getMessage(),
+                'message' => $e->getMessage(),
             ]);
+
             return response()->json(['error' => 'Erreur interne.'], 500);
         }
     }

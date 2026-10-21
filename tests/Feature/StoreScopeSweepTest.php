@@ -13,6 +13,8 @@ use App\Models\Product;
 use App\Models\Store;
 use App\Models\StoreProduct;
 use App\Models\User;
+use Database\Seeders\PermissionSeeder;
+use Database\Seeders\RolesSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
@@ -28,17 +30,22 @@ class StoreScopeSweepTest extends TestCase
     use RefreshDatabase;
 
     private User $admin;
+
     private User $vendeur;
+
     private Store $madina;
+
     private Store $kaloum;
+
     private Customer $client;
+
     private Product $ciment;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->seed(\Database\Seeders\RolesSeeder::class);
-        $this->seed(\Database\Seeders\PermissionSeeder::class);
+        $this->seed(RolesSeeder::class);
+        $this->seed(PermissionSeeder::class);
 
         $this->admin = $this->user('Patron', User::ROLE_ADMIN);
         Place::create(['placeName' => 'Conakry', 'countryName' => 'Guinée', 'description' => 'test']);
@@ -62,7 +69,7 @@ class StoreScopeSweepTest extends TestCase
     private function user(string $name, int $role, ?int $storeId = null): User
     {
         $user = User::create([
-            'name' => $name, 'email' => str()->slug($name) . uniqid() . '@example.com', 'username' => str()->slug($name) . uniqid(),
+            'name' => $name, 'email' => str()->slug($name).uniqid().'@example.com', 'username' => str()->slug($name).uniqid(),
             'password' => Hash::make('password'), 'role_id' => $role, 'phone' => '620', 'status' => 'Active', 'token' => '',
         ]);
         if ($storeId) {
@@ -75,7 +82,7 @@ class StoreScopeSweepTest extends TestCase
     private function vente(User $par, Store $magasin, int $avance = 0): Facture
     {
         $this->actingAs($par)->post(route('sales.store'), [
-            'numeroFacture' => 'F-' . uniqid(), 'store_id' => $magasin->id, 'customer_id' => $this->client->id,
+            'numeroFacture' => 'F-'.uniqid(), 'store_id' => $magasin->id, 'customer_id' => $this->client->id,
             'avance' => $avance, 'paid_by' => 'cash',
             'sales' => [1 => ['product_id' => $this->ciment->id, 'quantity' => 1, 'prix' => 60000, 'store_id' => $magasin->id]],
         ])->assertSessionHas('success');
@@ -130,7 +137,7 @@ class StoreScopeSweepTest extends TestCase
     public function test_depenses_rappels_et_clients_limites_au_magasin(): void
     {
         $categorie = ExpenseCategory::forceCreate(['slug' => 'transport', 'categoryName' => 'Transport']);
-        $depense = fn (Store $m, int $montant) => Expense::forceCreate(['reference' => 'D-' . uniqid(), 'expense_categories_id' => $categorie->id,
+        $depense = fn (Store $m, int $montant) => Expense::forceCreate(['reference' => 'D-'.uniqid(), 'expense_categories_id' => $categorie->id,
             'store_id' => $m->id, 'user_id' => $this->admin->id, 'amount' => $montant, 'exp_mode' => 'others', 'description' => 'x']);
         $dMadina = $depense($this->madina, 1000);
         $dKaloum = $depense($this->kaloum, 5000);

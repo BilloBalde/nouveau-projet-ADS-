@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
@@ -14,7 +15,7 @@ class StoresSeeder extends Seeder
         $userId = DB::table('users')->where('email', 'info@ibratechengineer.com')->value('id')
             ?? DB::table('users')->value('id');
 
-        if (!$placeId || !$userId) {
+        if (! $placeId || ! $userId) {
             return;
         }
 
@@ -62,7 +63,7 @@ class StoresSeeder extends Seeder
         // Vendeur de démonstration affecté à la boutique : sans affectation, il
         // ne voyait aucun stock à la caisse et son tableau de bord le renvoyait
         // à la connexion.
-        $vendeur = \App\Models\User::where('email', 'storeuser@example.com')->first();
+        $vendeur = User::where('email', 'storeuser@example.com')->first();
         if ($vendeur && $boutiqueId && ! $vendeur->store_id) {
             $vendeur->assignToStore((int) $boutiqueId);
         }

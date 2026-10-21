@@ -2,21 +2,22 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Customer;
 use App\Models\Expense;
 use App\Models\Facture;
-use App\Models\Logistic;
+use App\Models\Fund;
 use App\Models\Payment;
 use App\Models\Product;
-use App\Models\StoreProduct;
 use App\Models\Purchase;
 use App\Models\PurchaseOrder;
-use App\Models\Store;
 use App\Models\Sale;
-use App\Models\Category;
-use Illuminate\Support\Facades\DB;
+use App\Models\StockTransfer;
+use App\Models\Store;
+use App\Models\StoreProduct;
+use App\Services\FundService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class IndexController extends Controller
 {
@@ -109,10 +110,10 @@ class IndexController extends Controller
         $warehouseIds = Store::where('type', Store::TYPE_ENTREPOT)->pluck('id');
 
         $periods = [
-            'jour'    => [Carbon::today(), Carbon::today()->endOfDay()],
+            'jour' => [Carbon::today(), Carbon::today()->endOfDay()],
             'semaine' => [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()],
-            'mois'    => [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()],
-            'annee'   => [Carbon::now()->startOfYear(), Carbon::now()->endOfYear()],
+            'mois' => [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()],
+            'annee' => [Carbon::now()->startOfYear(), Carbon::now()->endOfYear()],
         ];
 
         $sales = [];
@@ -133,16 +134,16 @@ class IndexController extends Controller
 
         // Synthèse des associés, pour le patron uniquement.
         $associates = null;
-        if ($user->hasPermission('associates.manage') && \App\Models\Fund::exists()) {
-            $service = app(\App\Services\FundService::class);
-            $releves = \App\Models\Fund::where('active', true)->get()->map(fn ($f) => $service->statement($f));
+        if ($user->hasPermission('associates.manage') && Fund::exists()) {
+            $service = app(FundService::class);
+            $releves = Fund::where('active', true)->get()->map(fn ($f) => $service->statement($f));
             $associates = [
-                'count'                => $releves->count(),
-                'capital_restant'      => (float) $releves->sum('capital_restant'),
-                'stock_valeur'         => (float) $releves->sum('stock_valeur'),
-                'benefice_a_verser'    => (float) $releves->sum('benefice_a_verser'),
+                'count' => $releves->count(),
+                'capital_restant' => (float) $releves->sum('capital_restant'),
+                'stock_valeur' => (float) $releves->sum('stock_valeur'),
+                'benefice_a_verser' => (float) $releves->sum('benefice_a_verser'),
                 'part_patron_restante' => (float) $releves->sum('part_patron_restante'),
-                'tresorerie'           => (float) $releves->sum('tresorerie'),
+                'tresorerie' => (float) $releves->sum('tresorerie'),
             ];
         }
 
@@ -156,16 +157,16 @@ class IndexController extends Controller
             ->groupBy('type')
             ->map(fn ($lignes) => Product::resumeQuantites($lignes));
 
-        $pendingTransfers = \App\Models\StockTransfer::visibleTo($user)
-            ->whereIn('status', [\App\Models\StockTransfer::PENDING, \App\Models\StockTransfer::APPROVED, \App\Models\StockTransfer::IN_TRANSIT])
+        $pendingTransfers = StockTransfer::visibleTo($user)
+            ->whereIn('status', [StockTransfer::PENDING, StockTransfer::APPROVED, StockTransfer::IN_TRANSIT])
             ->count();
 
         return [
-            'sales'             => $sales,
-            'stock_by_type'     => $stockByType,
+            'sales' => $sales,
+            'stock_by_type' => $stockByType,
             'pending_transfers' => $pendingTransfers,
-            'locations'         => Store::visibleTo($user)->count(),
-            'associates'        => $associates,
+            'locations' => Store::visibleTo($user)->count(),
+            'associates' => $associates,
         ];
     }
 
@@ -221,9 +222,9 @@ class IndexController extends Controller
             $total_sales_invoices = Facture::where('store_id', $store_id)->count();
             $total_third_party_interest = Sale::where('is_third_party', true)->where('store_id', $store_id)->sum('interet');
             $latestSales = Sale::where('store_id', $store_id)->with('product')
-            ->orderBy('created_at', 'desc')
-            ->take(5)
-            ->get();
+                ->orderBy('created_at', 'desc')
+                ->take(5)
+                ->get();
             // whereNull('deleted_at') : sinon une facture supprimée reste comptée
             // dans le chiffre d'affaires mensuel affiché.
             $salesData = DB::table('factures')
@@ -246,7 +247,7 @@ class IndexController extends Controller
                 $sales[] = $salesData[$month] ?? 0;
                 $purchases[] = -($purchasesData[$month] ?? 0);
             }
-        }else{
+        } else {
             $total_credits = Customer::where('balance', '>', 0)->sum('balance');
             $total_purchases = $this->totalPurchases();
             $total_sales = Sale::whereDate('created_at', Carbon::today())
@@ -261,9 +262,9 @@ class IndexController extends Controller
             $total_sales_invoices = Facture::count();
             $total_third_party_interest = Sale::where('is_third_party', true)->sum('interet');
             $latestSales = Sale::with('product')
-            ->orderBy('created_at', 'desc')
-            ->take(5)
-            ->get();
+                ->orderBy('created_at', 'desc')
+                ->take(5)
+                ->get();
             // whereNull('deleted_at') : voir plus haut, même raison.
             $salesData = DB::table('factures')
                 ->whereNull('deleted_at')
@@ -289,7 +290,7 @@ class IndexController extends Controller
         $query = Facture::query();
 
         if ($request->filled('customer_id')) {
-            $query->where('customer_id', 'like', '%' . $request->customer_id . '%');
+            $query->where('customer_id', 'like', '%'.$request->customer_id.'%');
         }
         if ($request->filled('created_at')) {
             $query->whereDate('created_at', $request->created_at);
@@ -298,13 +299,13 @@ class IndexController extends Controller
         if ($user->isStoreScoped()) {
             $query->whereIn('store_id', $user->accessibleStoreIds());
         }
-        
+
         // Les clients sont chargés ici, en une requête : la vue les cherchait
         // un par un avec Customer::find() à l'intérieur de sa boucle.
         $factures = $query->with(['paiements', 'customer'])->get();
 
         $grouped = $factures->groupBy(function ($facture) {
-            return $facture->customer_id . '|' . $facture->created_at->format('Y-m-d');
+            return $facture->customer_id.'|'.$facture->created_at->format('Y-m-d');
         });
 
         $salesRankingQuery = Sale::query();

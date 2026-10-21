@@ -4,13 +4,13 @@ namespace App\Http\Controllers\Ecommerce;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Ecommerce\OrderRequest;
-use App\Services\OrderService;
-use App\Services\PaymentService;
-use App\Services\Payment\OrangeMoneyService;
-use App\Notifications\OrderPlacedNotification;
-use App\Notifications\NewOrderForAdminNotification;
 use App\Models\Product;
 use App\Models\User;
+use App\Notifications\NewOrderForAdminNotification;
+use App\Notifications\OrderPlacedNotification;
+use App\Services\OrderService;
+use App\Services\Payment\OrangeMoneyService;
+use App\Services\PaymentService;
 use App\Support\PricingTiers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -30,6 +30,7 @@ class OrderController extends Controller
         $product = Product::findOrFail($id);
         $quantity = max(1, (int) $request->query('quantity', 1));
         session(['buy_now' => [['product_id' => $product->id, 'quantity' => $quantity]]]);
+
         return redirect()->route('checkout');
     }
 
@@ -38,7 +39,7 @@ class OrderController extends Controller
         $user = Auth::user();
         $addresses = $user->addresses;
 
-        $isBuyNow  = session()->has('buy_now');
+        $isBuyNow = session()->has('buy_now');
         $cartItems = $isBuyNow ? session('buy_now') : session()->get('cart', []);
 
         if (empty($cartItems)) {
@@ -83,19 +84,19 @@ class OrderController extends Controller
         // Orange Money → initier le paiement et rediriger vers la page Orange
         if ($request->payment_method === 'orange_money') {
             $result = $this->orangeMoney->initiatePayment(
-                amount:  (int) $order->total_amount,
-                orderId: 'SMH-' . $order->id,
-                user:    Auth::user(),
+                amount: (int) $order->total_amount,
+                orderId: 'SMH-'.$order->id,
+                user: Auth::user(),
             );
 
-            if (!$result['success']) {
+            if (! $result['success']) {
                 Log::error('[Checkout] Échec initiation Orange Money', [
                     'order_id' => $order->id,
-                    'error'    => $result['error'],
+                    'error' => $result['error'],
                 ]);
 
                 return redirect()->route('orders.show', $order->id)
-                    ->with('error', 'Commande créée mais le paiement Orange Money a échoué : ' . $result['error'] . ' — Réessayez depuis vos commandes.');
+                    ->with('error', 'Commande créée mais le paiement Orange Money a échoué : '.$result['error'].' — Réessayez depuis vos commandes.');
             }
 
             // Sauvegarder le pay_token pour retrouver la commande dans le webhook
@@ -113,12 +114,14 @@ class OrderController extends Controller
     public function index()
     {
         $orders = Auth::user()->orders()->with('items.product')->latest()->get();
+
         return view('ecommerce.orders.index', compact('orders'));
     }
 
     public function show($id)
     {
         $order = Auth::user()->orders()->with('items.product', 'address', 'facture.paiements')->findOrFail($id);
+
         return view('ecommerce.orders.show', compact('order'));
     }
 }

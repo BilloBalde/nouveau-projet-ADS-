@@ -2,28 +2,30 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Customer;
-use App\Models\Partner;
-use App\Models\Facture;
+use App\Exports\SalesExport;
+use App\Models\Achat;
 use App\Models\Category;
+use App\Models\Company;
+use App\Models\Customer;
+use App\Models\Facture;
+use App\Models\Fund;
+use App\Models\Partner;
 use App\Models\Payment;
 use App\Models\Product;
-use App\Models\StoreProduct;
 use App\Models\Sale;
+use App\Models\StockMovement;
 use App\Models\Store;
-use App\Models\Purchase;
-use App\Models\Achat;
 use App\Models\User;
+use App\Services\FundService;
 use App\Services\StockService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Http\Response;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Auth;
-use App\Exports\SalesExport;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Maatwebsite\Excel\Facades\Excel;
-use Illuminate\Support\Facades\Schema;
 
 class SaleController extends Controller
 {
@@ -63,52 +65,53 @@ class SaleController extends Controller
         switch ($period) {
             case 'daily':
                 $date = $request->get('date', now()->toDateString());
-                $startDate = \Illuminate\Support\Carbon::parse($date)->startOfDay();
-                $endDate = \Illuminate\Support\Carbon::parse($date)->endOfDay();
+                $startDate = Carbon::parse($date)->startOfDay();
+                $endDate = Carbon::parse($date)->endOfDay();
                 break;
             case 'weekly':
                 $weekStart = $request->get('week_start', now()->startOfWeek()->toDateString());
-                $startDate = \Illuminate\Support\Carbon::parse($weekStart)->startOfWeek();
+                $startDate = Carbon::parse($weekStart)->startOfWeek();
                 $endDate = $startDate->copy()->endOfWeek();
                 break;
             case 'monthly':
                 $month = $request->get('month', now()->format('Y-m'));
-                $startDate = \Illuminate\Support\Carbon::parse($month)->startOfMonth();
-                $endDate = \Illuminate\Support\Carbon::parse($month)->endOfMonth();
+                $startDate = Carbon::parse($month)->startOfMonth();
+                $endDate = Carbon::parse($month)->endOfMonth();
                 break;
             case 'quarterly':
                 $quarter = (int) $request->get('quarter', ceil(now()->month / 3));
                 $year = (int) $request->get('year', now()->year);
                 $startMonth = ($quarter - 1) * 3 + 1;
-                $startDate = \Illuminate\Support\Carbon::create($year, $startMonth, 1)->startOfMonth();
+                $startDate = Carbon::create($year, $startMonth, 1)->startOfMonth();
                 $endDate = $startDate->copy()->addMonths(3)->subDay()->endOfDay();
                 break;
             case 'semestral':
                 $semester = (int) $request->get('semester', now()->month <= 6 ? 1 : 2);
                 $year = (int) $request->get('year', now()->year);
                 $startMonth = $semester == 1 ? 1 : 7;
-                $startDate = \Illuminate\Support\Carbon::create($year, $startMonth, 1)->startOfMonth();
+                $startDate = Carbon::create($year, $startMonth, 1)->startOfMonth();
                 $endDate = $startMonth == 1
-                    ? \Illuminate\Support\Carbon::create($year, 6, 30)->endOfDay()
-                    : \Illuminate\Support\Carbon::create($year, 12, 31)->endOfDay();
+                    ? Carbon::create($year, 6, 30)->endOfDay()
+                    : Carbon::create($year, 12, 31)->endOfDay();
                 break;
             case 'yearly':
                 $year = (int) $request->get('year', now()->year);
-                $startDate = \Illuminate\Support\Carbon::create($year, 1, 1)->startOfDay();
-                $endDate = \Illuminate\Support\Carbon::create($year, 12, 31)->endOfDay();
+                $startDate = Carbon::create($year, 1, 1)->startOfDay();
+                $endDate = Carbon::create($year, 12, 31)->endOfDay();
                 break;
             case 'custom':
-                $startDate = $request->filled('start_date') ? \Illuminate\Support\Carbon::parse($request->start_date)->startOfDay() : null;
-                $endDate = $request->filled('end_date') ? \Illuminate\Support\Carbon::parse($request->end_date)->endOfDay() : null;
+                $startDate = $request->filled('start_date') ? Carbon::parse($request->start_date)->startOfDay() : null;
+                $endDate = $request->filled('end_date') ? Carbon::parse($request->end_date)->endOfDay() : null;
                 break;
         }
 
         return [$startDate, $endDate];
     }
+
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function index(Request $request)
     {
@@ -127,11 +130,11 @@ class SaleController extends Controller
         }
 
         if ($request->filled('numeroFacture')) {
-            $query->where('numeroFacture', 'like', '%' . $request->input('numeroFacture') . '%');
+            $query->where('numeroFacture', 'like', '%'.$request->input('numeroFacture').'%');
         }
 
         if ($request->filled('product_id')) {
-            $query->where('product_id', 'like', '%' . $request->input('product_id') . '%');
+            $query->where('product_id', 'like', '%'.$request->input('product_id').'%');
         }
 
         [$startDate, $endDate] = $this->resolvePeriodRange($request);
@@ -152,7 +155,8 @@ class SaleController extends Controller
 
         // Pass the necessary data to the view, including options for filters
         $customers = Customer::all();
-        return view('sales.index', compact('dataTable', 'produits','customers','boutiques','employees'));
+
+        return view('sales.index', compact('dataTable', 'produits', 'customers', 'boutiques', 'employees'));
     }
 
     public function storeCustomer(Request $request)
@@ -169,27 +173,30 @@ class SaleController extends Controller
                 'tel' => $request->tel ?? '17288399',
                 'email' => $request->email ?? 'test@email.com',
                 'address' => $request->address ?? 'kobaya',
-                'fidelite' => 1
+                'fidelite' => 1,
             ]);
             DB::commit();
+
             return response()->json([
                 'success' => true,
-                'customer' => $customer
+                'customer' => $customer,
             ]);
         } catch (\Exception $e) {
             DB::rollback();
 
-            \Log::error('Customer creation error: ' . $e->getMessage());
+            \Log::error('Customer creation error: '.$e->getMessage());
+
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], 500);
         }
     }
+
     /**
      * Show the form for creating a new resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function create()
     {
@@ -199,13 +206,16 @@ class SaleController extends Controller
     public function ajout($numero_facture, $avance, $store_id)
     {
         $produits = Product::all();
-        //dd($numero_facture);
+
+        // dd($numero_facture);
         return view('sales.create', compact('numero_facture', 'produits', 'avance', 'store_id'));
     }
 
-    public function voirSales($numero_facture){
-        //dd('Here i am');
+    public function voirSales($numero_facture)
+    {
+        // dd('Here i am');
         $ligneVentes = Sale::where('numeroFacture', $numero_facture)->visibleTo(auth()->user())->with('store')->get();
+
         return view('sales.voirSales', compact('ligneVentes', 'numero_facture'));
     }
 
@@ -218,7 +228,7 @@ class SaleController extends Controller
 
         // Apply filters
         if ($request->filled('numeroFacture')) {
-            $query->where('numeroFacture', 'like', '%' . $request->numeroFacture . '%');
+            $query->where('numeroFacture', 'like', '%'.$request->numeroFacture.'%');
         }
         if ($request->filled('product_id')) {
             $query->where('product_id', $request->product_id);
@@ -233,8 +243,8 @@ class SaleController extends Controller
 
         $sales = $query->orderBy('created_at', 'desc')->get();
 
-        $filename = 'ventes_' . now()->format('Y-m-d_His') . '.xlsx';
-        
+        $filename = 'ventes_'.now()->format('Y-m-d_His').'.xlsx';
+
         return Excel::download(new SalesExport($request, $sales), $filename);
     }
 
@@ -252,7 +262,7 @@ class SaleController extends Controller
 
         // Apply filters
         if ($request->filled('numeroFacture')) {
-            $query->where('numeroFacture', 'like', '%' . $request->numeroFacture . '%');
+            $query->where('numeroFacture', 'like', '%'.$request->numeroFacture.'%');
         }
         if ($request->filled('product_id')) {
             $query->where('product_id', $request->product_id);
@@ -268,9 +278,9 @@ class SaleController extends Controller
         // la limite mémoire). Pour l'historique complet, utiliser l'export Excel.
         // L'utilisateur peut choisir sa propre période via le filtre en haut de
         // l'index — ce repli ne s'applique que si aucun filtre n'est actif.
-        if (!$request->anyFilled(['numeroFacture', 'product_id', 'period'])) {
+        if (! $request->anyFilled(['numeroFacture', 'product_id', 'period'])) {
             $query->whereDate('created_at', '>=', now()->startOfMonth())
-                  ->whereDate('created_at', '<=', now()->endOfMonth());
+                ->whereDate('created_at', '<=', now()->endOfMonth());
         }
 
         // Périmètre magasin de l'utilisateur
@@ -285,7 +295,7 @@ class SaleController extends Controller
             return back()->with(
                 'error',
                 "Cette période contient {$count} ventes — trop pour générer un PDF de façon fiable. "
-                . 'Réduisez la période (ex : un mois au lieu d\'une année), ou utilisez l\'export Excel qui ne connaît pas cette limite.'
+                .'Réduisez la période (ex : un mois au lieu d\'une année), ou utilisez l\'export Excel qui ne connaît pas cette limite.'
             );
         }
 
@@ -293,7 +303,7 @@ class SaleController extends Controller
 
         // Get products for filter display
         $produits = Product::all();
-        $company = \App\Models\Company::current();
+        $company = Company::current();
 
         $pdf = Pdf::loadView('exports.sales-pdf', compact('sales', 'produits', 'company'));
 
@@ -309,8 +319,8 @@ class SaleController extends Controller
             'chroot' => public_path(),
         ]);
 
-        $filename = 'ventes_' . now()->format('Y-m-d_His') . '.pdf';
-        
+        $filename = 'ventes_'.now()->format('Y-m-d_His').'.pdf';
+
         return $pdf->download($filename);
     }
 
@@ -333,11 +343,9 @@ class SaleController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @param  Request  $request
+     * @return Response
      */
-
-
 
     /**
      * Prochain numéro de facture libre.
@@ -379,33 +387,33 @@ class SaleController extends Controller
         // message sans rapport avec la cause.
         $request->validate([
             'numeroFacture' => 'required|string',
-            'store_id'      => 'required|exists:stores,id',
-            'customer_id'   => 'required|exists:customers,id',
-            'avance'        => 'nullable|numeric|min:0',
-            'paid_by'       => 'nullable|string',
-            'notes'         => 'nullable|string',
-            'sales'                              => 'required|array|min:1',
+            'store_id' => 'required|exists:stores,id',
+            'customer_id' => 'required|exists:customers,id',
+            'avance' => 'nullable|numeric|min:0',
+            'paid_by' => 'nullable|string',
+            'notes' => 'nullable|string',
+            'sales' => 'required|array|min:1',
             // Produit du catalogue, ou — pour un produit pris chez un partenaire
             // et absent du catalogue — un nouveau produit (libellé + unité),
             // créé avec la vente.
-            'sales.*.product_id'                 => 'nullable|required_without:sales.*.nouveau_libelle|exists:products,id',
-            'sales.*.nouveau_libelle'            => 'nullable|string|max:225',
-            'sales.*.nouvelle_unite'             => 'nullable|in:'.implode(',', array_keys(Product::UNITES)),
+            'sales.*.product_id' => 'nullable|required_without:sales.*.nouveau_libelle|exists:products,id',
+            'sales.*.nouveau_libelle' => 'nullable|string|max:225',
+            'sales.*.nouvelle_unite' => 'nullable|in:'.implode(',', array_keys(Product::UNITES)),
             // Emplacement source de la ligne (magasin, stock interne, entrepôt).
             // Absent : la ligne sort du magasin de la vente, comme avant.
-            'sales.*.store_id'                   => 'nullable|exists:stores,id',
+            'sales.*.store_id' => 'nullable|exists:stores,id',
             // Propriétaire de la marchandise vendue : vide = fonds propres,
             // sinon le fonds d'un associé (choisi par le vendeur, ligne par ligne).
-            'sales.*.fund_id'                    => 'nullable|exists:funds,id',
-            'sales.*.quantity'                   => 'required|integer|min:1',
-            'sales.*.prix'                       => 'required|numeric|min:0',
-            'sales.*.partner_id'                 => 'nullable|exists:partners,id',
-            'sales.*.purchase_price_from_partner'=> 'nullable|numeric|min:0',
+            'sales.*.fund_id' => 'nullable|exists:funds,id',
+            'sales.*.quantity' => 'required|integer|min:1',
+            'sales.*.prix' => 'required|numeric|min:0',
+            'sales.*.partner_id' => 'nullable|exists:partners,id',
+            'sales.*.purchase_price_from_partner' => 'nullable|numeric|min:0',
         ], [
-            'sales.required'            => 'Veuillez ajouter au moins un produit.',
-            'sales.*.quantity.min'      => 'La quantité doit être d\'au moins 1.',
-            'sales.*.quantity.integer'  => 'La quantité doit être un nombre entier.',
-            'sales.*.prix.min'          => 'Le prix ne peut pas être négatif.',
+            'sales.required' => 'Veuillez ajouter au moins un produit.',
+            'sales.*.quantity.min' => 'La quantité doit être d\'au moins 1.',
+            'sales.*.quantity.integer' => 'La quantité doit être un nombre entier.',
+            'sales.*.prix.min' => 'Le prix ne peut pas être négatif.',
         ]);
 
         // Le numéro affiché dans le POS est calculé à l'ouverture de la page : deux
@@ -423,7 +431,7 @@ class SaleController extends Controller
         }
 
         $salesData = $request->input('sales') ?? [];
-        $salesData = array_values(array_filter($salesData, fn($row) => !empty($row['product_id']) || !empty($row['nouveau_libelle'])));
+        $salesData = array_values(array_filter($salesData, fn ($row) => ! empty($row['product_id']) || ! empty($row['nouveau_libelle'])));
 
         // Un produit hors catalogue n'est accepté que pris chez un partenaire :
         // il n'existe pas dans le stock.
@@ -463,17 +471,17 @@ class SaleController extends Controller
             // Toutes les lignes sont vérifiées avant la moindre écriture : si une
             // seule manque de stock, la vente entière est refusée avec le détail.
             $this->stock->assertAvailable(array_map(fn ($row) => [
-                'store_id'   => $row['store_id'],
+                'store_id' => $row['store_id'],
                 'product_id' => $row['product_id'],
-                'quantity'   => $row['quantity'],
-                'fund_id'    => $row['fund_id'] ?? null,
+                'quantity' => $row['quantity'],
+                'fund_id' => $row['fund_id'] ?? null,
             ], array_values(array_filter($salesData, fn ($row) => empty($row['is_third_party']) || $row['is_third_party'] != '1'))));
-            $funds = app(\App\Services\FundService::class);
+            $funds = app(FundService::class);
 
             $customerId = (int) $request->customer_id;
 
             foreach ($salesData as $data) {
-                $isThirdParty = !empty($data['is_third_party']) && $data['is_third_party'] == "1";
+                $isThirdParty = ! empty($data['is_third_party']) && $data['is_third_party'] == '1';
 
                 $data['prixTotal'] = $data['prix'] * $data['quantity'];
 
@@ -516,12 +524,12 @@ class SaleController extends Controller
                     $data['unit_cost'] = $prix_achat > 0 ? $prix_achat : null;
 
                     $this->stock->decrementOrFail((int) $data['store_id'], (int) $data['product_id'], (int) $data['quantity'], [
-                        'type'         => \App\Models\StockMovement::SALE,
-                        'source_type'  => 'facture',
+                        'type' => StockMovement::SALE,
+                        'source_type' => 'facture',
                         'document_ref' => $request->numeroFacture,
-                        'customer_id'  => $customerId,
-                        'unit_price'   => $data['prix'],
-                        'fund_id'      => $fundId,
+                        'customer_id' => $customerId,
+                        'unit_price' => $data['prix'],
+                        'fund_id' => $fundId,
                     ]);
 
                     // Coût inconnu : intérêt 0 plutôt qu'une marge fictive de 100 %.
@@ -533,19 +541,19 @@ class SaleController extends Controller
                 $total_price += $data['prixTotal'];
 
                 Sale::create([
-                    'numeroFacture'               => $request->numeroFacture,
-                    'product_id'                  => $data['product_id'],
-                    'prix'                        => $data['prix'],
-                    'quantity'                    => $data['quantity'],
-                    'prixTotal'                   => $data['prixTotal'],
-                    'interet'                     => $data['interet'],
-                    'store_id'                    => $data['store_id'],
-                    'user_id'                     => auth()->id(),
-                    'is_third_party'              => $data['is_third_party'],
-                    'partner_id'                  => $data['partner_id'] ?? null,
+                    'numeroFacture' => $request->numeroFacture,
+                    'product_id' => $data['product_id'],
+                    'prix' => $data['prix'],
+                    'quantity' => $data['quantity'],
+                    'prixTotal' => $data['prixTotal'],
+                    'interet' => $data['interet'],
+                    'store_id' => $data['store_id'],
+                    'user_id' => auth()->id(),
+                    'is_third_party' => $data['is_third_party'],
+                    'partner_id' => $data['partner_id'] ?? null,
                     'purchase_price_from_partner' => $data['purchase_price_from_partner'] ?? null,
-                    'fund_id'                     => $isThirdParty ? null : ($data['fund_id'] ?? null),
-                    'unit_cost'                   => $isThirdParty ? null : ($data['unit_cost'] ?? null),
+                    'fund_id' => $isThirdParty ? null : ($data['fund_id'] ?? null),
+                    'unit_cost' => $isThirdParty ? null : ($data['unit_cost'] ?? null),
                 ]);
             }
 
@@ -558,28 +566,28 @@ class SaleController extends Controller
 
             $facture = Facture::create([
                 'numero_facture' => $request->numeroFacture,
-                'store_id'       => $request->store_id,
-                'user_id'        => auth()->id(),
-                'channel'        => Facture::CHANNEL_POS,
-                'customer_id'    => $request->customer_id,
-                'montant_total'  => $total_price,
-                'quantity'       => $total_quantity,
-                'avance'         => $request->avance ?? 0,
-                'notes'          => $request->notes,
-                'reste'          => $reste,
-                'statut'         => $reste == 0 ? 'payé' : 'non payé',
-                'livraison'      => $reste == 0 ? 'livré' : 'non livré',
+                'store_id' => $request->store_id,
+                'user_id' => auth()->id(),
+                'channel' => Facture::CHANNEL_POS,
+                'customer_id' => $request->customer_id,
+                'montant_total' => $total_price,
+                'quantity' => $total_quantity,
+                'avance' => $request->avance ?? 0,
+                'notes' => $request->notes,
+                'reste' => $reste,
+                'statut' => $reste == 0 ? 'payé' : 'non payé',
+                'livraison' => $reste == 0 ? 'livré' : 'non livré',
             ]);
 
             // Payment
             $receiptNumber = generateReceiptNumber('RCF', (Payment::max('id') ?? 0) + 1);
             Payment::create([
-                'facture_id'   => $facture->id,
-                'versement'    => $facture->avance,
-                'total_paye'   => $facture->avance,
-                'paid_by'      => $request->paid_by ?? 'cash',
-                'reste'        => $reste,
-                'note'         => "Premier versement effectué à l'émission de la facture.",
+                'facture_id' => $facture->id,
+                'versement' => $facture->avance,
+                'total_paye' => $facture->avance,
+                'paid_by' => $request->paid_by ?? 'cash',
+                'reste' => $reste,
+                'note' => "Premier versement effectué à l'émission de la facture.",
                 'receipt_number' => $receiptNumber,
             ]);
 
@@ -597,28 +605,27 @@ class SaleController extends Controller
             DB::commit();
 
             return redirect()->route('factures.index')
-                            ->with('success', 'Vente enregistrée avec succès !');
+                ->with('success', 'Vente enregistrée avec succès !');
 
         } catch (\Throwable $th) {
             DB::rollBack();
+
             return redirect()->back()
-                            ->with('error', 'Erreur : ' . $th->getMessage())
-                            ->withInput();
+                ->with('error', 'Erreur : '.$th->getMessage())
+                ->withInput();
         }
     }
 
     /**
      * Display the specified resource.
      *
-     * @param  \App\Models\Sale  $sale
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
 
     /**
      * Show the form for editing the specified resource.
      *
-     * @param  \App\Models\Sale  $sale
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function edit(Sale $sale)
     {
@@ -627,7 +634,8 @@ class SaleController extends Controller
         return view('sales.edit', compact('sale'));
     }
 
-    public function pos(){
+    public function pos()
+    {
         $categories = Category::all();
         $produits = Product::with(['categories', 'latestLigneCommande', 'stores'])->get();
         $user = Auth::user();
@@ -654,47 +662,47 @@ class SaleController extends Controller
                 // Une entrée par emplacement ET par propriétaire (fonds propres
                 // ou fonds d'un associé) : le vendeur choisit le fonds à chaque ligne.
                 ->map(fn ($s) => [
-                    'id'    => $s->id,
-                    'fund'  => $s->pivot->fund_id ? (int) $s->pivot->fund_id : null,
-                    'owner' => \App\Models\Fund::labelFor($s->pivot->fund_id ? (int) $s->pivot->fund_id : null),
-                    'qty'   => (int) $s->pivot->quantity,
+                    'id' => $s->id,
+                    'fund' => $s->pivot->fund_id ? (int) $s->pivot->fund_id : null,
+                    'owner' => Fund::labelFor($s->pivot->fund_id ? (int) $s->pivot->fund_id : null),
+                    'qty' => (int) $s->pivot->quantity,
                 ])
                 ->values(),
         ]);
-        $locationLabels = $locations->mapWithKeys(fn ($s) => [$s->id => $s->full_name . ' (' . $s->type_label . ')']);
+        $locationLabels = $locations->mapWithKeys(fn ($s) => [$s->id => $s->full_name.' ('.$s->type_label.')']);
         // Unité de chaque produit (« carton », « cartons »…) pour les libellés
         // des lignes : la quantité saisie est directement dans cette unité.
         $unitesByProduct = $produits->mapWithKeys(fn ($p) => [$p->id => [
-            'libelle'  => $p->unite_libelle,
+            'libelle' => $p->unite_libelle,
             'singulier' => Product::motUnite($p->unite, 1),
-            'pluriel'  => Product::motUnite($p->unite, 2),
+            'pluriel' => Product::motUnite($p->unite, 2),
         ]]);
         // Tout le catalogue, même en rupture : un produit que la boutique n'a
         // pas peut être pris chez un partenaire et vendu dans la même facture.
         $produitsTiers = $produits->sortBy('libelle')->map(fn ($p) => [
-            'id'        => $p->id,
-            'libelle'   => $p->libelle,
-            'prix'      => (float) $p->price,
-            'unite'     => $p->unite_libelle,
+            'id' => $p->id,
+            'libelle' => $p->libelle,
+            'prix' => (float) $p->price,
+            'unite' => $p->unite_libelle,
             'singulier' => Product::motUnite($p->unite),
         ])->values();
         $customers = Customer::all();
         $partners = Partner::all();
         $numeroFacture = $this->prochainNumeroFacture();
+
         return view('sales.pos', compact('produits', 'boutiques', 'customers', 'categories', 'userStoreId', 'numeroFacture', 'partners', 'stockByProduct', 'locationLabels', 'locationIds', 'caisseParOrigine', 'unitesByProduct', 'produitsTiers'));
     }
 
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Sale  $sale
-     * @return \Illuminate\Http\Response
+     * @param  Sale  $sale
+     * @return Response
      */
     public function update(Request $request, $sale)
     {
         $sale = Sale::find($sale); // Use a meaningful variable name like $saleId instead of $sale
-        if (!$sale) {
+        if (! $sale) {
             return redirect()->route('sales.index')->with('error', 'Vente non trouvée.');
         }
 
@@ -710,15 +718,17 @@ class SaleController extends Controller
 
             // Fetch the invoice associated with the sale
             $invoice = Facture::where('numero_facture', $sale->numeroFacture)->first();
-            if (!$invoice) {
+            if (! $invoice) {
                 DB::rollBack();
+
                 return redirect()->route('sales.index')->with('error', 'Facture non trouvée.');
             }
 
             // Fetch the customer
             $customer = Customer::find($invoice->customer_id);
-            if (!$customer) {
+            if (! $customer) {
                 DB::rollBack();
+
                 return redirect()->route('sales.index')->with('error', 'Client non trouvé.');
             }
 
@@ -751,18 +761,19 @@ class SaleController extends Controller
             // La vente d'origine reste dans le journal ; la modification y ajoute
             // un mouvement de correction de l'écart, tracé avec son auteur.
             $correction = [
-                'type'         => \App\Models\StockMovement::CORRECTION,
-                'source_type'  => 'sale',
-                'source_id'    => $sale->id,
+                'type' => StockMovement::CORRECTION,
+                'source_type' => 'sale',
+                'source_id' => $sale->id,
                 'document_ref' => $sale->numeroFacture,
-                'customer_id'  => $invoice->customer_id,
-                'unit_price'   => $request->prix,
-                'reason'       => 'Modification de la vente : quantité ' . $sale->quantity . ' → ' . $request->quantity,
-                'fund_id'      => $sale->fund_id,
+                'customer_id' => $invoice->customer_id,
+                'unit_price' => $request->prix,
+                'reason' => 'Modification de la vente : quantité '.$sale->quantity.' → '.$request->quantity,
+                'fund_id' => $sale->fund_id,
             ];
             if ($deltaQuantity > 0) {
-                if (!$this->stock->decrementIfAvailable((int) $sale->store_id, (int) $sale->product_id, (int) $deltaQuantity, $correction)) {
+                if (! $this->stock->decrementIfAvailable((int) $sale->store_id, (int) $sale->product_id, (int) $deltaQuantity, $correction)) {
                     DB::rollBack();
+
                     return redirect()->route('sales.index')->with('error', 'Stock insuffisant pour modifier cette vente.');
                 }
             } elseif ($deltaQuantity < 0) {
@@ -777,7 +788,7 @@ class SaleController extends Controller
             $product = Product::find($sale->product_id);
             // Ligne d'un associé : son coût de revient, retenu à la vente.
             $prixAchat = $sale->fund_id
-                ? (float) ($sale->unit_cost ?? app(\App\Services\FundService::class)->unitCost((int) $sale->fund_id, (int) $sale->product_id))
+                ? (float) ($sale->unit_cost ?? app(FundService::class)->unitCost((int) $sale->fund_id, (int) $sale->product_id))
                 : ($product ? $this->resolveUnitCost($product) : 0);
             // Même règle qu'à la création : modifier une vente ne doit pas permettre
             // de repasser sous le prix de revient.
@@ -787,21 +798,21 @@ class SaleController extends Controller
             $sale->save();
 
             DB::commit();
+
             return redirect()->route('sales.index')->with('success', 'Vente modifiée avec succès.');
         } catch (\Throwable $th) {
             DB::rollBack();
-            return redirect()->route('sales.index')->with('error', 'La vente n\'a pas été modifiée. Raison : ' . $th->getMessage());
+
+            return redirect()->route('sales.index')->with('error', 'La vente n\'a pas été modifiée. Raison : '.$th->getMessage());
         }
     }
 
     /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\Models\Sale  $sale
-     * @return \Illuminate\Http\Response
+     * @param  Sale  $sale
+     * @return Response
      */
-
-
     public function exitSale($numero_facture)
     {
         // Ancien écran « quitter sans valider » : il supprimait n'importe quelle
@@ -819,10 +830,10 @@ class SaleController extends Controller
             Payment::where('facture_id', $facture->id)->delete();
             $facture->delete();
 
-            return redirect()->route('sales.index')->with('success', "Vous êtes parti sans valider, la vente a été annulé.");
+            return redirect()->route('sales.index')->with('success', 'Vous êtes parti sans valider, la vente a été annulé.');
         } catch (\Throwable $th) {
             // Log the error and return with an error message
-            return redirect()->back()->with('error', 'Impossible de quitter cette page, une erreur est survenue: ' . $th->getMessage());
+            return redirect()->back()->with('error', 'Impossible de quitter cette page, une erreur est survenue: '.$th->getMessage());
         }
     }
 
@@ -879,12 +890,12 @@ class SaleController extends Controller
             return response()->json([
                 'success' => true,
                 'partner' => $partner,
-                'message' => 'Partenaire créé avec succès'
+                'message' => 'Partenaire créé avec succès',
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], 500);
         }
     }
@@ -903,27 +914,27 @@ class SaleController extends Controller
     public function storeQuickThirdParty(Request $request)
     {
         $donnees = $request->validate([
-            'store_id'   => 'nullable|exists:stores,id',
+            'store_id' => 'nullable|exists:stores,id',
             'customer_id' => 'nullable|exists:customers,id',
             'nouveau_client.customerName' => 'nullable|string|max:255',
-            'nouveau_client.tel'          => 'nullable|string|max:40',
-            'nouveau_client.address'      => 'nullable|string|max:255',
-            'avance'  => 'nullable|numeric|min:0',
+            'nouveau_client.tel' => 'nullable|string|max:40',
+            'nouveau_client.address' => 'nullable|string|max:255',
+            'avance' => 'nullable|numeric|min:0',
             'paid_by' => 'nullable|string|max:40',
-            'notes'   => 'nullable|string',
+            'notes' => 'nullable|string',
 
-            'lignes'                                => 'required|array|min:1',
-            'lignes.*.libelle'                      => 'required|string|max:255',
-            'lignes.*.sku'                          => 'required|string|max:100',
-            'lignes.*.prix'                         => 'required|numeric|min:0',
-            'lignes.*.purchase_price_from_partner'  => 'required|numeric|min:0',
-            'lignes.*.partner_id'                   => 'required|exists:partners,id',
-            'lignes.*.quantity'                     => 'required|integer|min:1',
+            'lignes' => 'required|array|min:1',
+            'lignes.*.libelle' => 'required|string|max:255',
+            'lignes.*.sku' => 'required|string|max:100',
+            'lignes.*.prix' => 'required|numeric|min:0',
+            'lignes.*.purchase_price_from_partner' => 'required|numeric|min:0',
+            'lignes.*.partner_id' => 'required|exists:partners,id',
+            'lignes.*.quantity' => 'required|integer|min:1',
         ], [
-            'lignes.required'              => 'Ajoutez au moins un produit.',
-            'lignes.*.libelle.required'    => 'Le libellé du produit est obligatoire.',
-            'lignes.*.sku.required'        => 'La référence du produit est obligatoire.',
-            'lignes.*.quantity.min'        => 'La quantité doit être d\'au moins 1.',
+            'lignes.required' => 'Ajoutez au moins un produit.',
+            'lignes.*.libelle.required' => 'Le libellé du produit est obligatoire.',
+            'lignes.*.sku.required' => 'La référence du produit est obligatoire.',
+            'lignes.*.quantity.min' => 'La quantité doit être d\'au moins 1.',
             'lignes.*.partner_id.required' => 'Indiquez le partenaire qui fournit le produit.',
         ]);
 
@@ -952,15 +963,15 @@ class SaleController extends Controller
 
                 Sale::create([
                     'numeroFacture' => $numeroFacture,
-                    'product_id'    => $produit->id,
-                    'prix'          => $prix,
-                    'quantity'      => $quantite,
-                    'prixTotal'     => $prix * $quantite,
-                    'interet'       => ($prix - $prixAmi) * $quantite,
-                    'store_id'      => $storeId,
-                    'user_id'       => auth()->id(),
+                    'product_id' => $produit->id,
+                    'prix' => $prix,
+                    'quantity' => $quantite,
+                    'prixTotal' => $prix * $quantite,
+                    'interet' => ($prix - $prixAmi) * $quantite,
+                    'store_id' => $storeId,
+                    'user_id' => auth()->id(),
                     'is_third_party' => true,
-                    'partner_id'    => $ligne['partner_id'],
+                    'partner_id' => $ligne['partner_id'],
                     'purchase_price_from_partner' => $prixAmi,
                 ]);
 
@@ -973,26 +984,26 @@ class SaleController extends Controller
 
             $facture = Facture::create([
                 'numero_facture' => $numeroFacture,
-                'store_id'       => $storeId,
-                'user_id'        => auth()->id(),
-                'channel'        => Facture::CHANNEL_TIERS,
-                'customer_id'    => $customerId,
-                'montant_total'  => $total,
-                'quantity'       => $quantiteTotale,
-                'avance'         => $avance,
-                'notes'          => $request->input('notes'),
-                'reste'          => $reste,
-                'statut'         => $reste <= 0 ? 'payé' : 'non payé',
-                'livraison'      => $reste <= 0 ? 'livré' : 'non livré',
+                'store_id' => $storeId,
+                'user_id' => auth()->id(),
+                'channel' => Facture::CHANNEL_TIERS,
+                'customer_id' => $customerId,
+                'montant_total' => $total,
+                'quantity' => $quantiteTotale,
+                'avance' => $avance,
+                'notes' => $request->input('notes'),
+                'reste' => $reste,
+                'statut' => $reste <= 0 ? 'payé' : 'non payé',
+                'livraison' => $reste <= 0 ? 'livré' : 'non livré',
             ]);
 
             Payment::create([
-                'facture_id'  => $facture->id,
-                'versement'   => $avance,
-                'total_paye'  => $avance,
-                'paid_by'     => $request->input('paid_by') ?? 'cash',
-                'reste'       => $reste,
-                'note'        => 'Vente tierce — ' . ($request->input('notes') ?? ''),
+                'facture_id' => $facture->id,
+                'versement' => $avance,
+                'total_paye' => $avance,
+                'paid_by' => $request->input('paid_by') ?? 'cash',
+                'reste' => $reste,
+                'note' => 'Vente tierce — '.($request->input('notes') ?? ''),
                 'receipt_number' => generateReceiptNumber('RCF', (Payment::max('id') ?? 0) + 1),
             ]);
 
@@ -1003,8 +1014,8 @@ class SaleController extends Controller
             DB::commit();
 
             return response()->json([
-                'success'  => true,
-                'message'  => sprintf(
+                'success' => true,
+                'message' => sprintf(
                     'Vente tierce n° %s enregistrée : %d produit(s), %s GNF.',
                     $numeroFacture,
                     count($lignes),
@@ -1014,7 +1025,7 @@ class SaleController extends Controller
             ]);
         } catch (\Throwable $e) {
             DB::rollBack();
-            Log::error('Vente tierce : ' . $e->getMessage());
+            Log::error('Vente tierce : '.$e->getMessage());
 
             return response()->json([
                 'success' => false,
@@ -1062,8 +1073,8 @@ class SaleController extends Controller
 
         return Customer::create([
             'customerName' => $nom,
-            'mark'    => $this->marqueClientLibre($nom),
-            'tel'     => trim((string) $request->input('nouveau_client.tel')) ?: 'N/A',
+            'mark' => $this->marqueClientLibre($nom),
+            'tel' => trim((string) $request->input('nouveau_client.tel')) ?: 'N/A',
             'address' => trim((string) $request->input('nouveau_client.address')) ?: 'N/A',
             'fidelite' => 1,
         ])->id;
@@ -1083,7 +1094,7 @@ class SaleController extends Controller
 
         $i = 1;
         do {
-            $marque = $base . str_pad((string) $i, 3, '0', STR_PAD_LEFT);
+            $marque = $base.str_pad((string) $i, 3, '0', STR_PAD_LEFT);
             $i++;
         } while (Customer::withTrashed()->where('mark', $marque)->exists());
 
@@ -1110,13 +1121,13 @@ class SaleController extends Controller
         }
 
         return Product::create([
-            'libelle'     => $libelle,
-            'sku'         => 'TIERS-' . strtoupper(substr(md5($libelle . microtime()), 0, 8)),
-            'description' => $libelle . ' (produit pris chez un partenaire)',
-            'unite'       => $ligne['nouvelle_unite'] ?? 'pcs',
-            'price'       => $ligne['prix'],
-            'price_sale'  => $ligne['purchase_price_from_partner'] ?? 0,
-            'image'       => '',
+            'libelle' => $libelle,
+            'sku' => 'TIERS-'.strtoupper(substr(md5($libelle.microtime()), 0, 8)),
+            'description' => $libelle.' (produit pris chez un partenaire)',
+            'unite' => $ligne['nouvelle_unite'] ?? 'pcs',
+            'price' => $ligne['prix'],
+            'price_sale' => $ligne['purchase_price_from_partner'] ?? 0,
+            'image' => '',
         ]);
     }
 
@@ -1129,11 +1140,11 @@ class SaleController extends Controller
         }
 
         return Product::create([
-            'libelle'     => $ligne['libelle'],
-            'sku'         => $ligne['sku'],
+            'libelle' => $ligne['libelle'],
+            'sku' => $ligne['sku'],
             'description' => $ligne['libelle'],
-            'price'       => $ligne['prix'],
-            'price_sale'  => $ligne['purchase_price_from_partner'],
+            'price' => $ligne['prix'],
+            'price_sale' => $ligne['purchase_price_from_partner'],
         ]);
     }
 }

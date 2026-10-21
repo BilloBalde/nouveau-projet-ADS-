@@ -9,7 +9,7 @@ class ResetClientData extends Command
 {
     protected $signature = 'client:reset-data {--force : Ne pas demander de confirmation}';
 
-    protected $description = "Vide les données métier (produits, clients, boutiques, stocks, ventes, achats, devis, factures, paiements, dépenses) pour repartir sur une base propre avec un nouveau client. Conserve comptes utilisateurs, rôles/permissions et paramètres.";
+    protected $description = 'Vide les données métier (produits, clients, boutiques, stocks, ventes, achats, devis, factures, paiements, dépenses) pour repartir sur une base propre avec un nouveau client. Conserve comptes utilisateurs, rôles/permissions et paramètres.';
 
     /**
      * Ordre respecté pour ne pas violer les contraintes RESTRICT/NO ACTION

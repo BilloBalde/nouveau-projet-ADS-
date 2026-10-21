@@ -13,14 +13,12 @@ use Maatwebsite\Excel\Concerns\WithMultipleSheets;
  */
 class VentesTiercesExport implements WithMultipleSheets
 {
-    public function __construct(private array $donnees)
-    {
-    }
+    public function __construct(private array $donnees) {}
 
     public function sheets(): array
     {
         $d = $this->donnees;
-        $periode = 'Période : ' . $d['start']->format('d/m/Y') . ' au ' . $d['end']->format('d/m/Y');
+        $periode = 'Période : '.$d['start']->format('d/m/Y').' au '.$d['end']->format('d/m/Y');
 
         $partenaires = [
             'Par partenaire',
@@ -48,7 +46,7 @@ class VentesTiercesExport implements WithMultipleSheets
                 $s->numeroFacture,
                 $s->user?->name,
                 $s->store?->store_name,
-                $s->product?->libelle ?? 'Produit #' . $s->product_id,
+                $s->product?->libelle ?? 'Produit #'.$s->product_id,
                 $s->partner?->name,
                 (float) $s->quantity,
                 Product::motUnite($s->unite ?: $s->product?->unite, $s->quantity),

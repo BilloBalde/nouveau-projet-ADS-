@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class TransactionFacture extends Model
 {
     use HasFactory;
+
     protected $guarded = ['id'];
 
     public function customer()
@@ -21,7 +23,7 @@ class TransactionFacture extends Model
      * non rattaché à ses factures, reste visible si le client a des factures
      * dans ce périmètre.
      */
-    public function scopeVisibleTo(\Illuminate\Database\Eloquent\Builder $query, ?User $user): \Illuminate\Database\Eloquent\Builder
+    public function scopeVisibleTo(Builder $query, ?User $user): Builder
     {
         if (! $user || ! $user->isStoreScoped()) {
             return $query;

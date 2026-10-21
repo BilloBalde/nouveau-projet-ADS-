@@ -8,11 +8,11 @@ use Illuminate\Database\Eloquent\Model;
 class Logistic extends Model
 {
     use HasFactory;
+
     protected $guarded = ['id'];
 
-    public function store(){
+    public function store()
+    {
         return $this->belongsTo(Store::class);
     }
-
-   
 }

@@ -57,7 +57,7 @@ return new class extends Migration
         foreach ($this->withFund as $name) {
             Schema::table($name, function (Blueprint $table) use ($name) {
                 $table->unsignedBigInteger('fund_id')->nullable();
-                $table->index('fund_id', $name . '_fund_id_index');
+                $table->index('fund_id', $name.'_fund_id_index');
                 if ($name === 'sales') {
                     $table->decimal('unit_cost', 15, 2)->nullable();
                 }
@@ -71,7 +71,7 @@ return new class extends Migration
     {
         foreach ($this->withFund as $name) {
             Schema::table($name, function (Blueprint $table) use ($name) {
-                $table->dropIndex($name . '_fund_id_index');
+                $table->dropIndex($name.'_fund_id_index');
                 $table->dropColumn($name === 'sales' ? ['fund_id', 'unit_cost'] : ['fund_id']);
             });
         }

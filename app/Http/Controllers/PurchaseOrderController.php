@@ -4,15 +4,20 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\CurrencySetting;
+use App\Models\Fund;
 use App\Models\Partner;
 use App\Models\Place;
 use App\Models\Product;
 use App\Models\PurchaseOrder;
+use App\Models\StockMovement;
 use App\Models\Store;
 use App\Models\User;
+use App\Services\FundService;
 use App\Services\PurchaseOrderCostingService;
+use App\Services\StockService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Validation\ValidationException;
 
 class PurchaseOrderController extends Controller
 {
@@ -41,7 +46,7 @@ class PurchaseOrderController extends Controller
         }
 
         if ($request->filled('reference')) {
-            $query->where('reference', 'like', '%' . $request->input('reference') . '%');
+            $query->where('reference', 'like', '%'.$request->input('reference').'%');
         }
 
         if ($request->filled('store_id')) {
@@ -71,14 +76,14 @@ class PurchaseOrderController extends Controller
      */
     private function nextReference(): string
     {
-        $prefix = 'PO-' . Carbon::now()->format('Ymd') . '-';
+        $prefix = 'PO-'.Carbon::now()->format('Ymd').'-';
 
-        $lastNumber = PurchaseOrder::where('reference', 'like', $prefix . '%')
+        $lastNumber = PurchaseOrder::where('reference', 'like', $prefix.'%')
             ->pluck('reference')
             ->map(fn ($reference) => (int) substr($reference, strlen($prefix)))
             ->max() ?? 0;
 
-        return $prefix . str_pad((string) ($lastNumber + 1), 4, '0', STR_PAD_LEFT);
+        return $prefix.str_pad((string) ($lastNumber + 1), 4, '0', STR_PAD_LEFT);
     }
 
     /**
@@ -116,12 +121,12 @@ class PurchaseOrderController extends Controller
             return;
         }
 
-        $disponible = app(\App\Services\FundService::class)->capitalAvailable($fundId, $exceptOrderId);
+        $disponible = app(FundService::class)->capitalAvailable($fundId, $exceptOrderId);
         if ($total > $disponible + 0.01) {
-            throw \Illuminate\Validation\ValidationException::withMessages([
+            throw ValidationException::withMessages([
                 'fund_id' => sprintf(
                     'Capital insuffisant pour %s : %s FG disponibles (apports non investis), achat estimé à %s FG.',
-                    \App\Models\Fund::labelFor($fundId),
+                    Fund::labelFor($fundId),
                     number_format($disponible, 0, ',', ' '),
                     number_format($total, 0, ',', ' ')
                 ),
@@ -133,7 +138,7 @@ class PurchaseOrderController extends Controller
     {
         $stores = Store::optionsFor(auth()->user());
         $suppliers = Partner::orderBy('name')->get();
-        $funds = \App\Models\Fund::active()->orderBy('name')->get();
+        $funds = Fund::active()->orderBy('name')->get();
         $products = Product::orderBy('libelle')->get(['id', 'libelle', 'sku', 'unite', 'pcs_par_carton', 'pcs_par_paquet', 'dimension_rouleau']);
         $currencies = CurrencySetting::whereNotNull('rate_to_gnf')->where('currencyCode', '!=', 'GNF')->get();
         $reference = $this->nextReference();
@@ -223,7 +228,7 @@ class PurchaseOrderController extends Controller
         $this->authorizeStore($order->store_id);
         $stores = Store::optionsFor(auth()->user());
         $suppliers = Partner::orderBy('name')->get();
-        $funds = \App\Models\Fund::orderBy('name')->get();
+        $funds = Fund::orderBy('name')->get();
         $products = Product::orderBy('libelle')->get(['id', 'libelle', 'sku', 'unite', 'pcs_par_carton', 'pcs_par_paquet', 'dimension_rouleau']);
         $currencies = CurrencySetting::whereNotNull('rate_to_gnf')->where('currencyCode', '!=', 'GNF')->get();
         // Pour les modales "Nouvelle boutique" / "Nouveau produit" du formulaire.
@@ -282,7 +287,7 @@ class PurchaseOrderController extends Controller
             'fund_id' => $validated['fund_id'] ?? null,
             'origin' => $validated['origin'],
             'currency_code' => $validated['origin'] === 'chine' ? $validated['currency_code'] : null,
-            ///'exchange_rate_used' => $validated['origin'] === 'chine' ? $validated['exchange_rate_used'] : null,
+            // /'exchange_rate_used' => $validated['origin'] === 'chine' ? $validated['exchange_rate_used'] : null,
             'exchange_rate_used' => $validated['exchange_rate_used'] ?? 1,
             'transport_cost_gnf' => $validated['transport_cost_gnf'] ?? 0,
             'customs_cost_gnf' => $validated['customs_cost_gnf'] ?? 0,
@@ -311,16 +316,16 @@ class PurchaseOrderController extends Controller
             // Retire du stock exactement ce que cet achat y avait ajouté.
             // (Le prix de revient du produit n'est pas "annulé" — s'il a été mis à jour
             // par un achat plus récent depuis, revenir en arrière serait incorrect.)
-            $stock = app(\App\Services\StockService::class);
+            $stock = app(StockService::class);
             foreach ($order->items as $item) {
                 $stock->forceDecrement((int) $order->store_id, (int) $item->product_id, (int) $item->quantity, [
-                    'type'         => \App\Models\StockMovement::PURCHASE_CANCEL,
-                    'source_type'  => 'purchase_order',
-                    'source_id'    => $order->id,
+                    'type' => StockMovement::PURCHASE_CANCEL,
+                    'source_type' => 'purchase_order',
+                    'source_id' => $order->id,
                     'document_ref' => $order->reference,
-                    'supplier_id'  => $order->partner_id,
-                    'fund_id'      => $order->fund_id,
-                    'reason'       => 'Annulation de l\'achat ' . $order->reference,
+                    'supplier_id' => $order->partner_id,
+                    'fund_id' => $order->fund_id,
+                    'reason' => 'Annulation de l\'achat '.$order->reference,
                 ]);
             }
 

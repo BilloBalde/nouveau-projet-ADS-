@@ -80,7 +80,7 @@ class StockServiceTest extends TestCase
             'quantity' => 10,
         ]);
 
-        $service = new StockService();
+        $service = new StockService;
 
         $this->assertTrue($service->decrementIfAvailable(7, 1, 3));
         $this->assertSame(7, DB::table('store_products')->where('product_id', 1)->where('store_id', 7)->value('quantity'));
@@ -104,7 +104,7 @@ class StockServiceTest extends TestCase
             'quantity' => 5,
         ]);
 
-        $service = new StockService();
+        $service = new StockService;
 
         $this->assertFalse($service->decrementIfAvailable(7, 1, 6));
         // Aucune écriture ne doit avoir eu lieu, pas même dans le journal.
@@ -117,7 +117,7 @@ class StockServiceTest extends TestCase
         DB::table('products')->insert(['id' => 1]);
         DB::table('store_products')->insert(['id' => 1, 'store_id' => 7, 'product_id' => 1, 'quantity' => 2]);
 
-        $service = new StockService();
+        $service = new StockService;
 
         // Aucune ligne store_products pour (store 9, product 1) au départ.
         $service->increment(9, 1, 4);

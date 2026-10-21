@@ -7,6 +7,8 @@ use App\Models\Store;
 use App\Models\User;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\Validation\ValidationException;
 
 class StoreController extends Controller
 {
@@ -22,10 +24,11 @@ class StoreController extends Controller
         $this->middleware('permission:stores.edit')->only(['edit', 'update']);
         $this->middleware('permission:stores.delete')->only(['destroy']);
     }
+
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function index()
     {
@@ -37,6 +40,7 @@ class StoreController extends Controller
             ->orderBy('type')
             ->orderBy('store_name')
             ->get();
+
         return view('stores.index', compact('dataTable'));
     }
 
@@ -47,11 +51,11 @@ class StoreController extends Controller
     private function locationRules(?int $storeId = null): array
     {
         return [
-            'type'      => 'nullable|in:' . implode(',', array_keys(Store::TYPES)),
-            'parent_id' => 'nullable|exists:stores,id' . ($storeId ? '|not_in:' . $storeId : ''),
-            'is_main'   => 'nullable|boolean',
-            'address'   => 'nullable|string|max:255',
-            'phone'     => 'nullable|string|max:255',
+            'type' => 'nullable|in:'.implode(',', array_keys(Store::TYPES)),
+            'parent_id' => 'nullable|exists:stores,id'.($storeId ? '|not_in:'.$storeId : ''),
+            'is_main' => 'nullable|boolean',
+            'address' => 'nullable|string|max:255',
+            'phone' => 'nullable|string|max:255',
         ];
     }
 
@@ -66,23 +70,23 @@ class StoreController extends Controller
         $parentId = $request->filled('parent_id') ? (int) $request->input('parent_id') : null;
 
         if ($store && $parentId && in_array($parentId, Store::withDescendantIds($store->id), true)) {
-            throw \Illuminate\Validation\ValidationException::withMessages([
+            throw ValidationException::withMessages([
                 'parent_id' => 'Un emplacement ne peut pas être rattaché à lui-même ni à l\'un de ses sous-emplacements.',
             ]);
         }
 
         if ($type === Store::TYPE_STOCK && ! $parentId) {
-            throw \Illuminate\Validation\ValidationException::withMessages([
+            throw ValidationException::withMessages([
                 'parent_id' => 'Un stock interne doit être rattaché à un magasin.',
             ]);
         }
 
         return array_filter([
-            'type'      => $type,
+            'type' => $type,
             'parent_id' => $parentId,
-            'is_main'   => $request->boolean('is_main'),
-            'address'   => $request->input('address', $store->address ?? null),
-            'phone'     => $request->input('phone', $store->phone ?? null),
+            'is_main' => $request->boolean('is_main'),
+            'address' => $request->input('address', $store->address ?? null),
+            'phone' => $request->input('phone', $store->phone ?? null),
         ], fn ($v) => $v !== null) + ['parent_id' => $parentId];
     }
 
@@ -97,52 +101,52 @@ class StoreController extends Controller
     /**
      * Show the form for creating a new resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function create()
     {
         $places = Place::all();
         $users = User::where('id', '>', 2)->get();
         $parents = Store::optionsFor(null, false);
+
         return view('stores.create', compact('places', 'users', 'parents'));
     }
 
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function store(Request $request)
     {
         $request->validate([
-           'store_name' =>'required|string|max:255',
-            'place_id' =>'required|integer',
-            'user_id' =>'required|integer',
-           'status' =>'required|integer',
-           'store_picture' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
-            'description' =>'required|string|max:255'
+            'store_name' => 'required|string|max:255',
+            'place_id' => 'required|integer',
+            'user_id' => 'required|integer',
+            'status' => 'required|integer',
+            'store_picture' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'description' => 'required|string|max:255',
         ] + $this->locationRules());
 
         $location = $this->locationData($request);
 
-        if(request()->hasfile('store_picture')){
+        if (request()->hasfile('store_picture')) {
             $storeName = time().'.'.request()->store_picture->getClientOriginalExtension();
             request()->store_picture->move(public_path('stores'), $storeName);
         }
-        try{
+        try {
             $store = Store::create([
                 'store_name' => $request->store_name,
                 'place_id' => $request->place_id,
                 'user_id' => $request->user_id,
                 'status' => $request->status,
                 'store_picture' => $storeName ?? '',
-                'description' => $request->description
+                'description' => $request->description,
             ] + $location);
             $this->syncMainStore($store);
+
             return redirect()->route('boutiques.index')->with('success', 'Stock crée avec succès.');
-        }
-        catch(\Exception $e) {
+        } catch (\Exception $e) {
             return back()->with('fall', 'une erreur lors de lajout, voici le message : '.$e->getMessage());
         }
     }
@@ -180,7 +184,7 @@ class StoreController extends Controller
                 'success' => true,
                 'store' => [
                     'id' => $store->id,
-                    'store_name' => $store->full_name . ' (' . $store->type_label . ')',
+                    'store_name' => $store->full_name.' ('.$store->type_label.')',
                 ],
             ]);
         } catch (\Throwable $e) {
@@ -192,7 +196,7 @@ class StoreController extends Controller
      * Display the specified resource.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function show($id)
     {
@@ -203,7 +207,7 @@ class StoreController extends Controller
      * Show the form for editing the specified resource.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function edit($id)
     {
@@ -211,35 +215,35 @@ class StoreController extends Controller
         $places = Place::all();
         $users = User::all();
         $parents = Store::optionsFor(null, false)->whereNotIn('id', Store::withDescendantIds($store->id));
-        return view('stores.edit', compact('store','places', 'users', 'parents'));
+
+        return view('stores.edit', compact('store', 'places', 'users', 'parents'));
 
     }
 
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function update(Request $request, $id)
     {
-        //dd($id);
+        // dd($id);
         $request->validate([
             'place_id' => ['required', 'integer'],
             'user_id' => ['required', 'integer'],
-            'status' => ['required','string'],
-            'description' => ['required','string'],
+            'status' => ['required', 'string'],
+            'description' => ['required', 'string'],
         ] + $this->locationRules((int) $id));
         $store = Store::findOrFail($id);
         $location = $this->locationData($request, $store);
-        if(request()->hasfile('store_picture')){
+        if (request()->hasfile('store_picture')) {
             $storeName = time().'.'.request()->store_picture->getClientOriginalExtension();
             request()->store_picture->move(public_path('stores'), $storeName);
             $store->store_picture = $storeName;
         }
 
-        try{
+        try {
             $store->store_name = $request->store_name;
             $store->place_id = $request->place_id;
             $store->user_id = $request->user_id;
@@ -248,9 +252,9 @@ class StoreController extends Controller
             $store->fill($location);
             $store->save();
             $this->syncMainStore($store);
+
             return redirect()->route('boutiques.index')->with('success', 'Stock modifié '.$request->store_name.' avec succès.');
-        }
-        catch(\Exception $e) {
+        } catch (\Exception $e) {
             return back()->with('fall', 'une erreur lors de la modification, voici le message : '.$e->getMessage());
         }
     }
@@ -259,7 +263,7 @@ class StoreController extends Controller
      * Remove the specified resource from storage.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function destroy($id)
     {
@@ -274,9 +278,10 @@ class StoreController extends Controller
             $firstStore = Store::orderBy('id')->first()?->id;
             if ($id == $firstStore) {
                 return back()->with('error', 'Impossible de supprimer cette boutique, car elle est la seule');
-            }else{
+            } else {
                 $store->delete();
             }
+
             return redirect()->route('boutiques.index')->with('success', 'Boutique supprimée avec succès.');
         } catch (QueryException $e) {
             // Erreur 1451 = violation de clé étrangère (ventes, achats, factures, devis...
@@ -284,9 +289,10 @@ class StoreController extends Controller
             if ((int) $e->getCode() === 23000) {
                 return back()->with('error', 'Impossible de supprimer cette boutique : elle a des ventes, achats, factures ou d\'autres données associées. Désactivez-la plutôt avec le bouton Statut.');
             }
-            return back()->with('error', 'Erreur lors de la suppression : ' . $e->getMessage());
+
+            return back()->with('error', 'Erreur lors de la suppression : '.$e->getMessage());
         } catch (\Throwable $th) {
-            return back()->with('error', 'Erreur lors de la suppression : ' . $th->getMessage());
+            return back()->with('error', 'Erreur lors de la suppression : '.$th->getMessage());
         }
     }
 }

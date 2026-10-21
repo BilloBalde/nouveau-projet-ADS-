@@ -17,27 +17,36 @@ class StockMovement extends Model
     use Concerns\FigeUniteProduit;
 
     public const PURCHASE = 'PURCHASE';
+
     public const PURCHASE_CANCEL = 'PURCHASE_CANCEL';
+
     public const SALE = 'SALE';
+
     public const SALE_RETURN = 'RETURN';
+
     public const TRANSFER_OUT = 'TRANSFER_OUT';
+
     public const TRANSFER_IN = 'TRANSFER_IN';
+
     public const ADJUSTMENT = 'ADJUSTMENT';
+
     public const INVENTORY = 'INVENTORY';
+
     public const CORRECTION = 'CORRECTION';
+
     public const INITIAL = 'INITIAL';
 
     public const LABELS = [
-        self::PURCHASE        => 'Achat',
+        self::PURCHASE => 'Achat',
         self::PURCHASE_CANCEL => 'Annulation d\'achat',
-        self::SALE            => 'Vente',
-        self::SALE_RETURN     => 'Retour / annulation de vente',
-        self::TRANSFER_OUT    => 'Transfert sortant',
-        self::TRANSFER_IN     => 'Transfert entrant',
-        self::ADJUSTMENT      => 'Ajustement',
-        self::INVENTORY       => 'Inventaire',
-        self::CORRECTION      => 'Correction',
-        self::INITIAL         => 'Stock initial',
+        self::SALE => 'Vente',
+        self::SALE_RETURN => 'Retour / annulation de vente',
+        self::TRANSFER_OUT => 'Transfert sortant',
+        self::TRANSFER_IN => 'Transfert entrant',
+        self::ADJUSTMENT => 'Ajustement',
+        self::INVENTORY => 'Inventaire',
+        self::CORRECTION => 'Correction',
+        self::INITIAL => 'Stock initial',
     ];
 
     protected $fillable = [

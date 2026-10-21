@@ -12,22 +12,25 @@ use Illuminate\Database\Eloquent\Model;
 class FundTransaction extends Model
 {
     public const APPORT = 'apport';
+
     public const REMBOURSEMENT_CAPITAL = 'remboursement_capital';
+
     public const VERSEMENT_BENEFICE = 'versement_benefice';
+
     public const PRELEVEMENT_PATRON = 'prelevement_patron';
 
     public const TYPES = [
-        self::APPORT                => 'Apport de capital',
+        self::APPORT => 'Apport de capital',
         self::REMBOURSEMENT_CAPITAL => 'Remboursement de capital',
-        self::VERSEMENT_BENEFICE    => 'Versement de bénéfice à l\'associé',
-        self::PRELEVEMENT_PATRON    => 'Prélèvement de la part du patron',
+        self::VERSEMENT_BENEFICE => 'Versement de bénéfice à l\'associé',
+        self::PRELEVEMENT_PATRON => 'Prélèvement de la part du patron',
     ];
 
     protected $fillable = ['fund_id', 'type', 'amount', 'date', 'reference', 'notes', 'user_id'];
 
     protected $casts = [
         'amount' => 'float',
-        'date'   => 'date',
+        'date' => 'date',
     ];
 
     public function fund()

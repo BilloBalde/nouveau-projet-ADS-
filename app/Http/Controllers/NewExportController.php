@@ -1,14 +1,15 @@
 <?php
+
 // app/Http/Controllers/NewExportController.php
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Product;
-use App\Models\Store;
-use Maatwebsite\Excel\Facades\Excel;
 use Barryvdh\DomPDF\Facade\Pdf;
-use Illuminate\Support\Facades\DB;
+use Maatwebsite\Excel\Concerns\FromArray;
+use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithTitle;
+use Maatwebsite\Excel\Facades\Excel;
 
 class NewExportController extends Controller
 {
@@ -20,23 +21,23 @@ class NewExportController extends Controller
         // Augmenter les ressources
         ini_set('memory_limit', '512M');
         ini_set('max_execution_time', 300);
-        
+
         try {
             // Charger les produits par lots
             $products = Product::with(['categories', 'stores'])
-                        ->select('id', 'libelle', 'sku', 'price', 'image', 'updated_at')
-                        ->get();
-            
+                ->select('id', 'libelle', 'sku', 'price', 'image', 'updated_at')
+                ->get();
+
             // Préparer les données pour l'export
             $exportData = [];
-            
+
             foreach ($products as $product) {
                 // Calculer la quantité selon le rôle
                 $quantity = $this->calculateQuantity($product);
-                
+
                 // Récupérer les catégories
                 $categories = $product->categories->pluck('slug')->implode(', ');
-                
+
                 $exportData[] = [
                     'Nom' => $product->libelle,
                     'SKU' => $product->sku,
@@ -48,43 +49,42 @@ class NewExportController extends Controller
                     'Date' => $product->updated_at ? $product->updated_at->format('d/m/Y') : '',
                 ];
             }
-            
+
             // Créer le fichier Excel
             return Excel::download(
-                new class($exportData) implements \Maatwebsite\Excel\Concerns\FromArray, 
-                                                        \Maatwebsite\Excel\Concerns\WithHeadings,
-                                                        \Maatwebsite\Excel\Concerns\WithTitle {
+                new class($exportData) implements FromArray, WithHeadings, WithTitle
+                {
                     protected $data;
-                    
+
                     public function __construct($data)
                     {
                         $this->data = $data;
                     }
-                    
+
                     public function array(): array
                     {
                         return $this->data;
                     }
-                    
+
                     public function headings(): array
                     {
                         return ['Nom', 'SKU', 'Catégories', 'Quantité', 'Unité', 'Prix par unité (F)', 'Date'];
                     }
-                    
+
                     public function title(): string
                     {
                         return 'Produits';
                     }
                 },
-                'produits_' . date('Y-m-d') . '.xlsx'
+                'produits_'.date('Y-m-d').'.xlsx'
             );
-            
+
         } catch (\Exception $e) {
             return response()->json([
                 'error' => true,
                 'message' => $e->getMessage(),
                 'file' => $e->getFile(),
-                'line' => $e->getLine()
+                'line' => $e->getLine(),
             ]);
         }
     }
@@ -92,16 +92,16 @@ class NewExportController extends Controller
     public function exportHtmlReport()
     {
         $products = Product::with(['categories', 'stores'])->get();
-        
+
         // Optionnel: Filtrer les produits par boutique si nécessaire
         if (auth()->check() && auth()->user()->isStoreScoped()) {
             $storeId = auth()->user()->assignedStoreId();
             // Vous pouvez ajouter un filtre ici si besoin
         }
-        
+
         return view('products.products-html', compact('products'));
     }
-    
+
     /**
      * Export PDF complet (avec images)
      */
@@ -110,12 +110,12 @@ class NewExportController extends Controller
         // Augmenter les ressources
         ini_set('memory_limit', '1024M');
         ini_set('max_execution_time', 600);
-        
+
         try {
             $products = Product::with(['categories', 'stores'])->get();
-            
+
             $html = $this->generatePdfHtml($products, true);
-            
+
             $pdf = Pdf::loadHTML($html);
             $pdf->setPaper('A4', 'landscape');
             $pdf->setOptions([
@@ -124,14 +124,14 @@ class NewExportController extends Controller
                 'isRemoteEnabled' => true,
                 'dpi' => 96,
             ]);
-            
-            return $pdf->download('produits_complets_' . date('Y-m-d') . '.pdf');
-            
+
+            return $pdf->download('produits_complets_'.date('Y-m-d').'.pdf');
+
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()]);
         }
     }
-    
+
     /**
      * Export PDF simplifié (SANS images) - RECOMMANDÉ
      */
@@ -140,33 +140,33 @@ class NewExportController extends Controller
         // Ressources normales car pas d'images
         ini_set('memory_limit', '256M');
         ini_set('max_execution_time', 120);
-        
+
         try {
             // Charger sans les relations lourdes
             $products = Product::with('categories')
-                        ->select('id', 'libelle', 'sku', 'price', 'updated_at')
-                        ->get();
-            
+                ->select('id', 'libelle', 'sku', 'price', 'updated_at')
+                ->get();
+
             $html = $this->generatePdfHtml($products, false);
-            
+
             $pdf = Pdf::loadHTML($html);
             $pdf->setPaper('A4', 'landscape');
-            
-            return $pdf->download('produits_simples_' . date('Y-m-d') . '.pdf');
-            
+
+            return $pdf->download('produits_simples_'.date('Y-m-d').'.pdf');
+
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()]);
         }
     }
-    
+
     /**
      * Export CSV (ultra léger)
      */
     public function exportCsv()
     {
         try {
-            $filename = 'produits_' . date('Y-m-d') . '.csv';
-            
+            $filename = 'produits_'.date('Y-m-d').'.csv';
+
             $headers = [
                 'Content-Type' => 'text/csv',
                 'Content-Disposition' => "attachment; filename=\"$filename\"",
@@ -174,23 +174,23 @@ class NewExportController extends Controller
                 'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
                 'Expires' => '0',
             ];
-            
-            $callback = function() {
+
+            $callback = function () {
                 $handle = fopen('php://output', 'w');
-                
+
                 // En-têtes UTF-8 avec BOM pour Excel
                 fprintf($handle, chr(0xEF).chr(0xBB).chr(0xBF));
-                
+
                 // En-têtes CSV
                 fputcsv($handle, ['Nom', 'SKU', 'Catégories', 'Stock', 'Unité', 'Prix par unité (F)', 'Date']);
-                
+
                 // Traiter par lots
                 Product::with('categories', 'stores')
-                    ->chunk(100, function($products) use ($handle) {
+                    ->chunk(100, function ($products) use ($handle) {
                         foreach ($products as $product) {
                             $quantity = $this->calculateQuantity($product);
                             $categories = $product->categories->pluck('slug')->implode('|');
-                            
+
                             fputcsv($handle, [
                                 $product->libelle,
                                 $product->sku,
@@ -202,17 +202,17 @@ class NewExportController extends Controller
                             ]);
                         }
                     });
-                
+
                 fclose($handle);
             };
-            
+
             return response()->stream($callback, 200, $headers);
-            
+
         } catch (\Exception $e) {
-            return back()->with('error', 'Erreur: ' . $e->getMessage());
+            return back()->with('error', 'Erreur: '.$e->getMessage());
         }
     }
-    
+
     /**
      * Calculer la quantité selon le rôle
      */
@@ -221,14 +221,15 @@ class NewExportController extends Controller
         if (auth()->check() && auth()->user()->isStoreScoped()) {
             $storeId = auth()->user()->assignedStoreId();
             $store = $product->stores->firstWhere('id', $storeId);
+
             return $store ? $store->pivot->quantity : 0;
         }
-        
-        return $product->stores->sum(function($store) {
+
+        return $product->stores->sum(function ($store) {
             return $store->pivot->quantity ?? 0;
         });
     }
-    
+
     /**
      * Générer le HTML pour le PDF
      */
@@ -254,8 +255,8 @@ class NewExportController extends Controller
         </head>
         <body>
             <h1>Liste des produits</h1>
-            <p>Date d\'export: ' . date('d/m/Y H:i:s') . '</p>
-            <p>Total produits: ' . $products->count() . '</p>
+            <p>Date d\'export: '.date('d/m/Y H:i:s').'</p>
+            <p>Total produits: '.$products->count().'</p>
             
             <table>
                 <thead>
@@ -265,54 +266,54 @@ class NewExportController extends Controller
                         <th>Catégories</th>
                         <th>Stock</th>
                         <th>Prix (F)</th>';
-        
+
         if ($includeImages) {
             $html .= '<th>Image</th>';
         }
-        
+
         $html .= '<th>Date</th>
                     </tr>
                 </thead>
                 <tbody>';
-        
+
         foreach ($products as $product) {
             $quantity = $this->calculateQuantity($product);
             $categories = $product->categories->pluck('slug')->implode(', ');
-            
+
             $html .= '<tr>
-                        <td>' . htmlspecialchars($product->libelle) . '</td>
-                        <td>' . htmlspecialchars($product->sku ?? 'N/A') . '</td>
-                        <td>' . htmlspecialchars($categories) . '</td>
-                        <td>' . htmlspecialchars($product->quantiteAvecUnite($quantity)) . '</td>
-                        <td>' . number_format($product->price ?? 0, 0, ',', ' ') . ' F / ' . htmlspecialchars(Product::motUnite($product->unite)) . '</td>';
-            
+                        <td>'.htmlspecialchars($product->libelle).'</td>
+                        <td>'.htmlspecialchars($product->sku ?? 'N/A').'</td>
+                        <td>'.htmlspecialchars($categories).'</td>
+                        <td>'.htmlspecialchars($product->quantiteAvecUnite($quantity)).'</td>
+                        <td>'.number_format($product->price ?? 0, 0, ',', ' ').' F / '.htmlspecialchars(Product::motUnite($product->unite)).'</td>';
+
             if ($includeImages && $product->image) {
-                $imagePath = public_path('products/' . $product->image);
-                
+                $imagePath = public_path('products/'.$product->image);
+
                 if (file_exists($imagePath)) {
                     // Lire l'image et la convertir en base64
                     $imageData = file_get_contents($imagePath);
-                    $base64Image = 'data:image/' . pathinfo($imagePath, PATHINFO_EXTENSION) . ';base64,' . base64_encode($imageData);
-                    
-                    $html .= '<td><img src="' . $base64Image . '" class="product-image" alt="' . htmlspecialchars($product->libelle) . '"></td>';
+                    $base64Image = 'data:image/'.pathinfo($imagePath, PATHINFO_EXTENSION).';base64,'.base64_encode($imageData);
+
+                    $html .= '<td><img src="'.$base64Image.'" class="product-image" alt="'.htmlspecialchars($product->libelle).'"></td>';
                 } else {
                     $html .= '<td class="no-image">Image non trouvée</td>';
                 }
             }
-            $html .= '<td>' . ($product->updated_at ? $product->updated_at->format('d/m/Y') : '') . '</td>
+            $html .= '<td>'.($product->updated_at ? $product->updated_at->format('d/m/Y') : '').'</td>
                     </tr>';
         }
-        
+
         $html .= '
                 </tbody>
             </table>
             
             <div class="footer">
-                Document généré le ' . date('d/m/Y H:i:s') . '
+                Document généré le '.date('d/m/Y H:i:s').'
             </div>
         </body>
         </html>';
-        
+
         return $html;
     }
 }

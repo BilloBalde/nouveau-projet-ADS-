@@ -7,18 +7,31 @@ use Illuminate\View\Component;
 class FileUpload extends Component
 {
     public $name;
+
     public $label;
+
     public $oldValue;
+
     public $accept;
+
     public $multiple;
+
     public $preview;
+
     public $helpText;
+
     public $required;
+
     public $existingImage;
+
     public $deleteRoute;
+
     public $imageId;
+
     public $maxSize;
+
     public $wrapperClass;
+
     public $showPreview;
 
     public function __construct(

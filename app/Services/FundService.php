@@ -112,8 +112,10 @@ class FundService
             ->orderBy('s.id')
             ->get();
 
-        $ventesFacturees = 0.0; $coutFacture = 0.0;
-        $ventesEncaissees = 0.0; $coutEncaisse = 0.0;
+        $ventesFacturees = 0.0;
+        $coutFacture = 0.0;
+        $ventesEncaissees = 0.0;
+        $coutEncaisse = 0.0;
         foreach ($lines as $line) {
             $cout = (float) ($line->unit_cost ?? ($costs[$line->product_id] ?? 0)) * (int) $line->quantity;
             $ratio = (float) $line->montant_total > 0
@@ -155,29 +157,29 @@ class FundService
         $tresorerie = $apports - $achats + $ventesEncaissees - $rembourse - $verseBenefice - $preleve;
 
         return [
-            'apports'              => $apports,
-            'achats'               => $achats,
-            'capital_disponible'   => round($this->uninvested($apports, $achats, $rembourse + $verseBenefice + $preleve, $ventesEncaissees), 2),
-            'capital_rembourse'    => $rembourse,
-            'capital_restant'      => round($apports - $rembourse, 2),
-            'stock_qty'            => $stockQty,
-            'stock_valeur'         => round($stockValue, 2),
-            'ventes_facturees'     => round($ventesFacturees, 2),
-            'ventes_encaissees'    => round($ventesEncaissees, 2),
-            'reste_a_encaisser'    => round($ventesFacturees - $ventesEncaissees, 2),
-            'cout_encaisse'        => round($coutEncaisse, 2),
-            'benefice_encaisse'    => round($beneficeEncaisse, 2),
-            'benefice_en_attente'  => round(($ventesFacturees - $coutFacture) - $beneficeEncaisse, 2),
-            'ecarts_stock'         => round($ecarts, 2),
-            'resultat'             => round($resultat, 2),
-            'part_associe'         => $partAssocie,
-            'part_patron'          => $partPatron,
-            'benefice_verse'       => $verseBenefice,
-            'benefice_a_verser'    => round($partAssocie - $verseBenefice, 2),
+            'apports' => $apports,
+            'achats' => $achats,
+            'capital_disponible' => round($this->uninvested($apports, $achats, $rembourse + $verseBenefice + $preleve, $ventesEncaissees), 2),
+            'capital_rembourse' => $rembourse,
+            'capital_restant' => round($apports - $rembourse, 2),
+            'stock_qty' => $stockQty,
+            'stock_valeur' => round($stockValue, 2),
+            'ventes_facturees' => round($ventesFacturees, 2),
+            'ventes_encaissees' => round($ventesEncaissees, 2),
+            'reste_a_encaisser' => round($ventesFacturees - $ventesEncaissees, 2),
+            'cout_encaisse' => round($coutEncaisse, 2),
+            'benefice_encaisse' => round($beneficeEncaisse, 2),
+            'benefice_en_attente' => round(($ventesFacturees - $coutFacture) - $beneficeEncaisse, 2),
+            'ecarts_stock' => round($ecarts, 2),
+            'resultat' => round($resultat, 2),
+            'part_associe' => $partAssocie,
+            'part_patron' => $partPatron,
+            'benefice_verse' => $verseBenefice,
+            'benefice_a_verser' => round($partAssocie - $verseBenefice, 2),
             'part_patron_prelevee' => $preleve,
             'part_patron_restante' => round($partPatron - $preleve, 2),
-            'tresorerie'           => round($tresorerie, 2),
-            'lignes'               => $lines,
+            'tresorerie' => round($tresorerie, 2),
+            'lignes' => $lines,
         ];
     }
 }

@@ -8,9 +8,11 @@ use Illuminate\Database\Eloquent\Model;
 class Place extends Model
 {
     use HasFactory;
+
     protected $guarded = ['id'];
 
-    public function boutiques(){
+    public function boutiques()
+    {
         return $this->hasMany(Store::class);
     }
 }

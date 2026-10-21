@@ -172,7 +172,7 @@ class SmsService
         $instance = env('ULTRAMSG_INSTANCE');
         $token = env('ULTRAMSG_TOKEN');
 
-        if (!$instance || !$token) {
+        if (! $instance || ! $token) {
             Log::warning('UltraMsg non configuré');
 
             return $this->sendLog($phone, $message);
@@ -195,10 +195,9 @@ class SmsService
             'response' => $response->json(),
         ]);
 
-
-        if (!$response->successful()) {
+        if (! $response->successful()) {
             Log::error('Erreur WhatsApp UltraMsg', [
-                'body' => $response->body()
+                'body' => $response->body(),
             ]);
         }
 

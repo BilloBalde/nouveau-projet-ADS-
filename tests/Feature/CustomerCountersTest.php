@@ -4,10 +4,10 @@ namespace Tests\Feature;
 
 use App\Models\Customer;
 use App\Models\Facture;
-use App\Models\Payment;
 use App\Models\Place;
 use App\Models\Store;
 use App\Models\User;
+use Database\Seeders\RolesSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
@@ -27,13 +27,14 @@ class CustomerCountersTest extends TestCase
     use RefreshDatabase;
 
     private Customer $client;
+
     private Store $boutique;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->seed(\Database\Seeders\RolesSeeder::class);
+        $this->seed(RolesSeeder::class);
 
         $gerant = User::create([
             'name' => 'Gerant Compteurs',

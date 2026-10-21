@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Place;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
@@ -13,21 +14,23 @@ class PlaceController extends Controller
     {
         $this->middleware('auth.check');
     }
+
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function index()
     {
         $dataTable = Place::all();
+
         return view('places.index', compact('dataTable'));
     }
 
     /**
      * Show the form for creating a new resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function create()
     {
@@ -37,38 +40,39 @@ class PlaceController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @param  Request  $request
+     * @return Response
      */
-
-    public function validateform($request){
+    public function validateform($request)
+    {
         $validate = Validator::make($request->all(), [
-            'placeName'=>'required|max:25',
-            'countryName'=>'required',
-            'description'=>'required',
-        ],[
+            'placeName' => 'required|max:25',
+            'countryName' => 'required',
+            'description' => 'required',
+        ], [
             'placeName.required' => 'champ placeName doit etre rempli.',
             'placeName.max' => 'champ placeName prend maximum 25 charactere.',
             'countryName.required' => 'champ countryName est obligatoire.',
             'description.required' => 'champ description doit etre rempli.',
         ]);
+
         return $validate;
     }
 
     public function store(Request $request)
     {
-        //dd('I got the error message here');
+        // dd('I got the error message here');
         Log::info('Store method called');
         Log::info($request->all());
         $request->validate([
             'placeName' => 'required|string|max:255',
             'countryName' => 'required|string|max:255',
             'description' => 'nullable|string',
-        ],[
+        ], [
             'placeName.required' => 'champ placeName doit etre rempli',
             'placeName.max' => 'champ placeName prend maximum 25 characteres.',
             'placeName.string' => 'champ placeName prend que de chaine de caractères.',
-            'countryName.required' => 'veuillez selectionner le pays'
+            'countryName.required' => 'veuillez selectionner le pays',
         ]);
         try {
             Place::updateOrCreate(['id' => $request->id], [
@@ -76,12 +80,13 @@ class PlaceController extends Controller
                 'countryName' => $request->countryName,
                 'description' => $request->description,
             ]);
-            if(!empty($request->id)) {
-                session(['error' => 'Place '. $request->id.' modifié avec succès.']);
+            if (! empty($request->id)) {
+                session(['error' => 'Place '.$request->id.' modifié avec succès.']);
             } else {
                 session(['success' => 'Nouveau Place enregistré']);
             }
-            return redirect()->route('places.index')->with('success','Place added successfully.');
+
+            return redirect()->route('places.index')->with('success', 'Place added successfully.');
         } catch (\Throwable $th) {
             return redirect()->route('places.index')->with(['error' => $th->getMessage()], 500);
         }
@@ -91,7 +96,7 @@ class PlaceController extends Controller
      * Display the specified resource.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function show($id)
     {
@@ -102,20 +107,20 @@ class PlaceController extends Controller
      * Show the form for editing the specified resource.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function edit($id)
     {
         $place = Place::find($id);
+
         return view('places.edit', compact('place'));
     }
 
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function update(Request $request, $id)
     {
@@ -125,11 +130,11 @@ class PlaceController extends Controller
             'placeName' => 'required|string|max:255',
             'countryName' => 'required|string|max:255',
             'description' => 'nullable|string',
-        ],[
+        ], [
             'placeName.required' => 'champ placeName doit etre rempli',
             'placeName.max' => 'champ placeName prend maximum 25 characteres.',
             'placeName.string' => 'champ placeName prend que de chaine de caractères.',
-            'countryName.required' => 'veuillez selectionner le pays'
+            'countryName.required' => 'veuillez selectionner le pays',
         ]);
         try {
             Place::updateOrCreate(['id' => $id], [
@@ -137,12 +142,13 @@ class PlaceController extends Controller
                 'countryName' => $request->countryName,
                 'description' => $request->description,
             ]);
-            if(!empty($request->id)) {
-                session(['error' => 'Place '. $request->id.' modifié avec succès.']);
+            if (! empty($request->id)) {
+                session(['error' => 'Place '.$request->id.' modifié avec succès.']);
             } else {
                 session(['success' => 'Nouveau Place enregistré']);
             }
-            return redirect()->route('places.index')->with('success','Place added successfully.');
+
+            return redirect()->route('places.index')->with('success', 'Place added successfully.');
         } catch (\Throwable $th) {
             return redirect()->route('places.index')->with(['error' => $th->getMessage()], 500);
         }
@@ -152,7 +158,7 @@ class PlaceController extends Controller
      * Remove the specified resource from storage.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function destroy($id)
     {

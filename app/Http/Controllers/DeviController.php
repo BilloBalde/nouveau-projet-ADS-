@@ -1,16 +1,20 @@
 <?php
+
 // app/Http/Controllers/DevisController.php
 
 namespace App\Http\Controllers;
 
+use App\Models\Company;
+use App\Models\Customer;
 use App\Models\Devi;
 use App\Models\DeviLine;
+use App\Models\Fund;
 use App\Models\Product;
-use App\Models\Customer;
 use App\Models\Store;
+use App\Services\FundService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Barryvdh\DomPDF\Facade\Pdf;
 
 class DeviController extends Controller
 {
@@ -32,7 +36,7 @@ class DeviController extends Controller
         $query = Devi::with(['store', 'customer', 'createdBy']);
 
         if ($request->filled('numero_devis')) {
-            $query->where('numero_devis', 'like', '%' . $request->numero_devis . '%');
+            $query->where('numero_devis', 'like', '%'.$request->numero_devis.'%');
         }
 
         if ($request->filled('customer_id')) {
@@ -83,7 +87,8 @@ class DeviController extends Controller
             $userStoreId = auth()->user()->assignedStoreId();
         }
 
-        $funds = \App\Models\Fund::active()->orderBy('name')->get(['id', 'name']);
+        $funds = Fund::active()->orderBy('name')->get(['id', 'name']);
+
         return view('devis.create', compact('stores', 'products', 'customers', 'userStoreId', 'funds'));
     }
 
@@ -121,7 +126,7 @@ class DeviController extends Controller
         try {
             // Create customer if new
             $customerId = $request->customer_id;
-            if (!$customerId && $request->customer_name) {
+            if (! $customerId && $request->customer_name) {
                 $customer = Customer::create([
                     'customerName' => $request->customer_name,
                     'tel' => $request->customer_phone ?? 'N/A',
@@ -170,7 +175,8 @@ class DeviController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Erreur: ' . $e->getMessage());
+
+            return back()->with('error', 'Erreur: '.$e->getMessage());
         }
     }
 
@@ -180,7 +186,7 @@ class DeviController extends Controller
         $this->autoriserPerimetre($devis->store_id, 'Ce devis appartient à un autre magasin.');
 
         // Get company info for PDF
-        $company = \App\Models\Company::current();
+        $company = Company::current();
 
         return view('devis.show', compact('devis', 'company'));
     }
@@ -208,7 +214,8 @@ class DeviController extends Controller
             });
         $customers = Customer::all();
 
-        $funds = \App\Models\Fund::orderBy('name')->get(['id', 'name']);
+        $funds = Fund::orderBy('name')->get(['id', 'name']);
+
         return view('devis.edit', compact('devis', 'stores', 'products', 'customers', 'funds'));
     }
 
@@ -292,14 +299,15 @@ class DeviController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Erreur: ' . $e->getMessage());
+
+            return back()->with('error', 'Erreur: '.$e->getMessage());
         }
     }
 
     /** Première ligne vendue sous le plancher de vente du produit, ou null. */
     private function erreurDePrix(array $lignes): ?string
     {
-        $funds = app(\App\Services\FundService::class);
+        $funds = app(FundService::class);
         foreach ($lignes as $ligne) {
             $produit = Product::find($ligne['product_id'] ?? null);
             if (! $produit) {
@@ -377,10 +385,10 @@ class DeviController extends Controller
             $facture = $devis->validate();
 
             return redirect()->route('factures.show', $facture->numero_facture)
-                ->with('success', 'Devi validé avec succès. Facture #' . $facture->numero_facture . ' créée.');
+                ->with('success', 'Devi validé avec succès. Facture #'.$facture->numero_facture.' créée.');
 
         } catch (\Exception $e) {
-            return back()->with('error', 'Erreur: ' . $e->getMessage());
+            return back()->with('error', 'Erreur: '.$e->getMessage());
         }
     }
 
@@ -388,7 +396,7 @@ class DeviController extends Controller
     {
         $devis = Devi::with(['lines.product', 'store', 'customer', 'createdBy'])->findOrFail($id);
         $this->autoriserPerimetre($devis->store_id, 'Ce devis appartient à un autre magasin.');
-        $company = \App\Models\Company::current();
+        $company = Company::current();
 
         return view('devis.pdf', compact('devis', 'company'));
     }
@@ -397,7 +405,7 @@ class DeviController extends Controller
     {
         $devis = Devi::with(['lines.product', 'store', 'customer', 'createdBy'])->findOrFail($id);
         $this->autoriserPerimetre($devis->store_id, 'Ce devis appartient à un autre magasin.');
-        $company = \App\Models\Company::current();
+        $company = Company::current();
 
         $html = view('devis.pdf', compact('devis', 'company'))->render();
 
@@ -409,7 +417,7 @@ class DeviController extends Controller
             'isRemoteEnabled' => true,
         ]);
 
-        return $pdf->download('Devis_' . $devis->numero_devis . '.pdf');
+        return $pdf->download('Devis_'.$devis->numero_devis.'.pdf');
     }
 
     /**
@@ -419,7 +427,7 @@ class DeviController extends Controller
     {
         $devis = Devi::with(['lines.product', 'store', 'customer', 'createdBy'])->findOrFail($id);
         $this->autoriserPerimetre($devis->store_id, 'Ce devis appartient à un autre magasin.');
-        $company = \App\Models\Company::current();
+        $company = Company::current();
 
         $pdf = Pdf::loadView('devis.pdf', compact('devis', 'company'));
         $pdf->setPaper('A4', 'portrait');
@@ -429,6 +437,6 @@ class DeviController extends Controller
             'isRemoteEnabled' => true,
         ]);
 
-        return $pdf->download('Devis_' . $devis->numero_devis . '.pdf');
+        return $pdf->download('Devis_'.$devis->numero_devis.'.pdf');
     }
 }

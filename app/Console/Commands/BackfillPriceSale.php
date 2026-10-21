@@ -36,6 +36,7 @@ class BackfillPriceSale extends Command
 
                 if ($latestPrice === null) {
                     $skipped++;
+
                     continue;
                 }
 

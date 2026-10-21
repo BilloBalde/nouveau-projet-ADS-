@@ -39,6 +39,7 @@ class SectionController extends Controller
             foreach ($children->get($id, collect()) as $child) {
                 $ids = array_merge($ids, $descendants($child->id));
             }
+
             return $ids;
         };
 
@@ -51,12 +52,13 @@ class SectionController extends Controller
             ->filter(fn ($s) => ! $user->isRestrictedToStore() || in_array($s->id, $user->accessibleStoreIds(), true) || $s->id === $user->assignedStoreId())
             ->map(function ($s) use ($descendants, $stock, $today, $staff, $stores) {
                 $ids = $descendants($s->id);
+
                 return (object) [
-                    'store'     => $s,
+                    'store' => $s,
                     'locations' => $stores->whereIn('id', array_diff($ids, [$s->id]))->values(),
-                    'stock'     => (int) collect($ids)->sum(fn ($id) => $stock[$id] ?? 0),
-                    'ca_today'  => (float) collect($ids)->sum(fn ($id) => $today[$id] ?? 0),
-                    'staff'     => (int) collect($ids)->sum(fn ($id) => $staff[$id] ?? 0),
+                    'stock' => (int) collect($ids)->sum(fn ($id) => $stock[$id] ?? 0),
+                    'ca_today' => (float) collect($ids)->sum(fn ($id) => $today[$id] ?? 0),
+                    'staff' => (int) collect($ids)->sum(fn ($id) => $staff[$id] ?? 0),
                 ];
             })->values();
 
@@ -94,6 +96,6 @@ class SectionController extends Controller
         $store = Store::findOrFail($data['section_id']);
         $request->session()->put('section_id', $store->id);
 
-        return redirect()->route('home')->with('success', 'Section « ' . $store->store_name . ' » : l\'application est limitée à cette section.');
+        return redirect()->route('home')->with('success', 'Section « '.$store->store_name.' » : l\'application est limitée à cette section.');
     }
 }

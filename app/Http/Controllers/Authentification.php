@@ -2,16 +2,20 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\ContactMail;
 use App\Mail\PasswordMail;
 use App\Mail\UserMail;
-use App\Mail\ContactMail;
+use App\Models\Company;
+use App\Models\Permission;
+use App\Models\Place;
+use App\Models\Role;
+use App\Models\Store;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Password;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
@@ -28,13 +32,15 @@ class Authentification extends Controller
         return view('users.login');
     }
 
-    public function edit($id){
+    public function edit($id)
+    {
         $user = User::find($id);
         [$roles, $permissionModules, $rolePresets] = $this->permissionFormData();
         $userPermissions = $user->permissions()->pluck('permissions.id')->all();
         [$stores, $places, $scopedRoleIds] = $this->storeAssignmentFormData();
         $currentStoreId = $user->assignedStoreId();
         $assignmentHistory = $user->storeAssignments()->with(['store', 'assignedBy'])->get();
+
         return view('users.edit', compact('user', 'roles', 'permissionModules', 'rolePresets', 'userPermissions', 'stores', 'currentStoreId', 'places', 'scopedRoleIds', 'assignmentHistory'));
     }
 
@@ -46,10 +52,10 @@ class Authentification extends Controller
      */
     private function storeAssignmentFormData(): array
     {
-        $stores = \App\Models\Store::optionsFor(Auth::user()->isRestrictedToStore() ? Auth::user() : null)->loadCount('users');
-        $places = \App\Models\Place::orderBy('placeName')->get();
-        $globalRoleIds = \App\Models\Role::whereHas('permissions', fn ($q) => $q->where('slug', 'stores.all'))->pluck('id');
-        $scopedRoleIds = \App\Models\Role::whereNotIn('slug', ['admin', 'customer', 'associe'])
+        $stores = Store::optionsFor(Auth::user()->isRestrictedToStore() ? Auth::user() : null)->loadCount('users');
+        $places = Place::orderBy('placeName')->get();
+        $globalRoleIds = Role::whereHas('permissions', fn ($q) => $q->where('slug', 'stores.all'))->pluck('id');
+        $scopedRoleIds = Role::whereNotIn('slug', ['admin', 'customer', 'associe'])
             ->whereNotIn('id', $globalRoleIds)
             ->pluck('id')
             ->all();
@@ -61,11 +67,11 @@ class Authentification extends Controller
     private function storeAssignmentRules(): array
     {
         return [
-            'store_mode'             => 'nullable|in:existing,new',
-            'store_id'               => 'nullable|exists:stores,id',
-            'new_store.store_name'   => 'required_if:store_mode,new|nullable|string|max:255|unique:stores,store_name',
-            'new_store.place_id'     => 'required_if:store_mode,new|nullable|exists:places,id',
-            'new_store.address'      => 'nullable|string|max:255',
+            'store_mode' => 'nullable|in:existing,new',
+            'store_id' => 'nullable|exists:stores,id',
+            'new_store.store_name' => 'required_if:store_mode,new|nullable|string|max:255|unique:stores,store_name',
+            'new_store.place_id' => 'required_if:store_mode,new|nullable|exists:places,id',
+            'new_store.address' => 'nullable|string|max:255',
         ];
     }
 
@@ -74,7 +80,7 @@ class Authentification extends Controller
      * créé ici puis affecté automatiquement. Ne s'applique qu'aux rôles limités
      * à un magasin ; un profil à vue globale n'a pas d'affectation.
      *
-     * @param bool $clearIfEmpty  en modification, « aucun magasin » désaffecte.
+     * @param  bool  $clearIfEmpty  en modification, « aucun magasin » désaffecte.
      */
     private function applyStoreAssignment(User $user, Request $request, bool $clearIfEmpty): void
     {
@@ -84,17 +90,17 @@ class Authentification extends Controller
         }
 
         if ($request->input('store_mode') === 'new') {
-            $store = \App\Models\Store::create([
-                'store_name'    => $request->input('new_store.store_name'),
-                'place_id'      => $request->input('new_store.place_id'),
-                'address'       => $request->input('new_store.address'),
+            $store = Store::create([
+                'store_name' => $request->input('new_store.store_name'),
+                'place_id' => $request->input('new_store.place_id'),
+                'address' => $request->input('new_store.address'),
                 // Responsable par défaut : l'employé qui y est affecté (modifiable
                 // ensuite depuis la fiche du magasin).
-                'user_id'       => $user->id,
-                'type'          => \App\Models\Store::TYPE_MAGASIN,
-                'status'        => 1,
+                'user_id' => $user->id,
+                'type' => Store::TYPE_MAGASIN,
+                'status' => 1,
                 'store_picture' => '',
-                'description'   => $request->input('new_store.store_name'),
+                'description' => $request->input('new_store.store_name'),
             ]);
             $user->assignToStore($store->id, Auth::id());
 
@@ -115,7 +121,7 @@ class Authentification extends Controller
      * Un non-admin ne peut affecter que des rôles dont le preset est
      * entièrement couvert par ses propres permissions.
      */
-    private function canAssignRole(\App\Models\Role $role): bool
+    private function canAssignRole(Role $role): bool
     {
         $granter = Auth::user();
         if (! $granter || (int) $granter->role_id === User::ROLE_ADMIN) {
@@ -141,7 +147,7 @@ class Authentification extends Controller
         $granter = Auth::user();
         if ($granter && (int) $granter->role_id !== User::ROLE_ADMIN) {
             $grantable = $granter->effectivePermissionIds();
-            $existing  = $user->permissions()->pluck('permissions.id');
+            $existing = $user->permissions()->pluck('permissions.id');
 
             // On ne garde des cases cochées que ce que l'accordant possède,
             // et on préserve les grants hors de sa portée (posés par l'admin).
@@ -152,7 +158,7 @@ class Authentification extends Controller
 
         $submitted = $submitted->sort()->values();
         // Role::find (et non la relation) : le role_id peut venir d'être changé sans être encore persisté
-        $preset = \App\Models\Role::find($user->role_id)?->permissions()->pluck('permissions.id')->sort()->values() ?? collect();
+        $preset = Role::find($user->role_id)?->permissions()->pluck('permissions.id')->sort()->values() ?? collect();
 
         $user->permissions()->sync(
             $submitted->all() === $preset->all() ? [] : $submitted->all()
@@ -166,17 +172,17 @@ class Authentification extends Controller
      */
     private function permissionFormData(): array
     {
-        $granter   = Auth::user();
-        $isAdmin   = $granter && (int) $granter->role_id === User::ROLE_ADMIN;
+        $granter = Auth::user();
+        $isAdmin = $granter && (int) $granter->role_id === User::ROLE_ADMIN;
         $grantable = $isAdmin ? null : $granter?->effectivePermissionIds() ?? collect();
 
-        $permissions = \App\Models\Permission::orderBy('module')->orderBy('id')->get();
+        $permissions = Permission::orderBy('module')->orderBy('id')->get();
         if (! $isAdmin) {
             $permissions = $permissions->whereIn('id', $grantable->all());
         }
         $permissionModules = $permissions->groupBy('module');
 
-        $roles = \App\Models\Role::whereNotIn('slug', ['admin', 'customer'])->get();
+        $roles = Role::whereNotIn('slug', ['admin', 'customer'])->get();
         $rolePresets = $roles->mapWithKeys(
             fn ($role) => [$role->id => $role->permissions()->pluck('permissions.id')->all()]
         );
@@ -191,13 +197,16 @@ class Authentification extends Controller
         return [$roles, $permissionModules, $rolePresets];
     }
 
-    public function forgotPass(){
+    public function forgotPass()
+    {
         return view('users.forgot_password');
     }
 
-    public function register(){
+    public function register()
+    {
         [$roles, $permissionModules, $rolePresets] = $this->permissionFormData();
         [$stores, $places, $scopedRoleIds] = $this->storeAssignmentFormData();
+
         return view('users.register', compact('roles', 'permissionModules', 'rolePresets', 'stores', 'places', 'scopedRoleIds'));
     }
 
@@ -212,7 +221,7 @@ class Authentification extends Controller
             'role_id' => 'required|integer|exists:roles,id',
             'permissions' => 'nullable|array',
             'permissions.*' => 'integer|exists:permissions,id',
-        ] + $this->storeAssignmentRules(),[
+        ] + $this->storeAssignmentRules(), [
             'email.required' => 'Vous devez remplir le champ email',
             'email.email' => 'Le champ email doit contenir un @ et .',
             'email.unique' => 'Cet email est déjà utilisé par un autre compte.',
@@ -229,10 +238,10 @@ class Authentification extends Controller
             'phone.max' => 'Le champ phone ne doit pas depasser 20 caracteres',
             'name.required' => 'Vous devez remplir le champ name',
             'name.string' => 'Le champ name ne prend que des chaines de caracteres',
-            'name.max' => 'Le champ name ne doit pas depasser 255 caracteres'
+            'name.max' => 'Le champ name ne doit pas depasser 255 caracteres',
         ]);
         // Les rôles système admin/customer ne sont pas assignables via ce formulaire
-        $role = \App\Models\Role::find($request->role_id);
+        $role = Role::find($request->role_id);
         if (in_array($role?->slug, ['admin', 'customer'], true)) {
             return back()->withInput()->with('fall', 'Ce rôle ne peut pas être attribué à un employé.');
         }
@@ -243,12 +252,12 @@ class Authentification extends Controller
             return back()->withInput()->with('fall', 'Ce rôle contient des permissions que vous ne possédez pas — seul un administrateur peut l\'attribuer.');
         }
 
-        if(request()->hasfile('profilePic')){
+        if (request()->hasfile('profilePic')) {
             $avatarName = time().'.'.request()->profilePic->getClientOriginalExtension();
             request()->profilePic->move(public_path('avatars'), $avatarName);
         }
         $token = Str::random(64);
-        try{
+        try {
             $user = User::create([
                 'name' => $request->name,
                 'username' => $request->username,
@@ -263,7 +272,7 @@ class Authentification extends Controller
                 'token' => $token,
                 'description' => $request->description ?? 'user',
                 'password' => Hash::make($request->password),
-                'motdepasse' => $request->password
+                'motdepasse' => $request->password,
             ]);
 
             // Si les cases cochées correspondent exactement au preset du rôle,
@@ -280,8 +289,7 @@ class Authentification extends Controller
             // magasin peut désormais avoir plusieurs vendeurs : on ne retire plus
             // la boutique à son responsable actuel (stores.user_id).
             $this->applyStoreAssignment($user, $request, false);
-        }
-        catch(\Exception $e) {
+        } catch (\Exception $e) {
             return back()->withInput()->with('fall', 'une erreur lors de lajout, voici le message : '.$e->getMessage());
         }
 
@@ -297,6 +305,7 @@ class Authentification extends Controller
             Mail::to($request->email)->send(new UserMail($subject, $message, $request->name));
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::warning('Echec envoi email de bienvenue utilisateur: '.$e->getMessage());
+
             return redirect()->route('users.index')->with('success', 'Utilisateur créé avec succès. (L\'email de notification n\'a pas pu être envoyé — vérifiez la configuration SMTP.)');
         }
 
@@ -327,7 +336,7 @@ class Authentification extends Controller
 
         // Rôle et permissions (uniquement si le formulaire les soumet — l'édition de profil simple ne les touche pas)
         if ($request->filled('role_id') && (int) $user->role_id !== User::ROLE_ADMIN) {
-            $newRole = \App\Models\Role::find($request->role_id);
+            $newRole = Role::find($request->role_id);
             if ($newRole && ! in_array($newRole->slug, ['admin', 'customer'], true) && $this->canAssignRole($newRole)) {
                 $user->role_id = (int) $newRole->id;
             }
@@ -380,7 +389,7 @@ class Authentification extends Controller
         // Notification de changement de mot de passe : un échec SMTP ne doit pas
         // faire croire que la modification a échoué alors qu'elle a bien été
         // enregistrée (même correctif que pour la création de compte).
-        if ($passwordChanged && !empty($user->email)) {
+        if ($passwordChanged && ! empty($user->email)) {
             try {
                 $userName = $user->name ?? $user->username ?? 'Utilisateur';
                 Mail::to($user->email)->send(new PasswordMail(
@@ -401,33 +410,39 @@ class Authentification extends Controller
             Auth::logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
+
             return redirect()->route('accueil')->with('success', 'Votre profil a été mis à jour. Veuillez vous reconnecter.');
         }
 
         return redirect()->route('users.index')->with('success', 'Utilisateur modifié avec succès.');
     }
 
-    public function registration_verify($token, $email){
+    public function registration_verify($token, $email)
+    {
         $userExist = User::where('email', $email)->where('token', $token)->first();
-        if(!$userExist){
+        if (! $userExist) {
             return redirect()->route('login')->with('fall', 'Utilisateur déjà activé ou n\'existe pas.');
-        }else{
+        } else {
             $userExist->status = 'Active';
             $userExist->token = '';
             $userExist->update();
+
             return redirect()->route('login')->with('success', 'Utilisateur activé avec succès.');
         }
 
     }
 
-    public function passwordRecovery(Request $request){
+    public function passwordRecovery(Request $request)
+    {
         // Deprecated insecure flow: send a standard reset link instead of emailing any password/hash.
         $request->validate(['email' => 'required|email']);
         Password::sendResetLink($request->only('email'));
+
         return redirect()->route('login')->with('success', 'Si votre email existe, un lien de réinitialisation a été envoyé.');
     }
 
-    public function login_submit(Request $request){
+    public function login_submit(Request $request)
+    {
         $identifier = trim((string) $request->email);
         $password = (string) $request->password;
 
@@ -435,7 +450,7 @@ class Authentification extends Controller
             ->orWhere('username', $identifier)
             ->first();
 
-        if (!$user) {
+        if (! $user) {
             return back()->with('fall', 'Utilisateur n\'existe pas');
         }
 
@@ -451,12 +466,13 @@ class Authentification extends Controller
         return back()->with('fall', 'Mot de passe incorrect.');
     }
 
-    public function sendEmail(Request $request){
+    public function sendEmail(Request $request)
+    {
         $validated = $request->validate([
             'email' => 'required|email',
             'name' => 'required|string',
             'subject' => 'required|string',
-            'message' => 'required|string'
+            'message' => 'required|string',
         ]);
         /* ,[
             'email.required' => 'Vous devez remplir le champ email',
@@ -472,7 +488,7 @@ class Authentification extends Controller
         // Destinataire : la fiche entreprise, modifiable depuis Profil. Le
         // formulaire envoyait auparavant vers une adresse personnelle codee en
         // dur : les messages des clients n'arrivaient pas a l'entreprise.
-        $destinataire = \App\Models\Company::current()?->email
+        $destinataire = Company::current()?->email
             ?: config('mail.from.address');
 
         if (! $destinataire) {
@@ -496,14 +512,13 @@ class Authentification extends Controller
                 $request->name,
                 $request->message
             ));
-            
+
             return back()->with('success', 'Votre message a été envoyé avec succès. Nous vous répondrons dans les plus brefs délais.');
-            
+
         } catch (\Exception $e) {
-            \Log::error('Contact email error: ' . $e->getMessage());
+            \Log::error('Contact email error: '.$e->getMessage());
+
             return back()->with('error', 'Une erreur est survenue. Veuillez réessayer plus tard.');
         }
     }
-
-
 }

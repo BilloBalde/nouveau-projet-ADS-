@@ -11,10 +11,11 @@ class CategoryController extends Controller
     {
         $this->middleware('auth.check');
     }
-    
+
     public function index()
     {
         $categories = Category::all();
+
         return view('categories.index', compact('categories'));
     }
 
@@ -29,7 +30,7 @@ class CategoryController extends Controller
             'slug' => 'required|unique:categories,slug',
             'category_type' => 'required|string',
             'description' => 'required|string',
-        ],[
+        ], [
             'slug.required' => 'L\'identifiant est réquis',
             'slug.unique' => 'L\'identifiant doit être unique, il existe déjà',
             'category_type.required' => 'Le type de catégorie est requis.',
@@ -39,16 +40,17 @@ class CategoryController extends Controller
 
         try {
             Category::create($request->only(['slug', 'category_type', 'description']));
+
             return redirect()->route('categories.index')->with('success', 'Category crée avec succès.');
         } catch (\Throwable $th) {
             return redirect()->route('categories.index')->with('error', 'Error lors de la creation de la categorie.'.$th->getMessage());
         }
     }
 
-
     public function edit($categoryEmballage)
     {
         $categoryEmballage = Category::find($categoryEmballage);
+
         return view('categories.create', compact('categoryEmballage'));
     }
 
@@ -60,9 +62,10 @@ class CategoryController extends Controller
             'description' => 'required',
         ]);
         $categoryEmballage = Category::findOrFail($categoryEmballage);
-        //dd($categoryEmballage);
+        // dd($categoryEmballage);
         try {
             $categoryEmballage->update($request->only(['slug', 'category_type', 'description']));
+
             return redirect()->route('categories.index')->with('success', 'Category modifié successfully.');
         } catch (\Throwable $th) {
             return redirect()->route('categories.index')->with('error', 'Error lors de la modification de la categorie.'.$th->getMessage());
@@ -76,10 +79,10 @@ class CategoryController extends Controller
             $firstCategory = Category::orderBy('id')->first()?->id;
             if ($id == $firstCategory) {
                 return back()->with('error', 'Impossible de supprimer cette categorie, car elle est la seule');
-            }else{
+            } else {
                 $categoryEmballage->delete();
             }
-            
+
             return redirect()->route('categories.index')->with('success', 'Categorie supprimé avec succès.');
         } catch (\Throwable $th) {
             return redirect()->back()->with('error', 'Impossible de supprimer cette categorie. '.$th->getMessage());

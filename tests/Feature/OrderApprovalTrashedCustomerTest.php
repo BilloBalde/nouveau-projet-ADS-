@@ -10,6 +10,7 @@ use App\Models\Place;
 use App\Models\Product;
 use App\Models\Store;
 use App\Models\User;
+use Database\Seeders\RolesSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -28,15 +29,18 @@ class OrderApprovalTrashedCustomerTest extends TestCase
     use RefreshDatabase;
 
     private User $admin;
+
     private User $client;
+
     private Store $boutique;
+
     private Product $produit;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->seed(\Database\Seeders\RolesSeeder::class);
+        $this->seed(RolesSeeder::class);
 
         $this->admin = User::create([
             'name' => 'Admin Commandes',
@@ -133,7 +137,7 @@ class OrderApprovalTrashedCustomerTest extends TestCase
      */
     private function mark(): string
     {
-        return strtoupper(substr($this->client->name, 0, 3)) . $this->client->id;
+        return strtoupper(substr($this->client->name, 0, 3)).$this->client->id;
     }
 
     public function test_une_commande_dun_client_archive_est_approuvee(): void

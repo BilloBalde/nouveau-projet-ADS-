@@ -22,22 +22,28 @@ use Illuminate\Support\Str;
 class OrangeMoneyService
 {
     private string $clientId;
+
     private string $clientSecret;
+
     private string $merchantKey;
+
     private string $baseUrl;
+
     private string $country;
+
     private string $currency;
+
     private bool $useMock;
 
     public function __construct()
     {
-        $this->clientId     = config('services.orange_money.client_id', '');
+        $this->clientId = config('services.orange_money.client_id', '');
         $this->clientSecret = config('services.orange_money.client_secret', '');
-        $this->merchantKey  = config('services.orange_money.merchant_key', '');
-        $this->baseUrl      = rtrim(config('services.orange_money.base_url', 'https://api.orange.com'), '/');
-        $this->country      = config('services.orange_money.country', 'GN');
-        $this->currency     = config('services.orange_money.currency', 'GNF');
-        $this->useMock      = (bool) config('services.orange_money.use_mock', false);
+        $this->merchantKey = config('services.orange_money.merchant_key', '');
+        $this->baseUrl = rtrim(config('services.orange_money.base_url', 'https://api.orange.com'), '/');
+        $this->country = config('services.orange_money.country', 'GN');
+        $this->currency = config('services.orange_money.currency', 'GNF');
+        $this->useMock = (bool) config('services.orange_money.use_mock', false);
     }
 
     // -------------------------------------------------------------------------
@@ -57,7 +63,7 @@ class OrangeMoneyService
                 $response = Http::timeout(15)
                     ->withHeaders([
                         'Authorization' => "Basic {$credentials}",
-                        'Accept'        => 'application/json',
+                        'Accept' => 'application/json',
                     ])
                     ->asForm()
                     ->post("{$this->baseUrl}/oauth/v3/token", [
@@ -67,8 +73,9 @@ class OrangeMoneyService
                 if ($response->failed()) {
                     Log::error('[OrangeMoney] Échec récupération token', [
                         'status' => $response->status(),
-                        'body'   => $response->body(),
+                        'body' => $response->body(),
                     ]);
+
                     return null;
                 }
 
@@ -80,6 +87,7 @@ class OrangeMoneyService
 
             } catch (\Throwable $e) {
                 Log::error('[OrangeMoney] Exception token OAuth2', ['message' => $e->getMessage()]);
+
                 return null;
             }
         });
@@ -92,76 +100,76 @@ class OrangeMoneyService
     /**
      * Initier un paiement Orange Money.
      *
-     * @param  int    $amount   Montant en GNF (entier)
-     * @param  string $orderId  Référence commande (ex: "SMH-24")
-     * @param  object $user     Utilisateur (name, email, phone)
-     * @return array  ['success' => bool, 'payment_url' => string, 'pay_token' => string, 'notif_token' => string, 'error' => string]
+     * @param  int  $amount  Montant en GNF (entier)
+     * @param  string  $orderId  Référence commande (ex: "SMH-24")
+     * @param  object  $user  Utilisateur (name, email, phone)
+     * @return array ['success' => bool, 'payment_url' => string, 'pay_token' => string, 'notif_token' => string, 'error' => string]
      */
     public function initiatePayment(int $amount, string $orderId, object $user): array
     {
         if ($this->useMock || empty($this->clientId) || empty($this->merchantKey)) {
-            $payToken = 'mock-' . Str::uuid()->toString();
+            $payToken = 'mock-'.Str::uuid()->toString();
 
             return [
-                'success'     => true,
+                'success' => true,
                 'payment_url' => config('services.orange_money.return_url')
-                    ? rtrim(config('services.orange_money.return_url'), '/') . '?pay_token=' . $payToken
+                    ? rtrim(config('services.orange_money.return_url'), '/').'?pay_token='.$payToken
                     : route('payment.success', ['pay_token' => $payToken]),
-                'pay_token'   => $payToken,
+                'pay_token' => $payToken,
                 'notif_token' => $payToken,
             ];
         }
 
         $token = $this->getAccessToken();
 
-        if (!$token) {
+        if (! $token) {
             return [
                 'success' => false,
-                'error'   => 'Impossible d\'obtenir le token d\'authentification Orange Money.',
+                'error' => 'Impossible d\'obtenir le token d\'authentification Orange Money.',
             ];
         }
 
-        $notifUrl  = config('services.orange_money.notif_url')  ?: route('payment.webhook');
+        $notifUrl = config('services.orange_money.notif_url') ?: route('payment.webhook');
         $returnUrl = config('services.orange_money.return_url') ?: route('payment.success');
         $cancelUrl = config('services.orange_money.cancel_url') ?: route('payment.cancel');
 
         $payload = [
             'merchant_key' => $this->merchantKey,
-            'currency'     => $this->currency,
-            'order_id'     => $orderId,
-            'amount'       => $amount,
-            'return_url'   => $returnUrl,
-            'cancel_url'   => $cancelUrl,
-            'notif_url'    => $notifUrl,
-            'lang'         => 'fr',
-            'reference'    => $orderId,
+            'currency' => $this->currency,
+            'order_id' => $orderId,
+            'amount' => $amount,
+            'return_url' => $returnUrl,
+            'cancel_url' => $cancelUrl,
+            'notif_url' => $notifUrl,
+            'lang' => 'fr',
+            'reference' => $orderId,
         ];
 
         Log::info('[OrangeMoney] Initiation paiement', [
             'order_id' => $orderId,
-            'amount'   => $amount,
+            'amount' => $amount,
             'currency' => $this->currency,
-            'country'  => $this->country,
+            'country' => $this->country,
         ]);
 
         try {
             $response = Http::timeout(30)
                 ->withHeaders([
                     'Authorization' => "Bearer {$token}",
-                    'Accept'        => 'application/json',
-                    'Content-Type'  => 'application/json',
+                    'Accept' => 'application/json',
+                    'Content-Type' => 'application/json',
                 ])
                 ->post("{$this->baseUrl}/orange-money-webpay/{$this->country}/v1/webpayment", $payload);
 
             Log::info('[OrangeMoney] Réponse API webpayment', [
                 'status' => $response->status(),
-                'body'   => $response->body(),
+                'body' => $response->body(),
             ]);
 
             if ($response->failed()) {
                 return [
                     'success' => false,
-                    'error'   => "Erreur Orange Money (HTTP {$response->status()}) : " . $response->body(),
+                    'error' => "Erreur Orange Money (HTTP {$response->status()}) : ".$response->body(),
                 ];
             }
 
@@ -170,14 +178,14 @@ class OrangeMoneyService
             if (empty($data['payment_url'])) {
                 return [
                     'success' => false,
-                    'error'   => $data['message'] ?? $data['error'] ?? 'Réponse Orange Money invalide (pas de payment_url).',
+                    'error' => $data['message'] ?? $data['error'] ?? 'Réponse Orange Money invalide (pas de payment_url).',
                 ];
             }
 
             return [
-                'success'     => true,
+                'success' => true,
                 'payment_url' => $data['payment_url'],
-                'pay_token'   => $data['pay_token']   ?? null,
+                'pay_token' => $data['pay_token'] ?? null,
                 'notif_token' => $data['notif_token'] ?? null,
             ];
 
@@ -186,7 +194,7 @@ class OrangeMoneyService
 
             return [
                 'success' => false,
-                'error'   => 'Erreur serveur lors de l\'initiation du paiement. Réessayez.',
+                'error' => 'Erreur serveur lors de l\'initiation du paiement. Réessayez.',
             ];
         }
     }
@@ -198,8 +206,8 @@ class OrangeMoneyService
     /**
      * Vérifier le statut d'un paiement via l'API Orange (plus fiable que le webhook seul).
      *
-     * @param  string $payToken  Le pay_token reçu lors de l'initiation
-     * @return array  ['success' => bool, 'completed' => bool, 'status' => string, 'amount' => int, 'reference' => string, 'txnid' => string]
+     * @param  string  $payToken  Le pay_token reçu lors de l'initiation
+     * @return array ['success' => bool, 'completed' => bool, 'status' => string, 'amount' => int, 'reference' => string, 'txnid' => string]
      */
     public function getPaymentStatus(string $payToken): array
     {
@@ -216,7 +224,7 @@ class OrangeMoneyService
 
         $token = $this->getAccessToken();
 
-        if (!$token) {
+        if (! $token) {
             return ['success' => false, 'completed' => false, 'status' => 'unknown', 'error' => 'Token indisponible.'];
         }
 
@@ -224,14 +232,14 @@ class OrangeMoneyService
             $response = Http::timeout(15)
                 ->withHeaders([
                     'Authorization' => "Bearer {$token}",
-                    'Accept'        => 'application/json',
+                    'Accept' => 'application/json',
                 ])
                 ->get("{$this->baseUrl}/orange-money-webpay/{$this->country}/v1/transactionstatus/{$payToken}");
 
             Log::info('[OrangeMoney] Vérification statut', [
                 'pay_token' => $payToken,
-                'status'    => $response->status(),
-                'body'      => $response->body(),
+                'status' => $response->status(),
+                'body' => $response->body(),
             ]);
 
             if ($response->failed()) {
@@ -241,16 +249,17 @@ class OrangeMoneyService
             $data = $response->json();
 
             return [
-                'success'   => true,
+                'success' => true,
                 'completed' => ($data['status'] ?? '') === 'SUCCESS',
-                'status'    => $data['status']    ?? 'unknown',
-                'amount'    => (int) ($data['amount']    ?? 0),
+                'status' => $data['status'] ?? 'unknown',
+                'amount' => (int) ($data['amount'] ?? 0),
                 'reference' => $data['reference'] ?? '',
-                'txnid'     => $data['txnid']     ?? '',
+                'txnid' => $data['txnid'] ?? '',
             ];
 
         } catch (\Throwable $e) {
             Log::error('[OrangeMoney] Exception getPaymentStatus', ['message' => $e->getMessage()]);
+
             return ['success' => false, 'completed' => false, 'status' => 'unknown'];
         }
     }

@@ -13,7 +13,7 @@ return new class extends Migration
             $table->string('reference');
             $table->foreignId('journalier_id')->constrained('journaliers')->onDelete('restrict')->onUpdate('cascade');
             $table->decimal('versement', 15, 2);
-            $table->enum('paid_by', ['cash','check','orange money'])->default('cash');
+            $table->enum('paid_by', ['cash', 'check', 'orange money'])->default('cash');
             $table->string('notes');
             $table->timestamps();
         });

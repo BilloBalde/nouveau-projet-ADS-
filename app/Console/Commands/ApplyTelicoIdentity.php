@@ -23,8 +23,8 @@ class ApplyTelicoIdentity extends Command
         $company = Company::current();
 
         $valeurs = [
-            'name'  => $this->option('nom'),
-            'logo'  => 'telico.png',
+            'name' => $this->option('nom'),
+            'logo' => 'telico.png',
             'email' => $this->option('email'),
         ];
 

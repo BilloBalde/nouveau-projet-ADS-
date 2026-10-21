@@ -2,19 +2,23 @@
 
 namespace Tests\Feature;
 
-use App\Models\Category;
+use App\Exports\VentesTiercesExport;
 use App\Models\Customer;
 use App\Models\Facture;
 use App\Models\Partner;
 use App\Models\PartnerSettlement;
+use App\Models\Payment;
 use App\Models\Place;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\Store;
 use App\Models\StoreProduct;
 use App\Models\User;
+use Database\Seeders\PermissionSeeder;
+use Database\Seeders\RolesSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use Maatwebsite\Excel\Facades\Excel;
 use Tests\TestCase;
 
 /**
@@ -28,17 +32,22 @@ class ThirdPartySaleTest extends TestCase
     use RefreshDatabase;
 
     private User $admin;
+
     private Store $magasin;
+
     private Customer $client;
+
     private Partner $ami;
+
     private Product $ciment;
+
     private Product $robinet;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->seed(\Database\Seeders\RolesSeeder::class);
-        $this->seed(\Database\Seeders\PermissionSeeder::class);
+        $this->seed(RolesSeeder::class);
+        $this->seed(PermissionSeeder::class);
 
         $this->admin = $this->user('Patron', User::ROLE_ADMIN);
         $lieu = Place::create(['placeName' => 'Conakry', 'countryName' => 'Guinée', 'description' => 'test']);
@@ -56,7 +65,7 @@ class ThirdPartySaleTest extends TestCase
     private function user(string $name, int $role, ?int $storeId = null): User
     {
         $user = User::create([
-            'name' => $name, 'email' => str()->slug($name) . uniqid() . '@example.com', 'username' => str()->slug($name) . uniqid(),
+            'name' => $name, 'email' => str()->slug($name).uniqid().'@example.com', 'username' => str()->slug($name).uniqid(),
             'password' => Hash::make('password'), 'role_id' => $role, 'phone' => '620', 'status' => 'Active', 'token' => '',
         ]);
         if ($storeId) {
@@ -75,7 +84,7 @@ class ThirdPartySaleTest extends TestCase
         }
 
         return $this->actingAs($vendeur ?? $this->admin)->post(route('sales.store'), [
-            'numeroFacture' => 'F-' . uniqid(), 'store_id' => $this->magasin->id, 'customer_id' => $this->client->id,
+            'numeroFacture' => 'F-'.uniqid(), 'store_id' => $this->magasin->id, 'customer_id' => $this->client->id,
             'avance' => 0, 'paid_by' => 'cash', 'sales' => $sales,
         ]);
     }
@@ -144,7 +153,7 @@ class ThirdPartySaleTest extends TestCase
 
         // Reçu de paiement : mention à l'écran, retirée du PDF et de l'impression ;
         // le PDF ne coupe plus un reçu trop long pour une page.
-        $paiement = \App\Models\Payment::whereHas('facture', fn ($q) => $q->where('numero_facture', $numero))->firstOrFail();
+        $paiement = Payment::whereHas('facture', fn ($q) => $q->where('numero_facture', $numero))->firstOrFail();
         $this->actingAs($this->admin)->get(route('receipts.payments.show', $paiement))->assertOk()
             ->assertSee('Pris chez Moussa Quincaillerie')
             ->assertSee('@media print { .mention-interne { display: none !important; } }', false)
@@ -209,7 +218,7 @@ class ThirdPartySaleTest extends TestCase
 
     public function test_exports_pdf_et_excel_du_rapport(): void
     {
-        \Maatwebsite\Excel\Facades\Excel::fake();
+        Excel::fake();
         $this->venteMixte([['product_id' => $this->robinet->id, 'quantity' => 3, 'prix' => 30000, 'purchase_price_from_partner' => 25000]]);
         $this->actingAs($this->admin)->post(route('reports.tiers.settle'), [
             'partner_id' => $this->ami->id, 'amount' => 50000, 'paid_at' => now()->toDateString(), 'mode' => 'cash',
@@ -231,9 +240,9 @@ class ThirdPartySaleTest extends TestCase
 
         // Excel : trois feuilles, montants numériques.
         $this->actingAs($this->admin)->get(route('reports.tiers.excel', ['period' => 'monthly']))->assertOk();
-        \Maatwebsite\Excel\Facades\Excel::assertDownloaded(
-            'ventes_tierces_' . now()->startOfMonth()->format('Y-m-d') . '_au_' . now()->endOfMonth()->format('Y-m-d') . '.xlsx',
-            function (\App\Exports\VentesTiercesExport $export) {
+        Excel::assertDownloaded(
+            'ventes_tierces_'.now()->startOfMonth()->format('Y-m-d').'_au_'.now()->endOfMonth()->format('Y-m-d').'.xlsx',
+            function (VentesTiercesExport $export) {
                 $feuilles = $export->sheets();
                 $this->assertSame(['Par partenaire', 'Détail', 'Règlements'], array_map(fn ($f) => $f->title(), $feuilles));
                 $partenaire = $feuilles[0]->array()[0];
@@ -251,15 +260,15 @@ class ThirdPartySaleTest extends TestCase
 
     public function test_export_vendeur_sans_soldes_ni_reglements(): void
     {
-        \Maatwebsite\Excel\Facades\Excel::fake();
+        Excel::fake();
         $vendeur = $this->user('Awa', User::ROLE_STORE_MANAGER, $this->magasin->id);
         $this->venteMixte([['product_id' => $this->robinet->id, 'quantity' => 1, 'prix' => 30000, 'purchase_price_from_partner' => 25000]], $vendeur);
 
         $this->actingAs($vendeur)->get(route('reports.tiers.pdf', ['period' => 'monthly']))->assertOk();
         $this->actingAs($vendeur)->get(route('reports.tiers.excel', ['period' => 'monthly']))->assertOk();
-        \Maatwebsite\Excel\Facades\Excel::assertDownloaded(
-            'ventes_tierces_' . now()->startOfMonth()->format('Y-m-d') . '_au_' . now()->endOfMonth()->format('Y-m-d') . '.xlsx',
-            function (\App\Exports\VentesTiercesExport $export) {
+        Excel::assertDownloaded(
+            'ventes_tierces_'.now()->startOfMonth()->format('Y-m-d').'_au_'.now()->endOfMonth()->format('Y-m-d').'.xlsx',
+            function (VentesTiercesExport $export) {
                 $feuilles = $export->sheets();
                 $this->assertCount(2, $feuilles); // pas de feuille « Règlements »
                 $this->assertCount(7, $feuilles[0]->headings()[1]); // pas de colonnes de solde

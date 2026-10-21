@@ -3,19 +3,18 @@
 namespace App\Http\Controllers;
 
 use App\Models\CategoryProduct;
-use App\Models\Facture;
-use App\Models\Logistic;
-use App\Models\Payment;
+use App\Models\Customer;
 use App\Models\Expense;
+use App\Models\Facture;
+use App\Models\Journalier;
+use App\Models\Logistic;
+use App\Models\PaiementJournalier;
+use App\Models\Payment;
+use App\Models\Product;
 use App\Models\Purchase;
 use App\Models\Sale;
 use App\Models\StockTransfer;
 use App\Models\StoreProduct;
-use App\Models\PaiementJournalier;
-use App\Models\Journalier;
-use App\Models\Customer;
-use App\Models\Product;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class BaseDonneeController extends Controller
@@ -38,7 +37,9 @@ class BaseDonneeController extends Controller
         // le vidage lui-même était déjà réservé à l'admin ci-dessous).
         $this->middleware('permission:settings.view');
     }
-    public function index(){
+
+    public function index()
+    {
         $category_products = CategoryProduct::count();
         $factures = Facture::count();
         $logistics = Logistic::count();
@@ -65,12 +66,14 @@ class BaseDonneeController extends Controller
             [$stock_transfers, 'stock_transfers'],
             [$store_products, 'store_products'],
             [$paiement_journaliers, 'paiement_journaliers'],
-            [$journaliers, 'journaliers']
+            [$journaliers, 'journaliers'],
         ];
 
         return view('baseDonne.index', compact('listTables'));
     }
-    public function delete($id){
+
+    public function delete($id)
+    {
         if ((int) auth()->user()->role_id !== 1) {
             abort(403, 'Seul un administrateur peut vider une table.');
         }
@@ -83,7 +86,8 @@ class BaseDonneeController extends Controller
             DB::statement('SET FOREIGN_KEY_CHECKS=0;'); // Disable foreign key constraints
             DB::table($id)->truncate();
             DB::statement('SET FOREIGN_KEY_CHECKS=1;');
-            return redirect()->back()->with('success','Table '.$id.' a été vidée avec succès');
+
+            return redirect()->back()->with('success', 'Table '.$id.' a été vidée avec succès');
         } catch (\Throwable $th) {
             return redirect()->back()->with('error', 'Erreur lors de la suppression des données : '.$th->getMessage());
         }

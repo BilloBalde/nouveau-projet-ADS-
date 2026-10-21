@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Exceptions\InsufficientStockException;
+use App\Models\Product;
 use App\Models\StockMovement;
 use App\Models\StoreProduct;
 use Illuminate\Support\Facades\DB;
@@ -87,7 +88,7 @@ class StockService
     {
         $needed = [];
         foreach ($lines as $line) {
-            $key = (int) $line['store_id'] . ':' . (int) $line['product_id'] . ':' . (int) ($line['fund_id'] ?? 0);
+            $key = (int) $line['store_id'].':'.(int) $line['product_id'].':'.(int) ($line['fund_id'] ?? 0);
             $needed[$key] = ($needed[$key] ?? 0) + (int) $line['quantity'];
         }
 
@@ -104,7 +105,7 @@ class StockService
             ->selectRaw('store_id, product_id, COALESCE(fund_id, 0) as fund, SUM(quantity) as qty')
             ->groupBy('store_id', 'product_id', DB::raw('COALESCE(fund_id, 0)'))
             ->get()
-            ->mapWithKeys(fn ($r) => [$r->store_id . ':' . $r->product_id . ':' . (int) $r->fund => (int) $r->qty]);
+            ->mapWithKeys(fn ($r) => [$r->store_id.':'.$r->product_id.':'.(int) $r->fund => (int) $r->qty]);
 
         $failures = [];
         foreach ($needed as $key => $qty) {
@@ -230,42 +231,42 @@ class StockService
         $after = $this->availableForFund($storeId, $productId, $fundId);
 
         StockMovement::create([
-            'product_id'           => $productId,
-            'store_id'             => $storeId,
-            'fund_id'              => $fundId,
-            'type'                 => $context['type'],
-            'quantity'             => $signedQuantity,
-            'stock_before'         => $after - $signedQuantity,
-            'stock_after'          => $after,
+            'product_id' => $productId,
+            'store_id' => $storeId,
+            'fund_id' => $fundId,
+            'type' => $context['type'],
+            'quantity' => $signedQuantity,
+            'stock_before' => $after - $signedQuantity,
+            'stock_after' => $after,
             'counterpart_store_id' => $context['counterpart_store_id'] ?? null,
-            'source_type'          => $context['source_type'] ?? null,
-            'source_id'            => $context['source_id'] ?? null,
-            'document_ref'         => $context['document_ref'] ?? null,
-            'customer_id'          => $context['customer_id'] ?? null,
-            'supplier_id'          => $context['supplier_id'] ?? null,
-            'unit_price'           => $context['unit_price'] ?? null,
-            'user_id'              => $context['user_id'] ?? auth()->id(),
-            'reason'               => $context['reason'] ?? null,
+            'source_type' => $context['source_type'] ?? null,
+            'source_id' => $context['source_id'] ?? null,
+            'document_ref' => $context['document_ref'] ?? null,
+            'customer_id' => $context['customer_id'] ?? null,
+            'supplier_id' => $context['supplier_id'] ?? null,
+            'unit_price' => $context['unit_price'] ?? null,
+            'user_id' => $context['user_id'] ?? auth()->id(),
+            'reason' => $context['reason'] ?? null,
         ]);
     }
 
     private function shortageMessage(int $storeId, int $productId, int $available, int $requested, ?int $fundId = null): string
     {
         $fiche = DB::table('products')->where('id', $productId)->first(['libelle', 'unite']);
-        $product = $fiche->libelle ?? ('Produit #' . $productId);
+        $product = $fiche->libelle ?? ('Produit #'.$productId);
         // Quantités dans l'unité du produit : « Disponible : 10 cartons ».
         $unite = $fiche->unite ?? 'pcs';
-        $store = DB::table('stores')->where('id', $storeId)->value('store_name') ?? ('Emplacement #' . $storeId);
+        $store = DB::table('stores')->where('id', $storeId)->value('store_name') ?? ('Emplacement #'.$storeId);
         if ($fundId) {
-            $store .= ' (' . (DB::table('funds')->where('id', $fundId)->value('name') ?? 'fonds #' . $fundId) . ')';
+            $store .= ' ('.(DB::table('funds')->where('id', $fundId)->value('name') ?? 'fonds #'.$fundId).')';
         }
 
         return sprintf(
             'Stock insuffisant pour %s à %s. Disponible : %s. Demandé : %s.',
             $product,
             $store,
-            \App\Models\Product::quantiteEnUnite($available, $unite),
-            \App\Models\Product::quantiteEnUnite($requested, $unite)
+            Product::quantiteEnUnite($available, $unite),
+            Product::quantiteEnUnite($requested, $unite)
         );
     }
 

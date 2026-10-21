@@ -6,7 +6,6 @@ use App\Models\Product;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
 use App\Models\StockMovement;
-use App\Models\StoreProduct;
 use Illuminate\Support\Facades\DB;
 
 class PurchaseOrderCostingService
@@ -21,9 +20,9 @@ class PurchaseOrderCostingService
 
     /**
      * @param  int|null  $previousStoreId  destination avant modification : c'est
-     *   de là que le stock de l'ancienne version de l'achat doit être retiré.
-     *   Auparavant on le retirait de la NOUVELLE destination, ce qui faussait
-     *   deux emplacements quand on changeait la destination d'un achat.
+     *                                     de là que le stock de l'ancienne version de l'achat doit être retiré.
+     *                                     Auparavant on le retirait de la NOUVELLE destination, ce qui faussait
+     *                                     deux emplacements quand on changeait la destination d'un achat.
      */
     public function costOrder(PurchaseOrder $order, array $lines, ?int $previousStoreId = null, int|false|null $previousFundId = false): void
     {
@@ -36,13 +35,13 @@ class PurchaseOrderCostingService
             foreach ($order->items as $existingItem) {
                 // Retrait tracé de la version précédente de l'achat (modification).
                 $this->stock->forceDecrement($oldStoreId, (int) $existingItem->product_id, (int) $existingItem->quantity, [
-                    'type'         => StockMovement::CORRECTION,
-                    'source_type'  => 'purchase_order',
-                    'source_id'    => $order->id,
+                    'type' => StockMovement::CORRECTION,
+                    'source_type' => 'purchase_order',
+                    'source_id' => $order->id,
                     'document_ref' => $order->reference,
-                    'supplier_id'  => $order->partner_id,
-                    'fund_id'      => $oldFundId,
-                    'reason'       => 'Modification de l\'achat ' . $order->reference . ' : annulation des lignes précédentes',
+                    'supplier_id' => $order->partner_id,
+                    'fund_id' => $oldFundId,
+                    'reason' => 'Modification de l\'achat '.$order->reference.' : annulation des lignes précédentes',
                 ]);
             }
             $order->items()->delete();
@@ -85,11 +84,11 @@ class PurchaseOrderCostingService
                 ];
             }
 
-                $totalLandedCost =
-                    $grandTotalPrice
-                    + $order->transport_cost_gnf
-                    + $order->customs_cost_gnf
-                    + $order->other_fees_gnf;
+            $totalLandedCost =
+                $grandTotalPrice
+                + $order->transport_cost_gnf
+                + $order->customs_cost_gnf
+                + $order->other_fees_gnf;
 
             // Si aucun CBM n'a été renseigné (ex : oubli, ou achat local sans volume
             // suivi), on répartit les frais à parts égales entre les lignes plutôt que
@@ -173,13 +172,13 @@ class PurchaseOrderCostingService
 
                 // Entrée en stock à l'emplacement exact choisi comme destination.
                 $this->stock->increment((int) $order->store_id, (int) $item['product_id'], (int) $item['quantity'], [
-                    'type'         => StockMovement::PURCHASE,
-                    'source_type'  => 'purchase_order',
-                    'source_id'    => $order->id,
+                    'type' => StockMovement::PURCHASE,
+                    'source_type' => 'purchase_order',
+                    'source_id' => $order->id,
                     'document_ref' => $order->reference,
-                    'supplier_id'  => $order->partner_id,
-                    'fund_id'      => $order->fund_id,
-                    'unit_price'   => $item['landed_unit_cost_gnf'],
+                    'supplier_id' => $order->partner_id,
+                    'fund_id' => $order->fund_id,
+                    'unit_price' => $item['landed_unit_cost_gnf'],
                 ]);
             }
         });

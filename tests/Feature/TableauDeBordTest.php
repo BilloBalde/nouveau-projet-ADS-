@@ -13,6 +13,8 @@ use App\Models\Store;
 use App\Models\StoreProduct;
 use App\Models\User;
 use App\Services\PurchaseOrderCostingService;
+use Database\Seeders\PermissionSeeder;
+use Database\Seeders\RolesSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Hash;
@@ -31,16 +33,20 @@ class TableauDeBordTest extends TestCase
     use RefreshDatabase;
 
     private User $admin;
+
     private Store $magasin;
+
     private Store $kaloum;
+
     private Customer $client;
+
     private Product $ciment;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->seed(\Database\Seeders\RolesSeeder::class);
-        $this->seed(\Database\Seeders\PermissionSeeder::class);
+        $this->seed(RolesSeeder::class);
+        $this->seed(PermissionSeeder::class);
 
         $this->admin = $this->user('Patron', User::ROLE_ADMIN);
         Place::create(['placeName' => 'Conakry', 'countryName' => 'Guinée', 'description' => 'test']);
@@ -199,6 +205,6 @@ class TableauDeBordTest extends TestCase
     {
         $alertes = $this->actingAs($this->admin)->get(route('home'))->assertOk()->viewData('stockAlerts');
 
-        $this->assertSame(80, (int) $alertes->firstWhere("id", $this->ciment->id)->stock_total);
+        $this->assertSame(80, (int) $alertes->firstWhere('id', $this->ciment->id)->stock_total);
     }
 }

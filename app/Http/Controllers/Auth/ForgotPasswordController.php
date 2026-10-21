@@ -4,34 +4,36 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\ValidationException;
+use Illuminate\View\View;
 
 class ForgotPasswordController extends Controller
 {
     /**
      * Display the form to request a password reset link.
      *
-     * @return \Illuminate\View\View
+     * @return View
      */
     public function showLinkRequestForm()
     {
         return view('users.forgot_password');
     }
 
-    public function showResetForm($token, $email){
+    public function showResetForm($token, $email)
+    {
         return view('auth.passwords.email', compact('token', 'email'));
     }
 
     /**
      * Handle a password reset link request.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\RedirectResponse
+     * @return RedirectResponse
      *
-     * @throws \Illuminate\Validation\ValidationException
+     * @throws ValidationException
      */
     public function sendResetLinkEmail(Request $request)
     {
@@ -45,7 +47,7 @@ class ForgotPasswordController extends Controller
 
         // Handle the response
         if ($status === Password::RESET_LINK_SENT) {
-            //dd('Je tombe ici');
+            // dd('Je tombe ici');
             return redirect()->back()->with('success', 'Nous avons envoyer une email de recuperation de mot de passe');
         }
 
@@ -55,7 +57,8 @@ class ForgotPasswordController extends Controller
         ]);
     }
 
-    public function reset(Request $request){
+    public function reset(Request $request)
+    {
         $request->validate([
             'token' => 'required|string',
             'email' => 'required|email',

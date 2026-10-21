@@ -28,17 +28,17 @@ class OrderReturnedToHeadOfficeNotification extends Notification
     public function toArray($notifiable)
     {
         return [
-            'order_id'      => $this->order->id,
+            'order_id' => $this->order->id,
             'customer_name' => $this->order->user?->name ?? 'Client',
-            'total_amount'  => $this->order->total_amount,
-            'message'       => sprintf(
+            'total_amount' => $this->order->total_amount,
+            'message' => sprintf(
                 'La commande n°%d a été rendue au siège par %s (%s)%s.',
                 $this->order->id,
                 $this->boutique,
                 $this->par,
-                $this->motif !== '' ? ' : ' . $this->motif : ''
+                $this->motif !== '' ? ' : '.$this->motif : ''
             ),
-            'url'           => route('admin.orders.show', $this->order->id, absolute: false),
+            'url' => route('admin.orders.show', $this->order->id, absolute: false),
         ];
     }
 }

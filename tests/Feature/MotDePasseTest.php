@@ -2,8 +2,9 @@
 
 namespace Tests\Feature;
 
-use App\Models\Role;
 use App\Models\User;
+use Database\Seeders\PermissionSeeder;
+use Database\Seeders\RolesSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -28,8 +29,8 @@ class MotDePasseTest extends TestCase
     {
         parent::setUp();
 
-        $this->seed(\Database\Seeders\RolesSeeder::class);
-        $this->seed(\Database\Seeders\PermissionSeeder::class);
+        $this->seed(RolesSeeder::class);
+        $this->seed(PermissionSeeder::class);
         Mail::fake();
     }
 

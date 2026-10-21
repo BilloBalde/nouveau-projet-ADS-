@@ -3,8 +3,8 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class SalesDemoSeeder extends Seeder
 {
@@ -19,7 +19,7 @@ class SalesDemoSeeder extends Seeder
         $customerIds = DB::table('customers')->pluck('id')->all();
         $products = DB::table('products')->select('id', 'sku', 'price', 'price_sale')->get()->keyBy('sku');
 
-        if (!$storeId || !$userId || empty($customerIds) || $products->isEmpty()) {
+        if (! $storeId || ! $userId || empty($customerIds) || $products->isEmpty()) {
             return;
         }
 
@@ -41,12 +41,12 @@ class SalesDemoSeeder extends Seeder
 
         foreach ($transactions as $i => [$sku, $quantity, $daysAgo, $statut]) {
             $product = $products[$sku] ?? null;
-            if (!$product) {
+            if (! $product) {
                 continue;
             }
 
             $date = Carbon::now()->subDays($daysAgo);
-            $numeroFacture = $date->format('Ym') . sprintf('%04d', $i + 1);
+            $numeroFacture = $date->format('Ym').sprintf('%04d', $i + 1);
             $customerId = $customerIds[$i % count($customerIds)];
 
             $prix = (float) $product->price;

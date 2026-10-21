@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use Database\Seeders\RolesSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Route;
@@ -19,7 +20,7 @@ class CheckManagerRoleTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->seed(\Database\Seeders\RolesSeeder::class);
+        $this->seed(RolesSeeder::class);
     }
 
     public function test_admin_and_manager_can_access_superuser_routes(): void

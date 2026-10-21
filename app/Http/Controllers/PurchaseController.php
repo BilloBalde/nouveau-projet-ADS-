@@ -5,10 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\Logistic;
 use App\Models\Product;
 use App\Models\Purchase;
+use App\Models\StockMovement;
 use App\Models\Store;
-use App\Models\StoreProduct;
+use App\Services\StockService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Http\Response;
 
 class PurchaseController extends Controller
 {
@@ -25,10 +26,11 @@ class PurchaseController extends Controller
         $this->middleware('permission:purchases.create')->only(['ajout', 'exitAchat']);
         $this->middleware('permission:purchases.delete')->only(['destroy']);
     }
+
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function index(Request $request)
     {
@@ -37,11 +39,11 @@ class PurchaseController extends Controller
         $query = Purchase::query();
 
         if ($request->filled('numeroPurchase')) {
-            $query->where('numeroPurchase', 'like', '%' . $request->input('numeroPurchase') . '%');
+            $query->where('numeroPurchase', 'like', '%'.$request->input('numeroPurchase').'%');
         }
 
         if ($request->filled('product_id')) {
-            $query->where('product_id', 'like', '%' . $request->input('product_id') . '%');
+            $query->where('product_id', 'like', '%'.$request->input('product_id').'%');
         }
 
         if ($request->filled('created_at')) {
@@ -61,11 +63,12 @@ class PurchaseController extends Controller
     /**
      * Show the form for creating a new resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function ajout($numeroPurchase, $quantity, $store_id)
     {
         $products = Product::all();
+
         return view('purchases.create', compact('numeroPurchase', 'products', 'quantity', 'store_id'));
     }
 
@@ -77,8 +80,7 @@ class PurchaseController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function store(Request $request)
     {
@@ -107,18 +109,18 @@ class PurchaseController extends Controller
             unset($row);
         }
 
-        //dd($purchasesData);
+        // dd($purchasesData);
         // Insert multiple rows
         foreach ($purchasesData as $data) {
             $this->authorizeStore($data['store_id']);
             $purchase = Purchase::create($data);
             // Entrée en stock tracée dans le journal des mouvements.
-            app(\App\Services\StockService::class)->increment((int) $data['store_id'], (int) $data['product_id'], (int) $data['quantity'], [
-                'type'         => \App\Models\StockMovement::PURCHASE,
-                'source_type'  => 'purchase',
-                'source_id'    => $purchase->id,
+            app(StockService::class)->increment((int) $data['store_id'], (int) $data['product_id'], (int) $data['quantity'], [
+                'type' => StockMovement::PURCHASE,
+                'source_type' => 'purchase',
+                'source_id' => $purchase->id,
                 'document_ref' => $purchase->numeroPurchase,
-                'unit_price'   => $data['price'] ?? null,
+                'unit_price' => $data['price'] ?? null,
             ]);
 
             // Garde le "Prix de Revient" du produit aligné sur le dernier achat réel
@@ -132,8 +134,7 @@ class PurchaseController extends Controller
     /**
      * Display the specified resource.
      *
-     * @param  \App\Models\Purchase  $purchase
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function show(Purchase $purchase)
     {
@@ -143,8 +144,7 @@ class PurchaseController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
-     * @param  \App\Models\Purchase  $purchase
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function edit(Purchase $purchase)
     {
@@ -154,9 +154,8 @@ class PurchaseController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Purchase  $purchase
-     * @return \Illuminate\Http\Response
+     * @param  Purchase  $purchase
+     * @return Response
      */
     public function update(Request $request, $id)
     {
@@ -169,16 +168,16 @@ class PurchaseController extends Controller
             $this->authorizeStore($purchase->store_id);
             // Écart de quantité appliqué par un mouvement de correction tracé.
             $correction = [
-                'type'         => \App\Models\StockMovement::CORRECTION,
-                'source_type'  => 'purchase',
-                'source_id'    => $purchase->id,
+                'type' => StockMovement::CORRECTION,
+                'source_type' => 'purchase',
+                'source_id' => $purchase->id,
                 'document_ref' => $purchase->numeroPurchase,
-                'reason'       => 'Modification de l\'achat : quantité ' . $purchase->quantity . ' → ' . $request->quantity,
+                'reason' => 'Modification de l\'achat : quantité '.$purchase->quantity.' → '.$request->quantity,
             ];
             if ($reste > 0) {
-                app(\App\Services\StockService::class)->forceDecrement((int) $purchase->store_id, (int) $purchase->product_id, (int) $reste, $correction);
+                app(StockService::class)->forceDecrement((int) $purchase->store_id, (int) $purchase->product_id, (int) $reste, $correction);
             } elseif ($reste < 0) {
-                app(\App\Services\StockService::class)->increment((int) $purchase->store_id, (int) $purchase->product_id, (int) -$reste, $correction);
+                app(StockService::class)->increment((int) $purchase->store_id, (int) $purchase->product_id, (int) -$reste, $correction);
             }
             $purchase->price = $request->price;
             $purchase->quantity = $request->quantity;
@@ -192,7 +191,7 @@ class PurchaseController extends Controller
 
             return redirect()->route('purchases.index')->with('success', 'Achats modifié avec succès');
         } catch (\Throwable $th) {
-            return redirect()->route('purchases.index')->with('error', 'Achats pas modifié parceque'. $th->getMessage());
+            return redirect()->route('purchases.index')->with('error', 'Achats pas modifié parceque'.$th->getMessage());
         }
 
     }
@@ -200,8 +199,7 @@ class PurchaseController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\Models\Purchase  $purchase
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function destroy(Purchase $purchase)
     {
@@ -217,8 +215,7 @@ class PurchaseController extends Controller
             return redirect()->route('purchases.index')->with('success', "Vous êtes parti sans valider, l'achat a été annulé.");
         } catch (\Throwable $th) {
             // Log the error and return with an error message
-            return redirect()->back()->with('error', 'Impossible de quitter cette page, une erreur est survenue: ' . $th->getMessage());
+            return redirect()->back()->with('error', 'Impossible de quitter cette page, une erreur est survenue: '.$th->getMessage());
         }
     }
-
 }

@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
 use App\Models\PhoneVerification;
+use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 
 class PhoneAuthController extends Controller
@@ -15,7 +15,7 @@ class PhoneAuthController extends Controller
     public function sendCode(Request $request)
     {
         $request->validate([
-            'phone' => 'required|string|regex:/^(\+224|224|0)?[0-9]{9}$/'
+            'phone' => 'required|string|regex:/^(\+224|224|0)?[0-9]{9}$/',
         ]);
 
         $phone = $this->formatPhoneNumber($request->phone);
@@ -43,7 +43,7 @@ class PhoneAuthController extends Controller
     {
         $request->validate([
             'phone' => 'required|string',
-            'code' => 'required|string|size:6'
+            'code' => 'required|string|size:6',
         ]);
 
         $phone = $this->formatPhoneNumber($request->phone);
@@ -53,7 +53,7 @@ class PhoneAuthController extends Controller
             ->where('expires_at', '>', now())
             ->first();
 
-        if (!$verif) {
+        if (! $verif) {
             return back()->withErrors(['code' => 'Code invalide ou expiré']);
         }
 
@@ -61,9 +61,9 @@ class PhoneAuthController extends Controller
         $user = User::firstOrCreate(
             ['phone' => $phone],
             [
-                'name' => 'Client ' . substr($phone, -9),
-                'username' => 'u_' . substr($phone, -9) . '_' . uniqid(),
-                'email' => 'phone_' . substr($phone, -9) . '_' . uniqid() . '@clients.local',
+                'name' => 'Client '.substr($phone, -9),
+                'username' => 'u_'.substr($phone, -9).'_'.uniqid(),
+                'email' => 'phone_'.substr($phone, -9).'_'.uniqid().'@clients.local',
                 'password' => Hash::make(uniqid()),
                 'motdepasse' => '',
                 'status' => 'Active',
@@ -85,27 +85,27 @@ class PhoneAuthController extends Controller
     {
         // Supprime tous les espaces, tirets, points
         $phone = preg_replace('/[^0-9+]/', '', $phone);
-        
+
         // Déjà au bon format
         if (preg_match('/^\+224[0-9]{9}$/', $phone)) {
             return $phone;
         }
-        
+
         // Commence par '224' sans le +
         if (preg_match('/^224[0-9]{9}$/', $phone)) {
-            return '+' . $phone;
+            return '+'.$phone;
         }
-        
+
         // Commence par 0 (ex: 0771234567)
         if (preg_match('/^0[0-9]{9}$/', $phone)) {
-            return '+224' . substr($phone, 1);
+            return '+224'.substr($phone, 1);
         }
-        
+
         // Numéro local à 9 chiffres (ex: 771234567)
         if (preg_match('/^[0-9]{9}$/', $phone)) {
-            return '+224' . $phone;
+            return '+224'.$phone;
         }
-        
+
         // Fallback : on renvoie tel quel (mais logguez l'erreur)
         return $phone;
     }
@@ -114,6 +114,7 @@ class PhoneAuthController extends Controller
     public function logout()
     {
         Auth::logout();
+
         return redirect()->route('accueil');
     }
 }

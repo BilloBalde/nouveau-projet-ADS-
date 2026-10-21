@@ -5,11 +5,14 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class Product extends Model
 {
     use HasFactory;
+
     protected $guarded = ['id'];
+
     protected $casts = [
         'promo_start_date' => 'date',
         'promo_end_date' => 'date',
@@ -20,11 +23,11 @@ class Product extends Model
      * les ventes et les factures sont tous comptés dans cette unité.
      */
     public const UNITES = [
-        'pcs'      => ['libelle' => 'Pièce',    'pluriel' => 'pièces',    'court' => 'pcs'],
+        'pcs' => ['libelle' => 'Pièce',    'pluriel' => 'pièces',    'court' => 'pcs'],
         'douzaine' => ['libelle' => 'Douzaine', 'pluriel' => 'douzaines', 'court' => 'douz.'],
-        'carton'   => ['libelle' => 'Carton',   'pluriel' => 'cartons',   'court' => 'ctn'],
-        'paquet'   => ['libelle' => 'Paquet',   'pluriel' => 'paquets',   'court' => 'paq.'],
-        'rouleau'  => ['libelle' => 'Rouleau',  'pluriel' => 'rouleaux',  'court' => 'rlx'],
+        'carton' => ['libelle' => 'Carton',   'pluriel' => 'cartons',   'court' => 'ctn'],
+        'paquet' => ['libelle' => 'Paquet',   'pluriel' => 'paquets',   'court' => 'paq.'],
+        'rouleau' => ['libelle' => 'Rouleau',  'pluriel' => 'rouleaux',  'court' => 'rlx'],
     ];
 
     public function getUniteAttribute($valeur): string
@@ -37,10 +40,10 @@ class Product extends Model
     {
         return match ($this->unite) {
             'douzaine' => '12 pcs',
-            'carton'   => $this->pcs_par_carton ? $this->pcs_par_carton.' pcs' : null,
-            'paquet'   => $this->pcs_par_paquet ? $this->pcs_par_paquet.' pcs' : null,
-            'rouleau'  => $this->dimension_rouleau ?: null,
-            default    => null,
+            'carton' => $this->pcs_par_carton ? $this->pcs_par_carton.' pcs' : null,
+            'paquet' => $this->pcs_par_paquet ? $this->pcs_par_paquet.' pcs' : null,
+            'rouleau' => $this->dimension_rouleau ?: null,
+            default => null,
         };
     }
 
@@ -98,13 +101,13 @@ class Product extends Model
      * Stock total par unité, éventuellement limité à des emplacements :
      * « 1 675 pièces · 40 cartons · 25 douzaines ».
      */
-    public static function resumeStock(iterable|null $storeIds = null): string
+    public static function resumeStock(?iterable $storeIds = null): string
     {
-        $lignes = \Illuminate\Support\Facades\DB::table('store_products')
+        $lignes = DB::table('store_products')
             ->join('products', 'products.id', '=', 'store_products.product_id')
             ->when($storeIds !== null, fn ($q) => $q->whereIn('store_products.store_id', collect($storeIds)->all()))
             ->selectRaw("COALESCE(products.unite, 'pcs') as unite, SUM(store_products.quantity) as qty")
-            ->groupBy(\Illuminate\Support\Facades\DB::raw("COALESCE(products.unite, 'pcs')"))
+            ->groupBy(DB::raw("COALESCE(products.unite, 'pcs')"))
             ->get();
 
         return self::resumeQuantites($lignes);
@@ -123,7 +126,7 @@ class Product extends Model
      */
     public function isPromoActive(): bool
     {
-        if (!$this->is_promo || !$this->promo_price) {
+        if (! $this->is_promo || ! $this->promo_price) {
             return false;
         }
 
@@ -154,8 +157,8 @@ class Product extends Model
      */
     public static function urlImage(?string $image): string
     {
-        return $image && is_file(public_path('products/' . $image))
-            ? asset('products/' . $image)
+        return $image && is_file(public_path('products/'.$image))
+            ? asset('products/'.$image)
             : asset(self::IMAGE_PAR_DEFAUT);
     }
 
@@ -168,7 +171,7 @@ class Product extends Model
     {
         return $this->belongsToMany(Category::class, 'category_products');
     }
-    
+
     public function category()
     {
         return $this->belongsTo(Category::class);
@@ -179,10 +182,11 @@ class Product extends Model
         return $this->belongsToMany(Store::class, 'store_products')->withPivot('quantity', 'fund_id');
     }
 
-    public function ligneCommande(){
+    public function ligneCommande()
+    {
         return $this->hasMany(LigneCommande::class);
     }
-    
+
     /**
      * Coût d'achat unitaire (prix de revient), règle unique pour toutes les
      * ventes : point de vente, facturation, commandes en ligne, devis.
@@ -294,9 +298,4 @@ class Product extends Model
     {
         return $this->hasOne(LigneCommande::class)->latestOfMany(); // uses created_at or id
     }
-
-        
-    
-    
-
 }

@@ -26,11 +26,11 @@ class DebtReminderDigestNotification extends Notification
     {
         return [
             'customer_count' => $this->customerCount,
-            'total_amount'   => $this->totalAmount,
-            'message'        => $this->customerCount . ' client(s) ont des dettes impayées pour un total de '
-                . number_format($this->totalAmount, 0, ',', ' ')
-                . ' GNF — cliquez pour voir la liste et envoyer les rappels WhatsApp.',
-            'url'            => route('admin.debt-reminders.index', absolute: false),
+            'total_amount' => $this->totalAmount,
+            'message' => $this->customerCount.' client(s) ont des dettes impayées pour un total de '
+                .number_format($this->totalAmount, 0, ',', ' ')
+                .' GNF — cliquez pour voir la liste et envoyer les rappels WhatsApp.',
+            'url' => route('admin.debt-reminders.index', absolute: false),
         ];
     }
 }

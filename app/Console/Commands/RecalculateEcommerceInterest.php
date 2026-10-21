@@ -48,7 +48,7 @@ class RecalculateEcommerceInterest extends Command
             $changes[$ligne->id] = $nouveau;
             $rows[] = [
                 $ligne->numeroFacture,
-                $produit?->libelle ?? '#' . $ligne->product_id,
+                $produit?->libelle ?? '#'.$ligne->product_id,
                 $ligne->quantity,
                 number_format((float) $ligne->prix, 0, ',', ' '),
                 number_format($produit?->coutUnitaire() ?? 0, 0, ',', ' '),
@@ -66,7 +66,7 @@ class RecalculateEcommerceInterest extends Command
         $this->table(['Facture', 'Produit', 'Qté', 'Prix', 'Coût', 'Intérêt actuel', 'Nouvel intérêt'], $rows);
 
         if (! $this->option('apply')) {
-            $this->warn(count($rows) . ' ligne(s) à corriger. Relancez avec --apply pour enregistrer.');
+            $this->warn(count($rows).' ligne(s) à corriger. Relancez avec --apply pour enregistrer.');
 
             return self::SUCCESS;
         }
@@ -77,7 +77,7 @@ class RecalculateEcommerceInterest extends Command
             }
         });
 
-        $this->info(count($changes) . ' ligne(s) corrigée(s).');
+        $this->info(count($changes).' ligne(s) corrigée(s).');
 
         return self::SUCCESS;
     }

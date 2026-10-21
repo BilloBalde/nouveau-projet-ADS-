@@ -14,8 +14,11 @@ use App\Models\Sale;
 use App\Models\Store;
 use App\Models\StoreProduct;
 use App\Models\User;
+use Database\Seeders\PermissionSeeder;
+use Database\Seeders\RolesSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Testing\TestResponse;
 use Tests\TestCase;
 
 /**
@@ -28,16 +31,20 @@ class PrixMinimumTest extends TestCase
     use RefreshDatabase;
 
     private User $admin;
+
     private Store $magasin;
+
     private Customer $client;
+
     private Category $categorie;
+
     private Product $robinet;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->seed(\Database\Seeders\RolesSeeder::class);
-        $this->seed(\Database\Seeders\PermissionSeeder::class);
+        $this->seed(RolesSeeder::class);
+        $this->seed(PermissionSeeder::class);
 
         $this->admin = User::create([
             'name' => 'Patron', 'email' => 'patron@example.com', 'username' => 'patron',
@@ -56,10 +63,10 @@ class PrixMinimumTest extends TestCase
         StoreProduct::create(['store_id' => $this->magasin->id, 'product_id' => $this->robinet->id, 'quantity' => 100]);
     }
 
-    private function creerProduit(array $donnees): \Illuminate\Testing\TestResponse
+    private function creerProduit(array $donnees): TestResponse
     {
         return $this->actingAs($this->admin)->post(route('produits.store'), $donnees + [
-            'categories' => [$this->categorie->id], 'libelle' => 'Vanne', 'sku' => 'VAN-' . uniqid(), 'description' => 'x',
+            'categories' => [$this->categorie->id], 'libelle' => 'Vanne', 'sku' => 'VAN-'.uniqid(), 'description' => 'x',
             'price_sale' => 10000, 'stock_initial' => 10, 'store_id' => $this->magasin->id, 'unite' => 'pcs',
         ]);
     }
@@ -67,7 +74,7 @@ class PrixMinimumTest extends TestCase
     private function vendre(float $prix, array $ligne = [])
     {
         return $this->actingAs($this->admin)->post(route('sales.store'), [
-            'numeroFacture' => 'F-' . uniqid(), 'store_id' => $this->magasin->id, 'customer_id' => $this->client->id,
+            'numeroFacture' => 'F-'.uniqid(), 'store_id' => $this->magasin->id, 'customer_id' => $this->client->id,
             'avance' => 0, 'paid_by' => 'cash',
             'sales' => [1 => $ligne + ['product_id' => $this->robinet->id, 'quantity' => 2, 'prix' => $prix, 'store_id' => $this->magasin->id, 'is_third_party' => '0']],
         ]);
@@ -128,7 +135,7 @@ class PrixMinimumTest extends TestCase
     public function test_facturation_manuelle_refuse_sous_le_minimum(): void
     {
         $facturer = fn (float $prix) => $this->actingAs($this->admin)->post(route('facturations.store'), [
-            'numeroFacture' => 'FAC-' . uniqid(), 'avance' => 0, 'customer_id' => $this->client->id, 'store_id' => $this->magasin->id,
+            'numeroFacture' => 'FAC-'.uniqid(), 'avance' => 0, 'customer_id' => $this->client->id, 'store_id' => $this->magasin->id,
             'products' => [1 => ['productName' => 'Robinet', 'cartons' => 1, 'qty_per_ctn' => 1, 'price' => $prix, 'subtotal' => $prix]],
         ]);
 

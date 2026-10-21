@@ -2,19 +2,19 @@
 
 namespace App\Models;
 
-use App\Models\Store;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class Expense extends Model
 {
     use HasFactory;
+
     protected $fillable = [
         'reference',
         'expense_categories_id',
         'amount',
         'status',
-        'store_id', 
+        'store_id',
         'description',
         'user_id',
     ];

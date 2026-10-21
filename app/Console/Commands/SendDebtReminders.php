@@ -40,22 +40,24 @@ class SendDebtReminders extends Command
 
         $touch = function (array $keys, float $reste) use (&$customers) {
             $reminder = DebtReminder::firstOrNew($keys);
-            $reminder->amount         = $reste;
+            $reminder->amount = $reste;
             $reminder->reminder_count = $reminder->exists ? $reminder->reminder_count + 1 : 1;
-            $reminder->last_sent_at   = now();
-            $reminder->status         = 'sent';
+            $reminder->last_sent_at = now();
+            $reminder->status = 'sent';
             $reminder->save();
 
             $customers[$keys['customer_id']] = ($customers[$keys['customer_id']] ?? 0) + $reste;
         };
 
         foreach ($factures as $facture) {
-            if (! $facture->customer) continue;
+            if (! $facture->customer) {
+                continue;
+            }
             $touch(['customer_id' => $facture->customer_id, 'facture_id' => $facture->id], (float) $facture->reste);
         }
 
         $customerCount = count($customers);
-        $totalAmount   = array_sum($customers);
+        $totalAmount = array_sum($customers);
 
         // 4. Digest au staff (admins + managers)
         if ($customerCount > 0) {
@@ -63,7 +65,7 @@ class SendDebtReminders extends Command
             Notification::send($staff, new DebtReminderDigestNotification($customerCount, $totalAmount));
         }
 
-        $this->info("Rappels traités : {$customerCount} client(s), " . number_format($totalAmount, 0, ',', ' ') . " GNF impayés, {$resolved} rappel(s) résolu(s).");
+        $this->info("Rappels traités : {$customerCount} client(s), ".number_format($totalAmount, 0, ',', ' ')." GNF impayés, {$resolved} rappel(s) résolu(s).");
 
         return self::SUCCESS;
     }

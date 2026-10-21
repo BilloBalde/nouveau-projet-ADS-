@@ -6,8 +6,6 @@ use App\Models\Company;
 use App\Models\Payment;
 use App\Models\StockTransfer;
 use App\Models\TransactionFacture;
-use App\Models\Sale;
-use App\Models\User;
 
 class ReceiptController extends Controller
 {
@@ -66,7 +64,7 @@ class ReceiptController extends Controller
         abort_unless(
             StockTransfer::visibleTo(auth()->user())->whereKey($transfer->id)->exists(),
             403,
-            "Ce transfert ne concerne pas votre magasin."
+            'Ce transfert ne concerne pas votre magasin.'
         );
         $transfer->load(['product', 'fromStore', 'toStore', 'requester', 'approver', 'shipper', 'receiver']);
         $company = Company::current();

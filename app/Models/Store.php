@@ -14,41 +14,51 @@ use Illuminate\Database\Eloquent\Model;
 class Store extends Model
 {
     use HasFactory;
+
     protected $guarded = ['id'];
 
     public const TYPE_MAGASIN = 'magasin';
+
     public const TYPE_ENTREPOT = 'entrepot';
+
     public const TYPE_STOCK = 'stock';
 
     public const TYPES = [
-        self::TYPE_MAGASIN  => 'Magasin',
+        self::TYPE_MAGASIN => 'Magasin',
         self::TYPE_ENTREPOT => 'Entrepôt',
-        self::TYPE_STOCK    => 'Stock interne',
+        self::TYPE_STOCK => 'Stock interne',
     ];
 
     protected $casts = [
         'is_main' => 'boolean',
     ];
 
-    public function getUserAttribute(){
+    public function getUserAttribute()
+    {
         $user = User::find($this->user_id);
+
         return $user?->username;
     }
 
-    public function getPlaceAttribute(){
+    public function getPlaceAttribute()
+    {
         $place = Place::find($this->place_id);
+
         return $place?->placeName;
     }
 
-    public function logistic(){
+    public function logistic()
+    {
         return $this->hasMany(Logistic::class);
     }
 
-    public function facture(){
+    public function facture()
+    {
         return $this->hasMany(Facture::class);
     }
 
-    public function place(){
+    public function place()
+    {
         return $this->belongsTo(Place::class);
     }
 
@@ -57,7 +67,7 @@ class Store extends Model
         return $this->belongsToMany(Product::class, 'store_products')->withPivot('quantity', 'fund_id');
     }
 
-      public function manager()
+    public function manager()
     {
         return $this->belongsTo(User::class, 'user_id');
     }
@@ -93,7 +103,7 @@ class Store extends Model
     {
         $parent = $this->parent_id ? $this->parent : null;
 
-        return $parent ? $parent->store_name . ' / ' . $this->store_name : $this->store_name;
+        return $parent ? $parent->store_name.' / '.$this->store_name : $this->store_name;
     }
 
     /**
@@ -177,6 +187,7 @@ class Store extends Model
                     $ids = array_merge($ids, $collect($child->id, array_merge($seen, $ids)));
                 }
             }
+
             return $ids;
         };
 

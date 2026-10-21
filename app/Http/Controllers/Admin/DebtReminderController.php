@@ -3,15 +3,14 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Company;
 use App\Models\Customer;
 use App\Models\DebtReminder;
 use App\Services\SmsService;
 
 class DebtReminderController extends Controller
 {
-    public function __construct(private SmsService $sms)
-    {
-    }
+    public function __construct(private SmsService $sms) {}
 
     /**
      * Liste des rappels de dettes groupés par client, avec liens WhatsApp.
@@ -29,13 +28,13 @@ class DebtReminderController extends Controller
                 $customer = $group->first()->customer;
 
                 return (object) [
-                    'customer'      => $customer,
-                    'customer_id'   => $group->first()->customer_id,
-                    'total'         => $group->sum('amount'),
-                    'count'         => $group->count(),
+                    'customer' => $customer,
+                    'customer_id' => $group->first()->customer_id,
+                    'total' => $group->sum('amount'),
+                    'count' => $group->count(),
                     'max_reminders' => $group->max('reminder_count'),
-                    'last_sent_at'  => $group->max('last_sent_at'),
-                    'reminder_ids'  => $group->pluck('id'),
+                    'last_sent_at' => $group->max('last_sent_at'),
+                    'reminder_ids' => $group->pluck('id'),
                 ];
             })
             ->sortByDesc('total')
@@ -85,11 +84,11 @@ class DebtReminderController extends Controller
             return back()->with('error', 'Aucune dette active pour ce client.');
         }
 
-        $message = 'Bonjour ' . ($customer->customerName ?? 'cher client')
-            . ', vous avez une facture impayée de '
-            . number_format($total, 0, ',', ' ')
-            . ' GNF chez ' . (\App\Models\Company::current()?->name ?? config('app.name'))
-            . '. Veuillez régler votre dette avant lundi. Merci de votre confiance.';
+        $message = 'Bonjour '.($customer->customerName ?? 'cher client')
+            .', vous avez une facture impayée de '
+            .number_format($total, 0, ',', ' ')
+            .' GNF chez '.(Company::current()?->name ?? config('app.name'))
+            .'. Veuillez régler votre dette avant lundi. Merci de votre confiance.';
 
         $sent = $this->sms->send($tel, $message);
 
@@ -97,8 +96,8 @@ class DebtReminderController extends Controller
             foreach ($reminders as $reminder) {
                 $reminder->update([
                     'reminder_count' => $reminder->reminder_count + 1,
-                    'last_sent_at'   => now(),
-                    'status'         => 'sent',
+                    'last_sent_at' => now(),
+                    'status' => 'sent',
                 ]);
             }
 

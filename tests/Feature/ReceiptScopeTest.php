@@ -11,8 +11,11 @@ use App\Models\Store;
 use App\Models\StoreProduct;
 use App\Models\TransactionFacture;
 use App\Models\User;
+use Database\Seeders\PermissionSeeder;
+use Database\Seeders\RolesSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use Maatwebsite\Excel\Facades\Excel;
 use Tests\TestCase;
 
 /**
@@ -25,18 +28,24 @@ class ReceiptScopeTest extends TestCase
     use RefreshDatabase;
 
     private User $admin;
+
     private User $vendeurA;
+
     private User $vendeurB;
+
     private Store $magasinA;
+
     private Store $magasinB;
+
     private Customer $client;
+
     private Product $ciment;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->seed(\Database\Seeders\RolesSeeder::class);
-        $this->seed(\Database\Seeders\PermissionSeeder::class);
+        $this->seed(RolesSeeder::class);
+        $this->seed(PermissionSeeder::class);
 
         $this->admin = $this->user('Patron', User::ROLE_ADMIN);
         $lieu = Place::create(['placeName' => 'Conakry', 'countryName' => 'Guinée', 'description' => 'test']);
@@ -62,7 +71,7 @@ class ReceiptScopeTest extends TestCase
     private function user(string $name, int $role, ?int $storeId = null): User
     {
         $user = User::create([
-            'name' => $name, 'email' => str()->slug($name) . uniqid() . '@example.com', 'username' => str()->slug($name) . uniqid(),
+            'name' => $name, 'email' => str()->slug($name).uniqid().'@example.com', 'username' => str()->slug($name).uniqid(),
             'password' => Hash::make('password'), 'role_id' => $role, 'phone' => '620', 'status' => 'Active', 'token' => '',
         ]);
         if ($storeId) {
@@ -76,7 +85,7 @@ class ReceiptScopeTest extends TestCase
     private function venteACredit(User $vendeur, Store $magasin): Facture
     {
         $this->actingAs($vendeur)->post(route('sales.store'), [
-            'numeroFacture' => 'F-' . uniqid(), 'store_id' => $magasin->id, 'customer_id' => $this->client->id,
+            'numeroFacture' => 'F-'.uniqid(), 'store_id' => $magasin->id, 'customer_id' => $this->client->id,
             'avance' => 1000, 'paid_by' => 'cash',
             'sales' => [1 => ['product_id' => $this->ciment->id, 'quantity' => 1, 'prix' => 60000, 'store_id' => $magasin->id]],
         ])->assertSessionHas('success');
@@ -114,9 +123,9 @@ class ReceiptScopeTest extends TestCase
         $this->actingAs($this->vendeurA)->get(route('payments.creation', $factureA->id))->assertOk();
 
         // Export Excel des paiements : même périmètre que la liste.
-        \Maatwebsite\Excel\Facades\Excel::fake();
+        Excel::fake();
         $this->actingAs($this->vendeurA)->get(route('payments.exportExcel', ['period' => 'yearly']))->assertOk();
-        \Maatwebsite\Excel\Facades\Excel::assertDownloaded('paiements.xlsx', function ($export) use ($paiementA) {
+        Excel::assertDownloaded('paiements.xlsx', function ($export) use ($paiementA) {
             $this->assertSame([$paiementA->id], collect((fn () => $this->payments)->call($export))->pluck('id')->all());
 
             return true;

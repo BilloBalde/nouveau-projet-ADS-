@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Fund;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\StockMovement;
 use App\Models\Store;
 use App\Models\StoreProduct;
 use App\Models\User;
+use App\Services\FundService;
 use App\Services\StockService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -73,26 +75,26 @@ class StockController extends Controller
             ->groupBy('store_id')->get()->keyBy('store_id');
 
         $rows = $stores->map(fn ($s) => (object) [
-            'store'        => $s,
-            'qty'          => (int) ($stock[$s->id]->qty ?? 0),
-            'products'     => (int) ($stock[$s->id]->products ?? 0),
-            'value'        => (float) ($value[$s->id] ?? 0),
-            'sales_today'  => (float) ($salesToday[$s->id]->amount ?? 0),
-            'qty_today'    => (int) ($salesToday[$s->id]->qty ?? 0),
-            'qty_unites'   => Product::resumeQuantites($stockUnites->where('store_id', $s->id)),
-            'ventes_unites'=> Product::resumeQuantites($ventesUnites->where('store_id', $s->id)),
+            'store' => $s,
+            'qty' => (int) ($stock[$s->id]->qty ?? 0),
+            'products' => (int) ($stock[$s->id]->products ?? 0),
+            'value' => (float) ($value[$s->id] ?? 0),
+            'sales_today' => (float) ($salesToday[$s->id]->amount ?? 0),
+            'qty_today' => (int) ($salesToday[$s->id]->qty ?? 0),
+            'qty_unites' => Product::resumeQuantites($stockUnites->where('store_id', $s->id)),
+            'ventes_unites' => Product::resumeQuantites($ventesUnites->where('store_id', $s->id)),
         ]);
 
         $totals = [
-            'stock'          => $rows->sum('qty'),
+            'stock' => $rows->sum('qty'),
             'stock_magasins' => $rows->filter(fn ($r) => $r->store->type !== Store::TYPE_ENTREPOT)->sum('qty'),
-            'stock_entrepots'=> $rows->filter(fn ($r) => $r->store->type === Store::TYPE_ENTREPOT)->sum('qty'),
-            'sales_today'    => $rows->sum('sales_today'),
-            'direct_today'   => $rows->filter(fn ($r) => $r->store->type === Store::TYPE_ENTREPOT)->sum('sales_today'),
-            'value'          => $rows->sum('value'),
-            'stock_unites'          => Product::resumeQuantites($stockUnites),
+            'stock_entrepots' => $rows->filter(fn ($r) => $r->store->type === Store::TYPE_ENTREPOT)->sum('qty'),
+            'sales_today' => $rows->sum('sales_today'),
+            'direct_today' => $rows->filter(fn ($r) => $r->store->type === Store::TYPE_ENTREPOT)->sum('sales_today'),
+            'value' => $rows->sum('value'),
+            'stock_unites' => Product::resumeQuantites($stockUnites),
             'stock_magasins_unites' => Product::resumeQuantites($stockUnites->whereIn('store_id', $stores->where('type', '!=', Store::TYPE_ENTREPOT)->pluck('id'))),
-            'stock_entrepots_unites'=> Product::resumeQuantites($stockUnites->whereIn('store_id', $stores->where('type', Store::TYPE_ENTREPOT)->pluck('id'))),
+            'stock_entrepots_unites' => Product::resumeQuantites($stockUnites->whereIn('store_id', $stores->where('type', Store::TYPE_ENTREPOT)->pluck('id'))),
         ];
 
         return view('stock.index', compact('rows', 'totals'));
@@ -107,17 +109,17 @@ class StockController extends Controller
         $products = StoreProduct::where('store_id', $store->id)
             ->with('product:id,libelle,sku,price,price_sale,unite,pcs_par_carton,pcs_par_paquet,dimension_rouleau')
             ->when($request->filled('q'), fn ($q) => $q->whereHas('product', fn ($p) => $p
-                ->where('libelle', 'like', '%' . $request->input('q') . '%')
-                ->orWhere('sku', 'like', '%' . $request->input('q') . '%')))
+                ->where('libelle', 'like', '%'.$request->input('q').'%')
+                ->orWhere('sku', 'like', '%'.$request->input('q').'%')))
             ->when(! $request->boolean('all'), fn ($q) => $q->where('quantity', '!=', 0))
             ->orderByDesc('quantity')
             ->paginate(50)->appends($request->query());
 
         $periods = [
-            'Aujourd\'hui'   => [Carbon::today(), Carbon::today()->endOfDay()],
-            'Cette semaine'  => [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()],
-            'Ce mois'        => [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()],
-            'Cette année'    => [Carbon::now()->startOfYear(), Carbon::now()->endOfYear()],
+            'Aujourd\'hui' => [Carbon::today(), Carbon::today()->endOfDay()],
+            'Cette semaine' => [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()],
+            'Ce mois' => [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()],
+            'Cette année' => [Carbon::now()->startOfYear(), Carbon::now()->endOfYear()],
         ];
         $sales = collect($periods)->map(function ($range) use ($store) {
             $s = Sale::where('store_id', $store->id)
@@ -154,7 +156,7 @@ class StockController extends Controller
             }
         }
         if ($request->filled('document_ref')) {
-            $query->where('document_ref', 'like', '%' . $request->input('document_ref') . '%');
+            $query->where('document_ref', 'like', '%'.$request->input('document_ref').'%');
         }
         if ($request->filled('date_debut')) {
             $query->whereDate('created_at', '>=', $request->input('date_debut'));
@@ -186,7 +188,7 @@ class StockController extends Controller
         if ($product) {
             $movements = StockMovement::visibleTo($user)
                 ->where('product_id', $product->id)
-                ->when($request->filled('document_ref'), fn ($q) => $q->where('document_ref', 'like', '%' . $request->input('document_ref') . '%'))
+                ->when($request->filled('document_ref'), fn ($q) => $q->where('document_ref', 'like', '%'.$request->input('document_ref').'%'))
                 ->with(['store:id,store_name,type', 'counterpartStore:id,store_name', 'user:id,name', 'customer:id,customerName', 'supplier:id,name'])
                 ->orderBy('id')
                 ->paginate(100)->appends($request->query());
@@ -205,7 +207,7 @@ class StockController extends Controller
     {
         $stores = Store::optionsFor(auth()->user());
         $products = Product::orderBy('libelle')->get(['id', 'libelle', 'sku', 'unite', 'pcs_par_carton', 'pcs_par_paquet', 'dimension_rouleau']);
-        $funds = \App\Models\Fund::active()->orderBy('name')->get();
+        $funds = Fund::active()->orderBy('name')->get();
         // Stock enregistré par emplacement, produit et propriétaire : affiché
         // pendant le comptage pour voir l'écart avant d'enregistrer.
         $stockEnregistre = StoreProduct::whereIn('store_id', $stores->pluck('id'))
@@ -222,12 +224,12 @@ class StockController extends Controller
     public function adjust(Request $request)
     {
         $data = $request->validate([
-            'store_id'   => 'required|exists:stores,id',
+            'store_id' => 'required|exists:stores,id',
             'product_id' => 'required|exists:products,id',
-            'counted'    => 'required|integer|min:0',
-            'type'       => 'required|in:' . StockMovement::INVENTORY . ',' . StockMovement::ADJUSTMENT,
-            'reason'     => 'required|string|min:3|max:500',
-            'fund_id'    => 'nullable|exists:funds,id',
+            'counted' => 'required|integer|min:0',
+            'type' => 'required|in:'.StockMovement::INVENTORY.','.StockMovement::ADJUSTMENT,
+            'reason' => 'required|string|min:3|max:500',
+            'fund_id' => 'nullable|exists:funds,id',
         ], [
             'reason.required' => 'Le motif est obligatoire : il est conservé dans le journal.',
         ]);
@@ -239,12 +241,12 @@ class StockController extends Controller
         $before = $this->stock->availableForFund((int) $data['store_id'], (int) $data['product_id'], $fundId);
 
         $movement = DB::transaction(fn () => $this->stock->adjustTo((int) $data['store_id'], (int) $data['product_id'], (int) $data['counted'], [
-            'type'        => $data['type'],
+            'type' => $data['type'],
             'source_type' => 'inventory',
-            'reason'      => $data['reason'],
-            'fund_id'     => $fundId,
+            'reason' => $data['reason'],
+            'fund_id' => $fundId,
             // Écart valorisé au coût de l'associé : perte ou gain partagé selon sa clé.
-            'unit_price'  => $fundId ? app(\App\Services\FundService::class)->unitCost($fundId, (int) $data['product_id']) : null,
+            'unit_price' => $fundId ? app(FundService::class)->unitCost($fundId, (int) $data['product_id']) : null,
         ]));
 
         // Quantités dans l'unité du produit : « 40 → 38 cartons (écart −2 cartons) ».

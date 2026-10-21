@@ -40,8 +40,8 @@ return new class extends Migration
         DB::table('stock_transfers')->whereNull('reference')->orderBy('id')->chunkById(500, function ($rows) {
             foreach ($rows as $row) {
                 DB::table('stock_transfers')->where('id', $row->id)->update([
-                    'reference'   => 'TR-' . str_pad((string) $row->id, 6, '0', STR_PAD_LEFT),
-                    'shipped_at'  => $row->created_at,
+                    'reference' => 'TR-'.str_pad((string) $row->id, 6, '0', STR_PAD_LEFT),
+                    'shipped_at' => $row->created_at,
                     'received_at' => $row->created_at,
                 ]);
             }

@@ -8,6 +8,7 @@ use App\Models\Place;
 use App\Models\Product;
 use App\Models\Store;
 use App\Models\User;
+use Database\Seeders\RolesSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -24,15 +25,18 @@ class SaleLineValidationTest extends TestCase
     use RefreshDatabase;
 
     private User $vendeur;
+
     private Store $boutique;
+
     private Product $produit;
+
     private Customer $client;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->seed(\Database\Seeders\RolesSeeder::class);
+        $this->seed(RolesSeeder::class);
 
         $this->vendeur = User::create([
             'name' => 'Vendeur Test',

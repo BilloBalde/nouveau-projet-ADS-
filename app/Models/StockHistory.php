@@ -1,9 +1,9 @@
 <?php
+
 // app/Models/StockHistory.php
 
 namespace App\Models;
 
-use App\Models\Product;
 use Illuminate\Database\Eloquent\Model;
 
 class StockHistory extends Model
@@ -21,7 +21,8 @@ class StockHistory extends Model
     {
         return $this->belongsTo(Store::class);
     }
-     public function product()
+
+    public function product()
     {
         return $this->belongsTo(Product::class);
     }

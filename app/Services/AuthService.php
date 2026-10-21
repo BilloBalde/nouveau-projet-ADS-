@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
-use App\Models\User;
 use App\Models\OtpCode;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -75,6 +75,7 @@ class AuthService
 
         if ($otp) {
             $otp->update(['verified' => true]);
+
             return true;
         }
 

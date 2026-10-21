@@ -3,10 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Expense;
-use App\Models\Store;
 use App\Models\ExpenseCategory;
-use Illuminate\Http\Request;
+use App\Models\Store;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 
 class ExpenseController extends Controller
 {
@@ -29,6 +29,7 @@ class ExpenseController extends Controller
     private function isAdmin()
     {
         $user = auth()->user();
+
         return $user && ! $user->isStoreScoped();
     }
 
@@ -46,13 +47,13 @@ class ExpenseController extends Controller
         $categories_expenses = ExpenseCategory::all();
 
         // 🔒 Restriction par magasin : si pas admin, on filtre par le store de l'utilisateur
-        if (!$this->isAdmin()) {
+        if (! $this->isAdmin()) {
             $query->whereIn('store_id', auth()->user()->accessibleStoreIds());
         }
 
         // Filtres de recherche
         if ($request->filled('reference')) {
-            $query->where('reference', 'like', '%' . $request->reference . '%');
+            $query->where('reference', 'like', '%'.$request->reference.'%');
         }
         if ($request->filled('expense_categories_id')) {
             $query->where('expense_categories_id', $request->expense_categories_id);
@@ -61,7 +62,7 @@ class ExpenseController extends Controller
             $query->where('status', $request->status);
         }
         if ($request->filled('amount')) {
-            $query->where('amount', 'like', '%' . $request->amount . '%');
+            $query->where('amount', 'like', '%'.$request->amount.'%');
         }
         if ($request->filled('created_at')) {
             $query->whereDate('created_at', $request->created_at);
@@ -79,7 +80,8 @@ class ExpenseController extends Controller
     {
         $categories = ExpenseCategory::all();
         $stores = $this->isAdmin() ? Store::all() : Store::whereIn('id', auth()->user()->accessibleStoreIds())->get();
-        $ref = "DEP" . Carbon::now()->format('Ym') . sprintf("%04d", Expense::count() + 1);
+        $ref = 'DEP'.Carbon::now()->format('Ym').sprintf('%04d', Expense::count() + 1);
+
         return view('expenses.create', compact('categories', 'ref', 'stores'));
     }
 
@@ -112,9 +114,10 @@ class ExpenseController extends Controller
 
         try {
             Expense::create($donnees);
+
             return redirect()->route('expenses.index')->with('success', 'Dépense créée avec succès.');
         } catch (\Throwable $th) {
-            return redirect()->route('expenses.index')->with('error', 'Erreur lors de la création : ' . $th->getMessage());
+            return redirect()->route('expenses.index')->with('error', 'Erreur lors de la création : '.$th->getMessage());
         }
     }
 
@@ -130,6 +133,7 @@ class ExpenseController extends Controller
 
         $categories = ExpenseCategory::all();
         $stores = $this->isAdmin() ? Store::all() : Store::whereIn('id', auth()->user()->accessibleStoreIds())->get();
+
         return view('expenses.create', compact('expense', 'categories', 'stores'));
     }
 
@@ -146,7 +150,7 @@ class ExpenseController extends Controller
         // Même raison qu'à la création : on n'écrit que les champs validés.
         // L'auteur d'origine n'est pas modifié.
         $donnees = $request->validate([
-            'reference' => 'required|string|max:255|unique:expenses,reference,' . $expense->id,
+            'reference' => 'required|string|max:255|unique:expenses,reference,'.$expense->id,
             'expense_categories_id' => 'required|exists:expense_categories,id',
             'amount' => 'required|numeric|min:0',
             'status' => 'required|string',
@@ -156,9 +160,10 @@ class ExpenseController extends Controller
 
         try {
             $expense->update($donnees);
+
             return redirect()->route('expenses.index')->with('success', 'Dépense mise à jour avec succès.');
         } catch (\Throwable $th) {
-            return redirect()->route('expenses.index')->with('error', 'Erreur lors de la mise à jour : ' . $th->getMessage());
+            return redirect()->route('expenses.index')->with('error', 'Erreur lors de la mise à jour : '.$th->getMessage());
         }
     }
 
@@ -174,9 +179,10 @@ class ExpenseController extends Controller
 
         try {
             $expense->delete();
+
             return redirect()->route('expenses.index')->with('success', 'Dépense supprimée avec succès.');
         } catch (\Throwable $th) {
-            return redirect()->route('expenses.index')->with('error', 'Erreur lors de la suppression : ' . $th->getMessage());
+            return redirect()->route('expenses.index')->with('error', 'Erreur lors de la suppression : '.$th->getMessage());
         }
     }
 }

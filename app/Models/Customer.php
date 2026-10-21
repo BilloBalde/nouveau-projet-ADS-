@@ -3,17 +3,18 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Customer extends Model
 {
     use HasFactory;
     use SoftDeletes;
-    
+
     protected $dates = ['deleted_at'];
+
     protected $guarded = ['id'];
-    
+
     /**
      * Recalcule total_taken, total_repaid et balance depuis les factures.
      *
@@ -44,9 +45,11 @@ class Customer extends Model
         ])->save();
     }
 
-    public function transaction_factures(){
+    public function transaction_factures()
+    {
         return $this->hasMany(TransactionFacture::class);
     }
+
     // Relationships with soft delete cascade
     public function factures()
     {

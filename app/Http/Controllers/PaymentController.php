@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Exports\PaymentsExport;
-use App\Http\Controllers\Controller;
+use App\Models\Company;
 use App\Models\Customer;
 use App\Models\Facture;
 use App\Models\Payment;
@@ -11,6 +11,7 @@ use App\Models\Store;
 use App\Models\TransactionFacture;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -22,7 +23,7 @@ class PaymentController extends Controller
     {
         try {
             // Sensitive maintenance action: restrict to admin
-            if (!auth()->check() || auth()->user()->role_id != 1) {
+            if (! auth()->check() || auth()->user()->role_id != 1) {
                 abort(403);
             }
 
@@ -32,15 +33,15 @@ class PaymentController extends Controller
             foreach ($customers as $customer) {
                 // Calculate total_taken: sum of all invoice amounts
                 $totalTaken = Facture::where('customer_id', $customer->id)
-                                    ->sum('montant_total');
+                    ->sum('montant_total');
 
                 // Calculate total_repaid: sum of all payments for this customer's invoices
-                $totalRepaid = Payment::whereIn('facture_id', function($query) use ($customer) {
-                                        $query->select('id')
-                                            ->from('factures')
-                                            ->where('customer_id', $customer->id);
-                                    })
-                                    ->sum('versement');
+                $totalRepaid = Payment::whereIn('facture_id', function ($query) use ($customer) {
+                    $query->select('id')
+                        ->from('factures')
+                        ->where('customer_id', $customer->id);
+                })
+                    ->sum('versement');
 
                 // Calculate balance
                 $balance = $totalTaken - $totalRepaid;
@@ -49,7 +50,7 @@ class PaymentController extends Controller
                 $customer->update([
                     'total_taken' => $totalTaken,
                     'total_repaid' => $totalRepaid,
-                    'balance' => max(0, $balance) // Ensure balance doesn't go negative
+                    'balance' => max(0, $balance), // Ensure balance doesn't go negative
                 ]);
 
                 $updatedCount++;
@@ -58,9 +59,10 @@ class PaymentController extends Controller
             return "Updated {$updatedCount} customer records.";
 
         } catch (\Throwable $th) {
-            return "Error: " . $th->getMessage();
+            return 'Error: '.$th->getMessage();
         }
     }
+
     public function __construct()
     {
         $this->middleware('auth.check');
@@ -229,25 +231,26 @@ class PaymentController extends Controller
             return back()->with(
                 'error',
                 "Cette période contient {$payments->count()} paiements — trop pour générer un PDF de façon fiable. "
-                . 'Réduisez la période, ou utilisez l\'export Excel qui ne connaît pas cette limite.'
+                .'Réduisez la période, ou utilisez l\'export Excel qui ne connaît pas cette limite.'
             );
         }
 
-        $company = \App\Models\Company::current();
+        $company = Company::current();
         $pdf = Pdf::loadView('payments.payments_pdf', compact('payments', 'company'));
         // isPhpEnabled : nécessaire pour le bloc <script type="text/php"> du template,
         // qui affiche "Page X / Y" — la vue est un template interne fixe (pas de
         // contenu utilisateur), donc sans risque ici.
         $pdf->setOptions(['isPhpEnabled' => true]);
+
         return $pdf->download('paiements.pdf');
     }
 
     public function exportExcel(Request $request)
     {
         $payments = $this->getFilteredPayments($request);
+
         return Excel::download(new PaymentsExport($payments), 'paiements.xlsx');
     }
-
 
     public function add($mark)
     {
@@ -262,6 +265,7 @@ class PaymentController extends Controller
             }
         }
         $balanceDue = $balanceQuery->sum('reste');
+
         return view('customers.add', compact('customer', 'dataTable', 'balanceDue'));
     }
 
@@ -276,20 +280,24 @@ class PaymentController extends Controller
         abort_unless(
             $user && (! $user->isStoreScoped() || $user->canAccessStore($facture->store_id)),
             403,
-            "Cette facture appartient à un autre magasin."
+            'Cette facture appartient à un autre magasin.'
         );
     }
 
-    public function creation($id){
+    public function creation($id)
+    {
         $facture = Facture::findOrFail($id);
         $this->autoriserFacture($facture);
+
         // dd($depot);
         return view('factures.addPayment', compact('facture'));
     }
 
-    public function voir($id){
+    public function voir($id)
+    {
         $facture = Facture::findOrFail($id);
         $this->autoriserFacture($facture);
+
         // dd($depot);
         return view('factures.showPayment', compact('facture'));
     }
@@ -343,7 +351,7 @@ class PaymentController extends Controller
             // départage — sans lui, deux factures de la même seconde étaient
             // réglées dans un ordre aléatoire.
             $unpaidQuery = Facture::where('customer_id', $customer->id)
-                                    ->where('statut', '!=', 'payé')
+                ->where('statut', '!=', 'payé')
                 ->orderBy('created_at', 'asc')
                 ->orderBy('id', 'asc');
             if ($storeId) {
@@ -382,8 +390,8 @@ class PaymentController extends Controller
 
                     // Get last payment for this invoice
                     $oldPayment = Payment::where('facture_id', $invoice->id)
-                                        ->orderBy('id', 'DESC')
-                                        ->first();
+                        ->orderBy('id', 'DESC')
+                        ->first();
 
                     $previousTotal = $oldPayment ? $oldPayment->total_paye : 0;
                     $previousReste = $oldPayment ? $oldPayment->reste : $invoice->montant_total;
@@ -415,7 +423,7 @@ class PaymentController extends Controller
                     $statut = $newReste == 0 ? 'payé' : 'non payé';
                     $invoice->update([
                         'statut' => $statut,
-                        'reste' => $newReste
+                        'reste' => $newReste,
                     ]);
 
                     // Deduct from remaining payment
@@ -442,18 +450,18 @@ class PaymentController extends Controller
             if ($lastPaidInvoiceNumber) {
                 return redirect()->route('factures.show', $lastPaidInvoiceNumber);
             }
+
             return redirect()->route('factures.index');
 
         } catch (\Throwable $th) {
-            return back()->with('fail', 'Une erreur est survenue : ' . $th->getMessage());
+            return back()->with('fail', 'Une erreur est survenue : '.$th->getMessage());
         }
     }
 
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function store(Request $request)
     {
@@ -462,7 +470,7 @@ class PaymentController extends Controller
 
         $validator = Validator::make($request->all(), [
             'paid_by' => 'required',
-            'versement' => 'required|numeric|min:0.01|max:' . $facture->reste,
+            'versement' => 'required|numeric|min:0.01|max:'.$facture->reste,
             'note' => 'nullable|string|max:500',
         ], [
             'paid_by.required' => 'Veuillez sélectionner le moyen de paiement',
@@ -481,8 +489,8 @@ class PaymentController extends Controller
 
                 // Dernier paiement
                 $oldPayment = Payment::where('facture_id', $request->facture_id)
-                                    ->orderBy('id', 'DESC')
-                                    ->first();
+                    ->orderBy('id', 'DESC')
+                    ->first();
 
                 $previousTotal = $oldPayment ? $oldPayment->total_paye : 0;
                 $previousReste = $oldPayment ? $oldPayment->reste : $facture->montant_total;
@@ -514,7 +522,7 @@ class PaymentController extends Controller
                 $statut = $reste == 0 ? 'payé' : 'non payé';
                 $facture->update([
                     'statut' => $statut,
-                    'reste' => $reste
+                    'reste' => $reste,
                 ]);
 
                 // Message de confirmation
@@ -527,13 +535,13 @@ class PaymentController extends Controller
                     : "Le montant de {$versement} a été versé pour la facture {$facture->numero_facture}. Montant restant: {$reste}.";
 
                 session(['success' => $sms]);
+
                 // Après paiement, rediriger vers la facture (détails de vente)
                 return redirect()->route('factures.show', $facture->numero_facture);
             });
 
         } catch (\Throwable $th) {
-            return back()->with('fail', 'Une erreur est survenue : ' . $th->getMessage());
+            return back()->with('fail', 'Une erreur est survenue : '.$th->getMessage());
         }
     }
-
 }

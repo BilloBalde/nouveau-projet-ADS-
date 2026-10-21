@@ -15,7 +15,7 @@ return new class extends Migration
             $table->foreignId('customer_id')->nullable()->constrained('customers');
             $table->text('notes')->nullable();
             $table->decimal('total_amount', 15, 2)->default(0.00);
-            $table->enum('status', ['draft','sent','accepted','rejected','expired'])->default('draft');
+            $table->enum('status', ['draft', 'sent', 'accepted', 'rejected', 'expired'])->default('draft');
             $table->date('valid_until')->nullable();
             $table->foreignId('created_by')->constrained('users');
             $table->foreignId('validated_by')->nullable()->constrained('users');

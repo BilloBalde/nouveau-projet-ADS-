@@ -3,12 +3,17 @@
 namespace Tests\Feature;
 
 use App\Models\Customer;
+use App\Models\DeliveryAddress;
+use App\Models\Devi;
+use App\Models\DeviLine;
 use App\Models\Facture;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Partner;
 use App\Models\Place;
 use App\Models\Product;
+use App\Models\Purchase;
+use App\Models\PurchaseOrder;
 use App\Models\Role;
 use App\Models\Sale;
 use App\Models\StockMovement;
@@ -17,8 +22,9 @@ use App\Models\Store;
 use App\Models\StoreAssignment;
 use App\Models\User;
 use App\Services\StockService;
+use Database\Seeders\PermissionSeeder;
+use Database\Seeders\RolesSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
@@ -34,22 +40,31 @@ class MultiLocationTest extends TestCase
     use RefreshDatabase;
 
     private User $admin;
+
     private Place $lieu;
+
     private Customer $client;
+
     private Product $ciment;
+
     private Product $carton;
+
     private Product $fer;
+
     private Store $principal;
+
     private Store $madina;
+
     private Store $magasinB;
+
     private Store $entrepot5;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->seed(\Database\Seeders\RolesSeeder::class);
-        $this->seed(\Database\Seeders\PermissionSeeder::class);
+        $this->seed(RolesSeeder::class);
+        $this->seed(PermissionSeeder::class);
         Mail::fake();
 
         $this->admin = $this->user('Patron', User::ROLE_ADMIN);
@@ -75,7 +90,7 @@ class MultiLocationTest extends TestCase
         $roleId = is_int($role) ? $role : Role::where('slug', $role)->value('id');
 
         $user = User::create([
-            'name' => $name, 'email' => str()->slug($name) . uniqid() . '@example.com', 'username' => str()->slug($name) . uniqid(),
+            'name' => $name, 'email' => str()->slug($name).uniqid().'@example.com', 'username' => str()->slug($name).uniqid(),
             'password' => Hash::make('password'), 'role_id' => $roleId, 'phone' => '620000001', 'status' => 'Active', 'token' => '',
         ]);
 
@@ -121,7 +136,7 @@ class MultiLocationTest extends TestCase
         }
 
         return $this->actingAs($vendeur)->post(route('sales.store'), [
-            'numeroFacture' => 'F-' . uniqid(), 'store_id' => $magasin->id, 'customer_id' => $this->client->id,
+            'numeroFacture' => 'F-'.uniqid(), 'store_id' => $magasin->id, 'customer_id' => $this->client->id,
             'avance' => 0, 'paid_by' => 'cash', 'sales' => $sales,
         ]);
     }
@@ -262,7 +277,7 @@ class MultiLocationTest extends TestCase
     private function acheter(Store $destination, Product $produit, int $qte, ?Partner $fournisseur = null)
     {
         return $this->actingAs($this->admin)->post(route('purchase-orders.store'), [
-            'reference' => 'PO-TEST-' . uniqid(), 'store_id' => $destination->id, 'partner_id' => $fournisseur?->id,
+            'reference' => 'PO-TEST-'.uniqid(), 'store_id' => $destination->id, 'partner_id' => $fournisseur?->id,
             'origin' => 'guinee', 'date_emis' => now()->toDateString(), 'date_recu' => now()->toDateString(),
             'lines' => [['product_id' => $produit->id, 'quantity' => $qte, 'unit_price_foreign' => 1000]],
         ]);
@@ -291,14 +306,14 @@ class MultiLocationTest extends TestCase
 
         $this->acheter($this->entrepot5, $this->ciment, 10, $fournisseur)->assertRedirect();
 
-        $this->assertSame($fournisseur->id, (int) \App\Models\PurchaseOrder::latest('id')->value('partner_id'));
+        $this->assertSame($fournisseur->id, (int) PurchaseOrder::latest('id')->value('partner_id'));
         $this->assertSame(1, $fournisseur->purchaseOrders()->count());
     }
 
     public function test_changer_la_destination_d_un_achat_deplace_le_stock_au_bon_endroit(): void
     {
         $this->acheter($this->entrepot5, $this->ciment, 100)->assertRedirect();
-        $order = \App\Models\PurchaseOrder::latest('id')->first();
+        $order = PurchaseOrder::latest('id')->first();
 
         $this->actingAs($this->admin)->put(route('purchase-orders.update', $order->id), [
             'store_id' => $this->madina->id, 'origin' => 'guinee', 'date_emis' => now()->toDateString(), 'date_recu' => now()->toDateString(),
@@ -431,7 +446,7 @@ class MultiLocationTest extends TestCase
 
         // Commande e-commerce : un emplacement par article, même règle.
         $acheteur = $this->user('Client web', User::ROLE_CUSTOMER);
-        $adresse = \App\Models\DeliveryAddress::create(['user_id' => $acheteur->id, 'full_address' => 'Madina', 'city' => 'Conakry', 'phone' => '620']);
+        $adresse = DeliveryAddress::create(['user_id' => $acheteur->id, 'full_address' => 'Madina', 'city' => 'Conakry', 'phone' => '620']);
         $order = Order::create(['user_id' => $acheteur->id, 'delivery_address_id' => $adresse->id, 'total_amount' => 1000, 'status' => 'pending']);
         $a = OrderItem::create(['order_id' => $order->id, 'product_id' => $this->ciment->id, 'quantity' => 10, 'price' => 1500]);
         $b = OrderItem::create(['order_id' => $order->id, 'product_id' => $this->carton->id, 'quantity' => 15, 'price' => 1500]);
@@ -458,7 +473,7 @@ class MultiLocationTest extends TestCase
         $this->approvisionner($this->madina, $this->ciment, 20);
         $this->approvisionner($this->entrepot5, $this->carton, 20);
         $acheteur = $this->user('Client web', User::ROLE_CUSTOMER);
-        $adresse = \App\Models\DeliveryAddress::create(['user_id' => $acheteur->id, 'full_address' => 'Madina', 'city' => 'Conakry', 'phone' => '620']);
+        $adresse = DeliveryAddress::create(['user_id' => $acheteur->id, 'full_address' => 'Madina', 'city' => 'Conakry', 'phone' => '620']);
         $order = Order::create(['user_id' => $acheteur->id, 'delivery_address_id' => $adresse->id, 'total_amount' => 1000, 'status' => 'pending']);
         $a = OrderItem::create(['order_id' => $order->id, 'product_id' => $this->ciment->id, 'quantity' => 4, 'price' => 1500]);
         $b = OrderItem::create(['order_id' => $order->id, 'product_id' => $this->carton->id, 'quantity' => 4, 'price' => 1500]);
@@ -482,9 +497,9 @@ class MultiLocationTest extends TestCase
         $this->approvisionner($this->madina, $this->ciment, 10);
         $this->approvisionner($this->entrepot5, $this->carton, 10);
 
-        $devis = \App\Models\Devi::create(['store_id' => $this->madina->id, 'customer_id' => $this->client->id, 'total_amount' => 0, 'status' => 'accepted', 'created_by' => $this->admin->id]);
-        \App\Models\DeviLine::create(['devis_id' => $devis->id, 'product_id' => $this->ciment->id, 'quantity' => 4, 'unit_price' => 1500, 'total_price' => 6000]);
-        \App\Models\DeviLine::create(['devis_id' => $devis->id, 'product_id' => $this->carton->id, 'store_id' => $this->entrepot5->id, 'quantity' => 6, 'unit_price' => 1500, 'total_price' => 9000]);
+        $devis = Devi::create(['store_id' => $this->madina->id, 'customer_id' => $this->client->id, 'total_amount' => 0, 'status' => 'accepted', 'created_by' => $this->admin->id]);
+        DeviLine::create(['devis_id' => $devis->id, 'product_id' => $this->ciment->id, 'quantity' => 4, 'unit_price' => 1500, 'total_price' => 6000]);
+        DeviLine::create(['devis_id' => $devis->id, 'product_id' => $this->carton->id, 'store_id' => $this->entrepot5->id, 'quantity' => 6, 'unit_price' => 1500, 'total_price' => 9000]);
 
         $this->actingAs($this->admin)->post(route('devis.validate', $devis->id))->assertRedirect();
 
@@ -661,8 +676,8 @@ class MultiLocationTest extends TestCase
 
     private function commandeEnLigne(array $lignes): Order
     {
-        $acheteur = $this->user('Client web ' . uniqid(), User::ROLE_CUSTOMER);
-        $adresse = \App\Models\DeliveryAddress::create(['user_id' => $acheteur->id, 'full_address' => 'Madina', 'city' => 'Conakry', 'phone' => '620']);
+        $acheteur = $this->user('Client web '.uniqid(), User::ROLE_CUSTOMER);
+        $adresse = DeliveryAddress::create(['user_id' => $acheteur->id, 'full_address' => 'Madina', 'city' => 'Conakry', 'phone' => '620']);
         $order = Order::create(['user_id' => $acheteur->id, 'delivery_address_id' => $adresse->id, 'total_amount' => 1000, 'status' => 'pending']);
         foreach ($lignes as [$produit, $qte]) {
             OrderItem::create(['order_id' => $order->id, 'product_id' => $produit->id, 'quantity' => $qte, 'price' => 1500]);
@@ -676,7 +691,7 @@ class MultiLocationTest extends TestCase
         $order = $this->commandeEnLigne([[$this->ciment, 2]]);
         $jean = $this->user('Jean', User::ROLE_STORE_MANAGER, $this->madina->id);
 
-        $this->actingAs($this->admin)->get(route('admin.orders.index'))->assertOk()->assertSee('#' . $order->id);
+        $this->actingAs($this->admin)->get(route('admin.orders.index'))->assertOk()->assertSee('#'.$order->id);
 
         // Non attribuée : invisible pour les boutiques.
         $liste = $this->actingAs($jean)->get(route('admin.orders.index'))->assertOk();
@@ -774,7 +789,7 @@ class MultiLocationTest extends TestCase
         $this->approvisionner($this->madina, $this->ciment, 10);
         $this->approvisionner($this->madina, $this->carton, 10);
         // Ancien « achat simple » à un prix sans rapport (au carton) : ne doit plus faire foi.
-        \App\Models\Purchase::create(['product_id' => $this->ciment->id, 'store_id' => $this->madina->id, 'price' => 180000,
+        Purchase::create(['product_id' => $this->ciment->id, 'store_id' => $this->madina->id, 'price' => 180000,
             'numeroPurchase' => 'P-1', 'quantity' => 1, 'description' => 'ancien']);
         $this->carton->update(['price_sale' => 0]); // coût inconnu
         $order = $this->commandeEnLigne([[$this->ciment, 2], [$this->carton, 3]]);

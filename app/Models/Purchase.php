@@ -8,12 +8,14 @@ use Illuminate\Database\Eloquent\Model;
 class Purchase extends Model
 {
     use HasFactory;
+
     protected $guarded = ['id'];
 
     public function getProductLibelleAttribute()
     {
         return $this->product?->libelle;
     }
+
     public function getProductImageAttribute()
     {
         return $this->product?->image;

@@ -8,9 +8,11 @@ use Illuminate\Database\Eloquent\Model;
 class LigneCommande extends Model
 {
     use HasFactory;
+
     protected $guarded = ['id'];
 
-    public function product(){
+    public function product()
+    {
         return $this->belongsTo(Product::class);
     }
 }

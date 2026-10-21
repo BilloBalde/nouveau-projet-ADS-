@@ -25,11 +25,11 @@ class OrderAssignedToStoreNotification extends Notification
     public function toArray($notifiable)
     {
         return [
-            'order_id'      => $this->order->id,
+            'order_id' => $this->order->id,
             'customer_name' => $this->order->user?->name ?? 'Client',
-            'total_amount'  => $this->order->total_amount,
-            'message'       => 'La commande n°' . $this->order->id . ' a été attribuée à ' . $this->store->store_name . ' : à préparer et livrer.',
-            'url'           => route('admin.orders.show', $this->order->id, absolute: false),
+            'total_amount' => $this->order->total_amount,
+            'message' => 'La commande n°'.$this->order->id.' a été attribuée à '.$this->store->store_name.' : à préparer et livrer.',
+            'url' => route('admin.orders.show', $this->order->id, absolute: false),
         ];
     }
 }

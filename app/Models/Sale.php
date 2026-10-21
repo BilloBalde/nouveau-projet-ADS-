@@ -2,19 +2,23 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Sale extends Model
 {
-    use HasFactory, Concerns\FigeUniteProduit;
+    use Concerns\FigeUniteProduit, HasFactory;
+
     protected $guarded = ['id'];
 
-    public function getProduitAttribute(){
+    public function getProduitAttribute()
+    {
         return $this->product?->libelle;
     }
 
-    public function getProduitImageAttribute(){
+    public function getProduitImageAttribute()
+    {
         return $this->product?->image;
     }
 
@@ -45,8 +49,9 @@ class Sale extends Model
     {
         return $this->belongsTo(Facture::class, 'numeroFacture', 'numero_facture');
     }
-    
-    public function store(){
+
+    public function store()
+    {
         return $this->belongsTo(Store::class);
     }
 
@@ -56,7 +61,7 @@ class Sale extends Model
     }
 
     /** Lignes dont l'emplacement source est visible par l'utilisateur. */
-    public function scopeVisibleTo(\Illuminate\Database\Eloquent\Builder $query, ?User $user)
+    public function scopeVisibleTo(Builder $query, ?User $user)
     {
         if (! $user || ! $user->isStoreScoped()) {
             return $query;
@@ -64,5 +69,4 @@ class Sale extends Model
 
         return $query->whereIn('store_id', $user->accessibleStoreIds());
     }
-
 }

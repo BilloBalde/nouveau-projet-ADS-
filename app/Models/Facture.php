@@ -36,17 +36,21 @@ class Facture extends Model
      * NULL = facture antérieure à ce suivi, canal inconnu.
      */
     public const CHANNEL_POS = 'pos';
+
     public const CHANNEL_FACTURATION = 'facturation';
+
     public const CHANNEL_ECOMMERCE = 'ecommerce';
+
     public const CHANNEL_DEVIS = 'devis';
+
     public const CHANNEL_TIERS = 'tiers';
 
     public const CHANNELS = [
-        self::CHANNEL_POS         => 'Vente flash (caisse)',
+        self::CHANNEL_POS => 'Vente flash (caisse)',
         self::CHANNEL_FACTURATION => 'Facturation',
-        self::CHANNEL_ECOMMERCE   => 'Commande e-commerce',
-        self::CHANNEL_DEVIS       => 'Devis validé',
-        self::CHANNEL_TIERS       => 'Vente tierce',
+        self::CHANNEL_ECOMMERCE => 'Commande e-commerce',
+        self::CHANNEL_DEVIS => 'Devis validé',
+        self::CHANNEL_TIERS => 'Vente tierce',
     ];
 
     /**
@@ -61,7 +65,7 @@ class Facture extends Model
         $sequence = (static::withTrashed()->max('id') ?? 0) + 1;
 
         do {
-            $numero = date('Ym') . sprintf('%04d', $sequence);
+            $numero = date('Ym').sprintf('%04d', $sequence);
             $sequence++;
         } while (static::withTrashed()->where('numero_facture', $numero)->exists());
 
@@ -75,8 +79,9 @@ class Facture extends Model
     {
         $client = $this->customer;
         if ($client) {
-            return $client->customerName . '-' . $client->mark;
+            return $client->customerName.'-'.$client->mark;
         }
+
         return 'Client inconnu';
     }
 
@@ -137,7 +142,7 @@ class Facture extends Model
      * RELATION AVEC LA COMMANDE (ORDER) - AJOUT
      * ============================================
      */
-    
+
     /**
      * Relation avec la commande (e-commerce)
      * Si la table orders a une colonne 'invoice_number'

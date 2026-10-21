@@ -4,9 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\Sale;
 use App\Models\Store;
-
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 
 class VisitController extends Controller
 {
@@ -42,27 +43,32 @@ class VisitController extends Controller
     public function publicCategories()
     {
         $categories = $this->groupedCategories();
+
         return view('visitor.categories', compact('categories'));
     }
 
-    private function groupedCategories(): \Illuminate\Support\Collection
+    private function groupedCategories(): Collection
     {
         return Category::withCount('products')
-            ->with(['products' => fn($q) => $q->whereNotNull('image')->select('products.id', 'products.image')])
+            ->with(['products' => fn ($q) => $q->whereNotNull('image')->select('products.id', 'products.image')])
             ->get()
             ->groupBy('category_type')
             ->map(function ($group, $type) {
                 $firstProductImage = null;
                 foreach ($group as $cat) {
                     $img = $cat->products->first()?->image;
-                    if ($img) { $firstProductImage = $img; break; }
+                    if ($img) {
+                        $firstProductImage = $img;
+                        break;
+                    }
                 }
-                return (object)[
-                    'name'           => $type,
-                    'category_type'  => $type,
+
+                return (object) [
+                    'name' => $type,
+                    'category_type' => $type,
                     'products_count' => $group->sum('products_count'),
-                    'image'          => $firstProductImage,
-                    'image_url'      => $firstProductImage ? asset('products/' . $firstProductImage) : null,
+                    'image' => $firstProductImage,
+                    'image_url' => $firstProductImage ? asset('products/'.$firstProductImage) : null,
                 ];
             })
             ->sortBy('name')
@@ -71,119 +77,118 @@ class VisitController extends Controller
 
     protected function buildHomePageData(): array
     {
-        $getCategoryName = fn($p) => $p->categories->first()?->category_type ?? 'Sans catégorie';
+        $getCategoryName = fn ($p) => $p->categories->first()?->category_type ?? 'Sans catégorie';
 
         $mapProduct = function ($p) use ($getCategoryName) {
             // Vérifier si le produit est en promotion active
-            $isPromo = $p->is_promo 
-                && !is_null($p->promo_price)
+            $isPromo = $p->is_promo
+                && ! is_null($p->promo_price)
                 && (is_null($p->promo_start_date) || $p->promo_start_date <= now())
                 && (is_null($p->promo_end_date) || $p->promo_end_date >= now());
-            
+
             return [
-                'id'            => $p->id,
-                'name'          => $p->libelle ?? $p->name,
+                'id' => $p->id,
+                'name' => $p->libelle ?? $p->name,
                 'category_name' => $getCategoryName($p),
-                'price'         => (float) ($isPromo ? $p->promo_price : $p->price),
-                'old_price'     => $isPromo ? (float) $p->price : null,
-                'discount'      => $isPromo ? round((1 - $p->promo_price / $p->price) * 100) : 0,
-                'rating'        => (float) ($p->rating ?? 4.5),
-                'image'         => $p->image ? asset('products/' . $p->image) : null,
+                'price' => (float) ($isPromo ? $p->promo_price : $p->price),
+                'old_price' => $isPromo ? (float) $p->price : null,
+                'discount' => $isPromo ? round((1 - $p->promo_price / $p->price) * 100) : 0,
+                'rating' => (float) ($p->rating ?? 4.5),
+                'image' => $p->image ? asset('products/'.$p->image) : null,
                 // Prix et quantité dans l'unité unique du produit : « / carton ».
-                'unite'         => \App\Models\Product::motUnite($p->unite),
+                'unite' => Product::motUnite($p->unite),
             ];
         };
 
         $mapPromo = function ($p) use ($getCategoryName) {
             return [
-                'id'            => $p->id,
-                'name'          => $p->libelle ?? $p->name,
+                'id' => $p->id,
+                'name' => $p->libelle ?? $p->name,
                 'category_name' => $getCategoryName($p),
-                'price'         => (float) ($p->promo_price ?? $p->price),
-                'old_price'     => (float) $p->price,
-                'discount'      => $p->promo_price ? round((1 - $p->promo_price / $p->price) * 100) : 0,
-                'rating'        => (float) ($p->rating ?? 4.5),
-                'image'         => $p->image ? asset('products/' . $p->image) : null,
+                'price' => (float) ($p->promo_price ?? $p->price),
+                'old_price' => (float) $p->price,
+                'discount' => $p->promo_price ? round((1 - $p->promo_price / $p->price) * 100) : 0,
+                'rating' => (float) ($p->rating ?? 4.5),
+                'image' => $p->image ? asset('products/'.$p->image) : null,
                 // Prix et quantité dans l'unité unique du produit : « / carton ».
-                'unite'         => \App\Models\Product::motUnite($p->unite),
+                'unite' => Product::motUnite($p->unite),
             ];
         };
 
         // ... le reste de votre code ...
 
-        $categories      = $this->groupedCategories();
-            $totalCategories = $categories->count();
-            $totalProducts   = Product::count();
+        $categories = $this->groupedCategories();
+        $totalCategories = $categories->count();
+        $totalProducts = Product::count();
 
-            $stores = Store::with('manager')->get()->map(function ($s) {
-                return (object)[
-                    'id'          => $s->id,
-                    'name'        => $s->store_name,
-                    'address'     => $s->address,
-                    'description' => $s->description,
-                    'image_url'   => $s->store_picture ? asset('stores/' . $s->store_picture) : null,
-                    'manager'     => $s->manager?->name,
-                    'phone'       => $s->phone ?? $s->manager?->phone,
-                ];
-            })->values();
+        $stores = Store::with('manager')->get()->map(function ($s) {
+            return (object) [
+                'id' => $s->id,
+                'name' => $s->store_name,
+                'address' => $s->address,
+                'description' => $s->description,
+                'image_url' => $s->store_picture ? asset('stores/'.$s->store_picture) : null,
+                'manager' => $s->manager?->name,
+                'phone' => $s->phone ?? $s->manager?->phone,
+            ];
+        })->values();
 
-            // Meilleures ventes réelles (somme des quantités vendues, table sales)
-            $bestSellerIds = \App\Models\Sale::select('product_id')
-                ->selectRaw('SUM(quantity) as qty_sold')
-                ->groupBy('product_id')
-                ->orderByDesc('qty_sold')
-                ->limit(10)
-                ->pluck('product_id');
+        // Meilleures ventes réelles (somme des quantités vendues, table sales)
+        $bestSellerIds = Sale::select('product_id')
+            ->selectRaw('SUM(quantity) as qty_sold')
+            ->groupBy('product_id')
+            ->orderByDesc('qty_sold')
+            ->limit(10)
+            ->pluck('product_id');
 
-            $bestSellers = Product::with('categories')
-                ->whereIn('id', $bestSellerIds)
+        $bestSellers = Product::with('categories')
+            ->whereIn('id', $bestSellerIds)
+            ->get()
+            ->sortBy(fn ($p) => $bestSellerIds->search($p->id))
+            ->map($mapProduct)
+            ->values();
+
+        // Tendances : meilleures ventes des 30 derniers jours, fallback nouveautés
+        $trendingIds = Sale::select('product_id')
+            ->selectRaw('SUM(quantity) as qty_sold')
+            ->where('created_at', '>=', now()->subDays(30))
+            ->groupBy('product_id')
+            ->orderByDesc('qty_sold')
+            ->limit(10)
+            ->pluck('product_id');
+
+        $trending = $trendingIds->isNotEmpty()
+            ? Product::with('categories')
+                ->whereIn('id', $trendingIds)
                 ->get()
-                ->sortBy(fn ($p) => $bestSellerIds->search($p->id))
+                ->sortBy(fn ($p) => $trendingIds->search($p->id))
                 ->map($mapProduct)
-                ->values();
-
-            // Tendances : meilleures ventes des 30 derniers jours, fallback nouveautés
-            $trendingIds = \App\Models\Sale::select('product_id')
-                ->selectRaw('SUM(quantity) as qty_sold')
-                ->where('created_at', '>=', now()->subDays(30))
-                ->groupBy('product_id')
-                ->orderByDesc('qty_sold')
-                ->limit(10)
-                ->pluck('product_id');
-
-            $trending = $trendingIds->isNotEmpty()
-                ? Product::with('categories')
-                    ->whereIn('id', $trendingIds)
-                    ->get()
-                    ->sortBy(fn ($p) => $trendingIds->search($p->id))
-                    ->map($mapProduct)
-                    ->values()
-                : Product::with('categories')->latest()->limit(10)->get()->map($mapProduct)->values();
-
+                ->values()
+            : Product::with('categories')->latest()->limit(10)->get()->map($mapProduct)->values();
 
         return [
-            'categories'      => $categories,
+            'categories' => $categories,
             'totalCategories' => $totalCategories,
-            'totalProducts'   => $totalProducts,
-            'stores'          => $stores,
-            'allProducts'     => Product::with('categories')->latest()->get()->map($mapProduct)->values(),
-            'bestProducts'    => Product::with('categories')->orderByDesc('rating')->get()->map($mapProduct)->values(),
-            'promoProducts'   => Product::with('categories')
+            'totalProducts' => $totalProducts,
+            'stores' => $stores,
+            'allProducts' => Product::with('categories')->latest()->get()->map($mapProduct)->values(),
+            'bestProducts' => Product::with('categories')->orderByDesc('rating')->get()->map($mapProduct)->values(),
+            'promoProducts' => Product::with('categories')
                 ->where('is_promo', true)
                 ->whereNotNull('promo_price')
                 ->where(fn ($q) => $q->whereNull('promo_start_date')->orWhereDate('promo_start_date', '<=', now()))
                 ->where(fn ($q) => $q->whereNull('promo_end_date')->orWhereDate('promo_end_date', '>=', now()))
                 ->get()->map($mapPromo)->values(),
-            'bestSellers'  => $bestSellers,
-            'topRated'     => Product::with('categories')->orderByDesc('rating')->limit(10)->get()->map($mapProduct)->values(),
-            'trending'     => $trending,
+            'bestSellers' => $bestSellers,
+            'topRated' => Product::with('categories')->orderByDesc('rating')->limit(10)->get()->map($mapProduct)->values(),
+            'trending' => $trending,
         ];
     }
 
     public function showProduct($id)
     {
-        $product = \App\Models\Product::with('categories')->findOrFail($id);
-        $related = \App\Models\Product::with('categories')
+        $product = Product::with('categories')->findOrFail($id);
+        $related = Product::with('categories')
             ->whereHas('categories', function ($q) use ($product) {
                 $q->whereIn('categories.id', $product->categories->pluck('id'));
             })
@@ -205,10 +210,4 @@ class VisitController extends Controller
             'count' => $products->count(),
         ]);
     }
-
 }
-
-
-
-
-

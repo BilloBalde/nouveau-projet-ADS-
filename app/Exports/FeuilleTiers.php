@@ -10,15 +10,14 @@ use Maatwebsite\Excel\Concerns\WithTitle;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
 /** Une feuille : titre de période, en-têtes en gras, lignes. */
-class FeuilleTiers implements FromArray, WithHeadings, WithTitle, ShouldAutoSize, WithStyles
+class FeuilleTiers implements FromArray, ShouldAutoSize, WithHeadings, WithStyles, WithTitle
 {
     public function __construct(
         private string $titre,
         private string $periode,
         private array $entetes,
         private array $lignes,
-    ) {
-    }
+    ) {}
 
     public function title(): string
     {
@@ -27,7 +26,7 @@ class FeuilleTiers implements FromArray, WithHeadings, WithTitle, ShouldAutoSize
 
     public function headings(): array
     {
-        return [[$this->titre . ' — ventes tierces — ' . $this->periode], $this->entetes];
+        return [[$this->titre.' — ventes tierces — '.$this->periode], $this->entetes];
     }
 
     public function array(): array

@@ -5,11 +5,15 @@ namespace App\Http\Controllers;
 use App\Exports\ProductsExport;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\StockMovement;
 use App\Models\Store;
 use App\Models\StoreProduct;
+use App\Services\StockService;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 use Maatwebsite\Excel\Facades\Excel;
 
 class ProductController extends Controller
@@ -46,7 +50,7 @@ class ProductController extends Controller
         $query = Product::query();
 
         if ($request->filled('libelle')) {
-            $query->where('libelle', 'like', '%' . $request->input('libelle') . '%');
+            $query->where('libelle', 'like', '%'.$request->input('libelle').'%');
         }
 
         if ($request->filled('category_id')) {
@@ -79,7 +83,7 @@ class ProductController extends Controller
         $productName = $request->query('productName');
         // Libellé exact d'abord : c'est ce produit-là que la facture utilisera.
         $product = Product::with('category')->where('libelle', $productName)->first()
-            ?? ($request->boolean('exact') ? null : Product::with('category')->where('libelle', 'like', '%' . $productName . '%')->first());
+            ?? ($request->boolean('exact') ? null : Product::with('category')->where('libelle', 'like', '%'.$productName.'%')->first());
 
         if ($product) {
             return response()->json([
@@ -95,15 +99,15 @@ class ProductController extends Controller
                     'image' => $product->image,
                     'category' => [
                         'id' => $product->category?->id,
-                        'name' => $product->category?->slug
-                    ]
-                ]
+                        'name' => $product->category?->slug,
+                    ],
+                ],
             ]);
         }
 
         return response()->json([
             'success' => false,
-            'message' => 'Product not found'
+            'message' => 'Product not found',
         ]);
     }
 
@@ -112,14 +116,14 @@ class ProductController extends Controller
         $productName = $request->query('productName');
 
         if ($request->boolean('suggestions')) {
-            $suggestions = Product::where('libelle', 'like', '%' . $productName . '%')
+            $suggestions = Product::where('libelle', 'like', '%'.$productName.'%')
                 ->limit(10)
                 ->get(['id', 'libelle', 'unite', 'pcs_par_carton', 'pcs_par_paquet', 'dimension_rouleau'])
                 ->map(fn ($p) => ['id' => $p->id, 'libelle' => $p->libelle, 'unite' => $p->unite_libelle]);
 
             return response()->json([
                 'success' => true,
-                'suggestions' => $suggestions
+                'suggestions' => $suggestions,
             ]);
         }
 
@@ -128,13 +132,13 @@ class ProductController extends Controller
         if ($product) {
             return response()->json([
                 'success' => true,
-                'product' => $product
+                'product' => $product,
             ]);
         }
 
         return response()->json([
             'success' => false,
-            'message' => 'Product not found'
+            'message' => 'Product not found',
         ]);
     }
 
@@ -142,6 +146,7 @@ class ProductController extends Controller
     {
         $categories = Category::all();
         $stores = Store::all();
+
         return view('products.create', compact('categories', 'stores'));
     }
 
@@ -152,12 +157,12 @@ class ProductController extends Controller
      */
     private function reglesUnites(): array
     {
-        $si = fn (string $code) => \Illuminate\Validation\Rule::requiredIf(fn () => request()->input('unite') === $code);
+        $si = fn (string $code) => Rule::requiredIf(fn () => request()->input('unite') === $code);
 
         return [
-            'unite'             => 'required|in:'.implode(',', array_keys(Product::UNITES)),
-            'pcs_par_carton'    => ['nullable', $si('carton'), 'integer', 'min:2'],
-            'pcs_par_paquet'    => ['nullable', $si('paquet'), 'integer', 'min:2'],
+            'unite' => 'required|in:'.implode(',', array_keys(Product::UNITES)),
+            'pcs_par_carton' => ['nullable', $si('carton'), 'integer', 'min:2'],
+            'pcs_par_paquet' => ['nullable', $si('paquet'), 'integer', 'min:2'],
             'dimension_rouleau' => ['nullable', $si('rouleau'), 'string', 'max:60'],
         ];
     }
@@ -165,12 +170,12 @@ class ProductController extends Controller
     private function messagesUnites(): array
     {
         return [
-            'unite.required'             => "Choisissez l'unité du produit.",
-            'unite.in'                   => 'Unité inconnue.',
-            'pcs_par_carton.required'    => 'Indiquez le nombre de pièces par carton.',
-            'pcs_par_carton.min'         => 'Un carton contient au moins 2 pièces.',
-            'pcs_par_paquet.required'    => 'Indiquez le nombre de pièces par paquet.',
-            'pcs_par_paquet.min'         => 'Un paquet contient au moins 2 pièces.',
+            'unite.required' => "Choisissez l'unité du produit.",
+            'unite.in' => 'Unité inconnue.',
+            'pcs_par_carton.required' => 'Indiquez le nombre de pièces par carton.',
+            'pcs_par_carton.min' => 'Un carton contient au moins 2 pièces.',
+            'pcs_par_paquet.required' => 'Indiquez le nombre de pièces par paquet.',
+            'pcs_par_paquet.min' => 'Un paquet contient au moins 2 pièces.',
             'dimension_rouleau.required' => 'Indiquez la dimension du rouleau.',
         ];
     }
@@ -181,9 +186,9 @@ class ProductController extends Controller
         $unite = $request->input('unite', 'pcs');
 
         return [
-            'unite'             => $unite,
-            'pcs_par_carton'    => $unite === 'carton' ? (int) $request->pcs_par_carton : null,
-            'pcs_par_paquet'    => $unite === 'paquet' ? (int) $request->pcs_par_paquet : null,
+            'unite' => $unite,
+            'pcs_par_carton' => $unite === 'carton' ? (int) $request->pcs_par_carton : null,
+            'pcs_par_paquet' => $unite === 'paquet' ? (int) $request->pcs_par_paquet : null,
             'dimension_rouleau' => $unite === 'rouleau' ? trim((string) $request->dimension_rouleau) : null,
         ];
     }
@@ -202,9 +207,9 @@ class ProductController extends Controller
             $fg = fn ($n) => number_format((float) $n, 0, ',', ' ');
             $revient = (float) $request->input('price_sale');
             if ($revient > 0 && (float) $valeur <= $revient) {
-                $echec('Le prix de vente minimum doit être strictement supérieur au prix de revient (' . $fg($revient) . ' FG).');
+                $echec('Le prix de vente minimum doit être strictement supérieur au prix de revient ('.$fg($revient).' FG).');
             } elseif ($prixVente > 0 && (float) $valeur > $prixVente) {
-                $echec('Le prix de vente minimum ne peut pas dépasser le prix de vente (' . $fg($prixVente) . ' FG).');
+                $echec('Le prix de vente minimum ne peut pas dépasser le prix de vente ('.$fg($prixVente).' FG).');
             }
         }];
     }
@@ -259,7 +264,7 @@ class ProductController extends Controller
      */
     private function computePromoPrice(Request $request, float $price): ?float
     {
-        if (!$request->boolean('is_promo') || !$request->filled('promo_percent')) {
+        if (! $request->boolean('is_promo') || ! $request->filled('promo_percent')) {
             return null;
         }
 
@@ -319,7 +324,7 @@ class ProductController extends Controller
     {
         $this->validation($request);
         if (request()->hasfile('image')) {
-            $productName = time() . '.' . request()->image->getClientOriginalExtension();
+            $productName = time().'.'.request()->image->getClientOriginalExtension();
             request()->image->move(public_path('products'), $productName);
         }
         try {
@@ -354,11 +359,11 @@ class ProductController extends Controller
             // Ajout du stock dans le magasin sélectionné
             $storeId = $request->store_id;
             // Stock initial, tracé dans le journal comme premier mouvement.
-            app(\App\Services\StockService::class)->increment((int) $storeId, (int) $product->id, (int) $request->stock_initial, [
-                'type'        => \App\Models\StockMovement::INITIAL,
+            app(StockService::class)->increment((int) $storeId, (int) $product->id, (int) $request->stock_initial, [
+                'type' => StockMovement::INITIAL,
                 'source_type' => 'product',
-                'source_id'   => $product->id,
-                'reason'      => 'Stock initial saisi à la création du produit',
+                'source_id' => $product->id,
+                'reason' => 'Stock initial saisi à la création du produit',
             ]);
             // Stock initial nul : la ligne existe quand même, le produit reste
             // rattaché au magasin choisi (comme avant).
@@ -366,7 +371,7 @@ class ProductController extends Controller
 
             return redirect()->route('produits.index')->with('success', 'Produit crée avec succès.');
         } catch (\Exception $e) {
-            return back()->with('fall', 'une erreur lors de lajout, voici le message : ' . $e->getMessage());
+            return back()->with('fall', 'une erreur lors de lajout, voici le message : '.$e->getMessage());
         }
     }
 
@@ -384,8 +389,8 @@ class ProductController extends Controller
                 'price' => $product->price,
                 'price_sale' => $product->price_sale,
                 'image' => $product->image,
-                'category_name' => $product->categories->pluck('slug')->implode(', ')
-            ]
+                'category_name' => $product->categories->pluck('slug')->implode(', '),
+            ],
         ]);
     }
 
@@ -425,16 +430,16 @@ class ProductController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'libelle'      => 'required|string|max:255',
-            'sku'          => 'required|string|max:255|unique:products,sku,' . $id,
-            'categories'   => 'required|array',
+            'libelle' => 'required|string|max:255',
+            'sku' => 'required|string|max:255|unique:products,sku,'.$id,
+            'categories' => 'required|array',
             'categories.*' => 'exists:categories,id',
-            'description'  => 'required|string',
-            'price'        => 'required|numeric',
+            'description' => 'required|string',
+            'price' => 'required|numeric',
             'stock_restant' => 'required|integer|min:0',
-            'price_sale'   => 'nullable|numeric',
+            'price_sale' => 'nullable|numeric',
             'price_sale_minimum' => $this->regleMinimum($request, (float) $request->input('price')),
-            'image'        => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
             'store_id' => 'required|exists:stores,id',
             'is_promo' => 'nullable|boolean',
             'promo_percent' => 'nullable|numeric|min:0|max:100',
@@ -475,7 +480,7 @@ class ProductController extends Controller
             $product->save();
 
             if ($request->hasFile('image')) {
-                $productName = time() . '.' . $request->image->getClientOriginalExtension();
+                $productName = time().'.'.$request->image->getClientOriginalExtension();
                 $request->image->move(public_path('products'), $productName);
                 $product->update(['image' => $productName]);
             }
@@ -487,11 +492,11 @@ class ProductController extends Controller
             // l'écart avec le stock enregistré devient un mouvement d'ajustement
             // tracé (auteur, date, avant/après), dans le périmètre de l'utilisateur.
             $this->authorizeStore($storeId);
-            app(\App\Services\StockService::class)->adjustTo((int) $storeId, (int) $id, (int) $request->input('stock_restant'), [
-                'type'        => \App\Models\StockMovement::ADJUSTMENT,
+            app(StockService::class)->adjustTo((int) $storeId, (int) $id, (int) $request->input('stock_restant'), [
+                'type' => StockMovement::ADJUSTMENT,
                 'source_type' => 'product',
-                'source_id'   => (int) $id,
-                'reason'      => 'Stock modifié depuis la fiche produit',
+                'source_id' => (int) $id,
+                'reason' => 'Stock modifié depuis la fiche produit',
             ]);
 
             return redirect()
@@ -499,7 +504,7 @@ class ProductController extends Controller
                 ->with('success', 'Produit mis à jour avec succès!');
 
         } catch (\Exception $e) {
-            return back()->with('fall', 'Erreur: ' . $e->getMessage());
+            return back()->with('fall', 'Erreur: '.$e->getMessage());
         }
     }
 
@@ -590,15 +595,17 @@ class ProductController extends Controller
     {
         try {
             Product::find($id)->delete();
+
             return redirect()->back()->with('success', 'Produit supprimé avec succès.');
-        } catch (\Illuminate\Database\QueryException $th) {
-            if ($th->getCode() == "23000") {
+        } catch (QueryException $th) {
+            if ($th->getCode() == '23000') {
                 return back()->with(
                     'error',
                     "Impossible de supprimer ce produit : il est déjà utilisé dans d'autres enregistrements."
                 );
             }
-            return redirect()->back()->with('error', 'Produit pas supprimé. Voici l\'erreur' . $th->getMessage());
+
+            return redirect()->back()->with('error', 'Produit pas supprimé. Voici l\'erreur'.$th->getMessage());
         }
     }
 }

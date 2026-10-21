@@ -15,7 +15,7 @@ return new class extends Migration
             $table->decimal('versement', 15, 2);
             $table->decimal('total_paye', 15, 2);
             $table->decimal('reste', 15, 2);
-            $table->enum('paid_by', ['cash','check','orange money'])->default('cash');
+            $table->enum('paid_by', ['cash', 'check', 'orange money'])->default('cash');
             $table->string('note');
             $table->timestamps();
             $table->unique('receipt_number', 'payments_receipt_number_unique');

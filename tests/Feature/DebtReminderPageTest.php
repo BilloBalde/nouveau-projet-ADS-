@@ -6,6 +6,8 @@ use App\Models\Customer;
 use App\Models\DebtReminder;
 use App\Models\Product;
 use App\Models\User;
+use Database\Seeders\PermissionSeeder;
+use Database\Seeders\RolesSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
@@ -17,8 +19,8 @@ class DebtReminderPageTest extends TestCase
 
     public function test_un_client_archive_avec_un_rappel_ne_casse_pas_la_page(): void
     {
-        $this->seed(\Database\Seeders\RolesSeeder::class);
-        $this->seed(\Database\Seeders\PermissionSeeder::class);
+        $this->seed(RolesSeeder::class);
+        $this->seed(PermissionSeeder::class);
         $admin = User::create([
             'name' => 'Patron', 'email' => 'patron@example.com', 'username' => 'patron',
             'password' => Hash::make('password'), 'role_id' => User::ROLE_ADMIN,
@@ -41,7 +43,7 @@ class DebtReminderPageTest extends TestCase
     public function test_image_par_defaut_pour_un_produit_sans_photo(): void
     {
         $sansPhoto = new Product(['image' => '']);
-        $photoAbsente = new Product(['image' => 'inexistante-' . uniqid() . '.jpg']);
+        $photoAbsente = new Product(['image' => 'inexistante-'.uniqid().'.jpg']);
 
         $this->assertStringEndsWith(Product::IMAGE_PAR_DEFAUT, $sansPhoto->image_url);
         $this->assertStringEndsWith(Product::IMAGE_PAR_DEFAUT, $photoAbsente->image_url);

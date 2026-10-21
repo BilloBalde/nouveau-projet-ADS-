@@ -85,7 +85,7 @@ class PaymentControllerTest extends TestCase
 
         // Rôle admin : évite la branche de scoping par boutique (role_id == 3), qui
         // n'est pas ce que ce test couvre.
-        $admin = new User();
+        $admin = new User;
         $admin->forceFill(['id' => 1, 'role_id' => User::ROLE_ADMIN]);
         $admin->exists = true;
         $this->actingAs($admin);

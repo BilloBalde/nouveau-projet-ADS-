@@ -8,22 +8,27 @@ use Illuminate\Database\Eloquent\Model;
 
 class StockTransfer extends Model
 {
-    use HasFactory, Concerns\FigeUniteProduit;
+    use Concerns\FigeUniteProduit, HasFactory;
 
     public const PENDING = 'pending';
+
     public const APPROVED = 'approved';
+
     public const IN_TRANSIT = 'in_transit';
+
     public const COMPLETED = 'completed';
+
     public const REJECTED = 'rejected';
+
     public const CANCELLED = 'cancelled';
 
     public const STATUSES = [
-        self::PENDING    => 'En attente d\'autorisation',
-        self::APPROVED   => 'Autorisé',
+        self::PENDING => 'En attente d\'autorisation',
+        self::APPROVED => 'Autorisé',
         self::IN_TRANSIT => 'En transit',
-        self::COMPLETED  => 'Réceptionné',
-        self::REJECTED   => 'Refusé',
-        self::CANCELLED  => 'Annulé',
+        self::COMPLETED => 'Réceptionné',
+        self::REJECTED => 'Refusé',
+        self::CANCELLED => 'Annulé',
     ];
 
     protected $fillable = [
@@ -34,7 +39,7 @@ class StockTransfer extends Model
 
     protected $casts = [
         'approved_at' => 'datetime',
-        'shipped_at'  => 'datetime',
+        'shipped_at' => 'datetime',
         'received_at' => 'datetime',
     ];
 

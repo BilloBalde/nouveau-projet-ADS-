@@ -3,11 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
-use App\Models\Store;
 use App\Models\Payment;
+use App\Models\Store;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 
 class CustomerController extends Controller
@@ -23,10 +22,11 @@ class CustomerController extends Controller
         $this->middleware('permission:customers.edit')->only(['edit', 'update', 'restore']);
         $this->middleware('permission:customers.delete')->only(['destroy', 'forceDelete']);
     }
+
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function index()
     {
@@ -36,6 +36,7 @@ class CustomerController extends Controller
         $dataTable = $user->isStoreScoped()
             ? Customer::withSum(['factures as balance_perimetre' => fn ($q) => $q->whereIn('store_id', $user->accessibleStoreIds())], 'reste')->get()
             : Customer::all();
+
         return view('customers.index', compact('dataTable'));
     }
 
@@ -73,7 +74,7 @@ class CustomerController extends Controller
 
         if (auth()->user()->isStoreScoped()) {
             $store = Store::find(auth()->user()->assignedStoreId());
-            if (!$store) {
+            if (! $store) {
                 return redirect('login')->with('error', 'Dites au manager de vous attribuer à une boutique afin de pouvoir continuer');
             }
             $query->where('factures.store_id', $store->id);
@@ -87,7 +88,7 @@ class CustomerController extends Controller
     /**
      * Show the form for creating a new resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function create()
     {
@@ -97,18 +98,17 @@ class CustomerController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
-
-    public function validation(Request $request){
+    public function validation(Request $request)
+    {
         $request->validate([
-            'customerName'=>'nullable|max:250',
-            'tel'=>'nullable|max:18',
+            'customerName' => 'nullable|max:250',
+            'tel' => 'nullable|max:18',
             'mark' => 'nullable',
             'address' => 'nullable|string',
             'email' => 'nullable|email',
-        ],[
+        ], [
             'customerName.max' => 'champ nom prend maximum 250 charactere.',
             'tel.max' => 'champ tel prend maximum 18 caracteres.',
             'address.string' => 'champ address prend que des caracteres.',
@@ -129,11 +129,13 @@ class CustomerController extends Controller
                 'email' => $request->email ?? '',
             ]);
             DB::commit();
+
             return redirect()->route('customers.index')->with('success', 'Client ajouté avec succès.');
         } catch (\Exception $e) {
             DB::rollBack();
-        
-            \Log::error('Customer creation error: ' . $e->getMessage());
+
+            \Log::error('Customer creation error: '.$e->getMessage());
+
             return redirect()->route('customers.index')->with('error', 'Erreur lors de l\'ajout du client.');
         }
     }
@@ -143,8 +145,8 @@ class CustomerController extends Controller
         $search = $request->input('search');
 
         $customers = Customer::where('customerName', 'LIKE', "%{$search}%")
-                            ->orWhere('mark', 'LIKE', "%{$search}%")
-                            ->get(['id', 'customerName', 'mark']);
+            ->orWhere('mark', 'LIKE', "%{$search}%")
+            ->get(['id', 'customerName', 'mark']);
         if ($customers->isEmpty()) {
             return response()->json(['status' => 'no_results']);
         }
@@ -160,7 +162,7 @@ class CustomerController extends Controller
                 'mark' => 'nullable|string|max:255',
                 'tel' => 'nullable|string|max:20',
                 'email' => 'nullable|email|max:255',
-                'address' => 'nullable|string'
+                'address' => 'nullable|string',
             ]);
 
             $customer = Customer::create([
@@ -169,7 +171,7 @@ class CustomerController extends Controller
                 'tel' => $request->tel ?? '',
                 'email' => $request->email ?? '',
                 'address' => $request->address ?? '',
-                'fidelite' => 0
+                'fidelite' => 0,
             ]);
 
             return response()->json([
@@ -177,24 +179,23 @@ class CustomerController extends Controller
                 'customer' => [
                     'id' => $customer->id,
                     'customerName' => $customer->customerName,
-                    'mark' => $customer->mark
-                ]
+                    'mark' => $customer->mark,
+                ],
             ]);
 
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], 500);
         }
     }
-
 
     /**
      * Display the specified resource.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function show($id)
     {
@@ -205,135 +206,134 @@ class CustomerController extends Controller
      * Show the form for editing the specified resource.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function edit($id)
     {
         $customer = Customer::find($id);
+
         return view('customers.edit', compact('customer'));
     }
 
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
-    public function update(Request $request, $id)
-    {
-
-    }
+    public function update(Request $request, $id) {}
 
     /**
      * Remove the specified resource from storage.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function destroy($id)
     {
         try {
             $customer = Customer::findOrFail($id);
             $customerName = $customer->customerName;
-            
+
             // Check if customer can be deleted
             if ($customer->balance > 0) {
                 return redirect()->back()
-                                ->with('warning', 'Ce client a encore un solde impayé. Impossible de supprimer.');
+                    ->with('warning', 'Ce client a encore un solde impayé. Impossible de supprimer.');
             }
 
             if ($customer->factures()->where('statut', '!=', 'payé')->exists()) {
                 return redirect()->back()
-                                ->with('warning', 'Ce client a des factures impayées. Impossible de supprimer.');
+                    ->with('warning', 'Ce client a des factures impayées. Impossible de supprimer.');
             }
-            
+
             // Soft delete the customer
             $customer->delete();
-            
+
             return redirect()->route('customers.index')
-                            ->with('success', "Le client '{$customerName}' a été archivé avec succès.");
-                            
+                ->with('success', "Le client '{$customerName}' a été archivé avec succès.");
+
         } catch (\Throwable $th) {
             return redirect()->route('customers.index')
-                            ->with('error', 'Erreur lors de l\'archivage : ' . $th->getMessage());
+                ->with('error', 'Erreur lors de l\'archivage : '.$th->getMessage());
         }
     }
 
     public function restore($id)
-{
-    try {
-        $customer = Customer::withTrashed()->findOrFail($id);
-        $customerName = $customer->customerName;
-        
-        // Restore the customer
-        $customer->restore();
-        
-        return redirect()->route('customers.index')
-                        ->with('success', "Le client '{$customerName}' a été restauré avec succès.");
-                        
-    } catch (\Throwable $th) {
-        return redirect()->route('customers.index')
-                        ->with('error', 'Erreur lors de la restauration : ' . $th->getMessage());
+    {
+        try {
+            $customer = Customer::withTrashed()->findOrFail($id);
+            $customerName = $customer->customerName;
+
+            // Restore the customer
+            $customer->restore();
+
+            return redirect()->route('customers.index')
+                ->with('success', "Le client '{$customerName}' a été restauré avec succès.");
+
+        } catch (\Throwable $th) {
+            return redirect()->route('customers.index')
+                ->with('error', 'Erreur lors de la restauration : '.$th->getMessage());
+        }
     }
-}
-public function forceDelete($id)
-{
-    try {
-        DB::beginTransaction();
-        
-        $customer = Customer::withTrashed()->findOrFail($id);
-        $customerName = $customer->customerName;
 
-        // Cette méthode efface définitivement les factures ET les paiements du
-        // client : sans ce contrôle, la protection posée sur la suppression d'une
-        // facture encaissée se contournerait en passant par la fiche client.
-        // withTrashed : une facture archivée conserve ses paiements, la table
-        // `payments` n'ayant pas de suppression douce.
-        $encaissees = $customer->factures()->withTrashed()->get()->filter->aRecuUnPaiement();
+    public function forceDelete($id)
+    {
+        try {
+            DB::beginTransaction();
 
-        if ($encaissees->isNotEmpty()) {
+            $customer = Customer::withTrashed()->findOrFail($id);
+            $customerName = $customer->customerName;
+
+            // Cette méthode efface définitivement les factures ET les paiements du
+            // client : sans ce contrôle, la protection posée sur la suppression d'une
+            // facture encaissée se contournerait en passant par la fiche client.
+            // withTrashed : une facture archivée conserve ses paiements, la table
+            // `payments` n'ayant pas de suppression douce.
+            $encaissees = $customer->factures()->withTrashed()->get()->filter->aRecuUnPaiement();
+
+            if ($encaissees->isNotEmpty()) {
+                DB::rollBack();
+
+                return redirect()->back()->with('error', sprintf(
+                    'Le client « %s » a %d facture(s) déjà encaissée(s) (%s GNF au total). '
+                    .'Il ne peut pas être supprimé définitivement.',
+                    $customerName,
+                    $encaissees->count(),
+                    number_format($encaissees->sum->montantEncaisse(), 0, ',', ' ')
+                ));
+            }
+
+            // Corbeille comprise : une facture archivée reste rattachée au client,
+            // et ses paiements n'ont pas de suppression douce. Les laisser derrière
+            // nous ferait des factures sans client.
+            $invoiceIds = $customer->factures()->withTrashed()->pluck('id')->all();
+
+            if (! empty($invoiceIds)) {
+                Payment::whereIn('facture_id', $invoiceIds)->delete();
+            }
+
+            // forceDelete() et non delete() : `Facture` a une suppression douce, donc
+            // delete() ne faisait que les archiver. Le client, lui, disparaissait
+            // pour de bon — il restait des factures pointant un client inexistant.
+            $customer->factures()->withTrashed()->forceDelete();
+
+            $customer->forceDelete();
+
+            DB::commit();
+
+            // La page « corbeille » n'existe pas (CustomerController n'a pas de
+            // méthode trashed() et aucune vue ne l'accompagne) : rediriger vers
+            // `customers.trashed` levait une RouteNotFoundException, donc une erreur
+            // 500 juste après une suppression définitive réussie — et le bloc catch
+            // visait la même route, ce qui masquait au passage le message d'erreur.
+            return redirect()->route('customers.index')
+                ->with('success', "Le client '{$customerName}' a été définitivement supprimé.");
+
+        } catch (\Throwable $th) {
             DB::rollBack();
 
-            return redirect()->back()->with('error', sprintf(
-                'Le client « %s » a %d facture(s) déjà encaissée(s) (%s GNF au total). '
-                .'Il ne peut pas être supprimé définitivement.',
-                $customerName,
-                $encaissees->count(),
-                number_format($encaissees->sum->montantEncaisse(), 0, ',', ' ')
-            ));
+            return redirect()->route('customers.index')
+                ->with('error', 'Erreur : '.$th->getMessage());
         }
-
-        // Corbeille comprise : une facture archivée reste rattachée au client,
-        // et ses paiements n'ont pas de suppression douce. Les laisser derrière
-        // nous ferait des factures sans client.
-        $invoiceIds = $customer->factures()->withTrashed()->pluck('id')->all();
-
-        if (! empty($invoiceIds)) {
-            Payment::whereIn('facture_id', $invoiceIds)->delete();
-        }
-
-        // forceDelete() et non delete() : `Facture` a une suppression douce, donc
-        // delete() ne faisait que les archiver. Le client, lui, disparaissait
-        // pour de bon — il restait des factures pointant un client inexistant.
-        $customer->factures()->withTrashed()->forceDelete();
-
-        $customer->forceDelete();
-
-        DB::commit();
-
-        // La page « corbeille » n'existe pas (CustomerController n'a pas de
-        // méthode trashed() et aucune vue ne l'accompagne) : rediriger vers
-        // `customers.trashed` levait une RouteNotFoundException, donc une erreur
-        // 500 juste après une suppression définitive réussie — et le bloc catch
-        // visait la même route, ce qui masquait au passage le message d'erreur.
-        return redirect()->route('customers.index')
-                        ->with('success', "Le client '{$customerName}' a été définitivement supprimé.");
-
-    } catch (\Throwable $th) {
-        DB::rollBack();
-        return redirect()->route('customers.index')
-                        ->with('error', 'Erreur : ' . $th->getMessage());
     }
-}
 }

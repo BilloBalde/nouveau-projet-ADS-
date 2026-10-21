@@ -14,9 +14,9 @@ class Fund extends Model
     protected $fillable = ['name', 'associate_name', 'phone', 'owner_share', 'associate_share', 'active', 'notes'];
 
     protected $casts = [
-        'owner_share'     => 'float',
+        'owner_share' => 'float',
         'associate_share' => 'float',
-        'active'          => 'boolean',
+        'active' => 'boolean',
     ];
 
     /** Libellé des fonds propres dans les listes (fund_id NULL). */
@@ -57,6 +57,6 @@ class Fund extends Model
 
         static $noms = [];
 
-        return $noms[$fundId] ??= (static::whereKey($fundId)->value('name') ?? 'Fonds #' . $fundId);
+        return $noms[$fundId] ??= (static::whereKey($fundId)->value('name') ?? 'Fonds #'.$fundId);
     }
 }

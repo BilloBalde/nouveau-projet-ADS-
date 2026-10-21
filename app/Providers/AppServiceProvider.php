@@ -3,16 +3,15 @@
 namespace App\Providers;
 
 use App\Models\Company;
+use App\Models\Expense;
+use App\Models\PurchaseOrder;
+use App\Models\Sale;
+use App\Observers\StockObserver;
 use Illuminate\Pagination\Paginator;
-use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\View;
-
-use App\Models\Sale;
-use App\Models\Expense;
-use App\Models\PurchaseOrder;
-use App\Observers\StockObserver;
+use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -52,7 +51,6 @@ class AppServiceProvider extends ServiceProvider
         ], function ($view) {
             $view->with('company', Company::current());
         });
-
 
         Sale::observe(StockObserver::class);
         Expense::observe(StockObserver::class);

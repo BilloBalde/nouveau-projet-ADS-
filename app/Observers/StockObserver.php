@@ -1,9 +1,11 @@
 <?php
+
 // app/Observers/StockObserver.php
 
 namespace App\Observers;
 
 use App\Models\StockHistory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -12,8 +14,8 @@ class StockObserver
     /**
      * Enregistre ou met à jour l'historique pour un ou plusieurs modèles.
      *
-     * @param \Illuminate\Database\Eloquent\Model|array $models
-     * @param string $action 'create'|'update'|'delete'
+     * @param  Model|array  $models
+     * @param  string  $action  'create'|'update'|'delete'
      */
     private function recordHistory($models, string $action = 'create')
     {
@@ -26,8 +28,9 @@ class StockObserver
                 if (empty($storeId)) {
                     Log::debug('[StockObserver] store_id manquant, modèle ignoré', [
                         'class' => get_class($model),
-                        'id'    => $model->id ?? null,
+                        'id' => $model->id ?? null,
                     ]);
+
                     continue;
                 }
 
@@ -50,9 +53,9 @@ class StockObserver
                         $originalAmount = $model->getOriginal('prixTotal') ?? 0;
                         break;
 
-                    // -------------------------------------------------
-                    // DÉPENSES
-                    // -------------------------------------------------
+                        // -------------------------------------------------
+                        // DÉPENSES
+                        // -------------------------------------------------
                     case 'App\Models\Expense':
                         $type = 'expense';
                         $sign = -1;  // une dépense diminue la trésorerie
@@ -60,9 +63,9 @@ class StockObserver
                         $originalAmount = $model->getOriginal('amount') ?? 0;
                         break;
 
-                    // -------------------------------------------------
-                    // ACHATS (module PurchaseOrder — remplace l'ancien Achat)
-                    // -------------------------------------------------
+                        // -------------------------------------------------
+                        // ACHATS (module PurchaseOrder — remplace l'ancien Achat)
+                        // -------------------------------------------------
                     case 'App\Models\PurchaseOrder':
                         $type = 'purchase';
                         $sign = -1;  // un achat diminue la trésorerie
@@ -74,74 +77,76 @@ class StockObserver
                         $originalAmount = (float) ($model->getOriginal('total_landed_cost_gnf') ?? 0);
                         break;
 
-                    // -------------------------------------------------
-                    // Autres modèles (à décommenter et adapter si besoin)
-                    // -------------------------------------------------
-                    /*
-                    case 'App\Models\TransBank':
-                        $type = 'reception';
-                        $sign = -1;
-                        $currentAmount = $model->montant_fg ?? 0;
-                        $originalAmount = $model->getOriginal('montant_fg') ?? 0;
-                        break;
+                        // -------------------------------------------------
+                        // Autres modèles (à décommenter et adapter si besoin)
+                        // -------------------------------------------------
+                        /*
+                        case 'App\Models\TransBank':
+                            $type = 'reception';
+                            $sign = -1;
+                            $currentAmount = $model->montant_fg ?? 0;
+                            $originalAmount = $model->getOriginal('montant_fg') ?? 0;
+                            break;
 
-                    case 'App\Models\EmployeePayment':
-                        if (!$model->is_paid) {
-                            continue 2;
-                        }
-                        $type = 'employee_payment';
-                        $sign = -1;
-                        $currentAmount = $model->amount ?? 0;
-                        $originalAmount = $model->getOriginal('amount') ?? 0;
-                        break;
+                        case 'App\Models\EmployeePayment':
+                            if (!$model->is_paid) {
+                                continue 2;
+                            }
+                            $type = 'employee_payment';
+                            $sign = -1;
+                            $currentAmount = $model->amount ?? 0;
+                            $originalAmount = $model->getOriginal('amount') ?? 0;
+                            break;
 
-                    case 'App\Models\Production':
-                        if (!($model->isDirty('status') && $model->status === 'delivre')) {
-                            continue 2;
-                        }
-                        $type = 'delivery_fee';
-                        $sign = -1;
-                        $currentAmount = $model->frais ?? 0;
-                        $originalAmount = $model->getOriginal('frais') ?? 0;
-                        break;
-                    */
+                        case 'App\Models\Production':
+                            if (!($model->isDirty('status') && $model->status === 'delivre')) {
+                                continue 2;
+                            }
+                            $type = 'delivery_fee';
+                            $sign = -1;
+                            $currentAmount = $model->frais ?? 0;
+                            $originalAmount = $model->getOriginal('frais') ?? 0;
+                            break;
+                        */
                     default:
                         // Modèle non géré → on passe au suivant
                         Log::debug('[StockObserver] Classe non prise en charge', ['class' => $className]);
+
                         continue 2;
                 }
 
                 // --- Génération de la référence unique ---
-                $reference = $type . '_' . $model->id;
+                $reference = $type.'_'.$model->id;
 
                 // --- Calcul du montant du mouvement selon l'action ---
-                $amount = match($action) {
+                $amount = match ($action) {
                     'create' => $currentAmount * $sign,
                     'update' => ($currentAmount - $originalAmount) * $sign,
                     'delete' => -($currentAmount * $sign),
-                    default  => $currentAmount * $sign,
+                    default => $currentAmount * $sign,
                 };
 
                 // Si le montant est nul, on ignore (pas d'impact financier)
                 if ($amount == 0) {
                     Log::debug('[StockObserver] Montant nul, aucune action', [
                         'reference' => $reference,
-                        'action'    => $action,
+                        'action' => $action,
                     ]);
+
                     continue;
                 }
 
                 // --- Insertion ou mise à jour de la ligne d'historique ---
                 $history = StockHistory::updateOrCreate(
                     [
-                        'store_id'  => $storeId,
-                        'type'      => $type,
+                        'store_id' => $storeId,
+                        'type' => $type,
                         'reference' => $reference,
                     ],
                     [
-                        'amount'       => $amount,
+                        'amount' => $amount,
                         'dispo_before' => 0, // sera recalculé juste après
-                        'dispo_after'  => 0,
+                        'dispo_after' => 0,
                     ]
                 );
 
@@ -171,14 +176,14 @@ class StockObserver
         foreach ($histories as $history) {
             $history->update([
                 'dispo_before' => $runningDispo,
-                'dispo_after'  => $runningDispo + $history->amount,
+                'dispo_after' => $runningDispo + $history->amount,
             ]);
             $runningDispo += $history->amount;
         }
 
         Log::info('[StockObserver] Disponibilités recalculées', [
-            'store_id'    => $storeId,
-            'from_id'     => $fromHistoryId,
+            'store_id' => $storeId,
+            'from_id' => $fromHistoryId,
             'dispo_final' => $runningDispo,
         ]);
     }

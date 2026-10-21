@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 
 class Partner extends Model
 {
@@ -35,7 +36,7 @@ class Partner extends Model
      * Ce que le vendeur doit au partenaire, tous temps confondus : prix payé
      * au partenaire × quantité, sur les factures non supprimées.
      */
-    public static function montantsDus(): \Illuminate\Support\Collection
+    public static function montantsDus(): Collection
     {
         return Sale::query()
             ->join('factures', 'factures.numero_facture', '=', 'sales.numeroFacture')
@@ -48,7 +49,7 @@ class Partner extends Model
     }
 
     /** Règlements faits à chaque partenaire, tous temps confondus. */
-    public static function montantsRegles(): \Illuminate\Support\Collection
+    public static function montantsRegles(): Collection
     {
         return PartnerSettlement::query()
             ->selectRaw('partner_id, SUM(amount) as regle')

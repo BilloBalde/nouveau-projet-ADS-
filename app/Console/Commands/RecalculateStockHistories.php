@@ -7,7 +7,8 @@ use Illuminate\Console\Command;
 
 class RecalculateStockHistories extends Command
 {
-   protected $signature = 'stock:recalculate {store_id?}';
+    protected $signature = 'stock:recalculate {store_id?}';
+
     protected $description = 'Recalcule les disponibilités pour chaque magasin';
 
     public function handle()

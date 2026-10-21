@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class PurchaseOrderItem extends Model
 {
-    use HasFactory, Concerns\FigeUniteProduit;
+    use Concerns\FigeUniteProduit, HasFactory;
 
     protected $guarded = ['id'];
 

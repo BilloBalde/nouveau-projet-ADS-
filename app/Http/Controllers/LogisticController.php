@@ -4,10 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Exports\LogisticsExport;
 use App\Models\Logistic;
-use App\Models\Product;
 use App\Models\Store;
 use Barryvdh\DomPDF\Facade\Pdf as PDF;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Validator;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -19,21 +19,22 @@ class LogisticController extends Controller
         // Frais de transport des achats (hors menu) : mêmes droits que les achats.
         $this->middleware('permission:purchases.view');
     }
+
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function index(Request $request)
     {
         $query = Logistic::query();
 
         if ($request->filled('numeroPurchase')) {
-            $query->where('numeroPurchase', 'like', '%' . $request->input('numeroPurchase') . '%');
+            $query->where('numeroPurchase', 'like', '%'.$request->input('numeroPurchase').'%');
         }
 
         if ($request->filled('typeLogistic')) {
-            $query->where('typeLogistic', 'like', '%' . $request->input('typeLogistic') . '%');
+            $query->where('typeLogistic', 'like', '%'.$request->input('typeLogistic').'%');
         }
 
         if ($request->filled('dateEmis')) {
@@ -48,6 +49,7 @@ class LogisticController extends Controller
 
         // Pass the necessary data to the view, including options for filters
         $dataTable = Logistic::all();
+
         return view('logistics.index', compact('dataTable'));
     }
 
@@ -67,7 +69,7 @@ class LogisticController extends Controller
     /**
      * Show the form for creating a new resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function create()
     {
@@ -81,8 +83,7 @@ class LogisticController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function store(Request $request)
     {
@@ -94,7 +95,7 @@ class LogisticController extends Controller
             'depense' => 'required|numeric',
             'dateEmis' => 'required|date',
             'dateFournis' => 'required|date|after_or_equal:dateEmis',
-        ],[
+        ], [
             'numeroPurchase.required' => 'Le champ numeroPurchase est obligatoire, veuillez le remplir',
             'numeroPurchase.string' => 'Le champ numeroPurchase prend une chaine de caractère',
             'store_id.required' => 'Selectionner le stock svp',
@@ -110,7 +111,7 @@ class LogisticController extends Controller
         // If validation fails, return a JSON response with errors
         if ($validator->fails()) {
             return response()->json([
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ]);
         }
 
@@ -122,7 +123,7 @@ class LogisticController extends Controller
                 'quantity' => $request->quantity,
                 'depense' => $request->depense,
                 'dateEmis' => $request->dateEmis,
-                'dateFournis' => $request->dateFournis
+                'dateFournis' => $request->dateFournis,
             ]);
 
             // If the request is expecting JSON, return a JSON success response
@@ -130,20 +131,20 @@ class LogisticController extends Controller
                 return response()->json([
                     'success' => true,
                     'message' => 'Logistic crée avec succès.',
-                    'redirect_url' => route('purchases.ajout', [$request->numeroPurchase, $request->quantity, $request->store_id])
+                    'redirect_url' => route('purchases.ajout', [$request->numeroPurchase, $request->quantity, $request->store_id]),
                 ]);
             }
 
             // Otherwise, redirect back with a success message
             return redirect()->route('purchases.ajout', [$request->numeroPurchase, $request->quantity, $request->store_id])->with([
-                'success'=>'Logistic crée avec succès.'
+                'success' => 'Logistic crée avec succès.',
             ]);
         } catch (\Throwable $th) {
             // Handle any other errors
             if ($request->expectsJson()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Une erreur est survenue lors de l\'ajout. Voici le message : '.$th->getMessage()
+                    'message' => 'Une erreur est survenue lors de l\'ajout. Voici le message : '.$th->getMessage(),
                 ], 500);
             }
 
@@ -155,8 +156,7 @@ class LogisticController extends Controller
     /**
      * Display the specified resource.
      *
-     * @param  \App\Models\Logistic  $logistic
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function show(Logistic $logistic)
     {
@@ -166,8 +166,7 @@ class LogisticController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
-     * @param  \App\Models\Logistic  $logistic
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function edit(Logistic $logistic)
     {
@@ -177,18 +176,17 @@ class LogisticController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Logistic  $logistic
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function update(Request $request, Logistic $logistic)
     {
-        //dd($logistic);
+        // dd($logistic);
         try {
             $logistic->depense = $request->depense;
             $logistic->dateEmis = $request->dateEmis;
             $logistic->dateFournis = $request->dateFournis;
             $logistic->save();
+
             return redirect()->route('logistics.index')->with('success', 'La modification a réussie.');
         } catch (\Throwable $th) {
             return redirect()->route('logistics.index')->with('error', 'La modification a echouée. avec le message '.$th->getMessage());
@@ -198,8 +196,7 @@ class LogisticController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\Models\Logistic  $logistic
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function destroy(Logistic $logistic)
     {

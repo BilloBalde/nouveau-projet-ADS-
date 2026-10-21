@@ -95,8 +95,8 @@ return new class extends Migration
 
             DB::table('users')->where('id', $vendeur->id)->update(['store_id' => $storeId]);
             DB::table('store_assignments')->insert([
-                'user_id'    => $vendeur->id,
-                'store_id'   => $storeId,
+                'user_id' => $vendeur->id,
+                'store_id' => $storeId,
                 'started_at' => now(),
                 'created_at' => now(),
                 'updated_at' => now(),

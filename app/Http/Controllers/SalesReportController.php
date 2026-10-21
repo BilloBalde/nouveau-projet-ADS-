@@ -2,11 +2,21 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\VentesTiercesExport;
+use App\Models\Company;
+use App\Models\Customer;
+use App\Models\Facture;
+use App\Models\Partner;
+use App\Models\PartnerSettlement;
+use App\Models\Product;
 use App\Models\Sale;
 use App\Models\Store;
+use App\Models\User;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Maatwebsite\Excel\Facades\Excel;
 
 class SalesReportController extends Controller
 {
@@ -71,12 +81,12 @@ class SalesReportController extends Controller
         [$start, $end, $label] = $this->resolvePeriod($period, $request, Carbon::now());
         $user = auth()->user();
 
-        $lines = \App\Models\Sale::query()
+        $lines = Sale::query()
             ->join('factures', 'factures.numero_facture', '=', 'sales.numeroFacture')
             ->whereNull('factures.deleted_at')
             // Ventes faites au comptoir : caisse ET ventes tierces (produits d'un
             // partenaire revendus depuis le point de vente, facturées à part).
-            ->whereIn('factures.channel', [\App\Models\Facture::CHANNEL_POS, \App\Models\Facture::CHANNEL_TIERS])
+            ->whereIn('factures.channel', [Facture::CHANNEL_POS, Facture::CHANNEL_TIERS])
             ->whereBetween('sales.created_at', [$start, $end])
             ->when($user->isStoreScoped(), fn ($q) => $q->whereIn('sales.store_id', $user->accessibleStoreIds()))
             ->when($request->filled('user_id'), fn ($q) => $q->where('sales.user_id', $request->input('user_id')))
@@ -97,26 +107,26 @@ class SalesReportController extends Controller
         $qtyParUnite = (clone $lines)->reorder()
             ->select(DB::raw("sales.user_id, sales.store_id, COALESCE(sales.unite, 'pcs') as unite, SUM(sales.quantity) as qty"))
             ->groupBy('sales.user_id', 'sales.store_id', DB::raw("COALESCE(sales.unite, 'pcs')"))->get();
-        $qtyVendeur = $qtyParUnite->groupBy('user_id')->map(fn ($g) => \App\Models\Product::resumeQuantites($g));
-        $qtyStore = $qtyParUnite->groupBy('store_id')->map(fn ($g) => \App\Models\Product::resumeQuantites($g));
+        $qtyVendeur = $qtyParUnite->groupBy('user_id')->map(fn ($g) => Product::resumeQuantites($g));
+        $qtyStore = $qtyParUnite->groupBy('store_id')->map(fn ($g) => Product::resumeQuantites($g));
 
         $details = (clone $lines)
             ->with(['product:id,libelle', 'store:id,store_name,type', 'user:id,name'])
             ->orderByDesc('sales.created_at')
             ->paginate(100)->appends($request->query());
 
-        $customers = \App\Models\Customer::withTrashed()->whereIn('id', $details->pluck('facture_customer_id')->filter()->unique())->pluck('customerName', 'id');
-        $userNames = \App\Models\User::whereIn('id', $byVendeur->pluck('user_id')->filter())->pluck('name', 'id');
+        $customers = Customer::withTrashed()->whereIn('id', $details->pluck('facture_customer_id')->filter()->unique())->pluck('customerName', 'id');
+        $userNames = User::whereIn('id', $byVendeur->pluck('user_id')->filter())->pluck('name', 'id');
         $stores = Store::visibleTo($user)->orderBy('store_name')->get();
         $storeNames = Store::whereIn('id', $byStore->pluck('store_id'))->get()->keyBy('id');
-        $vendeurs = \App\Models\User::whereIn('id', \App\Models\Sale::visibleTo($user)->distinct()->pluck('user_id')->filter())->orderBy('name')->get(['id', 'name']);
-        $products = \App\Models\Product::orderBy('libelle')->get(['id', 'libelle']);
+        $vendeurs = User::whereIn('id', Sale::visibleTo($user)->distinct()->pluck('user_id')->filter())->orderBy('name')->get(['id', 'name']);
+        $products = Product::orderBy('libelle')->get(['id', 'libelle']);
 
         $totals = [
-            'nb'    => (int) $byVendeur->sum('nb'),
-            'ca'    => (float) $byVendeur->sum('ca'),
-            'qty'   => (int) $byVendeur->sum('qty'),
-            'qty_unites' => \App\Models\Product::resumeQuantites($qtyParUnite),
+            'nb' => (int) $byVendeur->sum('nb'),
+            'ca' => (float) $byVendeur->sum('ca'),
+            'qty' => (int) $byVendeur->sum('qty'),
+            'qty_unites' => Product::resumeQuantites($qtyParUnite),
             'marge' => (float) $byVendeur->sum('marge'),
         ];
 
@@ -151,12 +161,12 @@ class SalesReportController extends Controller
             ));
         }
 
-        $donnees['company'] = \App\Models\Company::current();
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('exports.ventes-tierces-pdf', $donnees)
+        $donnees['company'] = Company::current();
+        $pdf = Pdf::loadView('exports.ventes-tierces-pdf', $donnees)
             ->setPaper('a4', 'landscape')
             ->setOptions(['defaultFont' => 'DejaVu Sans', 'isHtml5ParserEnabled' => true]);
 
-        return $pdf->download($this->nomFichierTiers($donnees) . '.pdf');
+        return $pdf->download($this->nomFichierTiers($donnees).'.pdf');
     }
 
     /** Rapport des ventes tierces en Excel : partenaires, détail, règlements. */
@@ -164,15 +174,15 @@ class SalesReportController extends Controller
     {
         $donnees = $this->donneesTiers($request, true);
 
-        return \Maatwebsite\Excel\Facades\Excel::download(
-            new \App\Exports\VentesTiercesExport($donnees),
-            $this->nomFichierTiers($donnees) . '.xlsx'
+        return Excel::download(
+            new VentesTiercesExport($donnees),
+            $this->nomFichierTiers($donnees).'.xlsx'
         );
     }
 
     private function nomFichierTiers(array $donnees): string
     {
-        return 'ventes_tierces_' . $donnees['start']->format('Y-m-d') . '_au_' . $donnees['end']->format('Y-m-d');
+        return 'ventes_tierces_'.$donnees['start']->format('Y-m-d').'_au_'.$donnees['end']->format('Y-m-d');
     }
 
     /**
@@ -208,41 +218,41 @@ class SalesReportController extends Controller
         $qtyParPartenaire = (clone $lines)->reorder()
             ->select(DB::raw("sales.partner_id, COALESCE(sales.unite, 'pcs') as unite, SUM(sales.quantity) as qty"))
             ->groupBy('sales.partner_id', DB::raw("COALESCE(sales.unite, 'pcs')"))->get()
-            ->groupBy('partner_id')->map(fn ($g) => \App\Models\Product::resumeQuantites($g));
+            ->groupBy('partner_id')->map(fn ($g) => Product::resumeQuantites($g));
 
         // Soldes tous temps confondus (dû − réglé) : réservés à qui règle les partenaires.
-        $dus = $peutRegler ? \App\Models\Partner::montantsDus() : collect();
-        $regles = $peutRegler ? \App\Models\Partner::montantsRegles() : collect();
+        $dus = $peutRegler ? Partner::montantsDus() : collect();
+        $regles = $peutRegler ? Partner::montantsRegles() : collect();
         $partenaireIds = $parPartenaire->keys()->merge($dus->keys())->unique()->filter();
-        $partenaires = \App\Models\Partner::whereIn('id', $partenaireIds)->orderBy('name')->get()
+        $partenaires = Partner::whereIn('id', $partenaireIds)->orderBy('name')->get()
             ->map(fn ($p) => (object) [
                 'partner' => $p,
                 'periode' => $parPartenaire[$p->id] ?? null,
-                'qty'     => $qtyParPartenaire[$p->id] ?? '—',
-                'du'      => (float) ($dus[$p->id] ?? 0),
-                'regle'   => (float) ($regles[$p->id] ?? 0),
-                'solde'   => (float) ($dus[$p->id] ?? 0) - (float) ($regles[$p->id] ?? 0),
+                'qty' => $qtyParPartenaire[$p->id] ?? '—',
+                'du' => (float) ($dus[$p->id] ?? 0),
+                'regle' => (float) ($regles[$p->id] ?? 0),
+                'solde' => (float) ($dus[$p->id] ?? 0) - (float) ($regles[$p->id] ?? 0),
             ])
             ->when($request->filled('partner_id'), fn ($c) => $c->filter(fn ($r) => $r->partner->id === (int) $request->input('partner_id')))
             ->values();
 
         $totals = [
-            'ca'    => (float) $parPartenaire->sum('ca'),
-            'du'    => (float) $parPartenaire->sum('du'),
+            'ca' => (float) $parPartenaire->sum('ca'),
+            'du' => (float) $parPartenaire->sum('du'),
             'marge' => (float) $parPartenaire->sum('marge'),
             'solde' => (float) $partenaires->sum('solde'),
         ];
 
         $reglements = $peutRegler
-            ? \App\Models\PartnerSettlement::with(['partner:id,name', 'user:id,name'])
+            ? PartnerSettlement::with(['partner:id,name', 'user:id,name'])
                 ->whereBetween('paid_at', [$start->toDateString(), $end->toDateString()])
                 ->when($request->filled('partner_id'), fn ($q) => $q->where('partner_id', $request->input('partner_id')))
                 ->latest('paid_at')->latest('id')->get()
             : collect();
 
-        $customers = \App\Models\Customer::withTrashed()->whereIn('id', $details->pluck('facture_customer_id')->filter()->unique())->pluck('customerName', 'id');
+        $customers = Customer::withTrashed()->whereIn('id', $details->pluck('facture_customer_id')->filter()->unique())->pluck('customerName', 'id');
         $stores = Store::visibleTo($user)->orderBy('store_name')->get();
-        $tousPartenaires = \App\Models\Partner::orderBy('name')->get(['id', 'name', 'phone']);
+        $tousPartenaires = Partner::orderBy('name')->get(['id', 'name', 'phone']);
 
         return compact(
             'period', 'label', 'start', 'end', 'details', 'partenaires', 'totals', 'reglements',
@@ -255,18 +265,18 @@ class SalesReportController extends Controller
     {
         $data = $request->validate([
             'partner_id' => 'required|exists:partners,id',
-            'amount'     => 'required|numeric|min:1',
-            'paid_at'    => 'required|date|before_or_equal:today',
-            'mode'       => 'required|in:' . implode(',', array_keys(\App\Models\PartnerSettlement::MODES)),
-            'note'       => 'nullable|string|max:500',
+            'amount' => 'required|numeric|min:1',
+            'paid_at' => 'required|date|before_or_equal:today',
+            'mode' => 'required|in:'.implode(',', array_keys(PartnerSettlement::MODES)),
+            'note' => 'nullable|string|max:500',
         ], [
-            'amount.min'              => 'Le montant doit être positif.',
+            'amount.min' => 'Le montant doit être positif.',
             'paid_at.before_or_equal' => 'La date du règlement ne peut pas être dans le futur.',
         ]);
 
-        $partenaire = \App\Models\Partner::findOrFail($data['partner_id']);
-        $solde = (float) (\App\Models\Partner::montantsDus()[$partenaire->id] ?? 0)
-            - (float) (\App\Models\Partner::montantsRegles()[$partenaire->id] ?? 0);
+        $partenaire = Partner::findOrFail($data['partner_id']);
+        $solde = (float) (Partner::montantsDus()[$partenaire->id] ?? 0)
+            - (float) (Partner::montantsRegles()[$partenaire->id] ?? 0);
 
         // On ne règle pas plus que ce qui est dû : une erreur de saisie
         // créerait une avance fictive chez le partenaire.
@@ -278,7 +288,7 @@ class SalesReportController extends Controller
             )]);
         }
 
-        \App\Models\PartnerSettlement::create($data + ['user_id' => auth()->id()]);
+        PartnerSettlement::create($data + ['user_id' => auth()->id()]);
 
         return back()->with('success', sprintf(
             'Règlement de %s FG à %s enregistré. Reste dû : %s FG.',
@@ -295,7 +305,7 @@ class SalesReportController extends Controller
                 $week = $request->input('week_start', $now->toDateString());
                 $start = Carbon::parse($week)->startOfWeek();
                 $end = $start->copy()->endOfWeek();
-                $label = 'Semaine du ' . $start->format('d/m/Y') . ' au ' . $end->format('d/m/Y');
+                $label = 'Semaine du '.$start->format('d/m/Y').' au '.$end->format('d/m/Y');
                 break;
             case 'monthly':
                 $month = $request->input('month', $now->format('Y-m'));

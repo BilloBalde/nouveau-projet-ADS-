@@ -23,6 +23,7 @@ class DailyReportController extends Controller
     public function index(Request $request)
     {
         $data = $this->getReportData($request);
+
         return view('reports.daily', $data);
     }
 
@@ -33,7 +34,7 @@ class DailyReportController extends Controller
                 $weekStart = $request->input('week_start', $now->copy()->startOfWeek()->toDateString());
                 $start = Carbon::parse($weekStart)->startOfDay();
                 $end = $start->copy()->addDays(6)->endOfDay();
-                $label = $start->toDateString() . ' → ' . $end->toDateString();
+                $label = $start->toDateString().' → '.$end->toDateString();
                 break;
             case 'monthly':
                 $month = $request->input('month', $now->format('Y-m'));
@@ -67,7 +68,7 @@ class DailyReportController extends Controller
             case 'custom':
                 $start = Carbon::parse($request->input('start_date', $now->copy()->startOfMonth()->toDateString()))->startOfDay();
                 $end = Carbon::parse($request->input('end_date', $now->toDateString()))->endOfDay();
-                $label = $start->toDateString() . ' → ' . $end->toDateString();
+                $label = $start->toDateString().' → '.$end->toDateString();
                 break;
             case 'daily':
             default:
@@ -81,13 +82,11 @@ class DailyReportController extends Controller
         return [$start, $end, $label];
     }
 
-
-
     public function exportPDF(Request $request)
     {
         $data = $this->getReportData($request);
         $pdf = PDF::loadView('reports.daily-pdf', $data);
-        $filename = 'daily-report-' . str_replace([' ', '→'], ['-', 'to'], $data['label']) . '.pdf';
+        $filename = 'daily-report-'.str_replace([' ', '→'], ['-', 'to'], $data['label']).'.pdf';
 
         return $pdf->download($filename);
     }
@@ -170,11 +169,11 @@ class DailyReportController extends Controller
         // --- Totals (optionally filtered by store) ---
         $facturesQuery = Facture::query()->whereBetween('created_at', [$start, $end]);
 
-        if (!empty($storeId)) {
+        if (! empty($storeId)) {
             $facturesQuery->where('store_id', $storeId);
         }
 
-        $totalAchats = $this->achatsTotal($start, $end, !empty($storeId) ? (int) $storeId : null);
+        $totalAchats = $this->achatsTotal($start, $end, ! empty($storeId) ? (int) $storeId : null);
         $totalVentes = (float) $facturesQuery->sum('montant_total');
         $totalReste = (float) $facturesQuery->sum('reste');
         $totalPayesVentes = (float) $facturesQuery->where('statut', 'payé')->sum('montant_total');
@@ -183,7 +182,7 @@ class DailyReportController extends Controller
             ->whereBetween('payments.created_at', [$start, $end])
             ->join('factures', 'payments.facture_id', '=', 'factures.id');
 
-        if (!empty($storeId)) {
+        if (! empty($storeId)) {
             $paymentsQuery->where('factures.store_id', $storeId);
         }
 
@@ -195,7 +194,7 @@ class DailyReportController extends Controller
         $expensesQuery = Expense::query()
             ->whereBetween('expenses.created_at', [$start, $end]);
 
-        if (!empty($storeId)) {
+        if (! empty($storeId)) {
             $expensesQuery->where('expenses.store_id', $storeId);
         } else {
             $expensesQuery->whereIn('expenses.store_id', $stores->pluck('id')->all());
@@ -206,7 +205,7 @@ class DailyReportController extends Controller
         $profit = $totalVentes - $totalAchats - $totalDepenses;
 
         // --- Per-store breakdown (for "statistiques complet de chaque boutique") ---
-        $storeIds = !empty($storeId)
+        $storeIds = ! empty($storeId)
             ? [(int) $storeId]
             : $stores->pluck('id')->map(fn ($v) => (int) $v)->all();
 
@@ -253,44 +252,44 @@ class DailyReportController extends Controller
         $dailyExpensesQuery = Expense::query()
             ->whereBetween('expenses.created_at', [$start, $end]);
 
-        if (!empty($storeId)) {
+        if (! empty($storeId)) {
             $dailyExpensesQuery->where('expenses.store_id', $storeId);
         } else {
             $dailyExpensesQuery->whereIn('expenses.store_id', $storeIds);
         }
 
         $dailyExpenses = $dailyExpensesQuery
-        ->select([
-            DB::raw('DATE(expenses.created_at) as expense_date'),
-            DB::raw('COALESCE(SUM(expenses.amount), 0) as total_amount'),
-            DB::raw('COUNT(expenses.id) as expense_count'),
-        ])
-        ->groupBy('expense_date')
-        ->orderBy('expense_date', 'desc')
-        ->get();
+            ->select([
+                DB::raw('DATE(expenses.created_at) as expense_date'),
+                DB::raw('COALESCE(SUM(expenses.amount), 0) as total_amount'),
+                DB::raw('COUNT(expenses.id) as expense_count'),
+            ])
+            ->groupBy('expense_date')
+            ->orderBy('expense_date', 'desc')
+            ->get();
 
         // --- Per-store breakdown ---
         $breakdown = $stores
-        ->filter(fn ($s) => in_array((int) $s->id, $storeIds, true))
-        ->map(function ($store) use ($facturesByStore, $achatsByStore, $paymentsByStore, $expensesByStore) {
-            $sid = (int) $store->id;
-            $ventes = (float) ($facturesByStore[$sid]->total_ventes ?? 0);
-            $achats = (float) ($achatsByStore[$sid]->total_achats ?? 0);
-            $reste = (float) ($facturesByStore[$sid]->total_reste ?? 0);
-            $encaisse = (float) ($paymentsByStore[$sid]->total_encaisse ?? 0);
-            $depenses = (float) ($expensesByStore[$sid]->total_depenses ?? 0);
+            ->filter(fn ($s) => in_array((int) $s->id, $storeIds, true))
+            ->map(function ($store) use ($facturesByStore, $achatsByStore, $paymentsByStore, $expensesByStore) {
+                $sid = (int) $store->id;
+                $ventes = (float) ($facturesByStore[$sid]->total_ventes ?? 0);
+                $achats = (float) ($achatsByStore[$sid]->total_achats ?? 0);
+                $reste = (float) ($facturesByStore[$sid]->total_reste ?? 0);
+                $encaisse = (float) ($paymentsByStore[$sid]->total_encaisse ?? 0);
+                $depenses = (float) ($expensesByStore[$sid]->total_depenses ?? 0);
 
-            return [
-                'store' => $store,
-                'achats' => $achats,
-                'ventes' => $ventes,
-                'encaisse' => $encaisse,
-                'reste' => $reste,
-                'depenses' => $depenses,
-                'profit' => $ventes - $achats - $depenses,
-            ];
-        })
-        ->values();
+                return [
+                    'store' => $store,
+                    'achats' => $achats,
+                    'ventes' => $ventes,
+                    'encaisse' => $encaisse,
+                    'reste' => $reste,
+                    'depenses' => $depenses,
+                    'profit' => $ventes - $achats - $depenses,
+                ];
+            })
+            ->values();
 
         // NE PAS AJOUTER CETTE PARTIE - elle est inutile et peut causer des problèmes
         // $breakdown = collect($breakdown)->map(function ($item) {
@@ -306,24 +305,21 @@ class DailyReportController extends Controller
         // });
 
         return [
-        'stores' => $stores,
-        'storeId' => $storeId ? (int) $storeId : null,
-        'period' => $period,
-        'label' => $label,
-        'start' => $start,
-        'end' => $end,
-        'totalAchats' => $totalAchats,
-        'totalVentes' => $totalVentes,
-        'totalPayesVentes' => $totalPayesVentes,
-        'totalEncaisse' => $totalEncaisse,
-        'totalReste' => $totalReste,
-        'totalDepenses' => $totalDepenses,
-        'profit' => $profit,
-        'breakdown' => $breakdown,
-        'dailyExpenses' => $dailyExpenses,
+            'stores' => $stores,
+            'storeId' => $storeId ? (int) $storeId : null,
+            'period' => $period,
+            'label' => $label,
+            'start' => $start,
+            'end' => $end,
+            'totalAchats' => $totalAchats,
+            'totalVentes' => $totalVentes,
+            'totalPayesVentes' => $totalPayesVentes,
+            'totalEncaisse' => $totalEncaisse,
+            'totalReste' => $totalReste,
+            'totalDepenses' => $totalDepenses,
+            'profit' => $profit,
+            'breakdown' => $breakdown,
+            'dailyExpenses' => $dailyExpenses,
         ];
     }
-
-
 }
-

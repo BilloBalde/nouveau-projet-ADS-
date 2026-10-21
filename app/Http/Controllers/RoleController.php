@@ -24,6 +24,7 @@ class RoleController extends Controller
     {
         $dataTable = Role::withCount('permissions')->get()->map(function ($role) {
             $role->users_count = User::where('role_id', $role->id)->count();
+
             return $role;
         });
 
@@ -40,8 +41,8 @@ class RoleController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'nameRole'      => 'required|string|max:100',
-            'permissions'   => 'nullable|array',
+            'nameRole' => 'required|string|max:100',
+            'permissions' => 'nullable|array',
             'permissions.*' => 'integer|exists:permissions,id',
         ], [
             'nameRole.required' => 'Le nom du rôle est obligatoire.',
@@ -53,13 +54,13 @@ class RoleController extends Controller
         }
 
         $role = Role::create([
-            'slug'     => $slug,
+            'slug' => $slug,
             'nameRole' => $request->nameRole,
         ]);
 
         $role->permissions()->sync($request->input('permissions', []));
 
-        return redirect()->route('roles.index')->with('success', 'Rôle « ' . $role->nameRole . ' » créé avec ' . count($request->input('permissions', [])) . ' permission(s).');
+        return redirect()->route('roles.index')->with('success', 'Rôle « '.$role->nameRole.' » créé avec '.count($request->input('permissions', [])).' permission(s).');
     }
 
     public function edit($id)
@@ -85,8 +86,8 @@ class RoleController extends Controller
         }
 
         $request->validate([
-            'nameRole'      => 'required|string|max:100',
-            'permissions'   => 'nullable|array',
+            'nameRole' => 'required|string|max:100',
+            'permissions' => 'nullable|array',
             'permissions.*' => 'integer|exists:permissions,id',
         ]);
 
@@ -94,7 +95,7 @@ class RoleController extends Controller
         $role->update(['nameRole' => $request->nameRole]);
         $role->permissions()->sync($request->input('permissions', []));
 
-        return redirect()->route('roles.index')->with('success', 'Rôle « ' . $role->nameRole . ' » mis à jour. Les employés ayant ce rôle (sans permissions personnalisées) suivent automatiquement ces changements.');
+        return redirect()->route('roles.index')->with('success', 'Rôle « '.$role->nameRole.' » mis à jour. Les employés ayant ce rôle (sans permissions personnalisées) suivent automatiquement ces changements.');
     }
 
     public function destroy($id)
@@ -102,12 +103,12 @@ class RoleController extends Controller
         $role = Role::findOrFail($id);
 
         if (in_array($role->slug, self::PROTECTED_SLUGS, true)) {
-            return back()->with('error', 'Le rôle « ' . $role->nameRole . ' » est un rôle système, il ne peut pas être supprimé.');
+            return back()->with('error', 'Le rôle « '.$role->nameRole.' » est un rôle système, il ne peut pas être supprimé.');
         }
 
         $usersCount = User::where('role_id', $role->id)->count();
         if ($usersCount > 0) {
-            return back()->with('error', 'Impossible de supprimer : ' . $usersCount . ' utilisateur(s) ont encore ce rôle. Réaffectez-les d\'abord.');
+            return back()->with('error', 'Impossible de supprimer : '.$usersCount.' utilisateur(s) ont encore ce rôle. Réaffectez-les d\'abord.');
         }
 
         $role->permissions()->detach();

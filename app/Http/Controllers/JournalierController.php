@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Journalier;
 use App\Models\PaiementJournalier;
+use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -22,50 +22,57 @@ class JournalierController extends Controller
     {
         $query = Journalier::query();
         if ($request->filled('datePrise')) {
-            $query->where('datePrise', 'like', '%' .$request->input('datePrise') . '%');
+            $query->where('datePrise', 'like', '%'.$request->input('datePrise').'%');
         }
         $dataTable = $query->orderBy('id', 'desc')->paginate(10);
+
         return view('journaliers.index', compact('dataTable'));
     }
-    public function create(){
+
+    public function create()
+    {
         $dataTable = Journalier::where('datePrise', today()->toDateString())->paginate(10);
+
         return view('journaliers.create', compact('dataTable'));
     }
-    
-    public function store(Request $request){
+
+    public function store(Request $request)
+    {
         $request->validate([
-           'nomPrenant' => 'required|string',
-           'montant' => 'required|numeric',
-           'datePrise' => 'required|date',
-           'contenu' => 'required|string'
+            'nomPrenant' => 'required|string',
+            'montant' => 'required|numeric',
+            'datePrise' => 'required|date',
+            'contenu' => 'required|string',
         ]);
-        try{
+        try {
             Journalier::create([
-               'nomPrenant' => $request->nomPrenant,
-               'montant' => $request->montant,
-               'datePrise' => $request->datePrise,
-               'contenu' => $request->contenu,
-               'reste' => $request->montant,
+                'nomPrenant' => $request->nomPrenant,
+                'montant' => $request->montant,
+                'datePrise' => $request->datePrise,
+                'contenu' => $request->contenu,
+                'reste' => $request->montant,
             ]);
-            
+
             return redirect()->back()->with('success', 'Dette enregistré avec succès');
-        }catch(\Exception $e){
+        } catch (\Exception $e) {
             return redirect()->back()->with('fall', 'Impossible de register cette dette', $e->getMessage());
         }
     }
-    
-    public function edit($id){
+
+    public function edit($id)
+    {
         $dette = Journalier::findOrFail($id);
+
         return view('journaliers.edit', compact('dette'));
     }
-    
+
     public function update(Request $request, $id)
     {
         $validated = $request->validate([
             'nomPrenant' => ['required', 'string', 'max:255'],
-            'montant'    => ['required', 'numeric', 'min:0'],
-            'contenu'    => ['nullable', 'string'],
-            'datePrise'  => ['required', 'date'],
+            'montant' => ['required', 'numeric', 'min:0'],
+            'contenu' => ['nullable', 'string'],
+            'datePrise' => ['required', 'date'],
         ]);
 
         $journalier = Journalier::findOrFail($id);
@@ -80,7 +87,7 @@ class JournalierController extends Controller
         // But if payments exist, montant cannot be smaller
         if ($newMontant < $totalPaid) {
             return back()->withErrors([
-                'montant' => "Le montant ($newMontant) ne peut pas être inférieur au total déjà versé ($totalPaid)."
+                'montant' => "Le montant ($newMontant) ne peut pas être inférieur au total déjà versé ($totalPaid).",
             ])->withInput();
         }
 
@@ -88,19 +95,20 @@ class JournalierController extends Controller
 
         $journalier->update([
             'nomPrenant' => $validated['nomPrenant'],
-            'montant'    => $newMontant,
-            'contenu'    => $validated['contenu'] ?? $journalier->contenu,
-            'paid'       => $totalPaid, // will be 0 if no payments
-            'reste'      => $reste,     // full montant if no payments
-            'datePrise'  => $validated['datePrise'],
+            'montant' => $newMontant,
+            'contenu' => $validated['contenu'] ?? $journalier->contenu,
+            'paid' => $totalPaid, // will be 0 if no payments
+            'reste' => $reste,     // full montant if no payments
+            'datePrise' => $validated['datePrise'],
         ]);
 
         return redirect()
             ->back()
             ->with('success', 'Dette mise à jour avec succès.');
     }
-    
-    public function destroy($id){
+
+    public function destroy($id)
+    {
         // Wrap in a transaction + row lock to be safe under concurrency
         return DB::transaction(function () use ($id) {
             $journalier = Journalier::lockForUpdate()->findOrFail($id);
@@ -122,23 +130,25 @@ class JournalierController extends Controller
                 ->with('success', "La dette #{$journalier->id} a été supprimée avec succès.");
         });
     }
-    
-    public function payForm($id){
+
+    public function payForm($id)
+    {
         $journalier = Journalier::findOrFail($id);
+
         return view('journaliers.addPaiement', compact('journalier'));
     }
-    
+
     public function paySubmit(Request $request)
     {
         // Basic validation
         $validated = $request->validate([
             'journalier_id' => ['required', 'integer'],
-            'versement'     => ['required', 'string'], // we'll normalize it ourselves
-            'paid_by'       => ['required'],
-            'notes'         => ['nullable', 'string'],
+            'versement' => ['required', 'string'], // we'll normalize it ourselves
+            'paid_by' => ['required'],
+            'notes' => ['nullable', 'string'],
         ]);
-        
-        //dd($validated);
+
+        // dd($validated);
 
         $amountInput = $validated['versement'];
         if ($amountInput <= 0) {
@@ -151,8 +161,8 @@ class JournalierController extends Controller
 
             // Recompute totals from paiement_journaliers (source of truth)
             $totalPaidSoFar = (float) PaiementJournalier::where('journalier_id', $journalier->id)->sum('versement');
-            $montant        = (float) $journalier->montant;
-            $resteAvant     = round($montant - $totalPaidSoFar, 2);
+            $montant = (float) $journalier->montant;
+            $resteAvant = round($montant - $totalPaidSoFar, 2);
 
             if ($resteAvant <= 0) {
                 // 'journaliers.show' n'existe pas dans routes/web.php (ça produisait une
@@ -164,30 +174,30 @@ class JournalierController extends Controller
 
             if ($amountInput > $resteAvant) {
                 return back()->withErrors([
-                    'versement' => "Le versement ($amountInput) dépasse le reste à payer ($resteAvant)."
+                    'versement' => "Le versement ($amountInput) dépasse le reste à payer ($resteAvant).",
                 ])->withInput();
             }
 
             // Create the payment first with temporary reference
             $payment = PaiementJournalier::create([
-                'reference'    => 'TEMP', // will update right after we get the id
-                'journalier_id'=> $journalier->id,
-                'versement'    => $amountInput,
-                'paid_by'      => $validated['paid_by'],
-                'notes'        => $validated['notes'] ?? '',
+                'reference' => 'TEMP', // will update right after we get the id
+                'journalier_id' => $journalier->id,
+                'versement' => $amountInput,
+                'paid_by' => $validated['paid_by'],
+                'notes' => $validated['notes'] ?? '',
             ]);
 
             // Now that we have an ID, build a stable reference and update it
-            $ref = 'PJJ' . Carbon::now()->format('Ym') . '-' . str_pad($payment->id, 6, '0', STR_PAD_LEFT);
+            $ref = 'PJJ'.Carbon::now()->format('Ym').'-'.str_pad($payment->id, 6, '0', STR_PAD_LEFT);
             $payment->update(['reference' => $ref]);
 
             // Recompute after this payment
             $totalPaidNow = $totalPaidSoFar + $amountInput;
-            $resteNow     = round($montant - $totalPaidNow, 2);
+            $resteNow = round($montant - $totalPaidNow, 2);
 
             // Update parent
             $journalier->update([
-                'paid'  => round($totalPaidNow, 2),
+                'paid' => round($totalPaidNow, 2),
                 'reste' => $resteNow < 0 ? 0 : $resteNow,
             ]);
 
@@ -196,16 +206,19 @@ class JournalierController extends Controller
                 ->with('success', "Paiement enregistré (Réf: {$ref}). Reste à payer: {$journalier->reste}.");
         });
     }
-    
-    public function list($id){
+
+    public function list($id)
+    {
         $payements = PaiementJournalier::where('journalier_id', $id)->get();
         $journalier = Journalier::findOrFail($id);
+
         return view('journaliers.showPaiement', compact('payements', 'journalier'));
     }
-    
-    public function paymentsIndex(){
+
+    public function paymentsIndex()
+    {
         $payements = PaiementJournalier::all();
-        
+
         return view('journaliers.paymentList', compact('payements'));
     }
 }

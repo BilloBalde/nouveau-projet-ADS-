@@ -8,6 +8,8 @@ use App\Models\Role;
 use App\Models\Store;
 use App\Models\StoreProduct;
 use App\Models\User;
+use Database\Seeders\PermissionSeeder;
+use Database\Seeders\RolesSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
@@ -28,15 +30,18 @@ class ExportProduitsPerimetreTest extends TestCase
     use RefreshDatabase;
 
     private User $admin;
+
     private Store $madina;
+
     private Store $kaloum;
+
     private Product $ciment;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->seed(\Database\Seeders\RolesSeeder::class);
-        $this->seed(\Database\Seeders\PermissionSeeder::class);
+        $this->seed(RolesSeeder::class);
+        $this->seed(PermissionSeeder::class);
 
         $this->admin = $this->user('Patron', User::ROLE_ADMIN);
         Place::create(['placeName' => 'Conakry', 'countryName' => 'Guinée', 'description' => 'test']);

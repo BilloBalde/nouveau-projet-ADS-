@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Category;
 use App\Models\Fund;
 use App\Models\FundTransaction;
 use App\Models\Partner;
@@ -11,7 +12,10 @@ use App\Models\PurchaseOrder;
 use App\Models\StockMovement;
 use App\Models\Store;
 use App\Models\User;
+use App\Services\FundService;
 use App\Services\PurchaseOrderCostingService;
+use Database\Seeders\PermissionSeeder;
+use Database\Seeders\RolesSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -34,17 +38,22 @@ class PrixDeRevientTest extends TestCase
     use RefreshDatabase;
 
     private User $admin;
+
     private Store $entrepot;
+
     private Store $magasin;
+
     private Product $ciment;
+
     private Product $carton;
+
     private Partner $fournisseur;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->seed(\Database\Seeders\RolesSeeder::class);
-        $this->seed(\Database\Seeders\PermissionSeeder::class);
+        $this->seed(RolesSeeder::class);
+        $this->seed(PermissionSeeder::class);
 
         $this->admin = User::create([
             'name' => 'Patron', 'email' => 'patron'.uniqid().'@example.com', 'username' => 'patron'.uniqid(),
@@ -313,7 +322,7 @@ class PrixDeRevientTest extends TestCase
         // Le stock et le coût sont rattachés au fonds.
         $this->assertSame(20, $this->stock($this->entrepot, $this->ciment, $fonds->id));
         $this->assertSame(0, $this->stock($this->entrepot, $this->ciment), 'Rien ne doit entrer dans les fonds propres.');
-        $this->assertEquals(13_000, app(\App\Services\FundService::class)->unitCost($fonds->id, $this->ciment->id));
+        $this->assertEquals(13_000, app(FundService::class)->unitCost($fonds->id, $this->ciment->id));
     }
 
     /** Un achat annulé ne compte plus dans l'investissement du fonds. */
@@ -328,7 +337,7 @@ class PrixDeRevientTest extends TestCase
             ['product_id' => $this->ciment->id, 'quantity' => 10, 'unit_price_foreign' => 100],
         ]);
 
-        $service = app(\App\Services\FundService::class);
+        $service = app(FundService::class);
         $this->assertEquals(1_300_000, $service->purchasesTotal($fonds->id));
 
         $achat->fresh()->update(['status' => 'cancelled']);
@@ -429,7 +438,7 @@ class PrixDeRevientTest extends TestCase
     {
         config(['pricing.sale_margin_percent' => 30]);
 
-        $categorie = \App\Models\Category::forceCreate(['slug' => 'materiaux', 'category_type' => 'produit', 'description' => 'x']);
+        $categorie = Category::forceCreate(['slug' => 'materiaux', 'category_type' => 'produit', 'description' => 'x']);
 
         $enregistrer = function (int $prix) use ($categorie) {
             $this->put(route('produits.update', $this->ciment->id), [

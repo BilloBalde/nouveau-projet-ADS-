@@ -7,8 +7,11 @@ use Illuminate\View\Component;
 class FormActions extends Component
 {
     public $mode;
+
     public $submitText;
+
     public $cancelRoute;
+
     public $cancelText;
 
     public function __construct(

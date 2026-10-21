@@ -17,8 +17,8 @@ class LocationPermissions
             'stores.all' => 'Accès à tous les magasins et entrepôts (sinon : uniquement son magasin)',
         ],
         'Stock' => [
-            'stock.view'      => 'Voir les stocks par emplacement',
-            'stock.adjust'    => 'Ajuster le stock / saisir un inventaire',
+            'stock.view' => 'Voir les stocks par emplacement',
+            'stock.adjust' => 'Ajuster le stock / saisir un inventaire',
             'stock.movements' => 'Consulter le journal des mouvements et la traçabilité',
         ],
         'Commandes e-commerce' => [
@@ -26,27 +26,27 @@ class LocationPermissions
         ],
         'Associés' => [
             'associates.manage' => 'Gérer les associés : fonds, apports, versements, relevés',
-            'associates.self'   => 'Consulter son propre relevé d\'associé (lecture seule)',
+            'associates.self' => 'Consulter son propre relevé d\'associé (lecture seule)',
         ],
         'Partenaires' => [
             // Ventes tierces : produits pris chez un partenaire et revendus.
             'partners.settle' => 'Enregistrer les règlements aux partenaires (ventes tierces)',
         ],
         'Transferts' => [
-            'transfers.view'    => 'Voir les transferts',
-            'transfers.create'  => 'Préparer / demander un transfert',
+            'transfers.view' => 'Voir les transferts',
+            'transfers.create' => 'Préparer / demander un transfert',
             'transfers.approve' => 'Autoriser ou refuser un transfert',
             'transfers.execute' => 'Expédier et réceptionner un transfert',
-            'transfers.edit'    => 'Corriger un transfert terminé',
+            'transfers.edit' => 'Corriger un transfert terminé',
         ],
     ];
 
     /** Nouveaux rôles (slug => libellé). Créés par slug, jamais par id. */
     public const ROLES = [
-        'magasinier'  => 'Magasinier',
+        'magasinier' => 'Magasinier',
         'responsable' => 'Responsable magasin',
         // Associé : accès en lecture à son seul relevé, rien d'autre.
-        'associe'     => 'Associé',
+        'associe' => 'Associé',
     ];
 
     /**

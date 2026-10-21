@@ -4,9 +4,7 @@ namespace App\Exports;
 
 use App\Models\Purchase;
 use Illuminate\Contracts\View\View;
-use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\FromView;
-use Maatwebsite\Excel\Concerns\WithDrawings;
 
 class PurchasesExport implements FromView
 {

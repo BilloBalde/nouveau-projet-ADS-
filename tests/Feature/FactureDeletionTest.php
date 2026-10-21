@@ -10,6 +10,7 @@ use App\Models\Product;
 use App\Models\Sale;
 use App\Models\Store;
 use App\Models\User;
+use Database\Seeders\RolesSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -25,15 +26,18 @@ class FactureDeletionTest extends TestCase
     use RefreshDatabase;
 
     private User $utilisateur;
+
     private Store $boutique;
+
     private Product $produit;
+
     private Customer $client;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->seed(\Database\Seeders\RolesSeeder::class);
+        $this->seed(RolesSeeder::class);
 
         $this->utilisateur = User::create([
             'name' => 'Vendeur Test',
@@ -117,7 +121,7 @@ class FactureDeletionTest extends TestCase
     private function supprimer(Facture $facture)
     {
         return $this->actingAs($this->utilisateur)
-                    ->delete(route('factures.destroy', $facture));
+            ->delete(route('factures.destroy', $facture));
     }
 
     public function test_une_facture_sans_encaissement_est_supprimable(): void

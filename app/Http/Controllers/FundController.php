@@ -43,7 +43,7 @@ class FundController extends Controller
         $fund = Fund::create($this->validated($request));
         $this->linkUser($fund, $request->input('user_id'));
 
-        return redirect()->route('associates.show', $fund)->with('success', 'Associé « ' . $fund->associate_name . ' » créé.');
+        return redirect()->route('associates.show', $fund)->with('success', 'Associé « '.$fund->associate_name.' » créé.');
     }
 
     public function edit(Fund $fund)
@@ -112,17 +112,17 @@ class FundController extends Controller
     public function storeTransaction(Request $request, Fund $fund)
     {
         $data = $request->validate([
-            'kind'      => 'required|in:apport,versement,prelevement',
-            'date'      => 'required|date',
+            'kind' => 'required|in:apport,versement,prelevement',
+            'date' => 'required|date',
             'reference' => 'nullable|string|max:100',
-            'notes'     => 'nullable|string|max:500',
-            'amount'    => 'nullable|numeric|min:0',
-            'capital'   => 'nullable|numeric|min:0',
-            'benefice'  => 'nullable|numeric|min:0',
+            'notes' => 'nullable|string|max:500',
+            'amount' => 'nullable|numeric|min:0',
+            'capital' => 'nullable|numeric|min:0',
+            'benefice' => 'nullable|numeric|min:0',
         ]);
 
         $s = $this->funds->statement($fund);
-        $fmt = fn ($v) => number_format((float) $v, 0, ',', ' ') . ' FG';
+        $fmt = fn ($v) => number_format((float) $v, 0, ',', ' ').' FG';
         $rows = [];
 
         if ($data['kind'] === 'apport') {
@@ -138,13 +138,13 @@ class FundController extends Controller
                 throw ValidationException::withMessages(['capital' => 'Indiquez la part capital et / ou la part bénéfice du versement.']);
             }
             if ($capital > $s['capital_restant'] + 0.01) {
-                throw ValidationException::withMessages(['capital' => 'Capital restant dû : ' . $fmt($s['capital_restant']) . '.']);
+                throw ValidationException::withMessages(['capital' => 'Capital restant dû : '.$fmt($s['capital_restant']).'.']);
             }
             if ($benefice > $s['benefice_a_verser'] + 0.01) {
-                throw ValidationException::withMessages(['benefice' => 'Bénéfice encaissé restant à verser à l\'associé : ' . $fmt($s['benefice_a_verser']) . '.']);
+                throw ValidationException::withMessages(['benefice' => 'Bénéfice encaissé restant à verser à l\'associé : '.$fmt($s['benefice_a_verser']).'.']);
             }
             if ($capital + $benefice > $s['tresorerie'] + 0.01) {
-                throw ValidationException::withMessages(['capital' => 'Le compte de l\'associé ne contient que ' . $fmt($s['tresorerie']) . '.']);
+                throw ValidationException::withMessages(['capital' => 'Le compte de l\'associé ne contient que '.$fmt($s['tresorerie']).'.']);
             }
             if ($capital > 0) {
                 $rows[] = [FundTransaction::REMBOURSEMENT_CAPITAL, $capital];
@@ -155,25 +155,25 @@ class FundController extends Controller
         } else {
             $montant = (float) ($data['amount'] ?? 0);
             if ($montant <= 0 || $montant > $s['part_patron_restante'] + 0.01) {
-                throw ValidationException::withMessages(['amount' => 'Part du patron disponible : ' . $fmt(max(0, $s['part_patron_restante'])) . '.']);
+                throw ValidationException::withMessages(['amount' => 'Part du patron disponible : '.$fmt(max(0, $s['part_patron_restante'])).'.']);
             }
             if ($montant > $s['tresorerie'] + 0.01) {
-                throw ValidationException::withMessages(['amount' => 'Le compte de l\'associé ne contient que ' . $fmt($s['tresorerie']) . '.']);
+                throw ValidationException::withMessages(['amount' => 'Le compte de l\'associé ne contient que '.$fmt($s['tresorerie']).'.']);
             }
             $rows[] = [FundTransaction::PRELEVEMENT_PATRON, $montant];
         }
 
         DB::transaction(function () use ($rows, $fund, $data) {
-            $reference = ($data['reference'] ?? null) ?: ('MVT-' . $fund->id . '-' . now()->format('YmdHis'));
+            $reference = ($data['reference'] ?? null) ?: ('MVT-'.$fund->id.'-'.now()->format('YmdHis'));
             foreach ($rows as [$type, $montant]) {
                 FundTransaction::create([
-                    'fund_id'   => $fund->id,
-                    'type'      => $type,
-                    'amount'    => round($montant, 2),
-                    'date'      => $data['date'],
+                    'fund_id' => $fund->id,
+                    'type' => $type,
+                    'amount' => round($montant, 2),
+                    'date' => $data['date'],
                     'reference' => $reference,
-                    'notes'     => $data['notes'] ?? null,
-                    'user_id'   => auth()->id(),
+                    'notes' => $data['notes'] ?? null,
+                    'user_id' => auth()->id(),
                 ]);
             }
         });
@@ -184,13 +184,13 @@ class FundController extends Controller
     private function validated(Request $request): array
     {
         $data = $request->validate([
-            'name'            => 'required|string|max:255',
-            'associate_name'  => 'required|string|max:255',
-            'phone'           => 'nullable|string|max:40',
-            'owner_share'     => 'required|numeric|min:0|max:100',
+            'name' => 'required|string|max:255',
+            'associate_name' => 'required|string|max:255',
+            'phone' => 'nullable|string|max:40',
+            'owner_share' => 'required|numeric|min:0|max:100',
             'associate_share' => 'required|numeric|min:0|max:100',
-            'notes'           => 'nullable|string|max:1000',
-            'user_id'         => 'nullable|exists:users,id',
+            'notes' => 'nullable|string|max:1000',
+            'user_id' => 'nullable|exists:users,id',
         ]);
 
         if (abs($data['owner_share'] + $data['associate_share'] - 100) > 0.001) {

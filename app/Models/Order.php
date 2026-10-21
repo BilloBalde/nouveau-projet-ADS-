@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Facture;
 
 class Order extends Model
 {
@@ -40,7 +39,7 @@ class Order extends Model
 
     public function sales()
     {
-        return $this->hasMany(\App\Models\Sale::class, 'numeroFacture', 'invoice_number');
+        return $this->hasMany(Sale::class, 'numeroFacture', 'invoice_number');
     }
 
     /** Boutique à qui la commande est attribuée (null = traitée au siège). */

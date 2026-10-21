@@ -20,20 +20,20 @@ class CartController extends Controller
         $newQuantity = isset($cart[$id]) ? $cart[$id]['quantity'] + $requestedQty : $requestedQty;
 
         $cart[$id] = [
-            "product_id" => $product->id,
-            "name" => $product->libelle,
-            "quantity" => $newQuantity,
-            "unite" => $product->unite,
-            "price" => PricingTiers::unitPriceFor($basePrice, $newQuantity),
-            "image" => $product->image
+            'product_id' => $product->id,
+            'name' => $product->libelle,
+            'quantity' => $newQuantity,
+            'unite' => $product->unite,
+            'price' => PricingTiers::unitPriceFor($basePrice, $newQuantity),
+            'image' => $product->image,
         ];
 
         session()->put('cart', $cart);
 
-        if($request->ajax() || $request->wantsJson()) {
+        if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
                 'message' => 'Produit ajouté au panier !',
-                'count' => count($cart)
+                'count' => count($cart),
             ]);
         }
 
@@ -43,16 +43,18 @@ class CartController extends Controller
     public function show()
     {
         $cart = session()->get('cart', []);
+
         return view('ecommerce.cart', compact('cart'));
     }
 
     public function remove($id)
     {
         $cart = session()->get('cart', []);
-        if(isset($cart[$id])) {
+        if (isset($cart[$id])) {
             unset($cart[$id]);
             session()->put('cart', $cart);
         }
+
         return redirect()->back()->with('success', 'Produit retiré du panier.');
     }
 }

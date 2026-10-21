@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\StoreProduct;
+use App\Models\Fund;
+use App\Models\Product;
 use App\Models\StockTransfer;
 use App\Models\Store;
-use App\Models\Product;
+use App\Models\StoreProduct;
 use App\Services\TransferService;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 
 /**
  * Transferts de stock entre emplacements (route resource « transfers »).
@@ -31,7 +33,7 @@ class StoreProductController extends Controller
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function index(Request $request)
     {
@@ -71,7 +73,7 @@ class StoreProductController extends Controller
             ->paginate(50)
             ->appends($request->query());
 
-        $funds = \App\Models\Fund::active()->orderBy('name')->get();
+        $funds = Fund::active()->orderBy('name')->get();
 
         return view('transfers.index', compact('dataTable', 'produits', 'boutiques', 'mesEmplacements', 'funds'));
     }
@@ -183,7 +185,7 @@ class StoreProductController extends Controller
     {
         $request->validate([
             'quantity' => 'required|integer|min:1',
-            'reason'   => 'nullable|string|max:500',
+            'reason' => 'nullable|string|max:500',
         ]);
 
         $transfer = StockTransfer::visibleTo(auth()->user())->findOrFail($id);

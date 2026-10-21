@@ -3,7 +3,6 @@
 namespace App\Mail;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
@@ -14,9 +13,13 @@ class ContactMail extends Mailable
     use Queueable, SerializesModels;
 
     public $subject;
+
     public $senderEmail;
+
     public $senderName;
+
     public $messageContent;
+
     public $sentAt;
 
     /**
@@ -36,20 +39,20 @@ class ContactMail extends Mailable
     public function build()
     {
         return $this->subject($this->subject ?: 'Nouveau message de contact - SMH')
-                    ->view('mails.contact')
-                    ->with([
-                        'senderName' => $this->senderName,
-                        'senderEmail' => $this->senderEmail,
-                        'messageContent' => $this->messageContent,
-                        'sentAt' => $this->sentAt,
-                        'year' => date('Y')
-                    ]);
+            ->view('mails.contact')
+            ->with([
+                'senderName' => $this->senderName,
+                'senderEmail' => $this->senderEmail,
+                'messageContent' => $this->messageContent,
+                'sentAt' => $this->sentAt,
+                'year' => date('Y'),
+            ]);
     }
 
     /**
      * Get the message envelope.
      *
-     * @return \Illuminate\Mail\Mailables\Envelope
+     * @return Envelope
      */
     public function envelope()
     {
@@ -63,7 +66,7 @@ class ContactMail extends Mailable
     /**
      * Get the message content definition.
      *
-     * @return \Illuminate\Mail\Mailables\Content
+     * @return Content
      */
     public function content()
     {

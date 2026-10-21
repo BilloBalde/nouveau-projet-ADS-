@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('set null');
             $table->decimal('balance', 8, 2)->nullable();
             $table->decimal('amount', 8, 2)->nullable();
-            $table->enum('exp_mode', ['others','ukexpense']);
+            $table->enum('exp_mode', ['others', 'ukexpense']);
             $table->text('description');
             $table->string('status')->default('Pending');
             $table->timestamps();

@@ -12,7 +12,7 @@ class StoreProductsSeeder extends Seeder
         $mainStoreId = DB::table('stores')->where('store_name', 'Quincaillerie Madina')->value('id');
         $depotStoreId = DB::table('stores')->where('store_name', 'Dépôt Madina')->value('id');
 
-        if (!$mainStoreId) {
+        if (! $mainStoreId) {
             return;
         }
 
@@ -36,7 +36,7 @@ class StoreProductsSeeder extends Seeder
 
         foreach ($mainStock as $sku => $quantity) {
             $productId = $products[$sku] ?? null;
-            if (!$productId) {
+            if (! $productId) {
                 continue;
             }
 
@@ -49,7 +49,7 @@ class StoreProductsSeeder extends Seeder
         if ($depotStoreId) {
             foreach ($depotStock as $sku => $quantity) {
                 $productId = $products[$sku] ?? null;
-                if (!$productId) {
+                if (! $productId) {
                     continue;
                 }
 

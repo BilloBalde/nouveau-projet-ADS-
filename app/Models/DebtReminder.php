@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -30,7 +31,7 @@ class DebtReminder extends Model
      * employé rattaché, ceux des factures de son périmètre (ou, sans facture
      * précise, ceux des clients qui ont des factures dans ce périmètre).
      */
-    public function scopeVisibleTo(\Illuminate\Database\Eloquent\Builder $query, ?User $user): \Illuminate\Database\Eloquent\Builder
+    public function scopeVisibleTo(Builder $query, ?User $user): Builder
     {
         if (! $user || ! $user->isStoreScoped()) {
             return $query;

@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Models\Customer;
+use App\Models\Devi;
+use App\Models\DeviLine;
 use App\Models\Facture;
 use App\Models\Fund;
 use App\Models\FundTransaction;
@@ -15,6 +17,8 @@ use App\Models\Store;
 use App\Models\User;
 use App\Services\FundService;
 use App\Services\StockService;
+use Database\Seeders\PermissionSeeder;
+use Database\Seeders\RolesSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
@@ -30,17 +34,22 @@ class FundTest extends TestCase
     use RefreshDatabase;
 
     private User $admin;
+
     private Store $principal;
+
     private Store $entrepot;
+
     private Product $ciment;
+
     private Customer $client;
+
     private Fund $fonds;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->seed(\Database\Seeders\RolesSeeder::class);
-        $this->seed(\Database\Seeders\PermissionSeeder::class);
+        $this->seed(RolesSeeder::class);
+        $this->seed(PermissionSeeder::class);
 
         $this->admin = $this->user('Patron', User::ROLE_ADMIN);
         $lieu = Place::create(['placeName' => 'Conakry', 'countryName' => 'Guinée', 'description' => 'test']);
@@ -60,7 +69,7 @@ class FundTest extends TestCase
     private function user(string $name, int|string $role): User
     {
         return User::create([
-            'name' => $name, 'email' => str()->slug($name) . uniqid() . '@example.com', 'username' => str()->slug($name) . uniqid(),
+            'name' => $name, 'email' => str()->slug($name).uniqid().'@example.com', 'username' => str()->slug($name).uniqid(),
             'password' => Hash::make('password'), 'role_id' => is_int($role) ? $role : Role::where('slug', $role)->value('id'),
             'phone' => '620', 'status' => 'Active', 'token' => '',
         ]);
@@ -76,7 +85,7 @@ class FundTest extends TestCase
     private function acheter(?Fund $fonds, int $qte, float $prix)
     {
         return $this->actingAs($this->admin)->post(route('purchase-orders.store'), [
-            'reference' => 'PO-' . uniqid(), 'store_id' => $this->entrepot->id, 'fund_id' => $fonds?->id,
+            'reference' => 'PO-'.uniqid(), 'store_id' => $this->entrepot->id, 'fund_id' => $fonds?->id,
             'origin' => 'guinee', 'date_emis' => now()->toDateString(), 'date_recu' => now()->toDateString(),
             'lines' => [['product_id' => $this->ciment->id, 'quantity' => $qte, 'unit_price_foreign' => $prix]],
         ]);
@@ -85,7 +94,7 @@ class FundTest extends TestCase
     private function vendre(int $qte, ?Fund $fonds, float $avance)
     {
         return $this->actingAs($this->admin)->post(route('sales.store'), [
-            'numeroFacture' => 'F-' . uniqid(), 'store_id' => $this->principal->id, 'customer_id' => $this->client->id,
+            'numeroFacture' => 'F-'.uniqid(), 'store_id' => $this->principal->id, 'customer_id' => $this->client->id,
             'avance' => $avance, 'paid_by' => 'cash',
             'sales' => [1 => array_filter(['product_id' => $this->ciment->id, 'quantity' => $qte, 'prix' => 60000,
                 'store_id' => $this->entrepot->id, 'fund_id' => $fonds?->id, 'is_third_party' => '0'], fn ($v) => $v !== null)],
@@ -230,9 +239,9 @@ class FundTest extends TestCase
         $this->assertEquals(15000 * 3, (float) Sale::where('numeroFacture', 'FAC-1')->whereNull('fund_id')->value('interet'));
 
         // Devis : 4 sacs de l'associé, validé puis payé.
-        $devis = \App\Models\Devi::create(['store_id' => $this->entrepot->id, 'customer_id' => $this->client->id, 'total_amount' => 240000,
+        $devis = Devi::create(['store_id' => $this->entrepot->id, 'customer_id' => $this->client->id, 'total_amount' => 240000,
             'status' => 'accepted', 'created_by' => $this->admin->id]);
-        \App\Models\DeviLine::create(['devis_id' => $devis->id, 'product_id' => $this->ciment->id, 'fund_id' => $this->fonds->id,
+        DeviLine::create(['devis_id' => $devis->id, 'product_id' => $this->ciment->id, 'fund_id' => $this->fonds->id,
             'quantity' => 4, 'unit_price' => 60000, 'total_price' => 240000]);
         $this->actingAs($this->admin)->post(route('devis.validate', $devis->id))->assertRedirect();
 

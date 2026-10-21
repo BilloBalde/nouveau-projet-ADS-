@@ -24,9 +24,7 @@ use RuntimeException;
  */
 class TransferService
 {
-    public function __construct(private StockService $stock)
-    {
-    }
+    public function __construct(private StockService $stock) {}
 
     public function request(User $user, array $data): StockTransfer
     {
@@ -42,18 +40,18 @@ class TransferService
 
         return DB::transaction(function () use ($user, $data, $from, $to) {
             $transfer = StockTransfer::create([
-                'product_id'    => (int) $data['product_id'],
+                'product_id' => (int) $data['product_id'],
                 'from_store_id' => $from,
-                'to_store_id'   => $to,
-                'quantity'      => (int) $data['quantity'],
+                'to_store_id' => $to,
+                'quantity' => (int) $data['quantity'],
                 // Le propriétaire de la marchandise ne change pas en changeant de lieu.
-                'fund_id'       => ! empty($data['fund_id']) ? (int) $data['fund_id'] : null,
-                'status'        => StockTransfer::PENDING,
-                'requested_by'  => $user->id,
-                'notes'         => $data['notes'] ?? null,
+                'fund_id' => ! empty($data['fund_id']) ? (int) $data['fund_id'] : null,
+                'status' => StockTransfer::PENDING,
+                'requested_by' => $user->id,
+                'notes' => $data['notes'] ?? null,
             ]);
 
-            $transfer->update(['reference' => 'TR-' . str_pad((string) $transfer->id, 6, '0', STR_PAD_LEFT)]);
+            $transfer->update(['reference' => 'TR-'.str_pad((string) $transfer->id, 6, '0', STR_PAD_LEFT)]);
 
             return $transfer;
         });
@@ -65,7 +63,7 @@ class TransferService
         $this->expectScope($user, $transfer->from_store_id, $transfer->to_store_id);
 
         $transfer->update([
-            'status'      => StockTransfer::APPROVED,
+            'status' => StockTransfer::APPROVED,
             'approved_by' => $user->id,
             'approved_at' => now(),
         ]);
@@ -77,10 +75,10 @@ class TransferService
         $this->expectScope($user, $transfer->from_store_id, $transfer->to_store_id);
 
         $transfer->update([
-            'status'      => StockTransfer::REJECTED,
+            'status' => StockTransfer::REJECTED,
             'approved_by' => $user->id,
             'approved_at' => now(),
-            'notes'       => trim(($transfer->notes ? $transfer->notes . "\n" : '') . 'Refus : ' . ($reason ?: 'sans motif')),
+            'notes' => trim(($transfer->notes ? $transfer->notes."\n" : '').'Refus : '.($reason ?: 'sans motif')),
         ]);
     }
 
@@ -94,7 +92,7 @@ class TransferService
             $this->stock->decrementOrFail($transfer->from_store_id, $transfer->product_id, $transfer->quantity, $this->context($transfer, StockMovement::TRANSFER_OUT, $transfer->to_store_id));
 
             $transfer->update([
-                'status'     => StockTransfer::IN_TRANSIT,
+                'status' => StockTransfer::IN_TRANSIT,
                 'shipped_by' => $user->id,
                 'shipped_at' => now(),
             ]);
@@ -111,7 +109,7 @@ class TransferService
             $this->stock->increment($transfer->to_store_id, $transfer->product_id, $transfer->quantity, $this->context($transfer, StockMovement::TRANSFER_IN, $transfer->from_store_id));
 
             $transfer->update([
-                'status'      => StockTransfer::COMPLETED,
+                'status' => StockTransfer::COMPLETED,
                 'received_by' => $user->id,
                 'received_at' => now(),
             ]);
@@ -140,7 +138,7 @@ class TransferService
         DB::transaction(function () use ($transfer) {
             if ($transfer->status === StockTransfer::IN_TRANSIT) {
                 $context = $this->context($transfer, StockMovement::CORRECTION, $transfer->to_store_id);
-                $context['reason'] = 'Annulation du transfert ' . $transfer->reference . ' en transit : retour à la source';
+                $context['reason'] = 'Annulation du transfert '.$transfer->reference.' en transit : retour à la source';
                 $this->stock->increment($transfer->from_store_id, $transfer->product_id, $transfer->quantity, $context);
             }
 
@@ -171,7 +169,7 @@ class TransferService
                 $transfer->reference,
                 $transfer->quantity,
                 $newQuantity,
-                $reason ? ' (' . $reason . ')' : ''
+                $reason ? ' ('.$reason.')' : ''
             );
 
             if ($delta > 0) {
@@ -189,12 +187,12 @@ class TransferService
     private function context(StockTransfer $transfer, string $type, int $counterpart): array
     {
         return [
-            'type'                 => $type,
-            'source_type'          => 'stock_transfer',
-            'source_id'            => $transfer->id,
-            'document_ref'         => $transfer->reference,
+            'type' => $type,
+            'source_type' => 'stock_transfer',
+            'source_id' => $transfer->id,
+            'document_ref' => $transfer->reference,
             'counterpart_store_id' => $counterpart,
-            'fund_id'              => $transfer->fund_id,
+            'fund_id' => $transfer->fund_id,
         ];
     }
 

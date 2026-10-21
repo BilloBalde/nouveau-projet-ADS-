@@ -15,7 +15,7 @@ return new class extends Migration
             $table->decimal('amount', 15, 2);
             $table->integer('reminder_count')->default(1);
             $table->timestamp('last_sent_at')->nullable();
-            $table->enum('status', ['pending','sent','resolved'])->default('pending');
+            $table->enum('status', ['pending', 'sent', 'resolved'])->default('pending');
             $table->timestamps();
         });
     }

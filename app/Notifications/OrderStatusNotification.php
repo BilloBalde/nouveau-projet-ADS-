@@ -27,17 +27,17 @@ class OrderStatusNotification extends Notification
     public function toArray($notifiable)
     {
         $messages = [
-            'approved'   => 'Votre commande n°' . $this->order->id . ' a été validée avec succès.',
-            'rejected'   => 'Votre commande n°' . $this->order->id . ' a été annulée.',
-            'delivering' => 'Votre commande n°' . $this->order->id . ' est en cours de livraison.',
-            'delivered'  => 'Votre commande n°' . $this->order->id . ' a été livrée avec succès.',
+            'approved' => 'Votre commande n°'.$this->order->id.' a été validée avec succès.',
+            'rejected' => 'Votre commande n°'.$this->order->id.' a été annulée.',
+            'delivering' => 'Votre commande n°'.$this->order->id.' est en cours de livraison.',
+            'delivered' => 'Votre commande n°'.$this->order->id.' a été livrée avec succès.',
         ];
 
         return [
             'order_id' => $this->order->id,
-            'status'   => $this->status,
-            'message'  => $messages[$this->status] ?? 'Mise à jour de votre commande n°' . $this->order->id . '.',
-            'url'      => route('orders.show', $this->order->id, absolute: false),
+            'status' => $this->status,
+            'message' => $messages[$this->status] ?? 'Mise à jour de votre commande n°'.$this->order->id.'.',
+            'url' => route('orders.show', $this->order->id, absolute: false),
         ];
     }
 }

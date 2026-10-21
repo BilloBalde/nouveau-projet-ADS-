@@ -6,11 +6,14 @@ use App\Models\Customer;
 use App\Models\Devi;
 use App\Models\Expense;
 use App\Models\ExpenseCategory;
+use App\Models\Facture;
 use App\Models\Place;
 use App\Models\Product;
 use App\Models\Role;
 use App\Models\Store;
 use App\Models\User;
+use Database\Seeders\PermissionSeeder;
+use Database\Seeders\RolesSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
@@ -31,18 +34,24 @@ class PermissionsModulesTest extends TestCase
     use RefreshDatabase;
 
     private User $admin;
+
     private User $vendeur;
+
     private User $magasinier;
+
     private User $comptable;
+
     private Store $madina;
+
     private Customer $client;
+
     private Product $ciment;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->seed(\Database\Seeders\RolesSeeder::class);
-        $this->seed(\Database\Seeders\PermissionSeeder::class);
+        $this->seed(RolesSeeder::class);
+        $this->seed(PermissionSeeder::class);
 
         $this->admin = $this->user('Patron', User::ROLE_ADMIN);
         Place::create(['placeName' => 'Conakry', 'countryName' => 'Guinée', 'description' => 'test']);
@@ -166,7 +175,7 @@ class PermissionsModulesTest extends TestCase
     public function test_la_suppression_definitive_d_un_client_aboutit_sans_erreur(): void
     {
         $client = Customer::create(['customerName' => 'A supprimer', 'mark' => 'SUP', 'tel' => '620222222', 'address' => 'x']);
-        $facture = \App\Models\Facture::create(['numero_facture' => 'F-SUP-1', 'store_id' => $this->madina->id,
+        $facture = Facture::create(['numero_facture' => 'F-SUP-1', 'store_id' => $this->madina->id,
             'customer_id' => $client->id, 'montant_total' => 0, 'avance' => 0, 'reste' => 0]);
         $facture->delete(); // archivée : elle reste rattachée au client
 
@@ -179,7 +188,7 @@ class PermissionsModulesTest extends TestCase
 
         $this->assertNull(Customer::withTrashed()->find($client->id));
         $this->assertNull(
-            \App\Models\Facture::withTrashed()->find($facture->id),
+            Facture::withTrashed()->find($facture->id),
             'La facture est restée en base avec un client_id qui ne pointe plus sur rien.'
         );
     }

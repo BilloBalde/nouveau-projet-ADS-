@@ -6,13 +6,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Hash;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
-
 
     protected $fillable = [
         'name',
@@ -76,15 +76,18 @@ class User extends Authenticatable
         return (int) $this->role_id === self::ROLE_CUSTOMER;
     }
 
-    public function getRoleAttribute(){
+    public function getRoleAttribute()
+    {
         return $this->roleRelation?->slug ?? '';
     }
 
-    public function roleRelation(){
+    public function roleRelation()
+    {
         return $this->belongsTo(Role::class, 'role_id');
     }
 
-    public function factures(){
+    public function factures()
+    {
         return $this->hasMany(Facture::class);
     }
 
@@ -99,9 +102,9 @@ class User extends Authenticatable
     }
 
     public function company()
-{
-    return $this->belongsTo(Company::class);
-}
+    {
+        return $this->belongsTo(Company::class);
+    }
 
     public function store()
     {
@@ -285,10 +288,10 @@ class User extends Authenticatable
 
         if ($storeId) {
             StoreAssignment::create([
-                'user_id'     => $this->id,
-                'store_id'    => $storeId,
+                'user_id' => $this->id,
+                'store_id' => $storeId,
                 'assigned_by' => $assignedBy,
-                'started_at'  => $now,
+                'started_at' => $now,
             ]);
         }
 
@@ -349,7 +352,7 @@ class User extends Authenticatable
      * explicites (user_permissions) ou, à défaut, le preset du rôle.
      * Sert à limiter ce qu'un non-admin peut accorder à d'autres.
      */
-    public function effectivePermissionIds(): \Illuminate\Support\Collection
+    public function effectivePermissionIds(): Collection
     {
         if ((int) $this->role_id === self::ROLE_ADMIN) {
             return Permission::pluck('id');

@@ -4,15 +4,28 @@ namespace Tests\Feature;
 
 use App\Models\Category;
 use App\Models\Customer;
+use App\Models\DeliveryAddress;
+use App\Models\Devi;
+use App\Models\DeviLine;
+use App\Models\Facture;
+use App\Models\Order;
+use App\Models\OrderItem;
+use App\Models\Payment;
 use App\Models\Place;
 use App\Models\Product;
-use App\Models\Role;
+use App\Models\PurchaseOrderItem;
 use App\Models\Sale;
+use App\Models\StockMovement;
+use App\Models\StockTransfer;
 use App\Models\Store;
 use App\Models\StoreProduct;
+use App\Models\TransactionFacture;
 use App\Models\User;
+use Database\Seeders\PermissionSeeder;
+use Database\Seeders\RolesSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Testing\TestResponse;
 use Tests\TestCase;
 
 /**
@@ -24,15 +37,18 @@ class SaleUnitTest extends TestCase
     use RefreshDatabase;
 
     private User $admin;
+
     private Store $magasin;
+
     private Customer $client;
+
     private Category $categorie;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->seed(\Database\Seeders\RolesSeeder::class);
-        $this->seed(\Database\Seeders\PermissionSeeder::class);
+        $this->seed(RolesSeeder::class);
+        $this->seed(PermissionSeeder::class);
 
         $this->admin = User::create([
             'name' => 'Patron', 'email' => 'patron@example.com', 'username' => 'patron',
@@ -46,10 +62,10 @@ class SaleUnitTest extends TestCase
         $this->categorie = Category::create(['slug' => 'quincaillerie', 'category_type' => 'Quincaillerie', 'description' => 'x']);
     }
 
-    private function creerProduit(array $unites): \Illuminate\Testing\TestResponse
+    private function creerProduit(array $unites): TestResponse
     {
         return $this->actingAs($this->admin)->post(route('produits.store'), [
-            'categories' => [$this->categorie->id], 'libelle' => 'Vis 6 mm', 'sku' => 'VIS-' . uniqid(),
+            'categories' => [$this->categorie->id], 'libelle' => 'Vis 6 mm', 'sku' => 'VIS-'.uniqid(),
             'description' => 'x', 'price_sale' => 100, 'stock_initial' => 500, 'store_id' => $this->magasin->id,
         ] + $unites);
     }
@@ -57,7 +73,7 @@ class SaleUnitTest extends TestCase
     private function vendre(Product $produit, int $qte, float $prix)
     {
         return $this->actingAs($this->admin)->post(route('sales.store'), [
-            'numeroFacture' => 'F-' . uniqid(), 'store_id' => $this->magasin->id, 'customer_id' => $this->client->id,
+            'numeroFacture' => 'F-'.uniqid(), 'store_id' => $this->magasin->id, 'customer_id' => $this->client->id,
             'avance' => 0, 'paid_by' => 'cash',
             'sales' => [1 => ['product_id' => $produit->id, 'quantity' => $qte, 'prix' => $prix,
                 'store_id' => $this->magasin->id, 'is_third_party' => '0']],
@@ -149,7 +165,7 @@ class SaleUnitTest extends TestCase
             'password' => Hash::make('password'), 'role_id' => User::ROLE_CUSTOMER,
             'phone' => '621', 'status' => 'Active', 'token' => '',
         ]);
-        $adresse = \App\Models\DeliveryAddress::create(['user_id' => $client->id, 'full_address' => 'Madina', 'city' => 'Conakry', 'phone' => '621']);
+        $adresse = DeliveryAddress::create(['user_id' => $client->id, 'full_address' => 'Madina', 'city' => 'Conakry', 'phone' => '621']);
 
         $this->postJson(route('cart.add', $p->id), ['quantity' => 3])->assertOk();
         $this->assertSame('carton', session('cart')[$p->id]['unite']);
@@ -160,7 +176,7 @@ class SaleUnitTest extends TestCase
             'items' => [['product_id' => $p->id, 'quantity' => 3]],
         ])->assertRedirect();
 
-        $ligne = \App\Models\OrderItem::firstOrFail();
+        $ligne = OrderItem::firstOrFail();
         $this->assertSame('carton', $ligne->unite);
         $this->assertSame('3 cartons', $ligne->quantite_affichee);
 
@@ -176,8 +192,8 @@ class SaleUnitTest extends TestCase
 
         $this->actingAs($this->admin)->get(route('devis.create'))->assertOk()->assertSee('Rouleau (100 m)');
 
-        $devis = \App\Models\Devi::create(['store_id' => $this->magasin->id, 'customer_id' => $this->client->id, 'total_amount' => 0, 'status' => 'accepted', 'created_by' => $this->admin->id]);
-        $ligne = \App\Models\DeviLine::create(['devis_id' => $devis->id, 'product_id' => $p->id, 'quantity' => 4, 'unit_price' => 150, 'total_price' => 600]);
+        $devis = Devi::create(['store_id' => $this->magasin->id, 'customer_id' => $this->client->id, 'total_amount' => 0, 'status' => 'accepted', 'created_by' => $this->admin->id]);
+        $ligne = DeviLine::create(['devis_id' => $devis->id, 'product_id' => $p->id, 'quantity' => 4, 'unit_price' => 150, 'total_price' => 600]);
         $this->assertSame('rouleau', $ligne->unite);
 
         $this->actingAs($this->admin)->get(route('devis.show', $devis->id))->assertOk()->assertSee('4 rouleaux');
@@ -193,7 +209,7 @@ class SaleUnitTest extends TestCase
         $p = Product::firstOrFail();
 
         // Le formulaire propose l'unité et le prix du produit.
-        $this->actingAs($this->admin)->getJson('/fetch-product-details?exact=1&productName=' . urlencode($p->libelle))
+        $this->actingAs($this->admin)->getJson('/fetch-product-details?exact=1&productName='.urlencode($p->libelle))
             ->assertJson(['success' => true, 'product' => ['unite' => 'Carton (24 pcs)', 'price' => 130]]);
         $this->actingAs($this->admin)->getJson('/fetch-product-details?exact=1&productName=Vis')
             ->assertJson(['success' => false]);
@@ -211,7 +227,7 @@ class SaleUnitTest extends TestCase
         $this->assertSame(3, (int) $vente->quantity);
         $this->assertSame('3 cartons', $vente->quantite_affichee);
         $this->assertEquals(9000, $vente->prixTotal);
-        $this->assertEquals(9000, \App\Models\Facture::where('numero_facture', 'FAC-U1')->value('montant_total'));
+        $this->assertEquals(9000, Facture::where('numero_facture', 'FAC-U1')->value('montant_total'));
         $this->assertSame(497, (int) StoreProduct::where('product_id', $p->id)->value('quantity'));
 
         $this->actingAs($this->admin)->get(route('factures.show', 'FAC-U1'))->assertOk()->assertSee('3 cartons');
@@ -233,7 +249,7 @@ class SaleUnitTest extends TestCase
             'lines' => [['product_id' => $p->id, 'quantity' => 40, 'unit_price_foreign' => 2000]],
         ])->assertSessionHasNoErrors();
 
-        $ligne = \App\Models\PurchaseOrderItem::firstOrFail();
+        $ligne = PurchaseOrderItem::firstOrFail();
         $this->assertSame('carton', $ligne->unite);
         $this->assertSame('40 cartons', $ligne->quantite_affichee);
         $this->assertSame(540, (int) StoreProduct::where('product_id', $p->id)->value('quantity'));
@@ -276,14 +292,14 @@ class SaleUnitTest extends TestCase
             'quantity' => 12, 'execute_now' => 1,
         ])->assertSessionHas('success');
 
-        $transfert = \App\Models\StockTransfer::firstOrFail();
+        $transfert = StockTransfer::firstOrFail();
         $this->assertSame('carton', $transfert->unite);
         $this->assertSame('12 cartons', $transfert->quantite_affichee);
         $this->assertSame(488, (int) StoreProduct::where('product_id', $p->id)->where('store_id', $this->magasin->id)->value('quantity'));
         $this->assertSame(12, (int) StoreProduct::where('product_id', $p->id)->where('store_id', $entrepot->id)->value('quantity'));
 
         // Journal : sortie et entrée en cartons.
-        $this->assertSame(['carton'], \App\Models\StockMovement::whereIn('type', ['TRANSFER_OUT', 'TRANSFER_IN'])->pluck('unite')->unique()->values()->all());
+        $this->assertSame(['carton'], StockMovement::whereIn('type', ['TRANSFER_OUT', 'TRANSFER_IN'])->pluck('unite')->unique()->values()->all());
 
         $this->actingAs($this->admin)->get(route('transfers.index'))->assertSee('12 cartons');
         $this->actingAs($this->admin)->get(route('receipts.transfers.show', $transfert))->assertOk()->assertSee('12 cartons');
@@ -356,7 +372,7 @@ class SaleUnitTest extends TestCase
             ->assertSee('5 pièces · 2 cartons');
 
         // Reçu de paiement : articles de la facture avec leur unité.
-        $paiement = \App\Models\Payment::whereHas('facture', fn ($q) => $q->where('numero_facture', 'F-BON'))->firstOrFail();
+        $paiement = Payment::whereHas('facture', fn ($q) => $q->where('numero_facture', 'F-BON'))->firstOrFail();
         $this->actingAs($this->admin)->get(route('receipts.payments.show', $paiement))->assertOk()
             ->assertSee('2 cartons')->assertSee('3 000 FG / carton')->assertSee('5 pièces');
     }
@@ -370,7 +386,7 @@ class SaleUnitTest extends TestCase
         // Formulaire : unité du produit et stock enregistré pour l'aperçu de l'écart.
         $form = $this->actingAs($this->admin)->get(route('stock.adjust.form'))->assertOk()
             ->assertSee('Carton (24 pcs)')->assertSee('data-pluriel="cartons"', false);
-        $this->assertSame(500, $form->viewData('stockEnregistre')[$this->magasin->id . '|' . $carton->id . '|']);
+        $this->assertSame(500, $form->viewData('stockEnregistre')[$this->magasin->id.'|'.$carton->id.'|']);
 
         // Inventaire : 500 cartons enregistrés, 497 comptés.
         $this->actingAs($this->admin)->post(route('stock.adjust'), [
@@ -378,7 +394,7 @@ class SaleUnitTest extends TestCase
             'type' => 'INVENTORY', 'reason' => 'Inventaire mensuel',
         ])->assertSessionHas('success', fn ($m) => str_contains($m, '500 → 497 cartons (écart −3 cartons)'));
 
-        $mouvement = \App\Models\StockMovement::where('type', 'INVENTORY')->firstOrFail();
+        $mouvement = StockMovement::where('type', 'INVENTORY')->firstOrFail();
         $this->assertSame('carton', $mouvement->unite);
         $this->assertSame(-3, (int) $mouvement->quantity);
 
@@ -413,9 +429,9 @@ class SaleUnitTest extends TestCase
             'password' => Hash::make('password'), 'role_id' => User::ROLE_CUSTOMER,
             'phone' => '622', 'status' => 'Active', 'token' => '',
         ]);
-        $adresse = \App\Models\DeliveryAddress::create(['user_id' => $client->id, 'full_address' => 'Madina', 'city' => 'Conakry', 'phone' => '622']);
-        $order = \App\Models\Order::create(['user_id' => $client->id, 'delivery_address_id' => $adresse->id, 'total_amount' => 9000, 'status' => 'pending']);
-        \App\Models\OrderItem::create(['order_id' => $order->id, 'product_id' => $carton->id, 'quantity' => 3, 'price' => 3000]);
+        $adresse = DeliveryAddress::create(['user_id' => $client->id, 'full_address' => 'Madina', 'city' => 'Conakry', 'phone' => '622']);
+        $order = Order::create(['user_id' => $client->id, 'delivery_address_id' => $adresse->id, 'total_amount' => 9000, 'status' => 'pending']);
+        OrderItem::create(['order_id' => $order->id, 'product_id' => $carton->id, 'quantity' => 3, 'price' => 3000]);
 
         $this->actingAs($this->admin)->getJson(route('admin.orders.stock.check', $order))->assertOk()
             ->assertJsonPath('items.0.unite', 'cartons')->assertJsonPath('items.0.requested', 3);
@@ -435,7 +451,7 @@ class SaleUnitTest extends TestCase
             'customer_id' => $this->client->id, 'versement' => '7 000', 'paid_by' => 'cash', 'note' => 'Versement',
         ])->assertRedirect();
 
-        $transaction = \App\Models\TransactionFacture::firstOrFail();
+        $transaction = TransactionFacture::firstOrFail();
         $this->assertEquals(9000, $transaction->solde_avant);
         $this->assertEquals(2000, $transaction->solde_apres);
         $this->assertCount(2, $transaction->payments);
@@ -452,7 +468,7 @@ class SaleUnitTest extends TestCase
             ->assertSee('Reste à payer après versement')->assertSee('2 000 FG');
 
         // Ancien versement (sans solde après enregistré) : déduit du solde avant.
-        $ancien = \App\Models\TransactionFacture::create(['customer_id' => $this->client->id, 'versement' => 500, 'balance' => 2000, 'receipt_number' => 'RCC-ANCIEN']);
+        $ancien = TransactionFacture::create(['customer_id' => $this->client->id, 'versement' => 500, 'balance' => 2000, 'receipt_number' => 'RCC-ANCIEN']);
         $this->assertEquals(1500, $ancien->solde_apres);
         $this->actingAs($this->admin)->get(route('receipts.transactions.show', $ancien))->assertOk()->assertSee('1,500.00');
     }
@@ -470,7 +486,7 @@ class SaleUnitTest extends TestCase
         $this->actingAs($this->admin)->post(route('transfers.store'), [
             'product_id' => $p->id, 'from_store_id' => $this->magasin->id, 'to_store_id' => $entrepot->id, 'quantity' => 5,
         ])->assertSessionHas('success');
-        $enAttente = \App\Models\StockTransfer::firstOrFail();
+        $enAttente = StockTransfer::firstOrFail();
         $this->actingAs($this->admin)->get(route('receipts.transfers.show', $enAttente))->assertOk()
             ->assertSee('BON DE TRANSFERT')->assertSee($enAttente->reference)
             ->assertSee("En attente d'autorisation")->assertDontSee('Transfert confirmé')
@@ -482,7 +498,7 @@ class SaleUnitTest extends TestCase
         $this->actingAs($this->admin)->post(route('transfers.store'), [
             'product_id' => $p->id, 'from_store_id' => $this->magasin->id, 'to_store_id' => $entrepot->id, 'quantity' => 3, 'execute_now' => 1,
         ])->assertSessionHas('success');
-        $termine = \App\Models\StockTransfer::latest('id')->firstOrFail();
+        $termine = StockTransfer::latest('id')->firstOrFail();
         $this->assertSame('completed', $termine->status);
         $bon = $this->actingAs($this->admin)->get(route('receipts.transfers.show', $termine))->assertOk();
         $bon->assertSee('Réceptionné')->assertDontSee("Ce transfert n'est pas terminé", false)->assertSee('Patron');

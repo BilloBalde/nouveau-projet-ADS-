@@ -12,14 +12,14 @@ return new class extends Migration
             $table->id();
             $table->string('reference');
             $table->foreignId('store_id')->constrained('stores')->onDelete('restrict');
-            $table->enum('origin', ['chine','guinee']);
+            $table->enum('origin', ['chine', 'guinee']);
             $table->string('currency_code', 10)->nullable();
             $table->decimal('exchange_rate_used', 14, 4)->nullable();
             $table->decimal('transport_cost_gnf', 14, 2)->default(0.00);
             $table->decimal('customs_cost_gnf', 14, 2)->default(0.00);
             $table->decimal('other_fees_gnf', 14, 2)->default(0.00);
             $table->decimal('total_cbm', 10, 3)->nullable();
-            $table->enum('status', ['pending','received','cancelled'])->default('pending');
+            $table->enum('status', ['pending', 'received', 'cancelled'])->default('pending');
             $table->date('date_emis');
             $table->date('date_recu')->nullable();
             $table->text('notes')->nullable();

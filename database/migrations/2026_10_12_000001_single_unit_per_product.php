@@ -50,7 +50,7 @@ return new class extends Migration
         Schema::table('products', function (Blueprint $table) {
             $table->json('unites_vente')->nullable()->after('pcs');
         });
-        DB::table('products')->where('unite', '!=', 'pcs')->update(['unites_vente' => DB::raw("JSON_ARRAY(unite)")]);
+        DB::table('products')->where('unite', '!=', 'pcs')->update(['unites_vente' => DB::raw('JSON_ARRAY(unite)')]);
 
         Schema::table('products', function (Blueprint $table) {
             $table->dropColumn('unite');

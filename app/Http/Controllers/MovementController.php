@@ -1,16 +1,15 @@
 <?php
+
 // app/Http/Controllers/MovementController.php
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Models\Company; // en haut du fichier
 use App\Models\Expense;
 use App\Models\Purchase;
 use App\Models\PurchaseOrder;
 use App\Models\Sale;
 use App\Models\Store;
-
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -36,11 +35,11 @@ class MovementController extends Controller
     private function achatMovements(bool $isAdmin, $user, Request $request)
     {
         $purchaseQuery = Purchase::with(['product', 'store'])
-            ->when(!$isAdmin, fn ($q) => $q->where('store_id', $user->store_id));
+            ->when(! $isAdmin, fn ($q) => $q->where('store_id', $user->store_id));
 
         $orderQuery = PurchaseOrder::with(['items.product', 'store'])
             ->where('status', '!=', 'cancelled')
-            ->when(!$isAdmin, fn ($q) => $q->where('store_id', $user->store_id));
+            ->when(! $isAdmin, fn ($q) => $q->where('store_id', $user->store_id));
 
         if ($isAdmin && $request->filled('store_id')) {
             $purchaseQuery->where('store_id', $request->store_id);
@@ -61,40 +60,40 @@ class MovementController extends Controller
         }
 
         $fromPurchases = $purchaseQuery->get()->map(fn ($purchase) => [
-            'id'          => $purchase->id,
-            'type'        => 'Achat',
-            'type_code'   => 'purchase',
-            'reference'   => $purchase->numeroPurchase ?? 'ACH_' . $purchase->id,
-            'date'        => $purchase->created_at,
-            'montant'     => (float) $purchase->price * (int) $purchase->quantity,
+            'id' => $purchase->id,
+            'type' => 'Achat',
+            'type_code' => 'purchase',
+            'reference' => $purchase->numeroPurchase ?? 'ACH_'.$purchase->id,
+            'date' => $purchase->created_at,
+            'montant' => (float) $purchase->price * (int) $purchase->quantity,
             'produit_nom' => $purchase->product->libelle ?? 'Produit inconnu',
             'produit_qte' => $purchase->quantity ?? 0,
-            'details'     => 'Qté: ' . ($purchase->quantity ?? 0),
-            'store_id'    => $purchase->store_id,
-            'store_name'  => $purchase->store->store_name ?? $purchase->store->name ?? 'N/A',
-            'can_edit'    => $isAdmin || ($user->store_id == $purchase->store_id),
+            'details' => 'Qté: '.($purchase->quantity ?? 0),
+            'store_id' => $purchase->store_id,
+            'store_name' => $purchase->store->store_name ?? $purchase->store->name ?? 'N/A',
+            'can_edit' => $isAdmin || ($user->store_id == $purchase->store_id),
         ]);
 
         $fromOrders = $orderQuery->get()->map(function ($order) use ($isAdmin, $user) {
             $itemCount = $order->items->count();
             $productName = $itemCount === 1
                 ? ($order->items->first()->product->libelle ?? 'Produit inconnu')
-                : 'Achat multiple (' . $itemCount . ' produits)';
+                : 'Achat multiple ('.$itemCount.' produits)';
             $quantity = $order->items->sum('quantity');
 
             return [
-                'id'          => $order->id,
-                'type'        => 'Achat',
-                'type_code'   => 'purchase',
-                'reference'   => $order->reference,
-                'date'        => $order->created_at,
-                'montant'     => (float) $order->total_landed_cost_gnf,
+                'id' => $order->id,
+                'type' => 'Achat',
+                'type_code' => 'purchase',
+                'reference' => $order->reference,
+                'date' => $order->created_at,
+                'montant' => (float) $order->total_landed_cost_gnf,
                 'produit_nom' => $productName,
                 'produit_qte' => $quantity,
-                'details'     => 'Qté totale: ' . $quantity,
-                'store_id'    => $order->store_id,
-                'store_name'  => $order->store->store_name ?? $order->store->name ?? 'N/A',
-                'can_edit'    => $isAdmin || ($user->store_id == $order->store_id),
+                'details' => 'Qté totale: '.$quantity,
+                'store_id' => $order->store_id,
+                'store_name' => $order->store->store_name ?? $order->store->name ?? 'N/A',
+                'can_edit' => $isAdmin || ($user->store_id == $order->store_id),
             ];
         });
 
@@ -113,7 +112,7 @@ class MovementController extends Controller
         // 1. VENTES
         // ------------------------------------------------------------
         $salesQuery = Sale::with(['product', 'store'])
-            ->when(!$isAdmin, fn($q) => $q->where('store_id', $user->store_id)); // Les vendeurs voient leur propre boutique uniquement
+            ->when(! $isAdmin, fn ($q) => $q->where('store_id', $user->store_id)); // Les vendeurs voient leur propre boutique uniquement
 
         // ------------------------------------------------------------
         // 2. ACHATS — voir achatMovements() : combine `purchases` + `purchase_orders`
@@ -125,7 +124,7 @@ class MovementController extends Controller
         // 3. DÉPENSES
         // ------------------------------------------------------------
         $expensesQuery = Expense::with(['category', 'store'])
-            ->when(!$isAdmin, fn($q) => $q->where('store_id', $user->store_id)); // Idem pour les dépenses
+            ->when(! $isAdmin, fn ($q) => $q->where('store_id', $user->store_id)); // Idem pour les dépenses
 
         // 🔍 FILTRES
         if ($request->filled('type')) {
@@ -169,19 +168,19 @@ class MovementController extends Controller
         // ------------------------------------------------------------
         // 4. TRANSFORMATION – AVEC "use ($isAdmin, $user)"
         // ------------------------------------------------------------
-        $sales = $salesQuery->get()->map(fn($sale) => [
-            'id'          => $sale->id,
-            'type'        => 'Vente',
-            'type_code'   => 'sale',
-            'reference'   => $sale->numeroFacture ?? 'VTE_'.$sale->id,
-            'date'        => $sale->created_at,
-            'montant'     => $sale->prixTotal ?? 0,
+        $sales = $salesQuery->get()->map(fn ($sale) => [
+            'id' => $sale->id,
+            'type' => 'Vente',
+            'type_code' => 'sale',
+            'reference' => $sale->numeroFacture ?? 'VTE_'.$sale->id,
+            'date' => $sale->created_at,
+            'montant' => $sale->prixTotal ?? 0,
             'produit_nom' => $sale->product->libelle ?? $sale->product->name ?? 'Produit inconnu',
             'produit_qte' => $sale->quantity ?? 0,
-            'details'     => 'Qté: '.($sale->quantity ?? 0),
-            'store_id'    => $sale->store_id,
-            'store_name'  => $sale->store->store_name ?? $sale->store->name ?? 'N/A',
-            'can_edit'    => $isAdmin || ($user->store_id == $sale->store_id),
+            'details' => 'Qté: '.($sale->quantity ?? 0),
+            'store_id' => $sale->store_id,
+            'store_name' => $sale->store->store_name ?? $sale->store->name ?? 'N/A',
+            'can_edit' => $isAdmin || ($user->store_id == $sale->store_id),
         ]);
 
         $achats = $includeAchats
@@ -190,18 +189,18 @@ class MovementController extends Controller
 
         $expenses = $expensesQuery->get()->map(function ($expense) use ($isAdmin, $user) { // ✅ USE ici
             return [
-                'id'          => $expense->id,
-                'type'        => 'Dépense',
-                'type_code'   => 'expense',
-                'reference'   => $expense->reference,
-                'date'        => $expense->created_at,
-                'montant'     => $expense->amount ?? 0,
+                'id' => $expense->id,
+                'type' => 'Dépense',
+                'type_code' => 'expense',
+                'reference' => $expense->reference,
+                'date' => $expense->created_at,
+                'montant' => $expense->amount ?? 0,
                 'produit_nom' => '—',
                 'produit_qte' => null,
-                'details'     => $expense->category->categoryName ?? 'N/A',
-                'store_id'    => $expense->store_id,
-                'store_name'  => $expense->store->store_name ?? $expense->store->name ?? 'N/A',
-                'can_edit'    => $isAdmin || ($user->store_id == $expense->store_id),
+                'details' => $expense->category->categoryName ?? 'N/A',
+                'store_id' => $expense->store_id,
+                'store_name' => $expense->store->store_name ?? $expense->store->name ?? 'N/A',
+                'can_edit' => $isAdmin || ($user->store_id == $expense->store_id),
             ];
         });
 
@@ -229,10 +228,10 @@ class MovementController extends Controller
         // ------------------------------------------------------------
         // 6. STATISTIQUES
         // ------------------------------------------------------------
-        $totalVentes   = $sales->sum('montant');
-        $totalAchats   = $achats->sum('montant');
+        $totalVentes = $sales->sum('montant');
+        $totalAchats = $achats->sum('montant');
         $totalDepenses = $expenses->sum('montant');
-        $solde         = $totalVentes - $totalAchats - $totalDepenses;
+        $solde = $totalVentes - $totalAchats - $totalDepenses;
 
         return view('movements.index', compact(
             'paginated',
@@ -246,7 +245,6 @@ class MovementController extends Controller
         ));
     }
 
-
     public function exportPdf(Request $request)
     {
         // Garde-fou mémoire : un export non filtré peut porter sur des milliers
@@ -256,10 +254,10 @@ class MovementController extends Controller
 
         // Si aucune période n'est précisée, se limiter au mois en cours par défaut
         // pour éviter d'exporter tout l'historique en un seul PDF.
-        if (!$request->filled('date_debut') && !$request->filled('date_fin')) {
+        if (! $request->filled('date_debut') && ! $request->filled('date_fin')) {
             $request->merge([
                 'date_debut' => now()->startOfMonth()->format('Y-m-d'),
-                'date_fin'   => now()->endOfMonth()->format('Y-m-d'),
+                'date_fin' => now()->endOfMonth()->format('Y-m-d'),
             ]);
         }
 
@@ -268,14 +266,14 @@ class MovementController extends Controller
 
         // 1. VENTES
         $salesQuery = Sale::with(['product', 'store'])
-            ->when(!$isAdmin, fn($q) => $q->where('store_id', $user->store_id)); // Filtrer les ventes pour les vendeurs
+            ->when(! $isAdmin, fn ($q) => $q->where('store_id', $user->store_id)); // Filtrer les ventes pour les vendeurs
 
         // 2. ACHATS — voir achatMovements() : combine `purchases` + `purchase_orders`.
-        $includeAchats = !$request->filled('type') || $request->type === 'purchase';
+        $includeAchats = ! $request->filled('type') || $request->type === 'purchase';
 
         // 3. DÉPENSES
         $expensesQuery = Expense::with(['category', 'store'])
-            ->when(!$isAdmin, fn($q) => $q->where('store_id', $user->store_id)); // Filtrer les dépenses pour les vendeurs
+            ->when(! $isAdmin, fn ($q) => $q->where('store_id', $user->store_id)); // Filtrer les dépenses pour les vendeurs
 
         // 🔍 FILTRES
         if ($request->filled('date_debut')) {
@@ -287,8 +285,12 @@ class MovementController extends Controller
             $expensesQuery->whereDate('created_at', '<=', $request->date_fin);
         }
         if ($request->filled('type')) {
-            if ($request->type != 'sale')     $salesQuery->whereRaw('1=0');
-            if ($request->type != 'expense')  $expensesQuery->whereRaw('1=0');
+            if ($request->type != 'sale') {
+                $salesQuery->whereRaw('1=0');
+            }
+            if ($request->type != 'expense') {
+                $expensesQuery->whereRaw('1=0');
+            }
         }
         if ($request->filled('reference')) {
             $search = $request->reference;
@@ -300,29 +302,28 @@ class MovementController extends Controller
         // 4. TRANSFORMATION (COPIEZ INTÉGRALEMENT DEPUIS VOTRE INDEX)
         // ------------------------------------------------------------
         // VENTES
-        $sales = $salesQuery->get()->map(fn($sale) => [
-            'id'          => $sale->id,
-            'type'        => 'Vente',
-            'type_code'   => 'sale',
-            'reference'   => $sale->numeroFacture ?? 'VTE_'.$sale->id,
-            'date'        => $sale->created_at, // ✅ clé date définie
-            'montant'     => $sale->prixTotal ?? 0,
+        $sales = $salesQuery->get()->map(fn ($sale) => [
+            'id' => $sale->id,
+            'type' => 'Vente',
+            'type_code' => 'sale',
+            'reference' => $sale->numeroFacture ?? 'VTE_'.$sale->id,
+            'date' => $sale->created_at, // ✅ clé date définie
+            'montant' => $sale->prixTotal ?? 0,
             'produit_nom' => $sale->product->libelle ?? 'Produit inconnu',
             'produit_qte' => $sale->quantity ?? 0,
-            'details'     => 'Qté: '.($sale->quantity ?? 0),
-            'store_id'    => $sale->store_id,
-            'store_name'  => $sale->store->store_name ?? 'N/A',
+            'details' => 'Qté: '.($sale->quantity ?? 0),
+            'store_id' => $sale->store_id,
+            'store_name' => $sale->store->store_name ?? 'N/A',
         ]);
 
-
-            // Récupérer les informations de l'entreprise
-            $company = Company::first() ?? (object) [
-                'name'    => config('app.name'),
-                'address' => 'Adresse non renseignée',
-                'phone'   => 'N/A',
-                'email'   => 'N/A',
-                'logo'    => 'assets/img/logo.png',
-            ];
+        // Récupérer les informations de l'entreprise
+        $company = Company::first() ?? (object) [
+            'name' => config('app.name'),
+            'address' => 'Adresse non renseignée',
+            'phone' => 'N/A',
+            'email' => 'N/A',
+            'logo' => 'assets/img/logo.png',
+        ];
 
         // ACHATS
         $achats = $includeAchats
@@ -330,18 +331,18 @@ class MovementController extends Controller
             : collect();
 
         // DÉPENSES
-        $expenses = $expensesQuery->get()->map(fn($expense) => [
-            'id'          => $expense->id,
-            'type'        => 'Dépense',
-            'type_code'   => 'expense',
-            'reference'   => $expense->reference,
-            'date'        => $expense->created_at, // ✅ clé date définie
-            'montant'     => $expense->amount ?? 0,
+        $expenses = $expensesQuery->get()->map(fn ($expense) => [
+            'id' => $expense->id,
+            'type' => 'Dépense',
+            'type_code' => 'expense',
+            'reference' => $expense->reference,
+            'date' => $expense->created_at, // ✅ clé date définie
+            'montant' => $expense->amount ?? 0,
             'produit_nom' => '—',
             'produit_qte' => null,
-            'details'     => $expense->category->categoryName ?? 'N/A',
-            'store_id'    => $expense->store_id,
-            'store_name'  => $expense->store->store_name ?? 'N/A',
+            'details' => $expense->category->categoryName ?? 'N/A',
+            'store_id' => $expense->store_id,
+            'store_name' => $expense->store->store_name ?? 'N/A',
         ]);
 
         // ------------------------------------------------------------
@@ -357,10 +358,10 @@ class MovementController extends Controller
         // ------------------------------------------------------------
         // 6. STATISTIQUES
         // ------------------------------------------------------------
-        $totalVentes   = $sales->sum('montant');
-        $totalAchats   = $achats->sum('montant');
+        $totalVentes = $sales->sum('montant');
+        $totalAchats = $achats->sum('montant');
         $totalDepenses = $expenses->sum('montant');
-        $solde         = $totalVentes - $totalAchats - $totalDepenses;
+        $solde = $totalVentes - $totalAchats - $totalDepenses;
 
         // ------------------------------------------------------------
         // 7. GÉNÉRATION PDF
@@ -376,7 +377,8 @@ class MovementController extends Controller
             'company'
         ));
 
-        $fileName = 'mouvements_' . now()->format('Ymd_His') . '.pdf';
+        $fileName = 'mouvements_'.now()->format('Ymd_His').'.pdf';
+
         return $pdf->download($fileName);
     }
 }

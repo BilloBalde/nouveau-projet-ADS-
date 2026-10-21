@@ -3,8 +3,8 @@
 namespace App\Mail;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
@@ -12,10 +12,13 @@ use Illuminate\Queue\SerializesModels;
 class UserMail extends Mailable
 {
     use Queueable, SerializesModels;
-    
+
     public $subject;
+
     public $body;
+
     public $userName;
+
     public $verificationLink;
 
     /**
@@ -28,7 +31,7 @@ class UserMail extends Mailable
         $this->subject = $subject;
         $this->body = $body;
         $this->userName = $userName;
-        
+
         // Extract verification link from body if needed
         preg_match('/<a href=(.*?)>/', $body, $matches);
         $this->verificationLink = $matches[1] ?? '#';
@@ -37,13 +40,13 @@ class UserMail extends Mailable
     public function build()
     {
         return $this->subject($this->subject)
-                    ->view('mails.usermail')
-                    ->with([
-                        'userName' => $this->userName,
-                        'verificationLink' => $this->verificationLink,
-                        'body' => $this->body,
-                        'year' => date('Y')
-                    ]);
+            ->view('mails.usermail')
+            ->with([
+                'userName' => $this->userName,
+                'verificationLink' => $this->verificationLink,
+                'body' => $this->body,
+                'year' => date('Y'),
+            ]);
     }
 
     /**
@@ -69,7 +72,7 @@ class UserMail extends Mailable
     /**
      * Get the attachments for the message.
      *
-     * @return array<int, \Illuminate\Mail\Mailables\Attachment>
+     * @return array<int, Attachment>
      */
     public function attachments(): array
     {

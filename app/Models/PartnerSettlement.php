@@ -8,16 +8,16 @@ use Illuminate\Database\Eloquent\Model;
 class PartnerSettlement extends Model
 {
     public const MODES = [
-        'cash'         => 'Espèces',
+        'cash' => 'Espèces',
         'orange_money' => 'Orange Money',
-        'virement'     => 'Virement',
-        'marchandise'  => 'Échange de marchandise',
+        'virement' => 'Virement',
+        'marchandise' => 'Échange de marchandise',
     ];
 
     protected $fillable = ['partner_id', 'amount', 'paid_at', 'mode', 'note', 'user_id'];
 
     protected $casts = [
-        'amount'  => 'decimal:2',
+        'amount' => 'decimal:2',
         'paid_at' => 'date',
     ];
 

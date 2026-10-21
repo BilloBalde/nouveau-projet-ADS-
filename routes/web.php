@@ -1,6 +1,7 @@
 <?php
 
 use App\Exports\PurchasesExport;
+use App\Http\Controllers\Admin\DebtReminderController;
 use App\Http\Controllers\Admin\OrderManagementController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Authentification;
@@ -9,19 +10,24 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\CurrencySettingController;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\DailyReportController;
+use App\Http\Controllers\DeviController;
 use App\Http\Controllers\Ecommerce\AddressController;
 use App\Http\Controllers\Ecommerce\AuthOtpController;
 use App\Http\Controllers\Ecommerce\CartController;
-use App\Http\Controllers\Ecommerce\OrderController;
 use App\Http\Controllers\Ecommerce\OrangeMoneyController;
+use App\Http\Controllers\Ecommerce\OrderController;
 use App\Http\Controllers\EmailController;
 use App\Http\Controllers\ExpenseCategoryController;
 use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\FactureController;
+use App\Http\Controllers\FundController;
 use App\Http\Controllers\IndexController;
 use App\Http\Controllers\JournalierController;
 use App\Http\Controllers\LogisticController;
 use App\Http\Controllers\MovementController;
+use App\Http\Controllers\NewExportController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PaymentSettingController;
 use App\Http\Controllers\PhoneAuthController;
@@ -29,19 +35,21 @@ use App\Http\Controllers\PlaceController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PurchaseController;
+use App\Http\Controllers\PurchaseOrderController;
 use App\Http\Controllers\ReceiptController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SaleController;
 use App\Http\Controllers\SalesReportController;
-use App\Http\Controllers\DailyReportController;
+use App\Http\Controllers\SectionController;
+use App\Http\Controllers\StockController;
 use App\Http\Controllers\StoreController;
 use App\Http\Controllers\StoreProductController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VisitController;
-use App\Http\Controllers\DeviController;
-use App\Http\Controllers\NewExportController;
-use App\Http\Controllers\PurchaseOrderController;
+use App\Http\Middleware\VerifyCsrfToken;
+use App\Models\Purchase;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -99,10 +107,11 @@ Route::post('password/misajour', [ForgotPasswordController::class, 'reset'])->mi
 // 3. ROUTES DE DÉCONNEXION
 // =============================================
 
-Route::post('/logout', function (\Illuminate\Http\Request $request) {
+Route::post('/logout', function (Request $request) {
     Auth::logout();
     $request->session()->invalidate();
     $request->session()->regenerateToken();
+
     return redirect()->route('accueil')->with('success', 'Déconnecté avec succès');
 })->middleware('auth.check')->name('logout');
 
@@ -130,8 +139,9 @@ Route::post('/admin/messages/{id}/read', [ContactController::class, 'markRead'])
 Route::delete('/admin/messages/{id}', [ContactController::class, 'destroy'])->name('contact.destroy')->middleware('auth.check');
 
 // Newsletter
-Route::post('/newsletter', function (\Illuminate\Http\Request $request) {
+Route::post('/newsletter', function (Request $request) {
     $request->validate(['email' => 'required|email']);
+
     return redirect()->route('accueil')->with('newsletter_success', 'Merci ! Vous êtes bien inscrit à notre newsletter.');
 })->name('newsletter.subscribe');
 
@@ -171,7 +181,7 @@ Route::prefix('shop')->group(function () {
         Route::get('/addresses/create', [AddressController::class, 'create'])->name('addresses.create');
         Route::post('/addresses', [AddressController::class, 'store'])->name('addresses.store');
         Route::delete('/addresses/{id}', [AddressController::class, 'destroy'])->name('addresses.destroy');
-        
+
         // Checkout et commandes
         Route::get('/checkout', [OrderController::class, 'checkout'])->name('checkout');
         Route::get('/buy-now/{id}', [OrderController::class, 'buyNow'])->name('buy.now');
@@ -189,17 +199,17 @@ Route::prefix('shop')->group(function () {
 // Webhook Orange Money (sans CSRF)
 Route::post('/payment/webhook', [OrangeMoneyController::class, 'webhook'])
     ->name('payment.webhook')
-    ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
+    ->withoutMiddleware([VerifyCsrfToken::class]);
 
 // =============================================
 // NOTIFICATIONS IN-APP (staff + clients)
 // =============================================
 
 Route::middleware('auth')->group(function () {
-    Route::get('/notifications', [\App\Http\Controllers\NotificationController::class, 'index'])->name('notifications.index');
-    Route::get('/notifications/feed', [\App\Http\Controllers\NotificationController::class, 'feed'])->name('notifications.feed');
-    Route::post('/notifications/{id}/read', [\App\Http\Controllers\NotificationController::class, 'markRead'])->name('notifications.read');
-    Route::post('/notifications/read-all', [\App\Http\Controllers\NotificationController::class, 'markAllRead'])->name('notifications.readAll');
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::get('/notifications/feed', [NotificationController::class, 'feed'])->name('notifications.feed');
+    Route::post('/notifications/{id}/read', [NotificationController::class, 'markRead'])->name('notifications.read');
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllRead'])->name('notifications.readAll');
 });
 
 // =============================================
@@ -221,9 +231,9 @@ Route::middleware(['auth', 'superuser'])->prefix('admin')->group(function () {
     Route::post('/orders/facture/{facture}/deliver', [OrderManagementController::class, 'partialDeliver'])->middleware('permission:orders.deliver')->name('admin.orders.facture.deliver');
 
     // Rappels de dettes (digest hebdomadaire + envoi WhatsApp/SMS manuel)
-    Route::get('/debt-reminders', [\App\Http\Controllers\Admin\DebtReminderController::class, 'index'])->name('admin.debt-reminders.index');
-    Route::post('/debt-reminders/{customerId}/resolve', [\App\Http\Controllers\Admin\DebtReminderController::class, 'resolve'])->name('admin.debt-reminders.resolve');
-    Route::post('/debt-reminders/{customerId}/send-sms', [\App\Http\Controllers\Admin\DebtReminderController::class, 'sendSms'])->name('admin.debt-reminders.send-sms');
+    Route::get('/debt-reminders', [DebtReminderController::class, 'index'])->name('admin.debt-reminders.index');
+    Route::post('/debt-reminders/{customerId}/resolve', [DebtReminderController::class, 'resolve'])->name('admin.debt-reminders.resolve');
+    Route::post('/debt-reminders/{customerId}/send-sms', [DebtReminderController::class, 'sendSms'])->name('admin.debt-reminders.send-sms');
 });
 
 // =============================================
@@ -426,25 +436,25 @@ Route::get('/logistics/export-pdf', [LogisticController::class, 'exportPDF'])->m
 
 Route::resource('transfers', StoreProductController::class);
 // Associés : fonds, compte à part, relevé (lecture seule pour l'associé lui-même).
-Route::get('/associes/mon-releve', [\App\Http\Controllers\FundController::class, 'me'])->name('associates.me');
-Route::get('/associes', [\App\Http\Controllers\FundController::class, 'index'])->name('associates.index');
-Route::get('/associes/nouveau', [\App\Http\Controllers\FundController::class, 'create'])->name('associates.create');
-Route::post('/associes', [\App\Http\Controllers\FundController::class, 'store'])->name('associates.store');
-Route::get('/associes/{fund}', [\App\Http\Controllers\FundController::class, 'show'])->whereNumber('fund')->name('associates.show');
-Route::get('/associes/{fund}/modifier', [\App\Http\Controllers\FundController::class, 'edit'])->whereNumber('fund')->name('associates.edit');
-Route::put('/associes/{fund}', [\App\Http\Controllers\FundController::class, 'update'])->whereNumber('fund')->name('associates.update');
-Route::post('/associes/{fund}/mouvements', [\App\Http\Controllers\FundController::class, 'storeTransaction'])->whereNumber('fund')->name('associates.transactions.store');
+Route::get('/associes/mon-releve', [FundController::class, 'me'])->name('associates.me');
+Route::get('/associes', [FundController::class, 'index'])->name('associates.index');
+Route::get('/associes/nouveau', [FundController::class, 'create'])->name('associates.create');
+Route::post('/associes', [FundController::class, 'store'])->name('associates.store');
+Route::get('/associes/{fund}', [FundController::class, 'show'])->whereNumber('fund')->name('associates.show');
+Route::get('/associes/{fund}/modifier', [FundController::class, 'edit'])->whereNumber('fund')->name('associates.edit');
+Route::put('/associes/{fund}', [FundController::class, 'update'])->whereNumber('fund')->name('associates.update');
+Route::post('/associes/{fund}/mouvements', [FundController::class, 'storeTransaction'])->whereNumber('fund')->name('associates.transactions.store');
 // Sections : entrepôt / magasin principal et chaque boutique. Le propriétaire
 // entre dans une section ou revient à la vue globale ; un employé reste dans la sienne.
-Route::get('/sections', [\App\Http\Controllers\SectionController::class, 'index'])->name('sections.index');
-Route::post('/sections/switch', [\App\Http\Controllers\SectionController::class, 'switch'])->name('sections.switch');
+Route::get('/sections', [SectionController::class, 'index'])->name('sections.index');
+Route::post('/sections/switch', [SectionController::class, 'switch'])->name('sections.switch');
 // Stock par emplacement : vue globale, fiche emplacement, journal, traçabilité, inventaire.
-Route::get('/stock', [\App\Http\Controllers\StockController::class, 'index'])->name('stock.index');
-Route::get('/stock/mouvements', [\App\Http\Controllers\StockController::class, 'movements'])->name('stock.movements');
-Route::get('/stock/tracabilite', [\App\Http\Controllers\StockController::class, 'trace'])->name('stock.trace');
-Route::get('/stock/inventaire', [\App\Http\Controllers\StockController::class, 'adjustForm'])->name('stock.adjust.form');
-Route::post('/stock/inventaire', [\App\Http\Controllers\StockController::class, 'adjust'])->name('stock.adjust');
-Route::get('/stock/{store}', [\App\Http\Controllers\StockController::class, 'show'])->whereNumber('store')->name('stock.show');
+Route::get('/stock', [StockController::class, 'index'])->name('stock.index');
+Route::get('/stock/mouvements', [StockController::class, 'movements'])->name('stock.movements');
+Route::get('/stock/tracabilite', [StockController::class, 'trace'])->name('stock.trace');
+Route::get('/stock/inventaire', [StockController::class, 'adjustForm'])->name('stock.adjust.form');
+Route::post('/stock/inventaire', [StockController::class, 'adjust'])->name('stock.adjust');
+Route::get('/stock/{store}', [StockController::class, 'show'])->whereNumber('store')->name('stock.show');
 // Circuit : demandé → autorisé → expédié (sortie source) → réceptionné (entrée destination).
 Route::post('/transfers/{transfer}/approve', [StoreProductController::class, 'approve'])->name('transfers.approve');
 Route::post('/transfers/{transfer}/reject', [StoreProductController::class, 'reject'])->name('transfers.reject');
@@ -526,8 +536,9 @@ Route::get('/purchases/export-excel', function () {
 })->middleware(['auth.check', 'permission:purchases.view'])->name('purchases.export-excel');
 
 Route::get('/purchases/export-pdf', function () {
-    $dataTable = \App\Models\Purchase::all();
+    $dataTable = Purchase::all();
     $pdf = Pdf::loadView('purchases.export', compact('dataTable'));
+
     return $pdf->download('purchases.pdf');
 })->middleware(['auth.check', 'permission:purchases.view'])->name('purchases.export-pdf');
 
@@ -555,14 +566,15 @@ Route::post('/baseDonnee/{id}/delete', [BaseDonneeController::class, 'delete'])-
 // 33. ROUTES CLEAR CACHE
 // =============================================
 
-Route::get('/clear-cache', function() {
-    if (!auth()->check() || auth()->user()->role_id != 1) {
+Route::get('/clear-cache', function () {
+    if (! auth()->check() || auth()->user()->role_id != 1) {
         abort(403);
     }
     Artisan::call('cache:clear');
     Artisan::call('config:clear');
     Artisan::call('route:clear');
     Artisan::call('view:clear');
+
     return view('refreshed');
 })->middleware('auth.check')->name('clear-cache');
 

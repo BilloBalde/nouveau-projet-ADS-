@@ -1,4 +1,5 @@
 <?php
+
 // app/Models/DeviLine.php
 
 namespace App\Models;
@@ -8,13 +9,13 @@ use Illuminate\Database\Eloquent\Model;
 
 class DeviLine extends Model
 {
-    use HasFactory, Concerns\FigeUniteProduit;
+    use Concerns\FigeUniteProduit, HasFactory;
 
     protected $guarded = ['id'];
 
     protected $casts = [
         'unit_price' => 'decimal:2',
-        'total_price' => 'decimal:2'
+        'total_price' => 'decimal:2',
     ];
 
     protected static function booted()
@@ -44,11 +45,11 @@ class DeviLine extends Model
 
     public function getFormattedUnitPriceAttribute()
     {
-        return number_format($this->unit_price, 0, ',', ' ') . ' FG';
+        return number_format($this->unit_price, 0, ',', ' ').' FG';
     }
 
     public function getFormattedTotalPriceAttribute()
     {
-        return number_format($this->total_price, 0, ',', ' ') . ' FG';
+        return number_format($this->total_price, 0, ',', ' ').' FG';
     }
 }
