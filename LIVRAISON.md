@@ -100,8 +100,24 @@ parent »), pas comme des emplacements de premier niveau. Deux boutiques
 rattachées à rien = deux sections, et le sélecteur réapparaît — ce qui est le
 comportement voulu le jour où le client ouvre une deuxième boutique.
 
-> Le jeu de démonstration crée 2 boutiques : le sélecteur est donc visible
-> avant la remise à zéro. C'est normal.
+> Le jeu de démonstration est déjà dans ce cas : une boutique
+> (« Quincaillerie Madina ») et son dépôt rattaché. Le menu « Sections » n'y
+> apparaît donc pas.
+
+Pour savoir sur une installation donnée quels emplacements comptent comme
+sections, c'est-à-dire lesquels ne sont rattachés à rien :
+
+```bash
+php artisan tinker
+```
+
+```php
+App\Models\Store::whereNull('parent_id')->pluck('store_name', 'id');
+```
+
+Plus d'une ligne = le menu « Sections » s'affiche. Il suffit alors de rattacher
+les emplacements de trop à la boutique (« Magasins & entrepôts » → modifier →
+champ « Emplacement parent »).
 
 ## 4. Fichiers et médias
 
