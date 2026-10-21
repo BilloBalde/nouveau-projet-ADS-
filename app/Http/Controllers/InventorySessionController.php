@@ -30,7 +30,7 @@ class InventorySessionController extends Controller
         $this->middleware('auth.check');
         // Réservé au mode de vente qui déduit le chiffre d'affaires du stock.
         $this->middleware('mode:inventaire');
-        $this->middleware('permission:stock.view')->only(['index', 'show', 'rapportPdf']);
+        $this->middleware('permission:stock.view')->only(['index', 'show', 'rapportPdf', 'modeOperatoire']);
         $this->middleware('permission:stock.adjust')->only(['create', 'store', 'feuille', 'edit', 'valider', 'destroy']);
     }
 
@@ -38,6 +38,23 @@ class InventorySessionController extends Controller
     private function autoriserEmplacement(int $storeId): void
     {
         abort_unless(Auth::user()->canAccessStore($storeId), 403, 'Cet emplacement ne fait pas partie de votre périmètre.');
+    }
+
+    /**
+     * Mode opératoire à imprimer et à laisser au gérant, près de sa caisse.
+     *
+     * Il vit dans l'application plutôt que dans un fichier à part : il reste
+     * ainsi toujours disponible, et toujours d'accord avec la version
+     * installée — une marche à suivre périmée est pire que pas de marche à
+     * suivre du tout.
+     */
+    public function modeOperatoire()
+    {
+        $pdf = Pdf::loadView('inventaires.mode-operatoire', ['company' => Company::current()]);
+        $pdf->setPaper('A4', 'portrait');
+        $pdf->setOptions(['defaultFont' => 'sans-serif', 'isHtml5ParserEnabled' => true, 'isRemoteEnabled' => true]);
+
+        return $pdf->stream('mode-operatoire-inventaire.pdf');
     }
 
     public function index(Request $request)

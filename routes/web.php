@@ -475,6 +475,8 @@ Route::post('/transfers/{transfer}/cancel', [StoreProductController::class, 'can
 
 Route::get('/inventaires', [InventorySessionController::class, 'index'])->name('inventaires.index');
 Route::get('/inventaires/nouveau', [InventorySessionController::class, 'create'])->name('inventaires.create');
+// Marche à suivre imprimable, à laisser au gérant près de sa caisse.
+Route::get('/inventaires/mode-operatoire', [InventorySessionController::class, 'modeOperatoire'])->name('inventaires.mode-operatoire');
 Route::post('/inventaires', [InventorySessionController::class, 'store'])->name('inventaires.store');
 Route::get('/inventaires/{inventaire}/feuille', [InventorySessionController::class, 'feuille'])->whereNumber('inventaire')->name('inventaires.feuille');
 Route::get('/inventaires/{inventaire}/saisie', [InventorySessionController::class, 'edit'])->whereNumber('inventaire')->name('inventaires.edit');

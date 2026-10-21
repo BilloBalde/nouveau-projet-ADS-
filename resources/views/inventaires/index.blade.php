@@ -6,13 +6,17 @@
             <h4>Inventaires et chiffre d'affaires</h4>
             <h6>Chaque comptage clôt une période : ce qui a disparu du stock, achats et transferts déduits, a été vendu</h6>
         </div>
-        @permission('stock.adjust')
         <div class="page-btn">
+            {{-- Marche à suivre à imprimer et à laisser au gérant près de sa caisse. --}}
+            <a href="{{ route('inventaires.mode-operatoire') }}" class="btn btn-cancel me-2" target="_blank">
+                <i class="fas fa-book me-1"></i> Mode opératoire
+            </a>
+            @permission('stock.adjust')
             <a href="{{ route('inventaires.create') }}" class="btn btn-added">
                 <i class="fas fa-plus me-1"></i> Nouveau comptage
             </a>
+            @endpermission
         </div>
-        @endpermission
     </div>
 
     @include('layouts.flash')

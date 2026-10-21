@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Company;
 use App\Models\InventorySession;
 use App\Models\Place;
 use App\Models\Product;
@@ -432,5 +433,43 @@ class InventaireEcransTest extends TestCase
         ]);
         $this->assertSame(0, (int) $seance->lines->sole()->sold_quantity);
         $this->assertEquals(0, $seance->total_revenue_gnf);
+    }
+
+    /**
+     * Marche à suivre imprimable, à laisser au gérant près de sa caisse.
+     *
+     * Elle vit dans l'application pour rester d'accord avec la version
+     * installée : une marche à suivre périmée est pire que pas de marche à
+     * suivre du tout.
+     */
+    public function test_le_mode_operatoire_s_imprime(): void
+    {
+        $this->actingAs($this->admin);
+
+        $reponse = $this->get(route('inventaires.mode-operatoire'))->assertOk();
+        $this->assertSame('application/pdf', $reponse->headers->get('content-type'));
+
+        // Le contenu, vérifié sur la vue : un PDF n'est pas relisible tel quel.
+        $vue = view('inventaires.mode-operatoire', ['company' => Company::current()])->render();
+
+        // Les quatre étapes et les trois règles qui décident de la justesse du chiffre.
+        foreach (['Ouvrir le comptage', 'Imprimer la feuille', 'Compter en boutique', 'Saisir au bureau',
+            'Saisissez tous vos achats', 'Passez par les transferts', 'Déclarez les pertes'] as $attendu) {
+            $this->assertStringContainsString($attendu, $vue, "Section manquante : $attendu");
+        }
+
+        // Les trois pièges qui font qu'un gérant croit l'application cassée.
+        $this->assertStringContainsString('premier comptage affiche 0', $vue);
+        $this->assertStringContainsString('je n\'ai pas compté ce produit', $vue);
+        $this->assertStringContainsString('ne se modifie plus', $vue);
+    }
+
+    /** Le bouton est à portée de main depuis la liste des comptages. */
+    public function test_le_mode_operatoire_est_accessible_depuis_la_liste(): void
+    {
+        $this->actingAs($this->admin)->get(route('inventaires.index'))
+            ->assertOk()
+            ->assertSee(route('inventaires.mode-operatoire'), false)
+            ->assertSee('Mode opératoire');
     }
 }
