@@ -25,6 +25,12 @@ class SalesReportController extends Controller
     public function __construct()
     {
         $this->middleware('auth.check');
+        // Ventes flash et ventes tierces se saisissent au point de vente, fermé
+        // en mode inventaire : ces écrans ne peuvent rien contenir. Masquer
+        // l'entrée de menu ne suffit pas, l'adresse resterait accessible.
+        $this->middleware('mode:caisse')->only([
+            'flash', 'tiers', 'tiersPdf', 'tiersExcel', 'reglerPartenaire',
+        ]);
     }
 
     /**

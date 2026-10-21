@@ -307,4 +307,44 @@ class InventaireTableauDeBordTest extends TestCase
         $this->assertDoesNotMatchRegularExpression('/<input[^>]+id="price"[^>]+readonly/', $html);
         $this->assertStringContainsString('c\'est lui qui valorise vos inventaires', $html);
     }
+
+    // -----------------------------------------------------------------
+    // Les écrans qui ne peuvent rien contenir dans ce mode
+    // -----------------------------------------------------------------
+
+    /**
+     * Ventes flash et ventes tierces se saisissent au point de vente, fermé en
+     * mode inventaire : ces écrans ne peuvent rien contenir, par construction.
+     * Les laisser au menu enverrait le gérant sur des pages vides sans lui
+     * dire pourquoi.
+     */
+    public function test_les_rapports_de_caisse_sont_fermes(): void
+    {
+        foreach (['reports.flash', 'reports.tiers', 'reports.tiers.pdf', 'reports.tiers.excel'] as $route) {
+            $this->get(route($route))->assertForbidden();
+        }
+
+        $this->post(route('reports.tiers.settle'), [])->assertForbidden();
+    }
+
+    public function test_le_menu_ne_propose_plus_les_rapports_de_caisse(): void
+    {
+        $reponse = $this->get(route('inventaires.index'))->assertOk();
+
+        $reponse->assertDontSee('Ventes flash');
+        $reponse->assertDontSee('Ventes tierces');
+        // Les deux rapports qui gardent un sens restent proposés.
+        $reponse->assertSee('Rapport des ventes');
+        $reponse->assertSee('Rapport journalier');
+    }
+
+    /** En mode caisse, ces écrans restent accessibles : rien n'a changé là-bas. */
+    public function test_en_mode_caisse_les_rapports_de_caisse_restent_ouverts(): void
+    {
+        config(['sales.mode' => ModeDeVente::CAISSE]);
+
+        $this->get(route('reports.flash'))->assertOk();
+        $this->get(route('reports.tiers'))->assertOk();
+        $this->get(route('home'))->assertOk()->assertSee('Ventes flash');
+    }
 }
