@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>À propos — TELICO</title>
+    <title>À propos — {{ marqueNom() }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     @include('partials.theme-head')
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -16,9 +16,9 @@
     <!-- Hero -->
     <section class="pt-24 pb-16 bg-gradient-to-br from-brand-50 to-accent-100">
         <div class="max-w-4xl mx-auto px-4 text-center">
-            <h1 class="text-4xl font-black text-gray-900 mb-4">À propos de <span class="text-brand-500">TELICO</span></h1>
+            <h1 class="text-4xl font-black text-gray-900 mb-4">À propos de <span class="text-brand-500">{{ marqueNom() }}</span></h1>
             <p class="text-lg text-gray-600 leading-relaxed">
-                Chez TELICO, au-delà de la qualité des autres — votre quincaillerie générale de confiance à Conakry.
+                @if (config('brand.slogan'))Chez {{ marqueNom() }}, {{ config('brand.slogan') }}@endif{{ marque()?->about ? ' — '.marque()->about : '' }}
             </p>
         </div>
     </section>
@@ -30,18 +30,19 @@
                 <div>
                     <h2 class="text-2xl font-bold text-gray-900 mb-4">Notre mission</h2>
                     <p class="text-gray-600 leading-relaxed mb-4">
-                        TELICO est une quincaillerie générale guinéenne à Conakry : peinture, outillage,
-                        serrurerie, plomberie et électricité. Nous mettons à disposition de nos clients des articles
-                        adaptés à leurs travaux, avec un accompagnement fiable et des standards élevés.
+                        {{ marqueNom() }}{{ marque()?->address ? ' — '.marque()->address : '' }}.
+                        {{ marque()?->about }}
+                        Nous mettons à disposition de nos clients des articles adaptés à leurs besoins,
+                        avec un accompagnement fiable et des standards élevés.
                     </p>
                     <p class="text-gray-600 leading-relaxed">
-                        Notre équipe expérimentée vous conseille selon votre chantier et votre budget, pour des articles
-                        de quincaillerie solides et adaptés à vos besoins.
+                        Notre équipe vous conseille selon vos besoins et votre budget, pour des articles
+                        de {{ config('brand.metier') }} fiables.
                     </p>
                 </div>
                 <div class="bg-brand-50 rounded-2xl p-8 text-center">
                     <div class="text-6xl text-brand-400 mb-4"><i class="fas fa-toolbox"></i></div>
-                    <div class="text-3xl font-black text-gray-900">TELICO</div>
+                    <div class="text-3xl font-black text-gray-900">{{ marqueNom() }}</div>
                     <div class="text-brand-600 font-semibold mt-1">Qualité & Service</div>
                 </div>
             </div>

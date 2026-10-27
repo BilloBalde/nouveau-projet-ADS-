@@ -29,12 +29,12 @@
         }
 
         .btn-added {
-            background-color: #3E4C21;
+            background-color: var(--adm-brand-600,#3E4C21);
             color: white;
         }
 
         .btn-added:hover {
-            background-color: #323D1A;
+            background-color: var(--adm-brand-700,#323D1A);
         }
 
         .btn-cancel {
@@ -47,7 +47,7 @@
         }
 
         /* ============================= */
-        /* FACTURE — design TELICO */
+        /* FACTURE */
         /* ============================= */
         #invoiceContent {
             position: relative;
@@ -96,7 +96,7 @@
             align-items: flex-start;
             gap: 24px;
             padding-bottom: 22px;
-            border-bottom: 3px solid #3E4C21;
+            border-bottom: 3px solid var(--adm-brand-600,#3E4C21);
             margin-bottom: 24px;
         }
 
@@ -136,7 +136,7 @@
             font-size: 28px;
             font-weight: 700;
             letter-spacing: 1px;
-            color: #3E4C21 !important;
+            color: var(--adm-brand-600,#3E4C21) !important;
             text-transform: uppercase;
         }
 
@@ -159,9 +159,9 @@
             font-weight: 700;
             letter-spacing: 0.5px;
             text-transform: uppercase;
-            background: #F4F5EC;
+            background: var(--adm-brand-50,#F4F5EC);
             color: #b45309 !important;
-            border: 1px solid #CED5AE;
+            border: 1px solid var(--adm-brand-200,#CED5AE);
         }
 
         /* Cartes d'info */
@@ -173,8 +173,8 @@
 
         .info-card {
             flex: 1;
-            background: #F4F5EC;
-            border: 1px solid #CED5AE;
+            background: var(--adm-brand-50,#F4F5EC);
+            border: 1px solid var(--adm-brand-200,#CED5AE);
             border-radius: 12px;
             padding: 16px 18px;
         }
@@ -246,8 +246,8 @@
 
         .invoice-products-table tfoot .invoice-total td {
             padding: 14px 12px;
-            background: #F4F5EC;
-            border-top: 2px solid #3E4C21;
+            background: var(--adm-brand-50,#F4F5EC);
+            border-top: 2px solid var(--adm-brand-600,#3E4C21);
             font-size: 14px;
         }
 
@@ -259,7 +259,7 @@
         /* Montant en lettres */
         .amount-in-words {
             background: #faf9f7;
-            border-left: 4px solid #3E4C21;
+            border-left: 4px solid var(--adm-brand-600,#3E4C21);
             border-radius: 0 10px 10px 0;
             padding: 14px 18px;
             font-size: 12.5px;
@@ -421,16 +421,16 @@
                         {{-- $company est fourni par le View Composer (AppServiceProvider) --}}
                         <div id="invoiceContent">
                             <div class="invoice-watermark" aria-hidden="true">
-                                <img class="watermark-logo" src="{{ asset('companies/' . ($company?->logo ?? 'telico.png')) }}" alt="">
+                                @if (marqueLogoUrl())<img class="watermark-logo" src="{{ marqueLogoUrl() }}" alt="">@endif
                             </div>
 
                             <div class="facture-inner">
                                 <!-- En-tête -->
                                 <div class="facture-header">
                                     <div class="facture-brand">
-                                        <img src="{{ asset('companies/' . ($company?->logo ?? 'telico.png')) }}" alt="{{ $company?->name ?? 'TELICO' }}">
+                                        @include('partials.logo-marque', ['taille' => 64])
                                         <div>
-                                            <div class="facture-brand-name">{{ $company?->name ?? 'TELICO' }}</div>
+                                            <div class="facture-brand-name">{{ marqueNom() }}</div>
                                             <div class="facture-brand-sub">
                                                 @if(!empty($company?->address)) {{ $company->address }}<br>@endif
                                                 Tél: {{ $company?->phone ?? '' }}
@@ -510,13 +510,13 @@
                                     </div>
                                     <div class="signature-box">
                                         <div class="signature-line"></div>
-                                        <p>Pour {{ strtoupper($company?->name ?? 'TELICO') }}</p>
+                                        <p>Pour {{ strtoupper(marqueNom()) }}</p>
                                     </div>
                                 </div>
 
                                 <!-- Pied de page -->
                                 <div class="company-info">
-                                    <h4>{{ $company?->name ?? 'TELICO' }}</h4>
+                                    <h4>{{ marqueNom() }}</h4>
                                     <p>{{ $company?->address ?? '' }}</p>
                                     <p>Tél: {{ $company?->phone ?? '' }} | Email: {{ $company?->email ?? '' }}</p>
                                     <p>Facture générée le {{ \Carbon\Carbon::now()->format('d/m/Y H:i') }}</p>

@@ -1,5 +1,8 @@
 <?php
 
+use App\Models\Company;
+use App\Support\IdentiteVisuelle;
+use App\Support\Monogramme;
 use Carbon\Carbon;
 
 if (! function_exists('getNow')) {
@@ -161,5 +164,82 @@ if (! function_exists('isActiveRoute')) {
         }
 
         return '';
+    }
+}
+
+/*
+|--------------------------------------------------------------------------
+| Identité du commerçant
+|--------------------------------------------------------------------------
+|
+| Le nom du premier client était écrit en dur dans quatre-vingts endroits : titres de
+| pages, en-têtes de factures, e-mails, reçus, site public. Ailleurs il servait
+| de valeur de repli — « $company?->name ?? '…' » — ce qui revient au même
+| dès qu'une vue est rendue sans qu'on lui passe la fiche entreprise, ce qui
+| arrive pour tous les PDF servis par un contrôleur qui l'oublie.
+|
+| Ces fonctions lisent la fiche enregistrée, mémorisée une fois par requête
+| (Company::current). Aucune vue n'a plus besoin qu'on lui passe quoi que ce
+| soit, et aucun nom de client ne reste dans le code.
+*/
+
+if (! function_exists('marque')) {
+    function marque(): ?Company
+    {
+        return Company::current();
+    }
+}
+
+if (! function_exists('marqueNom')) {
+    /** Nom du commerçant, tel qu'il doit apparaître sur les écrans et les documents. */
+    function marqueNom(): string
+    {
+        return marque()?->name ?: config('app.name');
+    }
+}
+
+if (! function_exists('marqueLogoUrl')) {
+    /** URL du logo, ou null s'il n'y en a pas : c'est alors au monogramme de servir. */
+    function marqueLogoUrl(): ?string
+    {
+        $logo = marque()?->logo;
+
+        return $logo ? asset('companies/'.$logo) : null;
+    }
+}
+
+if (! function_exists('marqueInitiales')) {
+    function marqueInitiales(): string
+    {
+        return Monogramme::pour(marqueNom());
+    }
+}
+
+if (! function_exists('marqueCouleur')) {
+    /**
+     * Un ton de la couleur de marque, en toutes lettres.
+     *
+     * Les PDF en ont besoin écrit : dompdf ne connaît pas les variables CSS et
+     * rendrait la couleur transparente. Les écrans, eux, passent par les jetons.
+     */
+    function marqueCouleur(string $ton = '600'): string
+    {
+        return IdentiteVisuelle::ton($ton);
+    }
+}
+
+if (! function_exists('marqueAccent')) {
+    /** Couleur d'accent, écrite en toutes lettres (PDF et e-mails). */
+    function marqueAccent(): string
+    {
+        return IdentiteVisuelle::accent();
+    }
+}
+
+if (! function_exists('marqueEncre')) {
+    /** Un neutre de la marque (ink, ink-muted, ink-faint, paper-warm, hairline). */
+    function marqueEncre(string $cle): string
+    {
+        return IdentiteVisuelle::encre()[$cle] ?? '#1F2414';
     }
 }

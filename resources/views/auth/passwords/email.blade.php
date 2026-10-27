@@ -5,12 +5,12 @@
     <style>
         /* Reset Password Specific Styles */
         :root {
-            --primary-color: #3E4C21;
-            --secondary-color: #323D1A;
+            --primary-color: var(--adm-brand-600,#3E4C21);
+            --secondary-color: var(--adm-brand-700,#323D1A);
             --success-color: #28a745;
             --danger-color: #dc3545;
             --warning-color: #ffc107;
-            --dark-bg: linear-gradient(135deg, #3E4C21 0%, #323D1A 100%);
+            --dark-bg: linear-gradient(135deg, var(--adm-brand-600,#3E4C21) 0%, var(--adm-brand-700,#323D1A) 100%);
         }
 
         body {
@@ -422,7 +422,7 @@
                     <div class="login-userset">
                         <!-- Logo -->
                         <div class="login-logo">
-                            <img src="{{ asset('companies/telico.png') }}" alt="TELICO">
+                            @include('partials.logo-marque', ['taille' => 64])
                         </div>
 
                         <!-- Security Badge -->

@@ -4,15 +4,15 @@
     <body>
         <style>
             :root {
-                --po-primary: #3E4C21;
-                --po-primary-light: #F4F5EC;
-                --po-ink: #1F2414;
-                --po-muted: #66695A;
-                --po-border: #E6E9D5;
+                --po-primary: var(--adm-brand-600,#3E4C21);
+                --po-primary-light: var(--adm-brand-50,#F4F5EC);
+                --po-ink: var(--adm-ink,#1F2414);
+                --po-muted: var(--adm-ink-muted,#66695A);
+                --po-border: var(--adm-brand-100,#E6E9D5);
             }
 
             .po-hero {
-                background: linear-gradient(135deg, #3E4C21 0%, #323D1A 100%);
+                background: linear-gradient(135deg, var(--adm-brand-600,#3E4C21) 0%, var(--adm-brand-700,#323D1A) 100%);
                 border-radius: 16px;
                 padding: 28px 32px;
                 color: #fff;
@@ -131,7 +131,7 @@
                 flex-shrink: 0;
             }
             .po-stat-icon.tone-store { background: #eaf2ff; color: #2e6bd6; }
-            .po-stat-icon.tone-origin { background: #F4F5EC; color: var(--po-primary); }
+            .po-stat-icon.tone-origin { background: var(--adm-brand-50,#F4F5EC); color: var(--po-primary); }
             .po-stat-icon.tone-currency { background: #eafaf0; color: #21a366; }
             .po-stat-icon.tone-cbm { background: #f3ecff; color: #7c4fe0; }
             .po-stat-icon.tone-status { background: #fff4de; color: #b5790a; }
@@ -181,7 +181,7 @@
                 border-collapse: collapse;
             }
             .po-table thead th {
-                background: #F9F9F3;
+                background: var(--adm-paper-warm,#F9F9F3);
                 color: var(--po-muted);
                 text-transform: uppercase;
                 font-size: 11px;
@@ -193,7 +193,7 @@
             }
             .po-table tbody td {
                 padding: 14px 16px;
-                border-bottom: 1px solid #E6E9D5;
+                border-bottom: 1px solid var(--adm-brand-100,#E6E9D5);
                 font-size: 14px;
                 color: var(--po-ink);
                 white-space: nowrap;
@@ -202,7 +202,7 @@
                 border-bottom: none;
             }
             .po-table tbody tr:hover {
-                background: #F9F9F3;
+                background: var(--adm-paper-warm,#F9F9F3);
             }
             .po-product-cell {
                 display: flex;
@@ -236,7 +236,7 @@
             }
 
             .po-grand-total {
-                background: linear-gradient(135deg, #F4F5EC 0%, #E6E9D5 100%);
+                background: linear-gradient(135deg, var(--adm-brand-50,#F4F5EC) 0%, var(--adm-brand-100,#E6E9D5) 100%);
                 border-top: 1px solid var(--po-border);
                 padding: 22px 24px;
                 display: flex;

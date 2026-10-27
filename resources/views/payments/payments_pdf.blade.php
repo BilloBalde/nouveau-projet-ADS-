@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Liste des paiements - TELICO</title>
+    <title>Liste des paiements - {{ marqueNom() }}</title>
     <style>
         /* ===== RESET & BASE ===== */
         * {
@@ -15,7 +15,7 @@
             font-family: 'DejaVu Sans', 'Helvetica', 'Arial', sans-serif;
             font-size: 11px;
             line-height: 1.5;
-            color: #1F2414;
+            color: {{ marqueEncre('ink') }};
             background: #fff;
             margin: 1.5cm;
         }
@@ -27,7 +27,7 @@
         .header {
             width: 100%;
             border-collapse: collapse;
-            border-bottom: 3px solid #3E4C21;
+            border-bottom: 3px solid {{ marqueCouleur('600') }};
             padding-bottom: 14px;
             margin-bottom: 18px;
         }
@@ -49,13 +49,13 @@
         .company-name {
             font-size: 20px;
             font-weight: bold;
-            color: #3E4C21;
+            color: {{ marqueCouleur('600') }};
             letter-spacing: -0.3px;
         }
 
         .company-details {
             font-size: 9px;
-            color: #66695A;
+            color: {{ marqueEncre('ink-muted') }};
             margin-top: 4px;
         }
 
@@ -75,24 +75,24 @@
         .report-title {
             font-size: 17px;
             font-weight: 700;
-            color: #1F2414;
+            color: {{ marqueEncre('ink') }};
             text-transform: uppercase;
             letter-spacing: 0.03em;
         }
 
         .report-generated {
             font-size: 9px;
-            color: #66695A;
+            color: {{ marqueEncre('ink-muted') }};
         }
 
         .filters {
-            background: #F9F9F3;
+            background: {{ marqueEncre('paper-warm') }};
             padding: 8px 14px;
             border-radius: 6px;
             margin-bottom: 16px;
             font-size: 9.5px;
-            color: #66695A;
-            border-left: 3px solid #3E4C21;
+            color: {{ marqueEncre('ink-muted') }};
+            border-left: 3px solid {{ marqueCouleur('600') }};
         }
 
         /* ===== TABLEAU ===== */
@@ -104,7 +104,7 @@
         }
 
         table.data th {
-            background-color: #3E4C21;
+            background-color: {{ marqueCouleur('600') }};
             color: white;
             padding: 9px 8px;
             text-align: left;
@@ -112,17 +112,17 @@
             font-size: 9.5px;
             text-transform: uppercase;
             letter-spacing: 0.02em;
-            border: 1px solid #3E4C21;
+            border: 1px solid {{ marqueCouleur('600') }};
         }
 
         table.data td {
             padding: 7px 8px;
-            border: 1px solid #E6E9D5;
+            border: 1px solid {{ marqueCouleur('100') }};
             vertical-align: top;
         }
 
         table.data tr:nth-child(even) td {
-            background-color: #F9F9F3;
+            background-color: {{ marqueEncre('paper-warm') }};
         }
 
         .amount {
@@ -143,8 +143,8 @@
 
         /* ===== RÉSUMÉ ===== */
         .summary {
-            background: #F9F9F3;
-            border: 1px solid #CED5AE;
+            background: {{ marqueEncre('paper-warm') }};
+            border: 1px solid {{ marqueCouleur('200') }};
             border-radius: 8px;
             padding: 14px 20px;
             margin-top: 18px;
@@ -165,28 +165,28 @@
         }
 
         .summary-row .total-label {
-            color: #66695A;
+            color: {{ marqueEncre('ink-muted') }};
         }
 
         .summary-row .total-value {
             text-align: right;
             font-weight: 700;
-            color: #1F2414;
+            color: {{ marqueEncre('ink') }};
         }
 
         .summary-row.grand-total td {
-            border-top: 2px solid #3E4C21;
+            border-top: 2px solid {{ marqueCouleur('600') }};
             padding-top: 8px;
             font-size: 13px;
         }
 
         .summary-row.grand-total .total-label {
             font-weight: 700;
-            color: #1F2414;
+            color: {{ marqueEncre('ink') }};
         }
 
         .summary-row.grand-total .total-value {
-            color: #3E4C21;
+            color: {{ marqueCouleur('600') }};
         }
 
         /* ===== PIED DE PAGE ===== */
@@ -196,9 +196,9 @@
             left: 0;
             right: 0;
             font-size: 8px;
-            color: #66695A;
+            color: {{ marqueEncre('ink-muted') }};
             text-align: center;
-            border-top: 1px solid #E6E9D5;
+            border-top: 1px solid {{ marqueCouleur('100') }};
             padding-top: 8px;
             margin-top: 20px;
             background: white;
@@ -230,7 +230,7 @@
                 @endif
             </td>
             <td>
-                <div class="company-name">{{ $company->name ?? 'TELICO' }}</div>
+                <div class="company-name">{{ marqueNom() }}</div>
                 <div class="company-details">
                     {{ $company->address ?? 'Madina, Ecole Gare Routière Dabola Camion, Conakry' }}<br>
                     Tél: {{ $company->phone ?? '' }} | Email: {{ $company->email ?? '' }}
@@ -290,7 +290,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="7" style="text-align:center;color:#66695A;padding:20px;">Aucun paiement pour cette sélection.</td>
+                    <td colspan="7" style="text-align:center;color:{{ marqueEncre('ink-muted') }};padding:20px;">Aucun paiement pour cette sélection.</td>
                 </tr>
             @endforelse
         </tbody>
@@ -316,7 +316,7 @@
     </div>
 
     <div class="footer">
-        {{ $company->name ?? 'TELICO' }} — Rapport de paiements — Document confidentiel
+        {{ marqueNom() }} — Rapport de paiements — Document confidentiel
     </div>
 
     <script type="text/php">

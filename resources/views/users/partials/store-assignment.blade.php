@@ -7,7 +7,7 @@
     $selectedStore = old('store_id', $currentStoreId ?? '');
 @endphp
 <div class="col-12" id="store-field" style="display:none;">
-    <div class="card" style="background:#F9F9F3;border:1px solid #E2E3CF;">
+    <div class="card" style="background:var(--adm-paper-warm,#F9F9F3);border:1px solid #E2E3CF;">
         <div class="card-body">
             <label class="fw-semibold mb-2">Magasin d'affectation — le magasin existe-t-il déjà ?</label>
             <div class="d-flex flex-wrap gap-3 mb-3">

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Catégories — TELICO</title>
+    <title>Catégories — {{ marqueNom() }}</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
     @include('partials.theme-head')
@@ -26,7 +26,7 @@
             text-decoration: none;
         }
         .cat-card:hover {
-            border-color: #6B7A35;
+            border-color: var(--brand-500,#6B7A35);
             transform: translateY(-4px);
             box-shadow: 0 12px 28px rgba(245,158,11,0.15);
         }
@@ -48,7 +48,7 @@
             width: 80px; height: 80px; border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
             font-size: 32px;
-            background: #E6E9D5; color: #3E4C21;
+            background: var(--brand-100,#E6E9D5); color: var(--brand-600,#3E4C21);
         }
         .cat-body { padding: 14px 12px 18px; }
         .cat-name { font-size: 14px; font-weight: 700; color: #1f2937; margin-bottom: 4px; }
@@ -56,7 +56,7 @@
         .cat-arrow {
             display: inline-flex; align-items: center; gap: 4px;
             margin-top: 10px; font-size: 12px; font-weight: 600;
-            color: #6B7A35;
+            color: var(--brand-500,#6B7A35);
         }
     </style>
 </head>

@@ -39,6 +39,12 @@ return [
     'accent' => env('BRAND_ACCENT', '#C7A150'),
 
     /*
+     * Devise affichée sur le site public et en pied de page. Laisser vide pour
+     * n'en afficher aucune. Par défaut celle des installations déjà livrées.
+     */
+    'slogan' => env('BRAND_SLOGAN', 'au-delà de la qualité des autres'),
+
+    /*
      * Fiche entreprise posée par le seeder sur une base neuve. Elle reste
      * modifiable ensuite depuis Paramètres > Profil de l'entreprise : ce ne
      * sont que les valeurs de départ, pas la source de vérité.

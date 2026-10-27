@@ -19,6 +19,9 @@
             @foreach (\App\Support\IdentiteVisuelle::rampe() as $ton => $valeur)
             --adm-brand-{{ $ton }}: {{ $valeur }};
             @endforeach
+            @foreach (\App\Support\IdentiteVisuelle::encre() as $cle => $valeur)
+            --adm-{{ $cle }}: {{ $valeur }};
+            @endforeach
         }
         /* Monogramme de repli, tant qu'aucun logo n'a été téléversé. */
         .logo-monogramme {
@@ -33,7 +36,7 @@
             font-family: 'Source Sans 3', 'Segoe UI', sans-serif;
             min-height: 100vh;
             display: flex;
-            background: #F9F9F3;
+            background: var(--adm-paper-warm,#F9F9F3);
         }
 
         /* ── Panneau gauche ── */
@@ -119,7 +122,7 @@
         }
         .left-title em {
             font-style: normal;
-            background: linear-gradient(90deg, #CED5AE, #ffffff);
+            background: linear-gradient(90deg, var(--adm-brand-200,#CED5AE), #ffffff);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
@@ -144,7 +147,7 @@
         }
         .stat-num {
             font-size: 1.5rem; font-weight: 800;
-            color: #ADB97E;
+            color: var(--adm-brand-300,#ADB97E);
         }
         .stat-lbl {
             font-size: 0.7rem; color: rgba(255,255,255,0.55);

@@ -17,12 +17,12 @@
         .header {
             text-align: center;
             margin-bottom: 30px;
-            border-bottom: 2px solid #3E4C21;
+            border-bottom: 2px solid {{ marqueCouleur('600') }};
             padding-bottom: 15px;
         }
         
         .header h1 {
-            color: #3E4C21;
+            color: {{ marqueCouleur('600') }};
             font-size: 24px;
             margin: 0 0 5px 0;
         }
@@ -84,12 +84,12 @@
             background: #f5f5f5;
             padding: 10px;
             margin-bottom: 20px;
-            border-left: 4px solid #3E4C21;
+            border-left: 4px solid {{ marqueCouleur('600') }};
             font-size: 11px;
         }
         
         .filter-info strong {
-            color: #3E4C21;
+            color: {{ marqueCouleur('600') }};
         }
         
         table {
@@ -100,12 +100,12 @@
         }
         
         th {
-            background: #3E4C21;
+            background: {{ marqueCouleur('600') }};
             color: white;
             font-weight: bold;
             padding: 10px 8px;
             text-align: center;
-            border: 1px solid #283114;
+            border: 1px solid {{ marqueCouleur('800') }};
         }
         
         td {
@@ -128,16 +128,16 @@
         }
         
         tr:hover {
-            background: #F9F9F3;
+            background: {{ marqueEncre('paper-warm') }};
         }
         
         .total-row {
-            background: #F4F5EC !important;
+            background: {{ marqueCouleur('50') }} !important;
             font-weight: bold;
         }
         
         .total-row td {
-            border-top: 2px solid #3E4C21;
+            border-top: 2px solid {{ marqueCouleur('600') }};
         }
         
         .summary-box {
@@ -248,7 +248,7 @@
             @endif
             <div class="document-title">
                 <h1>RAPPORT DES VENTES</h1>
-                <h3>{{ $company?->name ?? 'TELICO' }}</h3>
+                <h3>{{ marqueNom() }}</h3>
             </div>
         </div>
     </div>
@@ -336,7 +336,7 @@
 
     <!-- Summary Box -->
     <div class="summary-box">
-        <h4 style="margin-top: 0; color: #3E4C21;">RÉSUMÉ</h4>
+        <h4 style="margin-top: 0; color: {{ marqueCouleur('600') }};">RÉSUMÉ</h4>
         <div class="summary-row">
             <span class="summary-label">Nombre total de ventes:</span>
             <span class="summary-value">{{ $sales->count() }}</span>

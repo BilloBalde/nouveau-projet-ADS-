@@ -2,15 +2,15 @@
 <table>
     <thead>
         <tr>
-            <th style="background-color: #3E4C21; color: white; font-weight: bold; text-align: center;">N° Facture</th>
-            <th style="background-color: #3E4C21; color: white; font-weight: bold; text-align: center;">Produit</th>
-            <th style="background-color: #3E4C21; color: white; font-weight: bold; text-align: center;">Quantité</th>
-            <th style="background-color: #3E4C21; color: white; font-weight: bold; text-align: center;">Unité</th>
-            <th style="background-color: #3E4C21; color: white; font-weight: bold; text-align: center;">Prix par unité</th>
-            <th style="background-color: #3E4C21; color: white; font-weight: bold; text-align: center;">Prix Total</th>
-            <th style="background-color: #3E4C21; color: white; font-weight: bold; text-align: center;">Intérêt</th>
-            <th style="background-color: #3E4C21; color: white; font-weight: bold; text-align: center;">Date</th>
-            <th style="background-color: #3E4C21; color: white; font-weight: bold; text-align: center;">Vente tierce (partenaire)</th>
+            <th style="background-color: var(--adm-brand-600,#3E4C21); color: white; font-weight: bold; text-align: center;">N° Facture</th>
+            <th style="background-color: var(--adm-brand-600,#3E4C21); color: white; font-weight: bold; text-align: center;">Produit</th>
+            <th style="background-color: var(--adm-brand-600,#3E4C21); color: white; font-weight: bold; text-align: center;">Quantité</th>
+            <th style="background-color: var(--adm-brand-600,#3E4C21); color: white; font-weight: bold; text-align: center;">Unité</th>
+            <th style="background-color: var(--adm-brand-600,#3E4C21); color: white; font-weight: bold; text-align: center;">Prix par unité</th>
+            <th style="background-color: var(--adm-brand-600,#3E4C21); color: white; font-weight: bold; text-align: center;">Prix Total</th>
+            <th style="background-color: var(--adm-brand-600,#3E4C21); color: white; font-weight: bold; text-align: center;">Intérêt</th>
+            <th style="background-color: var(--adm-brand-600,#3E4C21); color: white; font-weight: bold; text-align: center;">Date</th>
+            <th style="background-color: var(--adm-brand-600,#3E4C21); color: white; font-weight: bold; text-align: center;">Vente tierce (partenaire)</th>
         </tr>
     </thead>
     <tbody>

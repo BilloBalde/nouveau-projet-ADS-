@@ -28,7 +28,7 @@
         @forelse ($sections as $section)
         @php $actif = $current && $current->id === $section->store->id; @endphp
         <div class="col-xl-4 col-md-6 col-12 d-flex">
-            <div class="card flex-fill" style="{{ $actif ? 'border:2px solid #3E4C21;' : '' }}">
+            <div class="card flex-fill" style="{{ $actif ? 'border:2px solid var(--adm-brand-600,#3E4C21);' : '' }}">
                 <div class="card-body d-flex flex-column">
                     <div class="d-flex justify-content-between align-items-start mb-2">
                         <div>

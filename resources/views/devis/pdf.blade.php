@@ -43,7 +43,7 @@
         }
         
         .btn-added {
-            background-color: #3E4C21;
+            background-color: {{ marqueCouleur('600') }};
             color: white;
         }
         
@@ -85,7 +85,7 @@
             background: #f5f5f5;
             padding: 15px;
             margin-bottom: 25px;
-            border-left: 4px solid #C7A150;
+            border-left: 4px solid {{ marqueAccent() }};
             font-size: 16px;
         }
         
@@ -374,7 +374,7 @@
                                     @endif
                                     <div class="document-title">
                                         <h1>DEVIS</h1>
-                                        <h3>{{ $company?->name ?? 'TELICO' }}</h3>
+                                        <h3>{{ marqueNom() }}</h3>
                                     </div>
                                 </div>
                             </div>
@@ -456,7 +456,7 @@
 
                             <!-- Notes -->
                             @if($devis->notes)
-                            <div style="margin: 20px 0; padding: 10px; background: #f9f9f9; border-left: 4px solid #C7A150;">
+                            <div style="margin: 20px 0; padding: 10px; background: #f9f9f9; border-left: 4px solid {{ marqueAccent() }};">
                                 <strong>Notes:</strong><br>
                                 {{ $devis->notes }}
                             </div>
@@ -482,7 +482,7 @@
                                 </div>
                                 <div class="signature-box">
                                     <div class="signature-line"></div>
-                                    <strong>Pour {{ $company?->name ?? 'TELICO' }}</strong><br>
+                                    <strong>Pour {{ marqueNom() }}</strong><br>
                                     <small>{{ $devis->createdBy?->name ?? auth()->user()->name }}</small>
                                 </div>
                             </div>

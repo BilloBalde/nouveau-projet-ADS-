@@ -42,7 +42,7 @@
             border: none;
         }
         .btn i { margin-right: 5px; }
-        .btn-added { background-color: #3E4C21; color: white; }
+        .btn-added { background-color: var(--adm-brand-600,#3E4C21); color: white; }
         .btn-added:hover { background-color: #ff820e; }
         .btn-cancel { background-color: #6c757d; color: white; }
         .btn-cancel:hover { background-color: #5a6268; }
@@ -364,11 +364,11 @@
                                     @if($company && $company->logo)
                                         <img src="{{ asset('companies/'.$company->logo) }}" alt="{{ $company->name ?? 'Logo' }}">
                                     @else
-                                        <img src="{{ asset('companies/telico.png') }}" alt="{{ config('app.name') }}">
+                                        @include('partials.logo-marque', ['taille' => 64])
                                     @endif
                                     <div class="document-title">
                                         <h1>BON DE COMMANDE</h1>
-                                        <h3>{{ $company?->name ?? 'TELICO' }}</h3>
+                                        <h3>{{ marqueNom() }}</h3>
                                     </div>
                                 </div>
                             </div>
@@ -488,7 +488,7 @@
                                 </div>
                                 <div class="bon-signature">
                                     <div class="bon-signature-line">
-                                        <strong>Pour {{ $company?->name ?? 'TELICO' }}</strong><br>
+                                        <strong>Pour {{ marqueNom() }}</strong><br>
                                         <small>{{ auth()->user()->name }}</small>
                                     </div>
                                 </div>

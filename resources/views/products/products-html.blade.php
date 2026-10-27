@@ -13,7 +13,7 @@
         }
         h1 {
             color: #333;
-            border-bottom: 2px solid #3E4C21;
+            border-bottom: 2px solid {{ marqueCouleur('600') }};
             padding-bottom: 10px;
             text-align: center;
         }
@@ -31,7 +31,7 @@
             margin-top: 20px;
         }
         th {
-            background-color: #3E4C21;
+            background-color: {{ marqueCouleur('600') }};
             color: white;
             padding: 12px 8px;
             text-align: left;
@@ -73,7 +73,7 @@
             width: 200px;
             margin: 20px auto;
             padding: 12px 20px;
-            background-color: #3E4C21;
+            background-color: {{ marqueCouleur('600') }};
             color: white;
             border: none;
             border-radius: 5px;
@@ -165,7 +165,7 @@
 
     <div class="footer">
         <p>Document généré le {{ now()->format('d/m/Y H:i:s') }}</p>
-        <p>TELICO - Tous droits réservés</p>
+        <p>{{ marqueNom() }} - Tous droits réservés</p>
     </div>
 
     <script>

@@ -6,7 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Mes notifications — TELICO</title>
+    <title>Mes notifications — {{ marqueNom() }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     @include('partials.theme-head')
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -94,7 +94,7 @@
                         <div class="page-btn">
                             <form method="POST" action="{{ route('notifications.readAll') }}">
                                 @csrf
-                                <button type="submit" class="btn btn-added" style="background-color:#6B7A35;border-color:#6B7A35;">
+                                <button type="submit" class="btn btn-added" style="background-color:var(--adm-brand-500,#6B7A35);border-color:var(--adm-brand-500,#6B7A35);">
                                     Tout marquer lu
                                 </button>
                             </form>
@@ -107,7 +107,7 @@
                             @forelse($notifications as $notification)
                                 <a href="{{ $notification->data['url'] ?? '#' }}"
                                    onclick="markRead(event, '{{ $notification->id }}', this.href)"
-                                   style="display:block;padding:14px 22px;border-bottom:1px solid #f3f4f6;color:#374151;text-decoration:none;{{ $notification->read_at ? '' : 'background:#F4F5EC;font-weight:600;' }}">
+                                   style="display:block;padding:14px 22px;border-bottom:1px solid #f3f4f6;color:#374151;text-decoration:none;{{ $notification->read_at ? '' : 'background:var(--adm-brand-50,#F4F5EC);font-weight:600;' }}">
                                     {{ $notification->data['message'] ?? '' }}
                                     <span style="display:block;font-size:12px;color:#9ca3af;font-weight:400;margin-top:3px;">
                                         {{ $notification->created_at->diffForHumans() }}

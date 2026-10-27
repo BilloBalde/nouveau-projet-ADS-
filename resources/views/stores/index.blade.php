@@ -82,7 +82,7 @@
                                                 @if($item->store_picture)
                                                     <img src="{{ asset('stores/' . $item->store_picture) }}" alt="{{ $item->store_name }}" style="width: 180px; height: 150px; object-fit: cover;">
                                                 @else
-                                                    <div style="width: 180px; height: 150px; display: flex; align-items: center; justify-content: center; background: #F4F5EC; color: #3E4C21; border-radius: 6px;">
+                                                    <div style="width: 180px; height: 150px; display: flex; align-items: center; justify-content: center; background: var(--adm-brand-50,#F4F5EC); color: var(--adm-brand-600,#3E4C21); border-radius: 6px;">
                                                         <i class="fas fa-store fa-2x"></i>
                                                     </div>
                                                 @endif

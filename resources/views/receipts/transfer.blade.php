@@ -7,13 +7,13 @@
         // (il affichait toujours « Transfert confirmé », même en attente ou refusé).
         $couleurs = [
             \App\Models\StockTransfer::PENDING    => ['#FBF6EA', '#8A6A24'],
-            \App\Models\StockTransfer::APPROVED   => ['#E6E9D5', '#3E4C21'],
-            \App\Models\StockTransfer::IN_TRANSIT => ['#E6E9D5', '#3E4C21'],
-            \App\Models\StockTransfer::COMPLETED  => ['#3E4C21', '#FFFFFF'],
+            \App\Models\StockTransfer::APPROVED   => ['var(--adm-brand-100,#E6E9D5)', 'var(--adm-brand-600,#3E4C21)'],
+            \App\Models\StockTransfer::IN_TRANSIT => ['var(--adm-brand-100,#E6E9D5)', 'var(--adm-brand-600,#3E4C21)'],
+            \App\Models\StockTransfer::COMPLETED  => ['var(--adm-brand-600,#3E4C21)', '#FFFFFF'],
             \App\Models\StockTransfer::REJECTED   => ['#FDECEA', '#B3261E'],
-            \App\Models\StockTransfer::CANCELLED  => ['#F1F1EC', '#66695A'],
+            \App\Models\StockTransfer::CANCELLED  => ['#F1F1EC', 'var(--adm-ink-muted,#66695A)'],
         ];
-        [$fondStatut, $texteStatut] = $couleurs[$transfer->status] ?? ['#F1F1EC', '#66695A'];
+        [$fondStatut, $texteStatut] = $couleurs[$transfer->status] ?? ['#F1F1EC', 'var(--adm-ink-muted,#66695A)'];
         $termine = $transfer->status === \App\Models\StockTransfer::COMPLETED;
         $etapes = [
             ['Demandé',      $transfer->requester, $transfer->created_at],
@@ -30,29 +30,29 @@
         <div class="page-wrapper">
             <div class="content">
                 <style>
-                    .bon-transfert { background: #fff; border: 1px solid #E6E9D5; border-radius: 12px; box-shadow: 0 6px 24px rgba(0,0,0,.08); max-width: 900px; margin: 0 auto; padding: 24px; color: #1C230D; }
-                    .bt-entete { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; border-bottom: 2px solid #3E4C21; padding-bottom: 14px; margin-bottom: 16px; }
+                    .bon-transfert { background: #fff; border: 1px solid var(--adm-brand-100,#E6E9D5); border-radius: 12px; box-shadow: 0 6px 24px rgba(0,0,0,.08); max-width: 900px; margin: 0 auto; padding: 24px; color: var(--adm-brand-900,#1C230D); }
+                    .bt-entete { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; border-bottom: 2px solid var(--adm-brand-600,#3E4C21); padding-bottom: 14px; margin-bottom: 16px; }
                     .bt-entete img { height: 64px; }
-                    .bt-titre { font-family: 'Cinzel', Georgia, serif; font-size: 20px; font-weight: 700; color: #3E4C21; letter-spacing: 1px; margin: 0; }
-                    .bt-ref { font-size: 13px; color: #66695A; text-align: right; line-height: 1.6; }
+                    .bt-titre { font-family: 'Cinzel', Georgia, serif; font-size: 20px; font-weight: 700; color: var(--adm-brand-600,#3E4C21); letter-spacing: 1px; margin: 0; }
+                    .bt-ref { font-size: 13px; color: var(--adm-ink-muted,#66695A); text-align: right; line-height: 1.6; }
                     .bt-statut { display: inline-block; padding: 4px 12px; border-radius: 999px; font-weight: 700; font-size: 13px; }
-                    .bt-section { font-weight: 700; color: #3E4C21; font-size: 13px; text-transform: uppercase; letter-spacing: .06em; margin: 18px 0 8px; }
-                    .bt-produit { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; background: #F9F9F3; border: 1px solid #E6E9D5; border-radius: 10px; padding: 14px 16px; }
+                    .bt-section { font-weight: 700; color: var(--adm-brand-600,#3E4C21); font-size: 13px; text-transform: uppercase; letter-spacing: .06em; margin: 18px 0 8px; }
+                    .bt-produit { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; background: var(--adm-paper-warm,#F9F9F3); border: 1px solid var(--adm-brand-100,#E6E9D5); border-radius: 10px; padding: 14px 16px; }
                     .bt-produit .nom { font-size: 16px; font-weight: 700; }
-                    .bt-produit .detail { font-size: 13px; color: #66695A; }
-                    .bt-quantite { font-size: 22px; font-weight: 800; color: #3E4C21; white-space: nowrap; }
+                    .bt-produit .detail { font-size: 13px; color: var(--adm-ink-muted,#66695A); }
+                    .bt-quantite { font-size: 22px; font-weight: 800; color: var(--adm-brand-600,#3E4C21); white-space: nowrap; }
                     .bt-trajet { width: 100%; border-collapse: collapse; }
-                    .bt-trajet td { width: 50%; border: 1px solid #E6E9D5; padding: 12px; vertical-align: top; }
+                    .bt-trajet td { width: 50%; border: 1px solid var(--adm-brand-100,#E6E9D5); padding: 12px; vertical-align: top; }
                     .bt-trajet .lbl { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: #8A6A24; font-weight: 700; }
                     .bt-trajet .lieu { font-size: 15px; font-weight: 700; margin-top: 2px; }
                     .bt-etapes { width: 100%; border-collapse: collapse; font-size: 13px; }
-                    .bt-etapes th { background: #F4F5EC; text-align: left; padding: 7px 10px; font-weight: 700; }
-                    .bt-etapes td { border-bottom: 1px solid #E6E9D5; padding: 7px 10px; }
-                    .bt-etapes .attente { color: #9A9C8A; font-style: italic; }
-                    .bt-notes { white-space: pre-line; font-size: 13px; background: #F9F9F3; border-left: 3px solid #C7A150; padding: 8px 12px; }
+                    .bt-etapes th { background: var(--adm-brand-50,#F4F5EC); text-align: left; padding: 7px 10px; font-weight: 700; }
+                    .bt-etapes td { border-bottom: 1px solid var(--adm-brand-100,#E6E9D5); padding: 7px 10px; }
+                    .bt-etapes .attente { color: var(--adm-ink-faint,#9A9C8A); font-style: italic; }
+                    .bt-notes { white-space: pre-line; font-size: 13px; background: var(--adm-paper-warm,#F9F9F3); border-left: 3px solid var(--adm-accent,#C7A150); padding: 8px 12px; }
                     .bt-signatures { display: flex; gap: 24px; margin-top: 28px; }
-                    .bt-signatures > div { flex: 1; border-top: 1px solid #1C230D; padding-top: 6px; font-size: 12px; text-align: center; min-height: 70px; }
-                    .bt-pied { margin-top: 18px; font-size: 11px; color: #9A9C8A; text-align: center; }
+                    .bt-signatures > div { flex: 1; border-top: 1px solid var(--adm-brand-900,#1C230D); padding-top: 6px; font-size: 12px; text-align: center; min-height: 70px; }
+                    .bt-pied { margin-top: 18px; font-size: 11px; color: var(--adm-ink-faint,#9A9C8A); text-align: center; }
                 </style>
                 <div class="page-header">
                     <div class="page-title">
@@ -76,7 +76,7 @@
                                     @endif
                                     <div>
                                         <p class="bt-titre">BON DE TRANSFERT</p>
-                                        <div style="font-size:13px;color:#66695A;">{{ $company?->name ?? 'TELICO' }}{{ $company?->phone ? ' · ' . $company->phone : '' }}</div>
+                                        <div style="font-size:13px;color:var(--adm-ink-muted,#66695A);">{{ marqueNom() }}{{ $company?->phone ? ' · ' . $company->phone : '' }}</div>
                                     </div>
                                 </div>
                                 <div class="bt-ref">
@@ -107,12 +107,12 @@
                                     <td>
                                         <div class="lbl">Depuis</div>
                                         <div class="lieu">{{ $transfer->fromStore?->full_name ?? 'N/A' }}</div>
-                                        <div class="detail" style="font-size:12px;color:#66695A;">{{ $transfer->fromStore?->type_label }}</div>
+                                        <div class="detail" style="font-size:12px;color:var(--adm-ink-muted,#66695A);">{{ $transfer->fromStore?->type_label }}</div>
                                     </td>
                                     <td>
                                         <div class="lbl">Vers</div>
                                         <div class="lieu">{{ $transfer->toStore?->full_name ?? 'N/A' }}</div>
-                                        <div class="detail" style="font-size:12px;color:#66695A;">{{ $transfer->toStore?->type_label }}</div>
+                                        <div class="detail" style="font-size:12px;color:var(--adm-ink-muted,#66695A);">{{ $transfer->toStore?->type_label }}</div>
                                     </td>
                                 </tr>
                             </table>

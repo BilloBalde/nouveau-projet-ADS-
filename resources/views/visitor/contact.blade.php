@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Contact — TELICO</title>
+    <title>Contact — {{ marqueNom() }}</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
     @include('partials.theme-head')
@@ -26,12 +26,12 @@
             transition: border-color 0.2s, box-shadow 0.2s;
         }
         .form-input:focus {
-            border-color: #6B7A35;
+            border-color: var(--brand-500,#6B7A35);
             box-shadow: 0 0 0 3px rgba(245,158,11,0.12);
         }
         .form-input.error { border-color: #ef4444; }
         .gradient-text {
-            background: linear-gradient(135deg, #8C9A55, #6B7A35);
+            background: linear-gradient(135deg, var(--brand-400,#8C9A55), var(--brand-500,#6B7A35));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -42,20 +42,20 @@
             transition: all 0.25s;
         }
         .info-card:hover {
-            border-color: #6B7A35;
+            border-color: var(--brand-500,#6B7A35);
             box-shadow: 0 8px 24px rgba(245,158,11,0.12);
             transform: translateY(-3px);
         }
         .info-icon {
             width: 60px; height: 60px;
-            background: linear-gradient(135deg, #8C9A55, #3E4C21);
+            background: linear-gradient(135deg, var(--brand-400,#8C9A55), var(--brand-600,#3E4C21));
             border-radius: 50%; margin: 0 auto 1rem;
             display: flex; align-items: center; justify-content: center;
             color: #fff; font-size: 22px;
         }
         .submit-btn {
             width: 100%; padding: 14px; font-size: 15px; font-weight: 700;
-            background: linear-gradient(135deg, #8C9A55, #3E4C21);
+            background: linear-gradient(135deg, var(--brand-400,#8C9A55), var(--brand-600,#3E4C21));
             color: #fff; border: none; border-radius: 12px; cursor: pointer;
             transition: opacity 0.2s, transform 0.1s;
             font-family: 'Source Sans 3', sans-serif;
@@ -73,7 +73,7 @@
     <div class="pt-20 bg-gradient-to-r from-brand-500 to-brand-600">
         <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-14 text-center">
             <h1 class="text-4xl md:text-5xl font-bold text-white mb-3">Contactez-nous</h1>
-            <p class="text-white/85 text-lg">Chez TELICO, au-delà de la qualité des autres. Nous sommes à votre écoute, réponse sous 24h.</p>
+            <p class="text-white/85 text-lg">@if (config('brand.slogan'))Chez {{ marqueNom() }}, {{ config('brand.slogan') }}. @endif Nous sommes à votre écoute, réponse sous 24h.</p>
         </div>
     </div>
 

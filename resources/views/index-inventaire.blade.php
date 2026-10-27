@@ -260,7 +260,7 @@
                 { name: "Chiffre d'affaires", data: @json(array_values($ca_par_mois)) },
                 { name: 'Achats', data: @json(array_map(fn ($v) => -$v, array_values($achats_par_mois))) },
             ],
-            colors: ['#3E4C21', '#C7A150'],
+            colors: ['var(--adm-brand-600,#3E4C21)', 'var(--adm-accent,#C7A150)'],
             plotOptions: { bar: { horizontal: false, columnWidth: '55%' } },
             dataLabels: { enabled: false },
             xaxis: { categories: @json($mois) },

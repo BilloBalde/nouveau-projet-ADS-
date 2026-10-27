@@ -10,8 +10,13 @@
     $initiales = $company?->initiales() ?? '?';
     // asset('avatars/') sans fichier renvoyait un 404 à chaque page ; sans logo
     // non plus, c'est le monogramme qui tient lieu de vignette.
-    $avatarUrl = Auth::check() && Auth::user()->profilePic
-        ? asset('avatars/'.Auth::user()->profilePic)
+    // Le nom enregistré ne garantit pas que le fichier existe : les comptes
+    // créés par le seeder portaient « default.png », qui n'a jamais été livré.
+    // Résultat, trois images cassées par page. Un is_file() par requête — ce
+    // bloc n'est évalué qu'une fois — vaut mieux que trois 404.
+    $avatarFichier = Auth::user()?->profilePic;
+    $avatarUrl = $avatarFichier && is_file(public_path('avatars/'.$avatarFichier))
+        ? asset('avatars/'.$avatarFichier)
         : $logoUrl;
     $avatarInitiales = \App\Support\Monogramme::pour(Auth::user()?->name ?? $nomEntreprise);
 @endphp
@@ -64,16 +69,16 @@
         <li class="nav-item dropdown" style="display:flex;align-items:center;margin-right:10px;">
             @if (Auth::user()->isRestrictedToStore())
                 @if ($plusieursSections)
-                <a class="nav-link" href="{{ route('sections.index') }}" style="font-weight:600;color:#3E4C21;white-space:nowrap;">
+                <a class="nav-link" href="{{ route('sections.index') }}" style="font-weight:600;color:var(--adm-brand-600,#3E4C21);white-space:nowrap;">
                     <i class="fas fa-store me-1"></i>{{ $sectionCourante?->store_name ?? 'Aucun magasin' }}
                 </a>
                 @else
-                <span class="nav-link" style="font-weight:600;color:#3E4C21;white-space:nowrap;">
+                <span class="nav-link" style="font-weight:600;color:var(--adm-brand-600,#3E4C21);white-space:nowrap;">
                     <i class="fas fa-store me-1"></i>{{ $sectionCourante?->store_name ?? 'Aucun magasin' }}
                 </span>
                 @endif
             @else
-                <a href="javascript:void(0);" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" style="font-weight:600;color:#3E4C21;white-space:nowrap;">
+                <a href="javascript:void(0);" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" style="font-weight:600;color:var(--adm-brand-600,#3E4C21);white-space:nowrap;">
                     <i class="fas {{ $sectionCourante ? 'fa-store' : 'fa-globe' }} me-1"></i>
                     {{ $sectionCourante ? 'Section : '.$sectionCourante->store_name : 'Vue globale' }}
                 </a>
@@ -100,7 +105,7 @@
         </li>
         @unless ((Auth::check() && Auth::user()->isAssociate()) || \App\Support\ModeDeVente::parInventaire())
         <li class="nav-item has-arrow flag-nav">
-            <a class="nav-link" href="{{ route('pos') }}" style="background-color: #3E4C21; color: #fff;">
+            <a class="nav-link" href="{{ route('pos') }}" style="background-color: var(--adm-brand-600,#3E4C21); color: #fff;">
                 <img src="{{ asset('assets/img/icons/sales1.svg') }}" alt="" height="20">POS
             </a>
         </li>
@@ -165,7 +170,7 @@
                 @endif
             </a>
             @unless (\App\Support\ModeDeVente::parInventaire())
-            <a class="dropdown-item" href="{{ route('pos') }}" style="background-color: #3E4C21; color: #fff;">
+            <a class="dropdown-item" href="{{ route('pos') }}" style="background-color: var(--adm-brand-600,#3E4C21); color: #fff;">
                 <img src="{{ asset('assets/img/icons/sales1.svg') }}" class="me-2" alt="" height="20">POS
             </a>
             @endunless

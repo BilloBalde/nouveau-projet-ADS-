@@ -94,7 +94,7 @@
             </div>
         </div>
         <div class="footer">
-            © {{ date('Y') }} TELICO - Tous droits réservés
+            © {{ date('Y') }} {{ marqueNom() }} - Tous droits réservés
         </div>
     </div>
 </body>

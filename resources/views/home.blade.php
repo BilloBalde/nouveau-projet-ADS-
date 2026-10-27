@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>TELICO — Quincaillerie générale à Conakry</title>
-    <meta name="description" content="TELICO, quincaillerie générale à Madina, Conakry : peinture, outillage, serrurerie, plomberie, électricité. Commande en ligne, livraison partout en Guinée.">
+    <title>{{ marqueNom() }} — {{ ucfirst(config('brand.metier')) }}</title>
+    <meta name="description" content="{{ marqueNom() }}{{ marque()?->about ? ' — '.marque()->about : '' }}{{ marque()?->address ? ' '.marque()->address : '' }}">
 
     {{-- Tailwind CSS CDN --}}
     <script src="https://cdn.tailwindcss.com"></script>
-    {{-- Système de design partagé TELICO (palette du logo, typographies, composants). --}}
+    {{-- Système de design partagé du site public (palette de l'installation, typographies, composants). --}}
     @include('partials.theme-head')
 
     {{-- Font Awesome pour les icônes --}}
@@ -17,19 +17,19 @@
 
     <style>
         /* ══════════════════════════════════════════════════════════
-           ACCUEIL TELICO — « le comptoir de quincaillerie »
+           ACCUEIL DU SITE PUBLIC
            Fond ivoire, emblème du baobab, étiquettes de rayon.
            Grands titres en Cinzel (comme le logo), étiquettes et prix
            en Barlow Condensed, texte en Source Sans 3.
            ══════════════════════════════════════════════════════════ */
         :root {
-            --ivoire: #F9F9F3;
+            --ivoire: var(--paper-warm,#F9F9F3);
             --ecorce: #5B4F2B;
-            --or: #C7A150;
+            --or: var(--accent-500,#C7A150);
             --or-texte: #8A6A24;
-            --trait: #E6E6D8;
-            --brand-400: #8C9A55;
-            --brand-800: #283114;
+            --trait: var(--hairline,#E6E6D8);
+            --brand-400: var(--brand-400,#8C9A55);
+            --brand-800: var(--brand-800,#283114);
         }
         body { background: var(--ivoire); }
         .label { font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; text-transform: uppercase; letter-spacing: .14em; font-weight: 600; }
@@ -135,7 +135,7 @@
         .prod-btn { background: var(--brand-600); color: #fff; border: 1.5px solid var(--brand-600); }
         .prod-btn:hover { background: var(--brand-800); border-color: var(--brand-800); }
         .prod-btn-order { background: #fff; color: var(--or-texte); border: 1.5px solid var(--or); }
-        .prod-btn-order:hover { background: var(--or); color: #1C230D; }
+        .prod-btn-order:hover { background: var(--or); color: var(--brand-900,#1C230D); }
 
         /* ── Sélections en onglets ── */
         .onglets { display: flex; gap: 6px; flex-wrap: wrap; border-bottom: 1px solid var(--trait); margin-bottom: 22px; }
@@ -183,10 +183,10 @@
         .boite p { color: rgba(246,242,223,.8); margin: 8px 0 16px; }
         .boite form { display: flex; gap: 8px; flex-wrap: wrap; }
         .boite input { flex: 1 1 200px; min-width: 0; border-radius: 8px; padding: 11px 14px; color: var(--ink); border: 0; }
-        .boite button { background: var(--or); color: #1C230D; font-weight: 700; border-radius: 8px; padding: 11px 18px; }
+        .boite button { background: var(--or); color: var(--brand-900,#1C230D); font-weight: 700; border-radius: 8px; padding: 11px 18px; }
         .boite button:hover { background: #D9B867; }
-        .btn-or { display: inline-flex; align-items: center; gap: 8px; background: var(--or); color: #1C230D; font-weight: 700; border-radius: 8px; padding: 11px 18px; margin-top: 22px; }
-        .btn-or:hover { background: #D9B867; color: #1C230D; }
+        .btn-or { display: inline-flex; align-items: center; gap: 8px; background: var(--or); color: var(--brand-900,#1C230D); font-weight: 700; border-radius: 8px; padding: 11px 18px; margin-top: 22px; }
+        .btn-or:hover { background: #D9B867; color: var(--brand-900,#1C230D); }
 
         @media (max-width: 960px) {
             .ouverture-grille, .final-grille { grid-template-columns: minmax(0, 1fr); }
@@ -208,7 +208,7 @@
         @media (prefers-reduced-motion: reduce) {
             .prod-card, .rayon, .prod-img img { transition: none; }
         }
-            .prod-unite { font-size: .78rem; color: var(--ink-muted, #66695A); margin-left: -4px; }
+            .prod-unite { font-size: .78rem; color: var(--ink-muted, var(--ink-muted,#66695A)); margin-left: -4px; }
     </style>
 </head>
 <body>
@@ -266,7 +266,7 @@
 
                 <div class="embleme" aria-hidden="true">
                     <div class="embleme-cercle">
-                        <img src="{{ asset('companies/telico-embleme.png') }}" alt="">
+                        @if (marqueLogoUrl())<img src="{{ marqueLogoUrl() }}" alt="">@endif
                     </div>
                     <div class="etiquette e1"><b>{{ number_format($totalProducts, 0, ',', ' ') }}+</b><small>articles en catalogue</small></div>
                     <div class="etiquette e2"><b>{{ $totalCategories }}</b><small>rayons</small></div>
@@ -449,14 +449,14 @@
         </div>
     </section>
 
-    {{-- ══════════ POURQUOI TELICO ══════════ --}}
+    {{-- ══════════ POURQUOI NOUS ══════════ --}}
     <section id="apropos" class="py-16 bg-white border-y" style="border-color: var(--trait);">
         <div class="container mx-auto px-4 sm:px-6 lg:px-8">
             <div class="section-tete">
                 <div>
-                    <span class="label">Pourquoi TELICO</span>
-                    <h2 class="titre">Comme le baobab : des racines, un tronc, des branches</h2>
-                    <p>TELICO est une quincaillerie générale de Madina, à Conakry. Particuliers et professionnels du bâtiment y trouvent le matériel et le conseil pour chaque chantier.</p>
+                    <span class="label">Pourquoi {{ marqueNom() }}</span>
+                    <h2 class="titre">Des racines, un tronc, des branches</h2>
+                    <p>{{ marqueNom() }}{{ marque()?->address ? ', '.marque()->address : '' }}. {{ marque()?->about }}</p>
                 </div>
             </div>
             <div class="baobab">
@@ -606,7 +606,7 @@
                 <div class="prod-info">
                     <div class="prod-cat-tag">${echapper(p.category_name)}</div>
                     <div class="prod-name">${echapper(p.name)}</div>
-                    <div class="prod-stars">${stars} <span style="color:#9A9C8A;font-size:11px;">${parseFloat(p.rating).toFixed(1)}</span></div>
+                    <div class="prod-stars">${stars} <span style="color:var(--ink-faint,#9A9C8A);font-size:11px;">${parseFloat(p.rating).toFixed(1)}</span></div>
                     ${tierHTML ? `<div class="tier-table"><div class="tier-label">Tarifs de gros — prix unitaire</div><div class="tier-grid">${tierHTML}</div></div>` : ''}
                     <div class="prod-qty" onclick="event.stopPropagation()">
                         <span class="qty-label">Quantité</span>
@@ -636,8 +636,8 @@
             toast.style.cssText = `
                 position:fixed; bottom:28px; right:28px; z-index:9999;
                 display:flex; align-items:center; gap:12px; padding:14px 20px; border-radius:10px;
-                background:${type === 'success' ? '#3E4C21' : '#B3261E'}; color:#fff;
-                border-left:4px solid ${type === 'success' ? '#C7A150' : '#fff'};
+                background:${type === 'success' ? 'var(--brand-600,#3E4C21)' : '#B3261E'}; color:#fff;
+                border-left:4px solid ${type === 'success' ? 'var(--accent-500,#C7A150)' : '#fff'};
                 font-size:14px; font-weight:600; font-family:'Source Sans 3',sans-serif;
                 box-shadow:0 12px 30px rgba(0,0,0,.2); transform:translateY(80px); opacity:0;
                 transition:transform .35s cubic-bezier(.34,1.56,.64,1), opacity .3s;`;
@@ -738,7 +738,7 @@
                 if (!el) return;
                 el.innerHTML = data.length
                     ? data.map(renderCard).join('')
-                    : '<p style="color:#66695A;padding:12px;">Aucun produit dans cette sélection pour le moment.</p>';
+                    : '<p style="color:var(--ink-muted,#66695A);padding:12px;">Aucun produit dans cette sélection pour le moment.</p>';
             });
 
             const onglets = Array.from(document.querySelectorAll('.onglet'));

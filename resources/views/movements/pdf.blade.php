@@ -15,7 +15,7 @@
             font-family: 'DejaVu Sans', 'Helvetica', 'Arial', sans-serif;
             font-size: 10pt;
             line-height: 1.5;
-            color: #1F2414;
+            color: {{ marqueEncre('ink') }};
             background: white;
             padding: 0.8cm;
         }
@@ -36,35 +36,35 @@
             font-family: Georgia, 'Times New Roman', serif;
             font-size: 17pt;
             font-weight: 700;
-            color: #1C230D;
+            color: {{ marqueCouleur('900') }};
             margin-bottom: 4px;
         }
 
         .company-info p {
             font-size: 9pt;
-            color: #66695A;
+            color: {{ marqueEncre('ink-muted') }};
             margin: 2px 0;
         }
 
         .report-info {
             font-size: 9pt;
-            background: #F4F5EC;
+            background: {{ marqueCouleur('50') }};
             padding: 8px 12px;
             border-radius: 6px;
-            border-left: 4px solid #3E4C21;
+            border-left: 4px solid {{ marqueCouleur('600') }};
         }
 
         .report-info p {
             margin: 4px 0;
-            color: #1F2414;
+            color: {{ marqueEncre('ink') }};
         }
 
         .report-info strong {
-            color: #283114;
+            color: {{ marqueCouleur('800') }};
         }
 
         .admin-badge {
-            background: #3E4C21;
+            background: {{ marqueCouleur('600') }};
             color: white;
             padding: 2px 8px;
             border-radius: 12px;
@@ -84,24 +84,24 @@
             font-family: Georgia, 'Times New Roman', serif;
             font-size: 15pt;
             font-weight: 700;
-            color: #1C230D;
+            color: {{ marqueCouleur('900') }};
             text-transform: uppercase;
             margin-bottom: 6px;
             letter-spacing: 1px;
         }
 
         .filters {
-            background: #F4F5EC;
+            background: {{ marqueCouleur('50') }};
             display: inline-block;
             padding: 6px 18px;
             border-radius: 30px;
             font-size: 9pt;
-            color: #1F2414;
-            border: 1px solid #CED5AE;
+            color: {{ marqueEncre('ink') }};
+            border: 1px solid {{ marqueCouleur('200') }};
         }
 
         .filters strong {
-            color: #283114;
+            color: {{ marqueCouleur('800') }};
         }
 
         /* ===== CARTES RÉCAPITULATIVES ===== */
@@ -116,15 +116,15 @@
             display: table-cell;
             padding: 14px 8px;
             text-align: center;
-            background-color: #F4F5EC;
-            border: 1px solid #CED5AE;
+            background-color: {{ marqueCouleur('50') }};
+            border: 1px solid {{ marqueCouleur('200') }};
         }
 
         .summary-card .label {
             font-size: 9pt;
             text-transform: uppercase;
             font-weight: 600;
-            color: #66695A;
+            color: {{ marqueEncre('ink-muted') }};
             margin-bottom: 6px;
             letter-spacing: 0.5px;
         }
@@ -136,14 +136,14 @@
         }
 
         .summary-card.ventes { border-top: 4px solid #059669; }
-        .summary-card.achats { border-top: 4px solid #283114; }
+        .summary-card.achats { border-top: 4px solid {{ marqueCouleur('800') }}; }
         .summary-card.depenses { border-top: 4px solid #b91c1c; }
-        .summary-card.solde { border-top: 4px solid #1C230D; }
+        .summary-card.solde { border-top: 4px solid {{ marqueCouleur('900') }}; }
 
         .text-success { color: #059669; }
         .text-danger { color: #b91c1c; }
-        .text-warning { color: #283114; }
-        .text-primary { color: #1C230D; }
+        .text-warning { color: {{ marqueCouleur('800') }}; }
+        .text-primary { color: {{ marqueCouleur('900') }}; }
 
         /* ===== TABLEAU DES MOUVEMENTS ===== */
         .movements-table {
@@ -154,7 +154,7 @@
         }
 
         .movements-table th {
-            background: #1C230D;
+            background: {{ marqueCouleur('900') }};
             color: white;
             padding: 10px 6px;
             font-weight: 600;
@@ -166,12 +166,12 @@
 
         .movements-table td {
             padding: 8px 6px;
-            border: 1px solid #E6E9D5;
+            border: 1px solid {{ marqueCouleur('100') }};
             vertical-align: middle;
         }
 
         .movements-table tr:nth-child(even) {
-            background-color: #F9F9F3;
+            background-color: {{ marqueEncre('paper-warm') }};
         }
 
         .badge {
@@ -187,20 +187,20 @@
         }
 
         .badge.vente { background: #059669; }
-        .badge.achat { background: #283114; }
+        .badge.achat { background: {{ marqueCouleur('800') }}; }
         .badge.depense { background: #b91c1c; }
-        .badge.autre { background: #66695A; }
+        .badge.autre { background: {{ marqueEncre('ink-muted') }}; }
 
         .total-row {
-            background: #F4F5EC !important;
+            background: {{ marqueCouleur('50') }} !important;
             font-weight: 700;
-            border-top: 2px solid #3E4C21;
+            border-top: 2px solid {{ marqueCouleur('600') }};
         }
 
         .total-row td {
             padding: 10px 6px;
-            background: #F4F5EC;
-            color: #1C230D;
+            background: {{ marqueCouleur('50') }};
+            color: {{ marqueCouleur('900') }};
         }
 
         .nowrap {
@@ -223,11 +223,11 @@
             right: 0;
             width: 100%;
             padding-top: 14px;
-            border-top: 2px solid #3E4C21;
+            border-top: 2px solid {{ marqueCouleur('600') }};
             text-align: center;
             font-size: 10px;
-            color: #66695A;
-            background: #F4F5EC;
+            color: {{ marqueEncre('ink-muted') }};
+            background: {{ marqueCouleur('50') }};
             padding: 14px;
             margin: 0;
             box-sizing: border-box;
@@ -236,13 +236,13 @@
         .footer-contact {
             margin-bottom: 6px;
             font-weight: 600;
-            color: #1F2414;
+            color: {{ marqueEncre('ink') }};
         }
 
         .footer-thanks {
             font-family: Georgia, 'Times New Roman', serif;
             font-weight: 700;
-            color: #1C230D;
+            color: {{ marqueCouleur('900') }};
             margin-top: 8px;
             font-size: 11px;
             font-style: italic;
@@ -251,17 +251,17 @@
         .footer-date {
             margin-top: 8px;
             font-size: 10px;
-            color: #9A9C8A;
+            color: {{ marqueEncre('ink-faint') }};
         }
 
         /* ===== UTILITAIRES ===== */
         .empty-message {
             padding: 30px;
             text-align: center;
-            background: #F9F9F3;
-            color: #66695A;
+            background: {{ marqueEncre('paper-warm') }};
+            color: {{ marqueEncre('ink-muted') }};
             font-style: italic;
-            border: 1px dashed #CED5AE;
+            border: 1px dashed {{ marqueCouleur('200') }};
         }
     </style>
 </head>
@@ -269,14 +269,14 @@
 {{-- ======================================== --}}
 {{-- EN-TÊTE : LOGO + SOCIÉTÉ + INFOS RAPPORT --}}
 {{-- ======================================== --}}
-<div class="header" style="display: table; width: 100%; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 3px solid #3E4C21;">
+<div class="header" style="display: table; width: 100%; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 3px solid {{ marqueCouleur('600') }};">
 
     {{-- Logo --}}
     <div style="display: table-cell; width: 90px; vertical-align: middle; text-align: left;">
         @if($company->logo ?? false)
             <img src="{{ public_path('companies/'.$company->logo) }}" alt="{{ $company->name ?? 'Logo' }}" style="max-width: 70px; height: auto; border-radius: 8px;">
         @else
-            <div style="width: 70px; height: 60px; background: #F4F5EC; border-radius: 6px; text-align: center; color: #283114; font-size: 10px; padding-top: 22px;">Logo</div>
+            <div style="width: 70px; height: 60px; background: {{ marqueCouleur('50') }}; border-radius: 6px; text-align: center; color: {{ marqueCouleur('800') }}; font-size: 10px; padding-top: 22px;">Logo</div>
         @endif
     </div>
 

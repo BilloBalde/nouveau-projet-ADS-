@@ -12,6 +12,12 @@ class BackupDatabase extends Command
 
     protected $description = 'Sauvegarde la base de données dans storage/app/backups et purge les anciennes copies';
 
+    /**
+     * Préfixe des fichiers de sauvegarde. Il portait le nom du premier client,
+     * ce qui donnait des « coleah-2026-10-27.sql » chez tous les suivants.
+     */
+    private const PREFIXE = 'sauvegarde-';
+
     public function handle(): int
     {
         $dossier = storage_path('app/backups');
@@ -22,7 +28,7 @@ class BackupDatabase extends Command
             return self::FAILURE;
         }
 
-        $fichier = $dossier.'/coleah-'.Carbon::now()->format('Y-m-d_His').'.sql';
+        $fichier = $dossier.'/'.self::PREFIXE.Carbon::now()->format('Y-m-d_His').'.sql';
 
         if (! $this->dumper($fichier)) {
             return self::FAILURE;
@@ -139,7 +145,16 @@ class BackupDatabase extends Command
         $limite = Carbon::now()->subDays(max(0, $jours))->getTimestamp();
         $supprimes = 0;
 
-        foreach (glob($dossier.'/coleah-*.sql*') ?: [] as $ancien) {
+        // Les deux motifs : « coleah- » est celui des installations créées avant
+        // que le nom d'un client cesse d'être écrit dans le code. Sans lui, leurs
+        // anciennes sauvegardes ne seraient plus jamais purgées et le disque se
+        // remplirait en silence.
+        $anciennes = array_merge(
+            glob($dossier.'/'.self::PREFIXE.'*.sql*') ?: [],
+            glob($dossier.'/coleah-*.sql*') ?: [],
+        );
+
+        foreach ($anciennes as $ancien) {
             if (filemtime($ancien) < $limite) {
                 @unlink($ancien);
                 $supprimes++;

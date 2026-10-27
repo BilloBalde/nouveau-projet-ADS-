@@ -23,7 +23,7 @@ namespace App\Support;
 class IdentiteVisuelle
 {
     /**
-     * Palette d'origine (vert TELICO). Conservée telle quelle, valeur par
+     * Palette d'origine (vert). Conservée telle quelle, valeur par
      * valeur : c'est celle des clients déjà en service.
      */
     private const ORIGINE = [
@@ -65,6 +65,52 @@ class IdentiteVisuelle
     private const LUMINOSITE_MAX = 0.97;
 
     private const LUMINOSITE_MIN = 0.12;
+
+    /**
+     * Neutres : texte, texte secondaire, filets, fond crème.
+     *
+     * Ce ne sont pas des gris. Ils étaient tirés du vert d'origine et en
+     * gardaient la teinte — ce qui passait inaperçu tant que la marque était
+     * verte, et donnait un texte verdâtre sur une interface violette. Ils
+     * suivent donc la teinte de la marque, à saturation très basse.
+     */
+    private const ENCRE_ORIGINE = [
+        'ink' => '#1F2414',
+        'ink-muted' => '#66695A',
+        'ink-faint' => '#9A9C8A',
+        'paper-warm' => '#F9F9F3',
+        'hairline' => '#E6E6D8',
+    ];
+
+    private const ENCRE_LUMINOSITES = [
+        'ink' => 0.110,
+        'ink-muted' => 0.382,
+        'ink-faint' => 0.576,
+        'paper-warm' => 0.965,
+        'hairline' => 0.875,
+    ];
+
+    /** Juste de quoi apparenter les neutres à la marque, sans les colorer. */
+    private const ENCRE_SATURATION = 0.09;
+
+    /** @return array<string, string> */
+    public static function encre(): array
+    {
+        $base = config('brand.couleur');
+
+        if (! is_string($base) || ! preg_match('/^#?[0-9a-fA-F]{6}$/', trim($base))) {
+            return self::ENCRE_ORIGINE;
+        }
+
+        [$teinte] = self::versTsl(ltrim(trim($base), '#'));
+
+        $encre = [];
+        foreach (self::ENCRE_LUMINOSITES as $cle => $luminosite) {
+            $encre[$cle] = self::versHexa($teinte, $luminosite, self::ENCRE_SATURATION);
+        }
+
+        return $encre;
+    }
 
     /** @return array<string, string> Les onze tons, du 50 au 950. */
     public static function rampe(): array

@@ -25,7 +25,7 @@ class UsersSeeder extends Seeder
                 'password' => Hash::make('Admin@123'),
                 'motdepasse' => 'Admin@123',
                 'description' => 'Compte administrateur principal.',
-                'profilePic' => 'default.png',
+                'profilePic' => null,
             ],
             [
                 'name' => 'General Manager',
@@ -38,7 +38,7 @@ class UsersSeeder extends Seeder
                 'password' => Hash::make('Manager@123'),
                 'motdepasse' => 'Manager@123',
                 'description' => 'Responsable général des boutiques.',
-                'profilePic' => 'default.png',
+                'profilePic' => null,
             ],
             [
                 'name' => 'Store User',
@@ -51,7 +51,7 @@ class UsersSeeder extends Seeder
                 'password' => Hash::make('User@123'),
                 'motdepasse' => 'User@123',
                 'description' => 'Utilisateur boutique.',
-                'profilePic' => 'default.png',
+                'profilePic' => null,
             ],
         ];
 

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ $product->libelle }} — TELICO</title>
+    <title>{{ $product->libelle }} — {{ marqueNom() }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     @include('partials.theme-head')
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -24,11 +24,11 @@
         .prod-img-placeholder {
             width: 100%; height: 380px;
             display: flex; align-items: center; justify-content: center;
-            background: linear-gradient(135deg, #E6E9D5, #CED5AE);
+            background: linear-gradient(135deg, var(--brand-100,#E6E9D5), var(--brand-200,#CED5AE));
             border-radius: 1.25rem; font-size: 80px;
         }
         .badge-cat {
-            background: #E6E9D5; color: #283114;
+            background: var(--brand-100,#E6E9D5); color: var(--brand-800,#283114);
             font-size: 12px; font-weight: 600;
             padding: 4px 14px; border-radius: 999px;
             display: inline-block;
@@ -39,13 +39,13 @@
         .price-old { font-size: 1rem; color: #9ca3af; text-decoration: line-through; }
         .tier-table { margin-bottom: 10px; }
         .tier-label {
-            font-size: 10px; font-weight: 600; color: #3E4C21;
+            font-size: 10px; font-weight: 600; color: var(--brand-600,#3E4C21);
             text-transform: uppercase; letter-spacing: 0.03em;
             margin-bottom: 6px;
         }
         .tier-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; max-width: 320px; }
-        .tier-cell { background: #E6E9D5; border-radius: 8px; padding: 6px 4px; text-align: center; }
-        .tier-qty { font-size: 11px; font-weight: 700; color: #283114; }
+        .tier-cell { background: var(--brand-100,#E6E9D5); border-radius: 8px; padding: 6px 4px; text-align: center; }
+        .tier-qty { font-size: 11px; font-weight: 700; color: var(--brand-800,#283114); }
         .tier-price { font-size: 12px; font-weight: 600; color: var(--ink); }
         .tier-badge {
             display: inline-block; margin-top: 2px;
@@ -55,7 +55,7 @@
         /* Sélecteur de quantité : styles centralisés dans partials/theme-head */
         .btn-cart {
             width: 100%;
-            background: linear-gradient(135deg, #8C9A55, #3E4C21);
+            background: linear-gradient(135deg, var(--brand-400,#8C9A55), var(--brand-600,#3E4C21));
             color: #fff; font-weight: 700; font-size: 15px;
             padding: 14px; border: none; border-radius: 12px;
             cursor: pointer; transition: opacity .2s, transform .1s;
@@ -69,7 +69,7 @@
             border-radius: 999px; transition: all .2s;
             text-decoration: none;
         }
-        .btn-back:hover { color: #3E4C21; border-color: #6B7A35; }
+        .btn-back:hover { color: var(--brand-600,#3E4C21); border-color: var(--brand-500,#6B7A35); }
         #cart-count {
             transition: transform 0.3s ease;
         }
@@ -81,12 +81,12 @@
             transition: all .25s; cursor: pointer;
             text-decoration: none;
         }
-        .rel-card:hover { border-color: #6B7A35; transform: translateY(-3px); box-shadow: 0 10px 26px rgba(62,76,33,.16); }
+        .rel-card:hover { border-color: var(--brand-500,#6B7A35); transform: translateY(-3px); box-shadow: 0 10px 26px rgba(62,76,33,.16); }
         .rel-img { width: 100%; height: 130px; object-fit: cover; background: #fafafa; }
         .rel-placeholder {
             width: 100%; height: 130px;
             display: flex; align-items: center; justify-content: center;
-            font-size: 36px; background: #E6E9D5;
+            font-size: 36px; background: var(--brand-100,#E6E9D5);
         }
         .rel-info { padding: 10px 12px 14px; }
         .rel-name { font-size: 12px; font-weight: 600; color: #1f2937; line-height: 1.4;

@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════════════════════════════
-   Habillage back-office — TELICO
+   Habillage back-office
    Chargé APRÈS style.css : ce fichier ne contient que des écarts
    assumés par rapport au thème, pour qu'une mise à jour du thème
    reste possible sans rejouer une refonte complète.
@@ -18,6 +18,9 @@
     --adm-accent:    #C7A150; /* or baobab */
     --adm-ink:       #1F2414;
     --adm-ink-muted: #66695A;
+    --adm-ink-faint: #9A9C8A;
+    --adm-paper-warm: #F9F9F3;
+    --adm-hairline:  #E6E6D8;
 }
 
 /* ── Barre latérale : fond blanc du thème, texte sombre ──
@@ -112,16 +115,16 @@
     color: var(--adm-brand-700) !important;
 }
 
-/* ── En-tête TELICO : logo agrandi ──
+/* ── En-tête : logo agrandi ──
    Le thème fixe l'en-tête à 60 px (logo de 140 px de large, prévu pour un logo
-   horizontal). Le logo TELICO est vertical : il est passé à 76 px de haut, avec
+   horizontal). Un logo vertical est passé à 76 px de haut, avec
    le nom à côté, dans un en-tête de 84 px. Tout ce que le thème cale sur 60 px
    (barre latérale, zone de contenu, boutons mobiles) suit cette hauteur. */
-:root { --telico-header-h: 84px; }
+:root { --entete-hauteur: 84px; }
 
 .header,
 .header .header-left,
-.header .page-title-box { height: var(--telico-header-h) !important; }
+.header .page-title-box { height: var(--entete-hauteur) !important; }
 
 .header .header-left .logo {
     display: flex !important;
@@ -162,7 +165,7 @@
 .header .header-left .logo .logo-mot {
     font-family: 'Cinzel', Georgia, serif;
     font-weight: 600;
-    /* Le nom vient de la fiche entreprise : « TELICO » tient, « THB BANTIGUEL »
+    /* Le nom vient de la fiche entreprise : un nom court tient, un nom long
        non. La taille suit la largeur de fenêtre plutôt que d'être fixe, et le
        nom reste sur une ligne. */
     font-size: clamp(.95rem, .55rem + .9vw, 1.45rem);
@@ -172,21 +175,21 @@
 }
 .header .header-left .logo-small img { width: auto !important; height: 58px; }
 
-.user-menu.nav > li > a { height: var(--telico-header-h); line-height: var(--telico-header-h); }
-.user-menu.nav > li > a i { line-height: var(--telico-header-h); }
+.user-menu.nav > li > a { height: var(--entete-hauteur); line-height: var(--entete-hauteur); }
+.user-menu.nav > li > a i { line-height: var(--entete-hauteur); }
 
-.page-wrapper { padding-top: var(--telico-header-h) !important; }
+.page-wrapper { padding-top: var(--entete-hauteur) !important; }
 .sidebar,
-.sidebar-overlay { top: var(--telico-header-h) !important; }
+.sidebar-overlay { top: var(--entete-hauteur) !important; }
 /* script.js calcule la hauteur de la barre latérale avec 60 px. */
 .sidebar .slimScrollDiv,
-.sidebar .sidebar-inner { height: calc(100vh - var(--telico-header-h)) !important; }
+.sidebar .sidebar-inner { height: calc(100vh - var(--entete-hauteur)) !important; }
 
 @media (max-width: 991px) {
     .header .mobile_btn,
     .header-pos #mobile_btn,
     .header .mobile-user-menu,
-    .header .responsive-search { height: var(--telico-header-h); line-height: var(--telico-header-h); }
+    .header .responsive-search { height: var(--entete-hauteur); line-height: var(--entete-hauteur); }
     /* Sur petit écran le logo est centré : le nom à côté chevaucherait les menus. */
     .header .header-left .logo .logo-mot { display: none; }
     .header .header-left .logo img { height: 68px; }

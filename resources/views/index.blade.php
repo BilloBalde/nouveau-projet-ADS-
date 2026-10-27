@@ -62,7 +62,7 @@
 
             <!-- Dettes -->
             <div class="metric-card metric-card-3">
-                <div class="dash-count" style="background: linear-gradient(135deg, #3E4C21, #9a3412);">
+                <div class="dash-count" style="background: linear-gradient(135deg, var(--adm-brand-600,#3E4C21), #9a3412);">
                     <div class="dash-counts">
                         <h4 class="mb-1">{{ numberDelimiter($total_credits_store) }} FG</h4>
                         <h5 class="opacity-75">Dettes (non payé)</h5>
@@ -312,7 +312,7 @@
             </div>
             @if (! empty($overview['associates']))
             @php $a = $overview['associates']; @endphp
-            <div class="d-flex flex-wrap gap-3 align-items-center mb-3 p-2 rounded" style="font-size:14px; background:#F9F9F3; border:1px solid #E2E3CF;">
+            <div class="d-flex flex-wrap gap-3 align-items-center mb-3 p-2 rounded" style="font-size:14px; background:var(--adm-paper-warm,#F9F9F3); border:1px solid #E2E3CF;">
                 <strong><i class="fas fa-handshake me-1 text-primary"></i>Associés ({{ $a['count'] }}) :</strong>
                 <span>Capital restant dû : <strong>{{ numberDelimiter($a['capital_restant']) }} FG</strong></span>
                 <span>Stock des associés : <strong>{{ numberDelimiter($a['stock_valeur']) }} FG</strong></span>

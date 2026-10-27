@@ -25,7 +25,7 @@
         body {
             font-family: 'Arial', 'Helvetica', sans-serif;
             font-size: 10px;
-            color: #1F2414;
+            color: {{ marqueEncre('ink') }};
             line-height: 1.4;
             background: #ffffff;
             padding: 5mm;
@@ -38,7 +38,7 @@
             width: 100%;
             table-layout: fixed;
             margin-bottom: 18px;
-            border-bottom: 3px solid #3E4C21;
+            border-bottom: 3px solid {{ marqueCouleur('600') }};
             padding-bottom: 12px;
         }
         .invoice-head-left,
@@ -89,14 +89,14 @@
         .invoice-head-company {
             font-family: Georgia, 'Times New Roman', serif;
             font-weight: 700;
-            color: #323D1A;
+            color: {{ marqueCouleur('700') }};
             font-size: 18px;
             line-height: 1.2;
         }
 
         .invoice-head-sub {
             font-size: 10px;
-            color: #66695A;
+            color: {{ marqueEncre('ink-muted') }};
             line-height: 1.4;
         }
 
@@ -105,7 +105,7 @@
             font-weight: 700;
             font-size: 20px;
             letter-spacing: 0.5px;
-            color: #3E4C21;
+            color: {{ marqueCouleur('600') }};
             text-transform: uppercase;
             margin-bottom: 3px;
             line-height: 1.1;
@@ -114,7 +114,7 @@
         .invoice-head-period {
             font-size: 10px;
             font-weight: 700;
-            color: #66695A;
+            color: {{ marqueEncre('ink-muted') }};
             text-transform: uppercase;
             letter-spacing: 0.5px;
             margin-top: 3px;
@@ -123,7 +123,7 @@
         .invoice-head-original {
             font-size: 9.5px;
             font-weight: 600;
-            color: #9A9C8A;
+            color: {{ marqueEncre('ink-faint') }};
             text-transform: uppercase;
             letter-spacing: 0.5px;
             margin-top: 5px;
@@ -131,7 +131,7 @@
 
         .invoice-head-clientname {
             font-weight: 700;
-            color: #1F2414;
+            color: {{ marqueEncre('ink') }};
             font-size: 13px;
             margin-bottom: 3px;
             line-height: 1.2;
@@ -139,16 +139,16 @@
 
         .invoice-head-clientline {
             font-size: 10px;
-            color: #66695A;
+            color: {{ marqueEncre('ink-muted') }};
             line-height: 1.3;
         }
 
         /* Bandeau numéro / période */
         .invoice-number-section {
-            background: #F4F5EC;
+            background: {{ marqueCouleur('50') }};
             padding: 12px 14px;
-            border: 1px solid #CED5AE;
-            border-left: 3px solid #3E4C21;
+            border: 1px solid {{ marqueCouleur('200') }};
+            border-left: 3px solid {{ marqueCouleur('600') }};
             border-radius: 8px;
             margin-bottom: 18px;
         }
@@ -174,14 +174,14 @@
 
         .invoice-number-label {
             font-weight: 700;
-            color: #3E4C21;
+            color: {{ marqueCouleur('600') }};
             margin-right: 5px;
             font-size: 10px;
         }
 
         .invoice-number-value {
             font-weight: 700;
-            color: #1F2414;
+            color: {{ marqueEncre('ink') }};
             font-size: 11px;
         }
 
@@ -207,13 +207,13 @@
             color: #ffffff;
         }
 
-        .summary-card.tone-1 { background-color: #3E4C21; } /* Ventes */
-        .summary-card.tone-2 { background-color: #6B7A35; } /* Paiements encaissés */
+        .summary-card.tone-1 { background-color: {{ marqueCouleur('600') }}; } /* Ventes */
+        .summary-card.tone-2 { background-color: {{ marqueCouleur('500') }}; } /* Paiements encaissés */
         .summary-card.tone-3 { background-color: #d92d20; } /* Non payé — attention */
-        .summary-card.tone-4 { background-color: #283114; } /* Achats */
-        .summary-card.tone-5 { background-color: #66695A; } /* Dépenses */
+        .summary-card.tone-4 { background-color: {{ marqueCouleur('800') }}; } /* Achats */
+        .summary-card.tone-5 { background-color: {{ marqueEncre('ink-muted') }}; } /* Dépenses */
         .summary-card.tone-6 {
-            background-color: #1C230D;
+            background-color: {{ marqueCouleur('900') }};
         }
         .summary-card.tone-6.negative {
             background-color: #b91c1c;
@@ -250,12 +250,12 @@
         .section-title {
             font-family: Georgia, 'Times New Roman', serif;
             font-weight: 700;
-            color: #323D1A;
+            color: {{ marqueCouleur('700') }};
             font-size: 14px;
             margin-bottom: 12px;
             margin-top: 18px;
             padding-bottom: 6px;
-            border-bottom: 2px solid #3E4C21;
+            border-bottom: 2px solid {{ marqueCouleur('600') }};
         }
 
         /* Tables */
@@ -276,7 +276,7 @@
         }
 
         table th {
-            background: #323D1A !important;
+            background: {{ marqueCouleur('700') }} !important;
             color: #ffffff !important;
             font-weight: 600;
             padding: 10px 8px;
@@ -293,9 +293,9 @@
 
         table td {
             padding: 9px 8px;
-            border-bottom: 1px solid #E6E9D5;
+            border-bottom: 1px solid {{ marqueCouleur('100') }};
             font-size: 10px;
-            color: #1F2414;
+            color: {{ marqueEncre('ink') }};
             display: table-cell;
         }
 
@@ -305,25 +305,25 @@
         }
 
         table tbody tr:nth-child(even) {
-            background-color: #F9F9F3;
+            background-color: {{ marqueEncre('paper-warm') }};
         }
 
         .total-row {
-            background: #F4F5EC !important;
+            background: {{ marqueCouleur('50') }} !important;
         }
 
         .total-row td {
-            border-top: 2px solid #3E4C21;
+            border-top: 2px solid {{ marqueCouleur('600') }};
             border-bottom: none;
             font-size: 11px;
             padding: 11px 8px;
-            color: #323D1A;
+            color: {{ marqueCouleur('700') }};
         }
 
         /* Montant en lettres */
         .amount-words-box {
-            background: #F9F9F3;
-            border-left: 4px solid #3E4C21;
+            background: {{ marqueEncre('paper-warm') }};
+            border-left: 4px solid {{ marqueCouleur('600') }};
             border-radius: 0 10px 10px 0;
             padding: 14px 16px;
             margin: 18px 0;
@@ -331,7 +331,7 @@
 
         .amount-words-title {
             font-weight: 700;
-            color: #3E4C21;
+            color: {{ marqueCouleur('600') }};
             font-size: 10.5px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
@@ -340,7 +340,7 @@
 
         .amount-words-text {
             font-size: 11px;
-            color: #1F2414;
+            color: {{ marqueEncre('ink') }};
             font-weight: 600;
             line-height: 1.5;
         }
@@ -348,7 +348,7 @@
         .montant-chiffres {
             font-size: 9px;
             margin-top: 5px;
-            color: #66695A;
+            color: {{ marqueEncre('ink-muted') }};
             font-style: italic;
         }
 
@@ -366,15 +366,15 @@
             display: table-cell;
             width: 50%;
             padding: 16px;
-            border: 1px solid #CED5AE;
+            border: 1px solid {{ marqueCouleur('200') }};
             vertical-align: top;
             border-radius: 10px;
-            background: #F4F5EC;
+            background: {{ marqueCouleur('50') }};
         }
 
         .signature-title {
             font-weight: 700;
-            color: #323D1A;
+            color: {{ marqueCouleur('700') }};
             font-size: 11px;
             margin-bottom: 12px;
             text-transform: uppercase;
@@ -382,11 +382,11 @@
         }
 
         .signature-line {
-            border-top: 1px solid #CED5AE;
+            border-top: 1px solid {{ marqueCouleur('200') }};
             margin-top: 45px;
             padding-top: 6px;
             font-size: 10px;
-            color: #66695A;
+            color: {{ marqueEncre('ink-muted') }};
             text-align: center;
         }
 
@@ -398,11 +398,11 @@
             right: 0;
             width: 100%;
             padding-top: 14px;
-            border-top: 2px solid #3E4C21;
+            border-top: 2px solid {{ marqueCouleur('600') }};
             text-align: center;
             font-size: 10px;
-            color: #66695A;
-            background: #F4F5EC;
+            color: {{ marqueEncre('ink-muted') }};
+            background: {{ marqueCouleur('50') }};
             padding: 14px;
             border-radius: 8px 8px 0 0;
             margin: 0;
@@ -412,13 +412,13 @@
         .footer-contact {
             margin-bottom: 6px;
             font-weight: 600;
-            color: #1F2414;
+            color: {{ marqueEncre('ink') }};
         }
 
         .footer-thanks {
             font-family: Georgia, 'Times New Roman', serif;
             font-weight: 700;
-            color: #323D1A;
+            color: {{ marqueCouleur('700') }};
             margin-top: 8px;
             font-size: 11px;
             font-style: italic;
@@ -427,7 +427,7 @@
         .footer-date {
             margin-top: 8px;
             font-size: 10px;
-            color: #9A9C8A;
+            color: {{ marqueEncre('ink-faint') }};
         }
 
         /* Badge de période */
@@ -441,9 +441,9 @@
             letter-spacing: 0.3px;
             margin-left: 8px;
             vertical-align: middle;
-            background: #F4F5EC;
-            color: #3E4C21;
-            border: 1px solid #CED5AE;
+            background: {{ marqueCouleur('50') }};
+            color: {{ marqueCouleur('600') }};
+            border: 1px solid {{ marqueCouleur('200') }};
         }
     </style>
 </head>
@@ -528,7 +528,7 @@
                 </div>
                 <div class="invoice-head-brand-cell">
                     <div class="invoice-head-brandtext">
-                        <div class="invoice-head-company">{{ $company?->name ?? 'TELICO' }}</div>
+                        <div class="invoice-head-company">{{ marqueNom() }}</div>
                         @if(!empty($company?->address))
                             <div class="invoice-head-sub">{{ $company->address }}</div>
                         @endif
@@ -652,7 +652,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="7" style="text-align: center; padding: 20px; color: #9A9C8A;">Aucune donnée pour cette période.</td>
+                    <td colspan="7" style="text-align: center; padding: 20px; color: {{ marqueEncre('ink-faint') }};">Aucune donnée pour cette période.</td>
                 </tr>
             @endforelse
             <tr class="total-row">
@@ -738,7 +738,7 @@
             <div class="signature-line">Nom et cachet</div>
         </div>
         <div class="signature-right">
-            <div class="signature-title">Pour {{ $company?->name ?? 'TELICO' }}</div>
+            <div class="signature-title">Pour {{ marqueNom() }}</div>
             <div class="signature-line">Le Gérant/Signature autorisée</div>
             <div class="signature-line" style="margin-top: 8px;">Nom et signature du responsable</div>
         </div>

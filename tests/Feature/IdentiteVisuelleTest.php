@@ -255,6 +255,24 @@ class IdentiteVisuelleTest extends TestCase
         $this->assertStringNotContainsString("src=''", $page->getContent());
     }
 
+    /**
+     * Le seeder inscrivait « default.png » comme photo de profil des comptes
+     * créés, mais ce fichier n'a jamais été livré : trois images cassées sur
+     * chaque page, sur toutes les installations. Le nom enregistré ne suffit
+     * pas, il faut que le fichier existe.
+     */
+    public function test_une_photo_de_profil_absente_ne_casse_pas_la_vignette(): void
+    {
+        $this->entreprise();
+        $admin = $this->admin();
+        $admin->forceFill(['profilePic' => 'fichier-absent.png'])->save();
+
+        $page = $this->actingAs($admin)->get(route('home'))->assertOk();
+
+        $page->assertDontSee('avatars/fichier-absent.png');
+        $this->assertStringNotContainsString('src=""', $page->getContent());
+    }
+
     public function test_les_initiales_tiennent_sur_un_nom_d_un_seul_mot(): void
     {
         $this->assertSame('TE', (new Company(['name' => 'TELICO']))->initiales());

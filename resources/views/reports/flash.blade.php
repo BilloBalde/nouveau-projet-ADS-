@@ -147,7 +147,7 @@
                         <td>{{ $s->numeroFacture }}</td>
                         <td>{{ $s->user?->name ?? '—' }}</td>
                         <td>{{ $s->store?->store_name }}</td>
-                        <td>{{ $s->product?->libelle }}@if ($s->is_third_party) <span class="badge bg-light text-dark" style="border:1px solid #C7A150;font-size:11px;">Vente tierce</span>@endif</td>
+                        <td>{{ $s->product?->libelle }}@if ($s->is_third_party) <span class="badge bg-light text-dark" style="border:1px solid var(--adm-accent,#C7A150);font-size:11px;">Vente tierce</span>@endif</td>
                         <td class="text-end">{{ $s->quantite_affichee }}</td>
                         <td class="text-end">{{ numberDelimiter($s->prix) }}</td>
                         <td class="text-end">{{ numberDelimiter($s->prixTotal) }}</td>

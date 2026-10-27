@@ -225,9 +225,9 @@
         <div class="header">
             <div class="logo">
                 <!-- Remplacez par votre logo -->
-                <img src="{{ asset('companies/telico.png') }}" alt="TELICO" style="max-width: 150px;">
+                @include('partials.logo-marque', ['taille' => 72, 'style' => 'max-width: 150px;'])
             </div>
-            <h1>Bienvenue chez TELICO</h1>
+            <h1>Bienvenue chez {{ marqueNom() }}</h1>
             <p>Votre partenaire de confiance</p>
         </div>
         
@@ -293,7 +293,7 @@
         
         <!-- Footer -->
         <div class="footer">
-            <p><strong>TELICO</strong> - Votre partenaire commercial de confiance</p>
+            <p><strong>{{ marqueNom() }}</strong> - Votre partenaire commercial de confiance</p>
             <p>📍 Conakry, Guinée | 📞 {{ \App\Models\Company::current()?->phone }} | ✉️ {{ \App\Models\Company::current()?->email }}</p>
             
             <div class="social-links">
@@ -303,7 +303,7 @@
             </div>
             
             <div class="copyright">
-                &copy; {{ $year ?? date('Y') }} TELICO. Tous droits réservés.
+                &copy; {{ $year ?? date('Y') }} {{ marqueNom() }}. Tous droits réservés.
             </div>
         </div>
     </div>

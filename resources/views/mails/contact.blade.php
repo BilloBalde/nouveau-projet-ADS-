@@ -525,7 +525,7 @@
                     Nous avons bien reçu votre message et vous remercions de nous avoir contactés.<br>
                     Notre équipe va étudier votre demande et vous répondra dans les plus brefs délais.<br><br>
                     Cordialement,<br>
-                    L'équipe TELICO
+                    L'équipe {{ marqueNom() }}
                 </div>
             </div>
         </div>
@@ -533,7 +533,7 @@
         <!-- Footer -->
         <div class="email-footer">
             <div class="company-name">
-                ⚡ TELICO
+                ⚡ {{ marqueNom() }}
             </div>
             
             <div class="contact-info">
@@ -565,8 +565,8 @@
             </div>
             
             <div class="copyright">
-                © {{ $year ?? date('Y') }} TELICO. Tous droits réservés.<br>
-                Ce message est confidentiel et destiné uniquement à l'équipe TELICO.
+                © {{ $year ?? date('Y') }} {{ marqueNom() }}. Tous droits réservés.<br>
+                Ce message est confidentiel et destiné uniquement à l'équipe {{ marqueNom() }}.
             </div>
         </div>
     </div>

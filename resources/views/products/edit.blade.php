@@ -4,7 +4,7 @@
     <body>
         <style>
             .form-section {
-                border: 1px solid #CED5AE;
+                border: 1px solid var(--adm-brand-200,#CED5AE);
                 border-radius: 10px;
                 padding: 20px;
                 margin-bottom: 24px;
@@ -14,7 +14,7 @@
             .form-section-title {
                 font-size: 15px;
                 font-weight: 700;
-                color: #3E4C21;
+                color: var(--adm-brand-600,#3E4C21);
                 margin-bottom: 16px;
                 display: flex;
                 align-items: center;
@@ -53,7 +53,7 @@
                 align-items: center;
                 gap: 14px;
                 background: #fbf3ea;
-                border: 1px solid #CED5AE;
+                border: 1px solid var(--adm-brand-200,#CED5AE);
                 border-radius: 8px;
                 padding: 12px 16px;
                 margin-top: 8px;
@@ -70,13 +70,13 @@
             }
 
             .promo-preview .new-price {
-                color: #3E4C21;
+                color: var(--adm-brand-600,#3E4C21);
                 font-weight: 700;
                 font-size: 18px;
             }
 
             .promo-preview .badge-percent {
-                background: #3E4C21;
+                background: var(--adm-brand-600,#3E4C21);
                 color: #fff;
                 font-size: 12px;
                 font-weight: 700;
@@ -276,7 +276,7 @@
                                         <div class="col-lg-12">
                                             <div class="promo-preview" id="promoPreview">
                                                 <span class="old-price" id="promoOldPrice">0 FG</span>
-                                                <i class="fa fa-arrow-right" style="color:#3E4C21;"></i>
+                                                <i class="fa fa-arrow-right" style="color:var(--adm-brand-600,#3E4C21);"></i>
                                                 <span class="new-price" id="promoNewPrice">0 FG</span>
                                                 <span class="badge-percent" id="promoBadge">-0%</span>
                                             </div>

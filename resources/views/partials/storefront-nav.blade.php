@@ -1,6 +1,6 @@
 <?php /** Header sur une seule ligne, équilibré : logo | menu | recherche + compte. */ ?>
 @php
-    // Bandeau clair : liens vert TELICO, page courante soulignée d'or.
+    // Bandeau clair : liens à la couleur de la marque, page courante soulignée d'accent.
     $navLinkClass = fn($active) => $active
         ? 'relative text-brand-800 font-semibold whitespace-nowrap text-[15px] tracking-wide after:absolute after:left-0 after:right-0 after:-bottom-2 after:h-0.5 after:rounded-full after:bg-accent-500'
         : 'text-brand-700/80 font-medium hover:text-brand-900 transition whitespace-nowrap text-[15px] tracking-wide';
@@ -15,8 +15,8 @@
             <!-- Logo -->
             <a href="{{ route('accueil') }}" class="flex items-center gap-2.5 shrink-0">
                 {{-- Bandeau blanc : le logo se pose directement, sans pastille. --}}
-                <img src="{{ asset('companies/telico.png') }}" alt="TELICO" class="h-16 w-auto object-contain shrink-0">
-                <span class="text-2xl font-semibold text-brand-700 hidden sm:inline" style="font-family:'Cinzel',Georgia,serif;letter-spacing:.18em;">TELICO</span>
+                @include('partials.logo-marque', ['taille' => 64, 'classe' => 'h-16 w-auto object-contain shrink-0'])
+                <span class="text-2xl font-semibold text-brand-700 hidden sm:inline" style="font-family:'Cinzel',Georgia,serif;letter-spacing:.18em;">{{ marqueNom() }}</span>
             </a>
 
             <!-- Menu (centré dans l'espace restant) -->

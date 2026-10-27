@@ -41,10 +41,13 @@
             --adm-brand-{{ $ton }}: {{ $valeur }};
             @endforeach
             --adm-accent: {{ \App\Support\IdentiteVisuelle::accent() }};
+            @foreach (\App\Support\IdentiteVisuelle::encre() as $cle => $valeur)
+            --adm-{{ $cle }}: {{ $valeur }};
+            @endforeach
         }
     </style>
 
-    {{-- Typographies TELICO : Cinzel (grands titres, comme le logo),
+    {{-- Typographies : Cinzel (grands titres),
          Source Sans 3 (texte), Barlow Condensed (références, prix, étiquettes). --}}
     {{-- Chargée en asynchrone : une police Google lente/inaccessible ne doit jamais
          bloquer l'exécution des scripts de la page (une feuille de style <link>

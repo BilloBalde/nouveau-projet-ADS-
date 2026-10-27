@@ -15,7 +15,7 @@
             .po-status-pending { background: #fff4de; color: #ffab00; }
             .po-status-received { background: #e2f5e9; color: #2ea86f; }
             .po-status-cancelled { background: #fdecea; color: #e04f4f; }
-            .po-origin-chine { color: #3E4C21; font-weight: 600; }
+            .po-origin-chine { color: var(--adm-brand-600,#3E4C21); font-weight: 600; }
             .po-origin-guinee { color: #2e7dc1; font-weight: 600; }
         </style>
         <div id="global-loader">

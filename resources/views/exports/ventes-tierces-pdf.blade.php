@@ -7,26 +7,26 @@
     <title>Ventes tierces — {{ $label }}</title>
     <style>
         @page { margin: 22px 26px; }
-        body { font-family: 'DejaVu Sans', sans-serif; font-size: 9.5px; color: #1C230D; }
-        h1 { font-size: 17px; margin: 0; color: #3E4C21; letter-spacing: 1px; }
-        h2 { font-size: 11.5px; margin: 16px 0 6px; color: #3E4C21; border-bottom: 1.5px solid #C7A150; padding-bottom: 3px; }
+        body { font-family: 'DejaVu Sans', sans-serif; font-size: 9.5px; color: {{ marqueCouleur('900') }}; }
+        h1 { font-size: 17px; margin: 0; color: {{ marqueCouleur('600') }}; letter-spacing: 1px; }
+        h2 { font-size: 11.5px; margin: 16px 0 6px; color: {{ marqueCouleur('600') }}; border-bottom: 1.5px solid {{ marqueAccent() }}; padding-bottom: 3px; }
         .entete td { vertical-align: middle; }
         .entete img { height: 52px; }
-        .sous-titre { color: #66695A; font-size: 10px; margin-top: 2px; }
-        .meta { text-align: right; color: #66695A; font-size: 9px; line-height: 1.5; }
+        .sous-titre { color: {{ marqueEncre('ink-muted') }}; font-size: 10px; margin-top: 2px; }
+        .meta { text-align: right; color: {{ marqueEncre('ink-muted') }}; font-size: 9px; line-height: 1.5; }
         table.donnees { width: 100%; border-collapse: collapse; }
-        table.donnees th { background: #3E4C21; color: #fff; font-weight: bold; padding: 5px 4px; text-align: left; font-size: 8.5px; }
-        table.donnees td { padding: 4px; border-bottom: 1px solid #E6E9D5; }
-        table.donnees tr:nth-child(even) td { background: #F9F9F3; }
-        table.donnees tfoot td { font-weight: bold; background: #F4F5EC; border-top: 1.5px solid #3E4C21; }
+        table.donnees th { background: {{ marqueCouleur('600') }}; color: #fff; font-weight: bold; padding: 5px 4px; text-align: left; font-size: 8.5px; }
+        table.donnees td { padding: 4px; border-bottom: 1px solid {{ marqueCouleur('100') }}; }
+        table.donnees tr:nth-child(even) td { background: {{ marqueEncre('paper-warm') }}; }
+        table.donnees tfoot td { font-weight: bold; background: {{ marqueCouleur('50') }}; border-top: 1.5px solid {{ marqueCouleur('600') }}; }
         .n { text-align: right; white-space: nowrap; }
         .rouge { color: #B3261E; font-weight: bold; }
-        .vert { color: #3E4C21; font-weight: bold; }
+        .vert { color: {{ marqueCouleur('600') }}; font-weight: bold; }
         .cartes { width: 100%; border-collapse: separate; border-spacing: 6px 0; margin: 10px -6px 4px; }
-        .cartes td { border: 1px solid #CED5AE; background: #F9F9F3; padding: 7px 9px; width: 25%; }
-        .cartes .t { color: #66695A; font-size: 8.5px; }
-        .cartes .v { font-size: 13px; font-weight: bold; color: #3E4C21; margin-top: 2px; }
-        .filtres { font-size: 9px; color: #66695A; margin-top: 6px; }
+        .cartes td { border: 1px solid {{ marqueCouleur('200') }}; background: {{ marqueEncre('paper-warm') }}; padding: 7px 9px; width: 25%; }
+        .cartes .t { color: {{ marqueEncre('ink-muted') }}; font-size: 8.5px; }
+        .cartes .v { font-size: 13px; font-weight: bold; color: {{ marqueCouleur('600') }}; margin-top: 2px; }
+        .filtres { font-size: 9px; color: {{ marqueEncre('ink-muted') }}; margin-top: 6px; }
         .pied { margin-top: 14px; font-size: 8px; color: #8A8D7A; text-align: center; }
     </style>
 </head>
@@ -46,7 +46,7 @@
             <td style="width:60px;">@if ($logo)<img src="{{ $logo }}" alt="">@endif</td>
             <td>
                 <h1>RAPPORT DES VENTES TIERCES</h1>
-                <div class="sous-titre">{{ $company?->name ?? 'TELICO' }} — produits pris chez un partenaire et revendus</div>
+                <div class="sous-titre">{{ marqueNom() }} — produits pris chez un partenaire et revendus</div>
             </td>
             <td class="meta">
                 Période : {{ $start->format('d/m/Y') }} au {{ $end->format('d/m/Y') }}<br>
@@ -98,7 +98,7 @@
                 @endif
             </tr>
             @empty
-            <tr><td colspan="{{ $peutRegler ? 10 : 7 }}" style="text-align:center;color:#66695A;">Aucune vente tierce sur la période.</td></tr>
+            <tr><td colspan="{{ $peutRegler ? 10 : 7 }}" style="text-align:center;color:{{ marqueEncre('ink-muted') }};">Aucune vente tierce sur la période.</td></tr>
             @endforelse
         </tbody>
         @if ($partenaires->isNotEmpty())
@@ -145,7 +145,7 @@
                 <td>{{ $customers[$s->facture_customer_id] ?? '—' }}</td>
             </tr>
             @empty
-            <tr><td colspan="13" style="text-align:center;color:#66695A;">Aucune ligne.</td></tr>
+            <tr><td colspan="13" style="text-align:center;color:{{ marqueEncre('ink-muted') }};">Aucune ligne.</td></tr>
             @endforelse
         </tbody>
     </table>
@@ -165,7 +165,7 @@
                 <td>{{ $r->user?->name ?? '—' }}</td>
             </tr>
             @empty
-            <tr><td colspan="6" style="text-align:center;color:#66695A;">Aucun règlement sur la période.</td></tr>
+            <tr><td colspan="6" style="text-align:center;color:{{ marqueEncre('ink-muted') }};">Aucun règlement sur la période.</td></tr>
             @endforelse
         </tbody>
         @if ($reglements->isNotEmpty())

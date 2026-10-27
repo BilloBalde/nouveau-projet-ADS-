@@ -17,7 +17,7 @@
                 margin: 8px 0;
                 padding: 12px;
                 background: #fff;
-                border: 1px solid #E6E9D5;
+                border: 1px solid var(--adm-brand-100,#E6E9D5);
                 border-radius: 10px;
                 box-shadow: 0 1px 3px rgba(28,35,13, 0.06);
                 transition: box-shadow .15s ease, transform .15s ease;
@@ -41,7 +41,7 @@
 
             .row-remove-btn {
                 background-color: #fdecea;
-                color: #3E4C21;
+                color: var(--adm-brand-600,#3E4C21);
                 border: none;
                 border-radius: 50%;
                 width: 30px;
@@ -54,7 +54,7 @@
             }
 
             .row-remove-btn:hover {
-                background-color: #3E4C21;
+                background-color: var(--adm-brand-600,#3E4C21);
                 color: #fff;
             }
 
@@ -67,9 +67,9 @@
             .qty-stepper button {
                 width: 28px;
                 height: 28px;
-                border: 1px solid #CED5AE;
-                background: #F4F5EC;
-                color: #3E4C21;
+                border: 1px solid var(--adm-brand-200,#CED5AE);
+                background: var(--adm-brand-50,#F4F5EC);
+                color: var(--adm-brand-600,#3E4C21);
                 border-radius: 6px;
                 font-weight: bold;
                 line-height: 1;
@@ -78,7 +78,7 @@
             }
 
             .qty-stepper button:hover {
-                background-color: #3E4C21;
+                background-color: var(--adm-brand-600,#3E4C21);
                 color: #fff;
             }
 
@@ -90,18 +90,18 @@
             #emptyCartState {
                 text-align: center;
                 padding: 40px 10px;
-                color: #66695A;
+                color: var(--adm-ink-muted,#66695A);
             }
 
             #emptyCartState i {
                 font-size: 42px;
-                color: #CED5AE;
+                color: var(--adm-brand-200,#CED5AE);
                 margin-bottom: 10px;
                 display: block;
             }
 
             #cartCountBadge {
-                background: #3E4C21;
+                background: var(--adm-brand-600,#3E4C21);
                 color: #fff;
                 border-radius: 999px;
                 font-size: 12px;
@@ -130,7 +130,7 @@
 
             .stock-badge.stock-ok {
                 background: #e8f6ec;
-                color: #3E4C21;
+                color: var(--adm-brand-600,#3E4C21);
             }
 
             .stock-badge.stock-low {
@@ -139,7 +139,7 @@
             }
 
             .price-vente {
-                color: #3E4C21;
+                color: var(--adm-brand-600,#3E4C21);
                 font-weight: 700;
                 font-size: 16px;
             }
@@ -154,8 +154,8 @@
             .store-pill {
                 font-size: 10px;
                 font-weight: 600;
-                color: #323D1A;
-                background: #E6E9D5;
+                color: var(--adm-brand-700,#323D1A);
+                background: var(--adm-brand-100,#E6E9D5);
                 border-radius: 999px;
                 padding: 2px 7px;
                 white-space: nowrap;
@@ -170,7 +170,7 @@
             }
 
             .vt-header {
-                background: linear-gradient(135deg, #3E4C21, #1C230D);
+                background: linear-gradient(135deg, var(--adm-brand-600,#3E4C21), var(--adm-brand-900,#1C230D));
                 color: #fff;
                 border: 0;
                 padding: 20px 26px;
@@ -189,7 +189,7 @@
             }
 
             .vt-body {
-                background: #F9F9F3;
+                background: var(--adm-paper-warm,#F9F9F3);
                 padding: 22px 26px;
             }
 
@@ -226,7 +226,7 @@
                 width: 24px;
                 height: 24px;
                 border-radius: 50%;
-                background: #3E4C21;
+                background: var(--adm-brand-600,#3E4C21);
                 color: #fff;
                 font-size: 12px;
                 font-weight: 700;
@@ -258,7 +258,7 @@
 
             .vt-choix-btn.actif {
                 background: #fff;
-                color: #3E4C21;
+                color: var(--adm-brand-600,#3E4C21);
                 box-shadow: 0 2px 6px -2px rgba(28,35,13, .25);
             }
 
@@ -288,7 +288,7 @@
 
             .vt-champ:focus {
                 outline: 0;
-                border-color: #3E4C21;
+                border-color: var(--adm-brand-600,#3E4C21);
                 box-shadow: 0 0 0 3px rgba(62,76,33, .13);
             }
 
@@ -305,9 +305,9 @@
 
             /* Lignes produit */
             .vt-btn-ajout {
-                border: 1px dashed #3E4C21;
-                background: #F4F5EC;
-                color: #3E4C21;
+                border: 1px dashed var(--adm-brand-600,#3E4C21);
+                background: var(--adm-brand-50,#F4F5EC);
+                color: var(--adm-brand-600,#3E4C21);
                 font-size: 13px;
                 font-weight: 600;
                 border-radius: 9px;
@@ -316,7 +316,7 @@
             }
 
             .vt-btn-ajout:hover {
-                background: #E6E9D5;
+                background: var(--adm-brand-100,#E6E9D5);
             }
 
             .vt-ligne {
@@ -338,7 +338,7 @@
             .vt-ligne-num {
                 font-size: 12px;
                 font-weight: 700;
-                color: #3E4C21;
+                color: var(--adm-brand-600,#3E4C21);
                 background: #e8f6ec;
                 border-radius: 999px;
                 padding: 3px 11px;
@@ -360,7 +360,7 @@
 
             .vt-btn-plus {
                 border: 0;
-                background: #3E4C21;
+                background: var(--adm-brand-600,#3E4C21);
                 color: #fff;
                 border-radius: 9px;
                 padding: 0 13px;
@@ -377,7 +377,7 @@
                 font-weight: 600;
             }
 
-            .vt-ligne-marge.ok    { color: #3E4C21; }
+            .vt-ligne-marge.ok    { color: var(--adm-brand-600,#3E4C21); }
             .vt-ligne-marge.perte { color: #b42318; }
 
             /* Récapitulatif */
@@ -445,7 +445,7 @@
                 font-weight: 600;
             }
 
-            .vt-marge { color: #3E4C21 !important; }
+            .vt-marge { color: var(--adm-brand-600,#3E4C21) !important; }
 
             .vt-ligne-total--final {
                 margin-top: 6px;
@@ -457,7 +457,7 @@
             .vt-ligne-total--final strong {
                 font-size: 20px;
                 font-weight: 800;
-                color: #3E4C21;
+                color: var(--adm-brand-600,#3E4C21);
             }
 
             /* Pied et messages */
@@ -477,7 +477,7 @@
             }
 
             .vt-btn-valider {
-                background: linear-gradient(135deg, #3E4C21, #323D1A);
+                background: linear-gradient(135deg, var(--adm-brand-600,#3E4C21), var(--adm-brand-700,#323D1A));
                 color: #fff;
                 font-weight: 700;
                 border-radius: 9px;
@@ -518,9 +518,9 @@
             .pos-pagination button {
                 min-width: 34px;
                 height: 34px;
-                border: 1px solid #CED5AE;
+                border: 1px solid var(--adm-brand-200,#CED5AE);
                 background: #fff;
-                color: #3E4C21;
+                color: var(--adm-brand-600,#3E4C21);
                 border-radius: 8px;
                 font-weight: 600;
                 cursor: pointer;
@@ -528,13 +528,13 @@
             }
 
             .pos-pagination button:hover {
-                background: #F4F5EC;
+                background: var(--adm-brand-50,#F4F5EC);
             }
 
             .pos-pagination button.active {
-                background: #3E4C21;
+                background: var(--adm-brand-600,#3E4C21);
                 color: #fff;
-                border-color: #3E4C21;
+                border-color: var(--adm-brand-600,#3E4C21);
             }
 
             .pos-pagination button:disabled {
@@ -548,25 +548,25 @@
 
             .tabs_wrapper ul.tabs li.active,
             .productset .check-product {
-                background-color: #3E4C21 !important;
+                background-color: var(--adm-brand-600,#3E4C21) !important;
             }
 
             .productset.active,
             .productset:hover {
-                border-color: #3E4C21 !important;
+                border-color: var(--adm-brand-600,#3E4C21) !important;
             }
 
             .product-details:hover {
-                background: #3E4C21;
+                background: var(--adm-brand-600,#3E4C21);
             }
 
             .product-details.active {
-                background-color: #3E4C21 !important;
+                background-color: var(--adm-brand-600,#3E4C21) !important;
             }
 
             .btn-totallabel,
             .btn-scanner-set {
-                background-color: #3E4C21 !important;
+                background-color: var(--adm-brand-600,#3E4C21) !important;
                 color: #fff !important;
             }
 
@@ -574,13 +574,13 @@
                le bloc des totaux a été remplacé par .pos-totals. */
 
             .owl-product .owl-nav button {
-                color: #3E4C21 !important;
+                color: var(--adm-brand-600,#3E4C21) !important;
             }
 
             .cat-chip {
                 display: inline-block;
-                background: #E6E9D5;
-                color: #323D1A;
+                background: var(--adm-brand-100,#E6E9D5);
+                color: var(--adm-brand-700,#323D1A);
                 font-size: 10px;
                 font-weight: 700;
                 letter-spacing: .04em;
@@ -591,7 +591,7 @@
             }
 
             .productsetimg {
-                background: #F4F5EC;
+                background: var(--adm-brand-50,#F4F5EC);
                 border-radius: 8px;
                 position: relative;
                 overflow: hidden;
@@ -611,7 +611,7 @@
                 align-items: center;
                 justify-content: center;
                 font-size: 32px;
-                color: #ADB97E;
+                color: var(--adm-brand-300,#ADB97E);
             }
 
             .productset {
@@ -624,23 +624,23 @@
             }
 
             .tab-item:not(.active) .product-details {
-                background: #F9F9F3;
-                border: 1px solid #CED5AE;
+                background: var(--adm-paper-warm,#F9F9F3);
+                border: 1px solid var(--adm-brand-200,#CED5AE);
                 transition: background-color .15s ease, box-shadow .15s ease;
             }
 
             .tab-item:not(.active):hover .product-details {
-                background: #F4F5EC;
+                background: var(--adm-brand-50,#F4F5EC);
                 box-shadow: 0 2px 8px rgba(62,76,33, 0.1);
             }
 
             .btn-adds {
-                border-color: #3E4C21 !important;
-                color: #3E4C21 !important;
+                border-color: var(--adm-brand-600,#3E4C21) !important;
+                color: var(--adm-brand-600,#3E4C21) !important;
             }
 
             .btn-adds:hover {
-                background: #3E4C21 !important;
+                background: var(--adm-brand-600,#3E4C21) !important;
                 color: #fff !important;
             }
 
@@ -654,7 +654,7 @@
                 position: absolute;
                 top: 10px;
                 right: 10px;
-                background-color: #3E4C21;
+                background-color: var(--adm-brand-600,#3E4C21);
                 color: white;
                 width: 20px;
                 height: 20px;
@@ -701,30 +701,30 @@
                 font-weight: 700;
                 letter-spacing: .08em;
                 text-transform: uppercase;
-                color: #3E4C21;
+                color: var(--adm-brand-600,#3E4C21);
                 margin: 22px 0 10px;
                 padding-bottom: 7px;
-                border-bottom: 1px solid #E6E9D5;
+                border-bottom: 1px solid var(--adm-brand-100,#E6E9D5);
             }
 
             .pos-label {
                 display: block;
                 font-size: 12px;
                 font-weight: 600;
-                color: #66695A;
+                color: var(--adm-ink-muted,#66695A);
                 margin-bottom: 5px;
             }
             .pos-optional {
                 font-weight: 400;
-                color: #9A9C8A;
+                color: var(--adm-ink-faint,#9A9C8A);
             }
 
             /* Les totaux étaient une liste indifférenciée : le montant à payer,
                qui est l'information que le vendeur annonce au client, se noyait
                au milieu du sous-total et des frais. */
             .pos-totals {
-                background: #F4F5EC;
-                border: 1px solid #E6E9D5;
+                background: var(--adm-brand-50,#F4F5EC);
+                border: 1px solid var(--adm-brand-100,#E6E9D5);
                 border-radius: 12px;
                 padding: 12px 14px;
                 margin-top: 4px;
@@ -739,13 +739,13 @@
             .pos-total-row span,
             .pos-total-row label {
                 font-size: 13px;
-                color: #66695A;
+                color: var(--adm-ink-muted,#66695A);
                 margin: 0;
             }
             .pos-total-row strong {
                 font-size: 15px;
                 font-weight: 600;
-                color: #1F2414;
+                color: var(--adm-ink,#1F2414);
             }
             .pos-total-input {
                 width: 110px;
@@ -756,22 +756,22 @@
             .pos-total-row--final {
                 margin-top: 6px;
                 padding-top: 11px;
-                border-top: 1px dashed #ADB97E;
+                border-top: 1px dashed var(--adm-brand-300,#ADB97E);
             }
             .pos-total-row--final span {
                 font-size: 14px;
                 font-weight: 700;
-                color: #1F2414;
+                color: var(--adm-ink,#1F2414);
             }
             .pos-total-row--final strong {
                 font-size: 22px;
                 font-weight: 800;
-                color: #3E4C21;
+                color: var(--adm-brand-600,#3E4C21);
                 line-height: 1.1;
             }
 
             .btn-pos-validate {
-                background: linear-gradient(135deg, #3E4C21, #323D1A);
+                background: linear-gradient(135deg, var(--adm-brand-600,#3E4C21), var(--adm-brand-700,#323D1A));
                 color: #fff;
                 font-weight: 700;
                 font-size: 15px;
@@ -808,28 +808,28 @@
                 height: 42px;
             }
             .pos-search input:focus {
-                border-color: #6B7A35;
+                border-color: var(--adm-brand-500,#6B7A35);
                 box-shadow: 0 0 0 3px rgba(107,122,53,.14);
             }
             .pos-search-icon {
                 position: absolute; left: 14px; top: 50%;
                 transform: translateY(-50%);
-                color: #9A9C8A; font-size: 13px; pointer-events: none;
+                color: var(--adm-ink-faint,#9A9C8A); font-size: 13px; pointer-events: none;
             }
             .pos-search-clear {
                 position: absolute; right: 12px; top: 50%;
                 transform: translateY(-50%);
-                cursor: pointer; color: #9A9C8A;
+                cursor: pointer; color: var(--adm-ink-faint,#9A9C8A);
             }
-            .pos-search-clear:hover { color: #66695A; }
+            .pos-search-clear:hover { color: var(--adm-ink-muted,#66695A); }
 
             /* btn-warning (jaune Bootstrap) jurait avec la charte verte */
             .btn-pos-secondary {
                 height: 42px;
                 white-space: nowrap;
                 background: #fff;
-                color: #3E4C21;
-                border: 1.5px solid #ADB97E;
+                color: var(--adm-brand-600,#3E4C21);
+                border: 1.5px solid var(--adm-brand-300,#ADB97E);
                 border-radius: 10px;
                 font-weight: 600;
                 font-size: 13.5px;
@@ -837,9 +837,9 @@
                 transition: background .18s ease, border-color .18s ease;
             }
             .btn-pos-secondary:hover {
-                background: #F4F5EC;
-                border-color: #6B7A35;
-                color: #323D1A;
+                background: var(--adm-brand-50,#F4F5EC);
+                border-color: var(--adm-brand-500,#6B7A35);
+                color: var(--adm-brand-700,#323D1A);
             }
 
             /* Ligne du panier : l'origine du stock et le bloc « vente pour un tiers »
@@ -1334,8 +1334,8 @@
         <div class="modal fade" id="partnerLineModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
-                    <div class="modal-header" style="background:#F9F9F3;border-bottom:1px solid #CED5AE;">
-                        <h6 class="modal-title" style="color:#3E4C21;"><i class="fa fa-handshake me-2"></i>Produit pris chez un partenaire</h6>
+                    <div class="modal-header" style="background:var(--adm-paper-warm,#F9F9F3);border-bottom:1px solid var(--adm-brand-200,#CED5AE);">
+                        <h6 class="modal-title" style="color:var(--adm-brand-600,#3E4C21);"><i class="fa fa-handshake me-2"></i>Produit pris chez un partenaire</h6>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
                     </div>
                     <div class="modal-body">
@@ -1377,7 +1377,7 @@
                                     <option value="{{ $partner->id }}">{{ $partner->name }}{{ $partner->phone ? ' ('.$partner->phone.')' : '' }}</option>
                                     @endforeach
                                 </select>
-                                <button type="button" class="btn btn-sm" id="plAjoutPartenaire" style="background:#3E4C21;color:#fff;" title="Nouveau partenaire"><i class="fa fa-plus"></i></button>
+                                <button type="button" class="btn btn-sm" id="plAjoutPartenaire" style="background:var(--adm-brand-600,#3E4C21);color:#fff;" title="Nouveau partenaire"><i class="fa fa-plus"></i></button>
                             </div>
                         </div>
                         <div class="row g-2">
@@ -1406,8 +1406,8 @@
         <div class="modal fade" id="quickPartnerModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-sm modal-dialog-centered">
                 <div class="modal-content">
-                    <div class="modal-header" style="background: #F9F9F3; border-bottom: 1px solid #CED5AE;">
-                        <h6 class="modal-title" style="color: #3E4C21;">
+                    <div class="modal-header" style="background: var(--adm-paper-warm,#F9F9F3); border-bottom: 1px solid var(--adm-brand-200,#CED5AE);">
+                        <h6 class="modal-title" style="color: var(--adm-brand-600,#3E4C21);">
                             <i class="fa fa-user-plus me-2"></i>Nouveau Partenaire
                         </h6>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -1430,9 +1430,9 @@
                             <div class="text-danger" id="quickPartnerError" style="font-size: 12px; display:none;"></div>
                         </form>
                     </div>
-                    <div class="modal-footer" style="border-top: 1px solid #CED5AE;">
+                    <div class="modal-footer" style="border-top: 1px solid var(--adm-brand-200,#CED5AE);">
                         <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                        <button type="button" class="btn btn-sm" id="saveQuickPartner" style="background: #3E4C21; color: white;">Enregistrer</button>
+                        <button type="button" class="btn btn-sm" id="saveQuickPartner" style="background: var(--adm-brand-600,#3E4C21); color: white;">Enregistrer</button>
                     </div>
                 </div>
             </div>
@@ -1468,7 +1468,7 @@
                             title: 'Stock insuffisant',
                             html: 'La quantité demandée dépasse le stock de l’emplacement choisi.<br>Réduisez la quantité ou choisissez une autre origine.',
                             confirmButtonText: 'Corriger',
-                            confirmButtonColor: '#3E4C21',
+                            confirmButtonColor: 'var(--adm-brand-600,#3E4C21)',
                         });
                         ruptures[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
                         return;
@@ -1485,7 +1485,7 @@
                             ? fautives.length + ' produits sont vendus sous leur prix minimum autorisé (prix de vente minimum ou prix de revient).<br>Corrigez les prix en rouge avant de valider.'
                             : 'Un produit est vendu sous son prix minimum autorisé (prix de vente minimum ou prix de revient).<br>Corrigez le prix en rouge avant de valider.',
                         confirmButtonText: 'Corriger',
-                        confirmButtonColor: '#3E4C21',
+                        confirmButtonColor: 'var(--adm-brand-600,#3E4C21)',
                     });
                     fautives[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
                     fautives[0].focus();
@@ -1644,7 +1644,7 @@
                         '</li>' +
                         '<li class="qty-price-group">' +
                             '<div class="quantity-set form-group">' +
-                                '<h6>Qté <span style="font-weight:400;color:#6B7A35;">(' + (unitesByProduct[product_id]?.libelle || 'Pièce') + ')</span></h6>' +
+                                '<h6>Qté <span style="font-weight:400;color:var(--adm-brand-500,#6B7A35);">(' + (unitesByProduct[product_id]?.libelle || 'Pièce') + ')</span></h6>' +
                                 '<div class="qty-stepper">' +
                                     '<button type="button" class="qty-decrement">-</button>' +
                                     '<input type="number" min="1" name="sales[' + i + '][quantity]" value="1" class="quantity-field form-control">' +
@@ -1667,15 +1667,15 @@
                         '</li>' +
                         '<li style="width:100%; margin-top:8px;">' +
                             '<label style="font-size:13px; cursor:pointer; display:flex; align-items:center;">' +
-                                '<input type="checkbox" class="third-party-check" style="margin-right:6px; accent-color:#3E4C21;">' +
+                                '<input type="checkbox" class="third-party-check" style="margin-right:6px; accent-color:var(--adm-brand-600,#3E4C21);">' +
                                 'Vente Eclaire' +
                             '</label>' +
-                            '<div class="third-party-fields mt-2" style="display:none; background:#F9F9F3; padding:10px; border-radius:8px; border:1px solid #CED5AE;">' +
+                            '<div class="third-party-fields mt-2" style="display:none; background:var(--adm-paper-warm,#F9F9F3); padding:10px; border-radius:8px; border:1px solid var(--adm-brand-200,#CED5AE);">' +
                                 '<div style="display:flex; gap:8px; margin-bottom:8px;">' +
                                     '<select name="sales[' + i + '][partner_id]" class="form-control partner-select" style="flex:1;">' +
                                         partnerOptions +
                                     '</select>' +
-                                    '<button type="button" class="btn btn-sm btn-add-partner" style="background:#3E4C21; color:#fff; white-space:nowrap;">' +
+                                    '<button type="button" class="btn btn-sm btn-add-partner" style="background:var(--adm-brand-600,#3E4C21); color:#fff; white-space:nowrap;">' +
                                         '<i class="fa fa-plus"></i>' +
                                     '</button>' +
                                 '</div>' +
@@ -1937,12 +1937,12 @@
                             '<input type="hidden" name="sales[' + i + '][purchase_price_from_partner]" value="' + prixAmi + '">' +
                             '<li style="width:100%;">' +
                                 '<h4 style="font-size:14px;margin-bottom:2px;">' + echapper(libelle) + '</h4>' +
-                                '<span class="badge" style="background:#FBF6EA;color:#8A6A24;border:1px solid #C7A150;font-weight:600;white-space:normal;">' +
+                                '<span class="badge" style="background:#FBF6EA;color:#8A6A24;border:1px solid var(--adm-accent,#C7A150);font-weight:600;white-space:normal;">' +
                                     '<i class="fa fa-handshake me-1"></i>Pris chez ' + echapper(nomPartenaire) + ' · payé ' + fmt(prixAmi) + ' GNF / ' + echapper(u ? u.singulier : 'pièce') +
                                 '</span>' +
                             '</li>' +
                             '<li class="qty-price-group">' +
-                                '<div class="quantity-set form-group"><h6>Qté <span style="font-weight:400;color:#6B7A35;">(' + echapper(u ? u.libelle : 'Pièce') + ')</span></h6>' +
+                                '<div class="quantity-set form-group"><h6>Qté <span style="font-weight:400;color:var(--adm-brand-500,#6B7A35);">(' + echapper(u ? u.libelle : 'Pièce') + ')</span></h6>' +
                                     '<input type="number" min="1" name="sales[' + i + '][quantity]" value="' + qte + '" class="quantity-field form-control"></div>' +
                                 '<div class="price form-group"><h6>Prix de Vente</h6>' +
                                     '<input type="text" style="width:150px" name="sales[' + i + '][prix]" value="' + prix + '" class="price-field form-control">' +
@@ -2170,7 +2170,7 @@
                                 '<td class="vt-c">' + r.quantite + '</td>' +
                                 '<td class="vt-d">' + vtFormat(r.prix) + '</td>' +
                                 '<td class="vt-d">' + vtFormat(r.totalLigne) + '</td>' +
-                                '<td class="vt-d" style="color:' + (r.margeLigne < 0 ? '#b42318' : '#3E4C21') + '">' + vtFormat(r.margeLigne) + '</td>' +
+                                '<td class="vt-d" style="color:' + (r.margeLigne < 0 ? '#b42318' : 'var(--adm-brand-600,#3E4C21)') + '">' + vtFormat(r.margeLigne) + '</td>' +
                             '</tr>').join('')
                         : '<tr class="vt-vide"><td colspan="5">Aucun produit pour l\'instant.</td></tr>';
 

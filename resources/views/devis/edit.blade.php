@@ -246,7 +246,7 @@
                 const prix = parseFloat(input.value) || 0;
                 const trop = plancher > 0 && prix > 0 && prix < plancher;
                 input.classList.toggle('is-invalid', trop);
-                aide.style.color = trop ? '#d92d20' : '#66695A';
+                aide.style.color = trop ? '#d92d20' : 'var(--adm-ink-muted,#66695A)';
                 aide.textContent = plancher > 0
                     ? (trop ? 'Trop bas : minimum ' : 'Minimum : ') + Number(plancher).toLocaleString('fr-FR') + ' GNF (' + origine + ')'
                     : '';

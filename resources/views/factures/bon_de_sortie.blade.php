@@ -44,7 +44,7 @@
         }
         
         .btn-added {
-            background-color: #3E4C21;
+            background-color: var(--adm-brand-600,#3E4C21);
             color: white;
         }
         
@@ -474,11 +474,11 @@
                                     @if($company && $company->logo)
                                         <img src="{{ asset('companies/'.$company->logo) }}" alt="{{ $company->name ?? 'Logo' }}">
                                     @else
-                                        <img src="{{ asset('companies/telico.png') }}" alt="{{ config('app.name') }}">
+                                        @include('partials.logo-marque', ['taille' => 64])
                                     @endif
                                     <div class="document-title">
                                         <h1>BON DE SORTIE</h1>
-                                        <h3>{{ $company?->name ?? 'TELICO' }}</h3>
+                                        <h3>{{ marqueNom() }}</h3>
                                     </div>
                                 </div>
                             </div>
@@ -591,7 +591,7 @@
                                     <!-- Entreprise -->
                                     <div style="width: 220px; text-align: center;">
                                         <div style="border-top: 1px solid black; margin-bottom: 8px;"></div>
-                                        <strong style="font-size: 12px;">Pour {{ $company?->name ?? 'TELICO' }}</strong><br>
+                                        <strong style="font-size: 12px;">Pour {{ marqueNom() }}</strong><br>
                                         <span style="font-size: 10px; color: #666;">Responsable magasin / Livreur</span>
                                     </div>
                                 </div>

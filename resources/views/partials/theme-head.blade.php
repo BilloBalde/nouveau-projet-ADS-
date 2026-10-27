@@ -1,9 +1,13 @@
-{{-- Emblème TELICO en favicon pour tout le site public. --}}
-<link rel="icon" type="image/png" href="{{ asset('favicon-telico.png') }}">
-<link rel="apple-touch-icon" href="{{ asset('companies/telico-embleme.png') }}">
+{{-- Icône d'onglet : le logo de l'entreprise enregistrée, s'il y en a un. --}}
+@if (marqueLogoUrl())
+<link rel="icon" href="{{ marqueLogoUrl() }}">
+<link rel="apple-touch-icon" href="{{ marqueLogoUrl() }}">
+@endif
 {{-- ════════════════════════════════════════════════════════════════════
-     SYSTÈME DE DESIGN — TELICO
-     Palette tirée du logo (baobab) : vert TELICO · or baobab (détails) · blanc chaud
+     SYSTÈME DE DESIGN DU SITE PUBLIC
+     La palette est celle de l'installation (BRAND_COLOR), comme le back-office.
+     Les valeurs sont rendues ici, et non reprises des jetons CSS : ces pages ne
+     chargent pas la feuille du back-office.
      Source unique pour toutes les pages publiques : la config Tailwind, les
      jetons CSS et les classes de composants vivent ici, pas dupliqués par page.
      ════════════════════════════════════════════════════════════════════ --}}
@@ -12,21 +16,13 @@
         theme: {
             extend: {
                 colors: {
-                    /* Vert de marque — structure, navigation, confiance */
+                    /* Couleur de marque — structure, navigation, confiance */
                     brand: {
-                        50:  '#F4F5EC',
-                        100: '#E6E9D5',
-                        200: '#CED5AE',
-                        300: '#ADB97E',
-                        400: '#8C9A55',
-                        500: '#6B7A35',
-                        600: '#3E4C21',
-                        700: '#323D1A',
-                        800: '#283114',
-                        900: '#1C230D',
-                        950: '#10150A',
+                        @foreach (\App\Support\IdentiteVisuelle::rampe() as $ton => $valeur)
+                        {{ $ton }}: '{{ $valeur }}',
+                        @endforeach
                     },
-                    /* Or baobab — ornement du logo : détails, prix, mises en avant.
+                    /* Accent — détails, prix, mises en avant.
                        Les teintes 600+ restent lisibles en texte blanc. */
                     accent: {
                         50:  '#FBF6EA',
@@ -34,7 +30,7 @@
                         200: '#EBD49D',
                         300: '#DFBC70',
                         400: '#D1AA5C',
-                        500: '#C7A150',
+                        500: '{{ marqueAccent() }}',
                         600: '#9A7A30',
                         700: '#8A6A24',
                         800: '#6D531D',
@@ -44,16 +40,9 @@
                        `amber-*`. Pointé sur le vert de marque pour qu'aucune page
                        non migrée ne reste orange. À retirer une fois tout migré. */
                     amber: {
-                        50:  '#F4F5EC',
-                        100: '#E6E9D5',
-                        200: '#CED5AE',
-                        300: '#ADB97E',
-                        400: '#8C9A55',
-                        500: '#6B7A35',
-                        600: '#3E4C21',
-                        700: '#323D1A',
-                        800: '#283114',
-                        900: '#1C230D',
+                        @foreach (\App\Support\IdentiteVisuelle::rampe() as $ton => $valeur)
+                        {{ $ton }}: '{{ $valeur }}',
+                        @endforeach
                     },
                 },
                 fontFamily: {
@@ -79,28 +68,20 @@
 
 <style>
     :root {
-        --brand-50:  #F4F5EC;
-        --brand-100: #E6E9D5;
-        --brand-200: #CED5AE;
-        --brand-300: #ADB97E;
-        --brand-500: #6B7A35;
-        --brand-600: #3E4C21;
-        --brand-700: #323D1A;
-        --brand-900: #1C230D;
-        --brand-950: #10150A;
+        @foreach (\App\Support\IdentiteVisuelle::rampe() as $ton => $valeur)
+        --brand-{{ $ton }}: {{ $valeur }};
+        @endforeach
 
         --accent-50:  #FBF6EA;
         --accent-100: #F5E9CC;
-        --accent-500: #C7A150;
+        --accent-500: {{ marqueAccent() }};
         --accent-600: #9A7A30;
         --accent-700: #8A6A24;
 
-        --ink:        #1F2414;
-        --ink-muted:  #66695A;
-        --ink-faint:  #9A9C8A;
+        @foreach (\App\Support\IdentiteVisuelle::encre() as $cle => $valeur)
+        --{{ $cle }}: {{ $valeur }};
+        @endforeach
         --paper:      #ffffff;
-        --paper-warm: #F9F9F3;
-        --hairline:   #E6E6D8;
 
         --radius-sm: 10px;
         --radius:    16px;
@@ -242,24 +223,25 @@
        Le filet du bas est une ombre interne et non une bordure, pour que la hauteur
        reste à 83px exactement — c'est sur cette valeur qu'est calé le hero. */
     .nav-dark {
-        /* Bandeau clair TELICO : blanc, logo posé directement dessus, liens vert
-           TELICO, filet ivoire. Une ombre se dessine dès que la page défile. */
+        /* Bandeau clair : blanc, logo posé directement dessus, liens à la
+           couleur de la marque, filet ivoire. Une ombre se dessine dès que la
+           page défile. */
         background: rgba(255,255,255,.97);
         backdrop-filter: blur(10px);
-        box-shadow: inset 0 -1px 0 #E6E6D8;
+        box-shadow: inset 0 -1px 0 var(--hairline,#E6E6D8);
         transition: box-shadow .35s ease, background .35s ease;
     }
     .nav-dark.is-scrolled {
         background: #FFFFFF;
-        box-shadow: inset 0 -1px 0 #E6E6D8, 0 14px 30px -18px rgba(28,35,13,.45);
+        box-shadow: inset 0 -1px 0 var(--hairline,#E6E6D8), 0 14px 30px -18px rgba(28,35,13,.45);
     }
     @media (prefers-reduced-motion: reduce) {
         .nav-dark { transition: none; }
     }
 
     /* Cloche de notifications : couleurs du bandeau clair. */
-    .nav-dark .notif-bell-btn { color: #3E4C21; }
-    .nav-dark .notif-bell-btn:hover { background: #F4F5EC; color: #1C230D; }
+    .nav-dark .notif-bell-btn { color: var(--brand-600,#3E4C21); }
+    .nav-dark .notif-bell-btn:hover { background: var(--brand-50,#F4F5EC); color: var(--brand-900,#1C230D); }
 
     ::selection { background: var(--brand-200); color: var(--brand-900); }
 </style>

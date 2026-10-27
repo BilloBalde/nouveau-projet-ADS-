@@ -74,7 +74,11 @@ COMPANY_PHONE="628 263 636"
 COMPANY_PHONE_2="666 321 811"
 COMPANY_ABOUT="Commerce de détail — Madina Marché, Conakry."
 COMPANY_LOGO=              # nom du fichier déposé dans public/companies/
+BRAND_SLOGAN=              # devise du site public ; vide = aucune
 ```
+
+> `APP_NAME` doit également porter le nom du client : c'est ce qui s'affiche si
+> la base est momentanément injoignable, et ce que portent les e-mails sortants.
 
 > **Les guillemets autour de la couleur ne sont pas décoratifs.** Dans un
 > `.env`, un `#` non protégé ouvre un commentaire : `BRAND_COLOR=#543FC2`
@@ -93,6 +97,24 @@ choix de la nuance qui le règle.
 
 Sans `BRAND_COLOR`, la palette d'origine (vert) est rendue à l'identique : les
 installations déjà livrées ne bougent pas.
+
+### Ce que l'identité couvre
+
+Aucun nom de client n'est plus écrit dans le code — un test l'interdit. Tout ce
+qui suit lit la fiche entreprise et la couleur de l'installation :
+
+| | |
+|---|---|
+| Logiciel | en-tête, menu, boutons, tableaux, icône d'onglet, page de connexion |
+| Documents | factures, devis, bons de commande et de sortie, reçus |
+| PDF | rapport journalier, exports de ventes, paiements, mouvements, comptages |
+| E-mails | bienvenue, mot de passe oublié, formulaire de contact |
+| Site public | accueil, catalogue, à propos, contact, bandeau et pied de page |
+| Rappels | message WhatsApp de relance de dette |
+
+> Les PDF ne peuvent pas utiliser de variables CSS — dompdf ne les résout pas et
+> la couleur deviendrait invisible, sans message d'erreur. Ces vues écrivent donc
+> la valeur avec `marqueCouleur()`. Un test le vérifie à chaque exécution.
 
 ### Logo
 
@@ -213,7 +235,7 @@ Vérifier après installation : `php artisan schedule:list` doit afficher les tr
 ## 5 bis. Sauvegardes
 
 Les copies sont écrites dans `storage/app/backups`, compressées, nommées
-`coleah-{date}.sql.gz`. Les fichiers de plus de 14 jours sont supprimés
+`sauvegarde-{date}.sql.gz`. Les fichiers de plus de 14 jours sont supprimés
 automatiquement.
 
 Lancer une sauvegarde à la demande :
@@ -228,7 +250,7 @@ Si `mysqldump` n'est pas dans le PATH du serveur, renseigner son chemin complet 
 Restaurer une sauvegarde :
 
 ```
-gunzip -c storage/app/backups/coleah-AAAA-MM-JJ_HHMMSS.sql.gz | mysql -u UTILISATEUR -p NOM_BASE
+gunzip -c storage/app/backups/sauvegarde-AAAA-MM-JJ_HHMMSS.sql.gz | mysql -u UTILISATEUR -p NOM_BASE
 ```
 
 **Limite importante à connaître.** Ces copies restent **sur le même disque que la base

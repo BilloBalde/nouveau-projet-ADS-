@@ -18,7 +18,7 @@ class PricingTiers
     /**
      * Les paliers sont-ils actifs sur cette installation ?
      *
-     * TELICO vend au prix affiché quelle que soit la quantité ; la
+     * L'installation d'origine vend au prix affiché quelle que soit la quantité ; la
      * définition ci-dessus est conservée pour les installations qui les veulent.
      * Voir config/pricing.php et PRICING_TIERS_ENABLED dans .env.
      */
