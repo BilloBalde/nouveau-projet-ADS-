@@ -201,8 +201,8 @@
                                     <label style="font-size:12px;" class="text-muted mb-1">Attribuer à une boutique</label>
                                     <select name="store_id" class="form-control form-control-sm" onchange="this.form.submit()">
                                         <option value="">Siège (traitement central)</option>
-                                        @foreach (\App\Models\Store::sectionsWithIds() as $section)
-                                            <option value="{{ $section->id }}" {{ (int) $order->store_id === $section->id ? 'selected' : '' }}>{{ $section->store_name }}</option>
+                                        @foreach (\App\Models\Store::racinesAvecIds() as $racine)
+                                            <option value="{{ $emplacement->id }}" {{ (int) $order->store_id === $emplacement->id ? 'selected' : '' }}>{{ $emplacement->store_name }}</option>
                                         @endforeach
                                     </select>
                                 </form>

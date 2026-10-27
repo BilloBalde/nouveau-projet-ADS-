@@ -49,55 +49,15 @@
         </span>
     </a>
     <ul class="nav user-menu">
-        {{-- Section courante. Le propriétaire passe d'une section à l'autre ou
-             revient à la vue globale ; un employé voit sa section, sans choix.
-
-             Avec une seule section, il n'y a rien à choisir : le sélecteur
-             disparaît. L'employé rattaché garde le nom de son emplacement —
-             un entrepôt ou un stock interne de la boutique — mais en simple
-             texte, puisque l'écran « Sections » n'est plus accessible. --}}
-        @php
-            $plusieursSections = \App\Models\Store::plusieursSections();
-        @endphp
-        @if (Auth::check() && ! Auth::user()->isAssociate() && ($plusieursSections || Auth::user()->isRestrictedToStore()))
-        @php
-            $sectionCourante = Auth::user()->currentSection();
-            $sectionsMenu = Auth::user()->isRestrictedToStore()
-                ? collect()
-                : \App\Models\Store::whereNull('parent_id')->orderByDesc('is_main')->orderBy('store_name')->get(['id', 'store_name', 'type']);
-        @endphp
-        <li class="nav-item dropdown" style="display:flex;align-items:center;margin-right:10px;">
-            @if (Auth::user()->isRestrictedToStore())
-                @if ($plusieursSections)
-                <a class="nav-link" href="{{ route('sections.index') }}" style="font-weight:600;color:var(--adm-brand-600,#3E4C21);white-space:nowrap;">
-                    <i class="fas fa-store me-1"></i>{{ $sectionCourante?->store_name ?? 'Aucun magasin' }}
-                </a>
-                @else
-                <span class="nav-link" style="font-weight:600;color:var(--adm-brand-600,#3E4C21);white-space:nowrap;">
-                    <i class="fas fa-store me-1"></i>{{ $sectionCourante?->store_name ?? 'Aucun magasin' }}
-                </span>
-                @endif
-            @else
-                <a href="javascript:void(0);" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" style="font-weight:600;color:var(--adm-brand-600,#3E4C21);white-space:nowrap;">
-                    <i class="fas {{ $sectionCourante ? 'fa-store' : 'fa-globe' }} me-1"></i>
-                    {{ $sectionCourante ? 'Section : '.$sectionCourante->store_name : 'Vue globale' }}
-                </a>
-                <div class="dropdown-menu dropdown-menu-end" style="min-width:260px;">
-                    <form method="POST" action="{{ route('sections.switch') }}" class="m-0">@csrf
-                        <button class="dropdown-item {{ $sectionCourante ? '' : 'active' }}" name="section_id" value="">
-                            <i class="fas fa-globe me-2"></i>Vue globale (toutes les sections)
-                        </button>
-                        <div class="dropdown-divider"></div>
-                        @foreach ($sectionsMenu as $s)
-                            <button class="dropdown-item {{ $sectionCourante?->id === $s->id ? 'active' : '' }}" name="section_id" value="{{ $s->id }}">
-                                <i class="fas {{ $s->type === 'entrepot' ? 'fa-warehouse' : 'fa-store' }} me-2"></i>{{ $s->store_name }}
-                            </button>
-                        @endforeach
-                    </form>
-                    <div class="dropdown-divider"></div>
-                    <a class="dropdown-item" href="{{ route('sections.index') }}"><i class="fas fa-th-large me-2"></i>Voir toutes les sections</a>
-                </div>
-            @endif
+        {{-- Magasin de l'employé rattaché. Il n'a pas de choix à faire : c'est
+             son affectation, et c'est la seule indication de l'endroit où il
+             travaille. Les profils à vue globale n'ont rien à afficher ici. --}}
+        @if (Auth::check() && ! Auth::user()->isAssociate() && Auth::user()->isRestrictedToStore())
+        @php($magasin = \App\Models\Store::find(Auth::user()->assignedStoreId()))
+        <li class="nav-item" style="display:flex;align-items:center;margin-right:10px;">
+            <span class="nav-link" style="font-weight:600;color:var(--adm-brand-600,#3E4C21);white-space:nowrap;">
+                <i class="fas fa-store me-1"></i>{{ $magasin?->store_name ?? 'Aucun magasin' }}
+            </span>
         </li>
         @endif
         <li class="nav-item" style="display:flex;align-items:center;">

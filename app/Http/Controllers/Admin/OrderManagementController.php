@@ -69,30 +69,31 @@ class OrderManagementController extends Controller
 
         $orders = $query->paginate(10)->appends($request->query());
 
-        // Pour l'attribution : chaque section, et pour chaque commande de la
-        // page, les sections qui ont tout le stock (toutes lignes confondues).
-        $sections = collect();
+        // Pour l'attribution : chaque magasin de premier niveau, et pour chaque
+        // commande de la page, ceux qui ont tout le stock (toutes lignes
+        // confondues) en comptant leurs entrepôts rattachés.
+        $emplacements = collect();
         $couverture = [];
         if ($user->hasPermission('orders.assign') && ! $user->isRestrictedToStore()) {
-            $sections = Store::sectionsWithIds();
+            $emplacements = Store::racinesAvecIds();
             $productIds = $orders->getCollection()->flatMap(fn ($o) => $o->items->pluck('product_id'))->unique();
             $stock = DB::table('store_products')->whereIn('product_id', $productIds)
                 ->selectRaw('store_id, product_id, SUM(quantity) as qty')
                 ->groupBy('store_id', 'product_id')->get()->groupBy('product_id');
 
             foreach ($orders as $order) {
-                foreach ($sections as $section) {
-                    $couverture[$order->id][$section->id] = $order->items->every(fn ($item) => (int) ($stock->get($item->product_id, collect())
-                        ->whereIn('store_id', $section->section_ids)->sum('qty')) >= $item->quantity);
+                foreach ($emplacements as $emplacement) {
+                    $couverture[$order->id][$emplacement->id] = $order->items->every(fn ($item) => (int) ($stock->get($item->product_id, collect())
+                        ->whereIn('store_id', $emplacement->ids_couverts)->sum('qty')) >= $item->quantity);
                 }
             }
         }
 
-        return view('admin.orders.index', compact('orders', 'sections', 'couverture'));
+        return view('admin.orders.index', compact('orders', 'emplacements', 'couverture'));
     }
 
     /**
-     * Attribue une commande en attente à une boutique (section), ou la rend au
+     * Attribue une commande en attente à une boutique, ou la rend au
      * siège (store_id vide). Les employés de la boutique sont prévenus.
      */
     public function assign(Order $order, Request $request)

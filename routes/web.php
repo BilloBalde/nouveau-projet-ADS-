@@ -41,7 +41,6 @@ use App\Http\Controllers\ReceiptController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SaleController;
 use App\Http\Controllers\SalesReportController;
-use App\Http\Controllers\SectionController;
 use App\Http\Controllers\StockController;
 use App\Http\Controllers\StoreController;
 use App\Http\Controllers\StoreProductController;
@@ -465,10 +464,6 @@ Route::get('/associes/{fund}', [FundController::class, 'show'])->whereNumber('fu
 Route::get('/associes/{fund}/modifier', [FundController::class, 'edit'])->whereNumber('fund')->name('associates.edit');
 Route::put('/associes/{fund}', [FundController::class, 'update'])->whereNumber('fund')->name('associates.update');
 Route::post('/associes/{fund}/mouvements', [FundController::class, 'storeTransaction'])->whereNumber('fund')->name('associates.transactions.store');
-// Sections : entrepôt / magasin principal et chaque boutique. Le propriétaire
-// entre dans une section ou revient à la vue globale ; un employé reste dans la sienne.
-Route::get('/sections', [SectionController::class, 'index'])->name('sections.index');
-Route::post('/sections/switch', [SectionController::class, 'switch'])->name('sections.switch');
 // Stock par emplacement : vue globale, fiche emplacement, journal, traçabilité, inventaire.
 Route::get('/stock', [StockController::class, 'index'])->name('stock.index');
 Route::get('/stock/mouvements', [StockController::class, 'movements'])->name('stock.movements');

@@ -211,43 +211,6 @@ php artisan db:seed --class=PermissionSeeder
 > et conserve les comptes, les rôles, les permissions, la fiche entreprise et les
 > paramètres. Elle demande confirmation avant d'agir.
 
-### Une seule boutique : pas de sections
-
-Une **section**, c'est un emplacement de premier niveau et tout ce qui lui est
-rattaché — ses entrepôts et ses stocks internes. Le mécanisme sert à cloisonner
-l'application quand le client tient plusieurs boutiques : le propriétaire
-« entre » dans l'une d'elles et ne voit plus que la sienne.
-
-Pour un client qui ne tient **qu'une boutique**, avec son entrepôt et ses
-réserves rattachés, il n'y a rien à cloisonner. Rien à régler : l'application
-s'en aperçoit seule. Le menu « Sections » et le sélecteur en haut de l'écran
-disparaissent, et une section restée en mémoire de session est ignorée.
-
-Il n'y a donc qu'une chose à faire au moment de l'installation : créer
-l'entrepôt et les réserves **rattachés à la boutique** (champ « Emplacement
-parent »), pas comme des emplacements de premier niveau. Deux boutiques
-rattachées à rien = deux sections, et le sélecteur réapparaît — ce qui est le
-comportement voulu le jour où le client ouvre une deuxième boutique.
-
-> Le jeu de démonstration est déjà dans ce cas : une boutique
-> (« Quincaillerie Madina ») et son dépôt rattaché. Le menu « Sections » n'y
-> apparaît donc pas.
-
-Pour savoir sur une installation donnée quels emplacements comptent comme
-sections, c'est-à-dire lesquels ne sont rattachés à rien :
-
-```bash
-php artisan tinker
-```
-
-```php
-App\Models\Store::whereNull('parent_id')->pluck('store_name', 'id');
-```
-
-Plus d'une ligne = le menu « Sections » s'affiche. Il suffit alors de rattacher
-les emplacements de trop à la boutique (« Magasins & entrepôts » → modifier →
-champ « Emplacement parent »).
-
 ## 4. Fichiers et médias
 
 ```bash

@@ -114,15 +114,15 @@
                                             </td>
                                             <td>{{ $order->created_at->format('d/m/Y H:i') }}</td>
                                             <td style="min-width:190px;">
-                                                @if ($sections->isNotEmpty() && $order->status === 'pending')
+                                                @if ($emplacements->isNotEmpty() && $order->status === 'pending')
                                                     <form method="POST" action="{{ route('admin.orders.assign', $order) }}" class="m-0">
                                                         @csrf
                                                         <select name="store_id" class="form-control form-control-sm" onchange="this.form.submit()">
                                                             <option value="">Siège (traitement central)</option>
-                                                            @foreach ($sections as $section)
-                                                                @php $complet = $couverture[$order->id][$section->id] ?? false; @endphp
-                                                                <option value="{{ $section->id }}" {{ (int) $order->store_id === $section->id ? 'selected' : '' }}>
-                                                                    {{ $section->store_name }} {{ $complet ? '✓ stock complet' : '— stock incomplet' }}
+                                                            @foreach ($emplacements as $emplacement)
+                                                                @php $complet = $couverture[$order->id][$emplacement->id] ?? false; @endphp
+                                                                <option value="{{ $emplacement->id }}" {{ (int) $order->store_id === $emplacement->id ? 'selected' : '' }}>
+                                                                    {{ $emplacement->store_name }} {{ $complet ? '✓ stock complet' : '— stock incomplet' }}
                                                                 </option>
                                                             @endforeach
                                                         </select>

@@ -12,12 +12,6 @@
                 <li class="{{ isActiveRoute(['home']) }}">
                     <a href="{{ route('home') }}"><img src="{{ asset('assets/img/icons/dashboard.svg') }}" alt="img"><span>Tableau de Bord</span> </a>
                 </li>
-                {{-- Une seule boutique : il n'y a pas de sections à parcourir. --}}
-                @if (\App\Models\Store::plusieursSections())
-                <li class="{{ isActiveRoute(['sections.index']) }}">
-                    <a href="{{ route('sections.index') }}"><img src="{{ asset('assets/img/icons/places.svg') }}" alt="img"><span>Sections</span> </a>
-                </li>
-                @endif
                 @endpermission
                 @permission('products.view')
                 <li class="submenu">

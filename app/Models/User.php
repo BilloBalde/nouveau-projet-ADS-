@@ -160,72 +160,22 @@ class User extends Authenticatable
     }
 
     /**
-     * Vrai si les données affichées doivent être limitées à une section :
-     * toujours pour un employé rattaché, et pour le propriétaire quand il est
-     * « entré » dans une section (sinon il est en vue globale).
+     * Vrai si les données affichées doivent être limitées à un magasin : c'est
+     * le cas de tout employé rattaché, et de lui seul. Les profils à vue
+     * globale voient l'ensemble.
      */
     public function isStoreScoped(): bool
     {
-        return $this->isRestrictedToStore() || $this->activeSectionId() !== null;
-    }
-
-    /**
-     * Section choisie par un profil à vue globale (session), ou null pour la
-     * vue globale. Un employé rattaché n'a pas de choix : sa section est son
-     * magasin d'affectation.
-     */
-    public function activeSectionId(): ?int
-    {
-        // La session est celle de l'utilisateur connecté : elle ne vaut pas pour
-        // un autre compte manipulé pendant la requête (fiche employé…).
-        if ((int) auth()->id() !== (int) $this->id
-            || $this->isRestrictedToStore()
-            || ! app()->bound('session') || ! request()->hasSession()) {
-            return null;
-        }
-
-        $id = (int) session('section_id');
-
-        if (! $id) {
-            return null;
-        }
-
-        // Une seule section : le sélecteur n'existe pas, et une valeur restée en
-        // session après une réorganisation des emplacements ne doit pas
-        // enfermer le propriétaire dans une section sans moyen d'en sortir.
-        if (! Store::plusieursSections()) {
-            return null;
-        }
-
-        return $this->activeSectionCache[$id] ??= Store::whereKey($id)->exists() ? $id : null;
-    }
-
-    /** @var array<int, int|null> */
-    private array $activeSectionCache = [];
-
-    /**
-     * Section courante : celle choisie par le propriétaire, ou le magasin
-     * d'affectation d'un employé. Null = vue globale.
-     */
-    public function currentSection(): ?Store
-    {
-        $id = $this->isRestrictedToStore() ? $this->assignedStoreId() : $this->activeSectionId();
-
-        return $id ? Store::find($id) : null;
+        return $this->isRestrictedToStore();
     }
 
     /**
      * Magasin d'affectation. users.store_id fait foi ; stores.user_id (l'ancien
      * rattachement, une seule personne par boutique) sert de repli pour les
-     * comptes que la migration n'aurait pas pu reprendre. Pour le propriétaire
-     * entré dans une section, c'est cette section.
+     * comptes que la migration n'aurait pas pu reprendre.
      */
     public function assignedStoreId(): ?int
     {
-        if ($section = $this->activeSectionId()) {
-            return $section;
-        }
-
         if ($this->store_id) {
             return (int) $this->store_id;
         }

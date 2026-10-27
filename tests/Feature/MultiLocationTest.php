@@ -636,42 +636,34 @@ class MultiLocationTest extends TestCase
         $this->assertSame($this->entrepot5->id, (int) Sale::firstOrFail()->store_id);
     }
 
-    public function test_sections_le_proprietaire_entre_dans_une_section_et_en_ressort(): void
+    /**
+     * Le sélecteur de « sections » — par lequel le propriétaire entrait dans
+     * une boutique pour n'en voir qu'elle — a été retiré. Reste le seul
+     * cloisonnement qui compte : celui de l'employé, par son affectation.
+     */
+    public function test_un_employe_ne_voit_que_son_magasin(): void
     {
         $this->approvisionner($this->entrepot5, $this->ciment, 100);
         $this->approvisionner($this->madina, $this->ciment, 30);
 
-        // Page des sections : une carte par emplacement de premier niveau ;
-        // l'Entrepôt 5 est dans la section du magasin principal.
-        $page = $this->actingAs($this->admin)->get(route('sections.index'))->assertOk();
-        $cartes = $page->viewData('sections')->keyBy(fn ($s) => $s->store->id);
-        $this->assertCount(3, $cartes);
-        $this->assertSame(100, $cartes[$this->principal->id]->stock);
-        $this->assertTrue($cartes[$this->principal->id]->locations->contains('id', $this->entrepot5->id));
-
-        // Entrer dans la section Madina : les données se limitent à Madina.
-        $this->actingAs($this->admin)->post(route('sections.switch'), ['section_id' => $this->madina->id])->assertRedirect(route('home'));
-        $this->actingAs($this->admin)->get(route('stock.index'))->assertOk()
-            ->assertSee('TELICO — Magasin Madina')->assertDontSee('Entrepôt 5');
-        // … mais la gestion (liste des magasins) reste complète pour le propriétaire.
-        $this->actingAs($this->admin)->get(route('boutiques.index'))->assertOk()->assertSee('Entrepôt 5');
-        // Une vente dans la section est facturée par la section.
-        $this->vendre($this->admin, $this->magasinB, [[$this->ciment, 1, null]]);
-        $this->assertSame($this->madina->id, (int) Facture::latest('id')->value('store_id'));
-
-        // Retour à la vue globale.
-        $this->actingAs($this->admin)->post(route('sections.switch'), ['section_id' => ''])->assertRedirect(route('home'));
-        $this->actingAs($this->admin)->get(route('stock.index'))->assertOk()->assertSee('Entrepôt 5');
-    }
-
-    public function test_sections_un_employe_reste_dans_sa_section(): void
-    {
         $jean = $this->user('Jean', User::ROLE_STORE_MANAGER, $this->madina->id);
 
-        $page = $this->actingAs($jean)->get(route('sections.index'))->assertOk();
-        $this->assertSame([$this->madina->id], $page->viewData('sections')->map(fn ($s) => $s->store->id)->all());
-        $this->actingAs($jean)->post(route('sections.switch'), ['section_id' => $this->magasinB->id])->assertForbidden();
-        $this->assertSame($this->madina->id, $jean->fresh()->currentSection()->id);
+        $this->assertTrue($jean->isStoreScoped());
+        $this->assertSame($this->madina->id, $jean->assignedStoreId());
+
+        $this->actingAs($jean)->get(route('stock.index'))->assertOk()
+            ->assertSee('TELICO — Magasin Madina')->assertDontSee('Entrepôt 5');
+    }
+
+    /** Le propriétaire, lui, voit tout : il n'a plus de périmètre à choisir. */
+    public function test_le_proprietaire_voit_tous_les_emplacements(): void
+    {
+        $this->approvisionner($this->entrepot5, $this->ciment, 100);
+
+        $this->assertFalse($this->admin->isStoreScoped());
+
+        $this->actingAs($this->admin)->get(route('stock.index'))->assertOk()
+            ->assertSee('Entrepôt 5')->assertSee('TELICO — Magasin Madina');
     }
 
     private function commandeEnLigne(array $lignes): Order

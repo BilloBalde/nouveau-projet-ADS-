@@ -55,9 +55,8 @@ class Order extends Model
 
     /**
      * Commandes visibles : toutes pour un profil à vue globale ; pour un
-     * employé de boutique (ou le propriétaire entré dans une section), seules
-     * celles attribuées à son périmètre. Une commande non attribuée reste au
-     * siège.
+     * employé de boutique, seules celles attribuées à son magasin. Une commande
+     * non attribuée reste au siège.
      */
     public function scopeVisibleTo(Builder $query, ?User $user): Builder
     {
