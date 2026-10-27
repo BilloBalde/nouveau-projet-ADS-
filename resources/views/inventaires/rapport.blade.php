@@ -72,8 +72,11 @@
 
     <div class="formule">
         <strong>Calcul, pour chaque produit :</strong>
-        compté au début + achats + transferts entrants − transferts sortants − pertes + autres mouvements
-        − compté à la fin = quantité vendue, puis × prix de vente = chiffre d'affaires.
+        {{-- Trait d'union ASCII, et non le signe moins typographique U+2212 :
+             les polices de base de dompdf ne le portent pas et l'impriment
+             « ? ». Le tiret long et le « × », eux, passent. --}}
+        compté au début + achats + transferts entrants - transferts sortants - pertes + autres mouvements
+        - compté à la fin = quantité vendue, puis × prix de vente = chiffre d'affaires.
     </div>
 
     <table class="lignes">

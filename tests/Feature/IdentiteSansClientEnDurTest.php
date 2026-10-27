@@ -146,6 +146,32 @@ class IdentiteSansClientEnDurTest extends TestCase
             ->map(fn ($couleurs, $vue) => "$vue — $couleurs")->implode("\n  "));
     }
 
+    /**
+     * Les polices de base de dompdf ne portent pas le signe moins
+     * typographique « − » (U+2212) : il s'imprime « ? ». La formule de calcul
+     * du rapport de comptage est sortie pendant des semaines avec trois « ? »
+     * au milieu, sur le document même qui explique au gérant d'où vient son
+     * chiffre d'affaires. Rien ne le signale : le PDF se génère sans erreur.
+     *
+     * Le tiret long « — » et le « × » passent, eux. Seul celui-ci est proscrit,
+     * et un trait d'union ASCII le remplace.
+     */
+    public function test_les_vues_pdf_evitent_les_signes_que_dompdf_ne_sait_pas_rendre(): void
+    {
+        $fautives = [];
+
+        foreach (self::SANS_VARIABLES_CSS as $vue) {
+            $fichier = resource_path('views/'.$vue.'.blade.php');
+
+            if (file_exists($fichier) && str_contains(file_get_contents($fichier), "\u{2212}")) {
+                $fautives[] = $vue;
+            }
+        }
+
+        $this->assertSame([], $fautives,
+            "Signe moins « − » (U+2212) dans une vue PDF — il s'imprimera « ? » :\n  ".implode("\n  ", $fautives));
+    }
+
     /** @return iterable<string> */
     private function fichiers(array $racines): iterable
     {
