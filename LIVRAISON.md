@@ -47,12 +47,76 @@ remplacées** avant la mise en ligne.
 | `DB_DATABASE` / `DB_USERNAME` / `DB_PASSWORD` | accès à la base de production |
 | `MAIL_*` | compte d'envoi de l'entreprise |
 | `SALES_MODE` | `caisse` ou `inventaire` — **demandez au client**, voir l'encadré en tête et la section 8 |
+| `BRAND_*` / `COMPANY_*` | identité du client — voir la section 2 bis |
 
 > **`APP_DEBUG=false` n'est pas optionnel.** À `true`, la moindre erreur affiche au
 > visiteur la trace complète : chemins serveur, requêtes SQL et valeurs de configuration.
 
 > **`APP_URL` doit correspondre au domaine réel.** C'est lui qui construit les liens de
 > réinitialisation de mot de passe et les adresses des images dans les e-mails et les PDF.
+
+## 2 bis. Identité du client
+
+Le nom, l'adresse et les couleurs ne sont plus écrits dans le code. Un bloc de
+`.env` habille toute l'installation — en-tête, page de connexion, boutons,
+menus, documents — et le seeder en pose la fiche entreprise sur une base neuve.
+
+```dotenv
+# ── Identité de l'installation ──────────────────────────────────────
+BRAND_COLOR="#543FC2"      # nuance principale : boutons, menu actif, titres
+BRAND_ACCENT="#C7A150"     # accent : prix, mises en avant, filets
+BRAND_SECTOR=commerce      # « Gérez votre activité de … » sur la connexion
+
+COMPANY_NAME="THB BANTIGUEL"
+COMPANY_ADDRESS="Boutique 22, en face de la Grande Mosquée, Madina Marché, Conakry, République de Guinée"
+COMPANY_EMAIL=thiankoyebarry@gmail.com
+COMPANY_PHONE="628 263 636"
+COMPANY_PHONE_2="666 321 811"
+COMPANY_ABOUT="Commerce de détail — Madina Marché, Conakry."
+COMPANY_LOGO=              # nom du fichier déposé dans public/companies/
+```
+
+> **Les guillemets autour de la couleur ne sont pas décoratifs.** Dans un
+> `.env`, un `#` non protégé ouvre un commentaire : `BRAND_COLOR=#543FC2`
+> arrive **vide**, sans le moindre avertissement, et la palette d'origine
+> s'affiche. Écrivez `BRAND_COLOR="#543FC2"` ou `BRAND_COLOR=543FC2`.
+
+### Choisir la couleur
+
+Une seule nuance est à choisir : le reste de la palette — onze tons, du fond de
+tableau au menu actif — s'en déduit, à teinte et saturation constantes.
+
+Elle porte du texte blanc sur les boutons et sert de texte sur fond blanc pour
+le nom de l'entreprise : il lui faut **4,5:1 de contraste avec le blanc**. Un or
+ou un jaune clair ne passent pas, et aucun calcul n'y changera rien — c'est le
+choix de la nuance qui le règle.
+
+Sans `BRAND_COLOR`, la palette d'origine (vert) est rendue à l'identique : les
+installations déjà livrées ne bougent pas.
+
+### Logo
+
+Tant qu'aucun fichier n'est déposé, l'application affiche un **monogramme** aux
+initiales de l'entreprise, à la couleur de la marque. C'est volontaire :
+l'emblème livré avec le thème appartient à un autre client et n'a rien à faire
+en haut des pages d'une nouvelle installation.
+
+Pour mettre le vrai logo : Paramètres > Profil de l'entreprise > Logo. Le
+fichier atterrit dans `public/companies/` et sert aussi d'icône d'onglet.
+
+### Vérifier
+
+La fiche entreprise reste modifiable depuis l'interface — `.env` ne fait que
+poser les valeurs de départ. Après `db:seed`, contrôlez :
+
+```bash
+php artisan tinker
+```
+
+```php
+App\Models\Company::current()->only(['name', 'address', 'email', 'phone', 'phone_secondary']);
+App\Support\IdentiteVisuelle::ton('600');   // la nuance doit être celle du .env
+```
 
 ## 3. Base de données
 

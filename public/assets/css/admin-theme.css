@@ -132,11 +132,42 @@
     line-height: normal;
 }
 .header .header-left .logo img { width: auto !important; height: 76px; }
+/* Monogramme : tient lieu de logo tant qu'aucun fichier n'a été téléversé.
+   Carré aux initiales, à la couleur de la marque — neutre, contrairement à
+   l'emblème livré avec le thème, qui appartient à un autre client. */
+.logo-monogramme {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 46px;
+    height: 46px;
+    border-radius: 10px;
+    background: var(--adm-brand-600, #3E4C21);
+    color: #fff;
+    font-family: 'Cinzel', Georgia, serif;
+    font-weight: 700;
+    font-size: 1.15rem;
+    letter-spacing: .04em;
+    flex: 0 0 auto;
+}
+
+/* Vignette de compte : même monogramme, en plus petit et en rond. */
+.logo-monogramme--vignette {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    font-size: .8rem;
+}
+
 .header .header-left .logo .logo-mot {
     font-family: 'Cinzel', Georgia, serif;
     font-weight: 600;
-    font-size: 1.45rem;
-    letter-spacing: .18em;
+    /* Le nom vient de la fiche entreprise : « TELICO » tient, « THB BANTIGUEL »
+       non. La taille suit la largeur de fenêtre plutôt que d'être fixe, et le
+       nom reste sur une ligne. */
+    font-size: clamp(.95rem, .55rem + .9vw, 1.45rem);
+    letter-spacing: .14em;
+    white-space: nowrap;
     color: var(--adm-brand-600);
 }
 .header .header-left .logo-small img { width: auto !important; height: 58px; }

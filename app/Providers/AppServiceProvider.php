@@ -44,6 +44,7 @@ class AppServiceProvider extends ServiceProvider
         View::composer([
             'layouts.head',
             'layouts.header',
+            'users.login',
             'factures.show',
             'factures.bon_de_commande',
             'factures.bon_de_sortie',

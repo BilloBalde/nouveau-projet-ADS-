@@ -32,5 +32,13 @@
         <env name="MAIL_MAILER" value="array" force="true"/>
         <env name="QUEUE_CONNECTION" value="sync" force="true"/>
         <env name="SESSION_DRIVER" value="array" force="true"/>
+        <!-- Verrouillés : sans cela, la suite dépend du .env du poste. Passer son
+             installation locale en mode inventaire faisait tomber 78 tests de
+             caisse, et une couleur de marque locale repeignait les pages
+             comparées. Les tests qui ont besoin d'un autre réglage le posent
+             eux-mêmes, le temps du test. -->
+        <env name="SALES_MODE" value="caisse" force="true"/>
+        <env name="BRAND_COLOR" value="" force="true"/>
+        <env name="BRAND_SECTOR" value="quincaillerie" force="true"/>
     </php>
 </phpunit>

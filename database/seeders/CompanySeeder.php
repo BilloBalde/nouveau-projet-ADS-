@@ -9,23 +9,22 @@ class CompanySeeder extends Seeder
 {
     /**
      * Sans cette ligne, une installation neuve n'a aucune société : le titre des
-     * pages est vide et le logo pointe vers « /companies/ », introuvable. Ces
-     * valeurs sont modifiables ensuite depuis Paramètres > Profil de l'entreprise.
+     * pages est vide et l'en-tête n'a rien à afficher. Ces valeurs sont
+     * modifiables ensuite depuis Paramètres > Profil de l'entreprise.
+     *
+     * La fiche vient de config/brand.php, donc de .env : le nom d'un client
+     * n'est plus écrit dans le code, et livrer le suivant ne demande pas d'y
+     * revenir.
      *
      * Idempotent : repérée par son nom, elle n'est pas dupliquée à chaque passage.
      */
     public function run(): void
     {
+        $fiche = config('brand.entreprise');
+
         Company::updateOrCreate(
-            ['name' => 'COLEAH BANDEYA & FILS'],
-            [
-                'address' => 'Madina, Ecole Gare Routière Dabola Camion, Conakry',
-                'email' => 'abdulghadirybalde@gmail.com',
-                'phone' => '625 45 35 45',
-                'phone_secondary' => '628 59 31 10',
-                'logo' => 'ADK.png',
-                'about' => 'Quincaillerie générale : peinture, baguette, pelle, pioche, serrure et divers.',
-            ]
+            ['name' => $fiche['name']],
+            collect($fiche)->except('name')->all()
         );
     }
 }

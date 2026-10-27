@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Monogramme;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -38,6 +39,16 @@ class Company extends Model
 
         // Numéro guinéen local (9 chiffres) : on préfixe l'indicatif pays.
         return strlen($chiffres) === 9 ? '224'.$chiffres : $chiffres;
+    }
+
+    /**
+     * Monogramme de repli : les initiales du nom, tant qu'aucun logo n'a été
+     * téléversé. Sans lui, l'emblème livré avec le thème — celui d'un autre
+     * client — s'affichait en haut de chaque page d'une installation neuve.
+     */
+    public function initiales(): string
+    {
+        return Monogramme::pour($this->name);
     }
 
     /**

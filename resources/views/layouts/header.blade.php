@@ -3,20 +3,35 @@
     // pour toute la page. Repli sur le logo de l'entreprise quand l'utilisateur
     // n'a pas de photo — sans ce garde-fou, asset('avatars/'.null) demandait
     // « /avatars » et renvoyait un 404 à chaque page.
-    $logoUrl = asset('companies/'.($company?->logo ?? 'telico.png'));
+    // Pas de logo téléversé : aucune image. Afficher celui livré avec le thème
+    // reviendrait à coiffer l'installation d'un client avec l'emblème d'un autre.
+    $logoUrl = $company?->logo ? asset('companies/'.$company->logo) : null;
+    $nomEntreprise = $company?->name ?? config('app.name');
+    $initiales = $company?->initiales() ?? '?';
+    // asset('avatars/') sans fichier renvoyait un 404 à chaque page ; sans logo
+    // non plus, c'est le monogramme qui tient lieu de vignette.
     $avatarUrl = Auth::check() && Auth::user()->profilePic
         ? asset('avatars/'.Auth::user()->profilePic)
         : $logoUrl;
+    $avatarInitiales = \App\Support\Monogramme::pour(Auth::user()?->name ?? $nomEntreprise);
 @endphp
 <div class="header">
 
     <div class="header-left active">
         <a href="{{ route('home') }}" class="logo">
-            <img src="{{ $logoUrl }}" alt="{{ $company?->name }}">
-            <span class="logo-mot">TELICO</span>
+            @if ($logoUrl)
+                <img src="{{ $logoUrl }}" alt="{{ $nomEntreprise }}">
+            @else
+                <span class="logo-monogramme">{{ $initiales }}</span>
+            @endif
+            <span class="logo-mot">{{ $nomEntreprise }}</span>
         </a>
         <a href="{{ route('home') }}" class="logo-small">
-            <img src="{{ $logoUrl }}" alt="{{ $company?->name }}">
+            @if ($logoUrl)
+                <img src="{{ $logoUrl }}" alt="{{ $nomEntreprise }}">
+            @else
+                <span class="logo-monogramme">{{ $initiales }}</span>
+            @endif
         </a>
         <a id="toggle_btn" href="javascript:void(0);"></a>
     </div>
@@ -92,7 +107,7 @@
         @endunless
         <li class="nav-item dropdown has-arrow main-drop">
             <a href="javascript:void(0);" class="dropdown-toggle nav-link userset" data-bs-toggle="dropdown">
-                <span class="user-img"><img src="{{ $avatarUrl }}" alt="">
+                <span class="user-img">@include('partials.avatar')
                 <span class="status online"></span></span>
             </a>
             <div class="dropdown-menu menu-drop-user">
@@ -100,7 +115,7 @@
                     <div class="profileset">
                         @if (Auth::check())
                         <span class="user-img">
-                            <img src="{{ $avatarUrl }}" alt="">
+                            @include('partials.avatar')
                             <span class="status online"></span>
                         </span>
                         <div class="profilesets">
@@ -135,7 +150,7 @@
             <a class="dropdown-item">
                 @if (Auth::check())
                 <span class="user-img">
-                    <img src="{{ $avatarUrl }}" alt="">
+                    @include('partials.avatar')
                     <span class="status online"></span>
                 </span>
                 <div class="profilesets">

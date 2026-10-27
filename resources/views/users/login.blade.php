@@ -3,12 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TELICO — Connexion Manager</title>
+    @php($nomEntreprise = $company?->name ?? config('app.name'))
+    <title>{{ $nomEntreprise }} — Connexion</title>
+    @if ($company?->logo)
+    <link rel="icon" href="{{ asset('companies/'.$company->logo) }}">
+    @endif
 
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Source+Sans+3:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
+        /* Couleur de marque de l'installation — cette page a son propre
+           <head> et ne passe pas par layouts.head. */
+        :root {
+            @foreach (\App\Support\IdentiteVisuelle::rampe() as $ton => $valeur)
+            --adm-brand-{{ $ton }}: {{ $valeur }};
+            @endforeach
+        }
+        /* Monogramme de repli, tant qu'aucun logo n'a été téléversé. */
+        .logo-monogramme {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 52px; height: 52px; border-radius: 12px;
+            background: var(--adm-brand-600); color: #fff;
+            font-family: 'Cinzel', Georgia, serif; font-weight: 700;
+            font-size: 1.25rem; letter-spacing: .04em;
+        }
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             font-family: 'Source Sans 3', 'Segoe UI', sans-serif;
@@ -20,7 +39,7 @@
         /* ── Panneau gauche ── */
         .left-panel {
             flex: 0 0 45%;
-            background: linear-gradient(160deg, #10150A 0%, #1C230D 45%, #323D1A 80%, #6B7A35 100%);
+            background: linear-gradient(160deg, var(--adm-brand-950) 0%, var(--adm-brand-900) 45%, var(--adm-brand-700) 80%, var(--adm-brand-500) 100%);
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -215,7 +234,7 @@
         }
         .input-wrap .icon-left {
             position: absolute; left: 16px; top: 50%; transform: translateY(-50%);
-            color: #3E4C21; font-size: 15px;
+            color: var(--adm-brand-600); font-size: 15px;
             pointer-events: none;
         }
         .input-wrap input {
@@ -232,7 +251,7 @@
         }
         .input-wrap input:focus {
             background: #fff;
-            border-color: #6B7A35;
+            border-color: var(--adm-brand-500);
             box-shadow: 0 0 0 4px rgba(107,122,53,0.12);
         }
         .input-wrap input::placeholder { color: #c4c4c4; }
@@ -245,7 +264,7 @@
             transition: color 0.2s;
             padding: 4px;
         }
-        .toggle-pw:hover { color: #3E4C21; }
+        .toggle-pw:hover { color: var(--adm-brand-600); }
 
         /* Lien oublié */
         .forgot-row {
@@ -253,17 +272,17 @@
             margin-top: -8px; margin-bottom: 24px;
         }
         .forgot-row a {
-            font-size: 0.78rem; color: #3E4C21;
+            font-size: 0.78rem; color: var(--adm-brand-600);
             text-decoration: none; font-weight: 500;
             transition: color 0.2s;
         }
-        .forgot-row a:hover { color: #323D1A; }
+        .forgot-row a:hover { color: var(--adm-brand-700); }
 
         /* Bouton submit */
         .btn-submit {
             width: 100%;
             padding: 14px;
-            background: linear-gradient(135deg, #3E4C21 0%, #323D1A 100%);
+            background: linear-gradient(135deg, var(--adm-brand-600) 0%, var(--adm-brand-700) 100%);
             color: #fff; font-size: 0.95rem; font-weight: 700;
             font-family: 'Source Sans 3', 'Segoe UI', sans-serif;
             border: none; border-radius: 12px;
@@ -287,7 +306,7 @@
             text-decoration: none;
             transition: color 0.2s;
         }
-        .back-link:hover { color: #3E4C21; }
+        .back-link:hover { color: var(--adm-brand-600); }
 
         /* Responsive */
         @media (max-width: 768px) {
@@ -295,7 +314,7 @@
             body { background: #fff; }
             .right-panel { padding: 32px 20px; }
         }
-            /* Identité TELICO : capitales gravées du logo pour les titres. */
+            /* Capitales gravées pour les titres. */
         .left-title, .form-title { font-family: 'Cinzel', Georgia, serif; letter-spacing: .02em; }
     </style>
 </head>
@@ -312,10 +331,14 @@
         {{-- Logo --}}
         <div class="brand">
             <span class="brand-logo">
-                <img src="{{ asset('companies/telico.png') }}" alt="TELICO">
+                @if ($company?->logo)
+                    <img src="{{ asset('companies/'.$company->logo) }}" alt="{{ $nomEntreprise }}">
+                @else
+                    <span class="logo-monogramme">{{ $company?->initiales() ?? '?' }}</span>
+                @endif
             </span>
             <div>
-                <div class="brand-name">TELICO</div>
+                <div class="brand-name">{{ $nomEntreprise }}</div>
                 <div class="brand-sub">Espace Manager</div>
             </div>
         </div>
@@ -326,13 +349,14 @@
                 <span></span>
                 Système de gestion interne
             </div>
+            @php($metier = config('brand.metier'))
             <h1 class="left-title">
                 Gérez votre<br>
-                activité de <em>quincaillerie</em><br>
+                activité de <em>{{ $metier }}</em><br>
                 en toute simplicité
             </h1>
             <p class="left-desc">
-                Pilotez vos stocks, ventes, livraisons et commandes de quincaillerie depuis un seul espace sécurisé.
+                Pilotez vos stocks, vos achats et vos comptages de {{ $metier }} depuis un seul espace sécurisé.
             </p>
             <div class="left-stats">
                 <div class="stat-box">
@@ -351,7 +375,7 @@
         </div>
 
         <div class="left-footer">
-            &copy; {{ date('Y') }} TELICO — Madina, Ecole Gare Routière Dabola Camion, Conakry
+            &copy; {{ date('Y') }} {{ $nomEntreprise }}@if ($company?->address) — {{ $company->address }}@endif
         </div>
     </div>
 
@@ -433,10 +457,12 @@
                 </button>
             </form>
 
+            @unless (\App\Support\ModeDeVente::parInventaire())
             <a href="{{ route('accueil') }}" class="back-link">
                 <i class="fas fa-arrow-left" style="font-size:11px;"></i>
                 Retour au site public
             </a>
+            @endunless
 
         </div>
     </div>

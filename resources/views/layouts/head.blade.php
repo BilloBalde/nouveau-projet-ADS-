@@ -7,9 +7,12 @@
     <meta name="robots" content="noindex, nofollow">
     <title>{{ $company?->name ?? config('app.name') }}</title>
 
-    {{-- Emblème du baobab : lisible en petite taille, contrairement au logo complet. --}}
-    <link rel="icon" type="image/png" href="{{ asset('favicon-telico.png') }}">
-    <link rel="apple-touch-icon" href="{{ asset('companies/telico-embleme.png') }}">
+    {{-- Icône d'onglet : le logo de l'entreprise enregistrée. Le fichier livré
+         avec le thème ne sert que tant qu'aucun logo n'a été téléversé. --}}
+    @if ($company?->logo)
+    <link rel="icon" href="{{ asset('companies/'.$company->logo) }}">
+    <link rel="apple-touch-icon" href="{{ asset('companies/'.$company->logo) }}">
+    @endif
 
     <link rel="stylesheet" href="{{ asset('assets/css/bootstrap.min.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/css/animate.css') }}">
@@ -24,9 +27,22 @@
 
     <link rel="stylesheet" href="{{ asset('assets/css/style.css') }}">
 
-    {{-- Habillage maison, chargé après le thème : barre latérale verte, tableaux,
+    {{-- Habillage maison, chargé après le thème : barre latérale, tableaux,
          cartes. Isolé dans son propre fichier pour que style.css reste remplaçable. --}}
     <link rel="stylesheet" href="{{ asset('assets/css/admin-theme.css') }}">
+
+    {{-- Couleur de marque de l'installation, chargée APRÈS admin-theme.css pour
+         en écraser les valeurs par défaut. Une ligne BRAND_COLOR dans .env
+         rhabille tout le back-office ; sans elle, la palette d'origine est
+         rendue à l'identique. Voir App\Support\IdentiteVisuelle. --}}
+    <style>
+        :root {
+            @foreach (\App\Support\IdentiteVisuelle::rampe() as $ton => $valeur)
+            --adm-brand-{{ $ton }}: {{ $valeur }};
+            @endforeach
+            --adm-accent: {{ \App\Support\IdentiteVisuelle::accent() }};
+        }
+    </style>
 
     {{-- Typographies TELICO : Cinzel (grands titres, comme le logo),
          Source Sans 3 (texte), Barlow Condensed (références, prix, étiquettes). --}}
