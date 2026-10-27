@@ -22,9 +22,13 @@ class CompanySeeder extends Seeder
     {
         $fiche = config('brand.entreprise');
 
-        Company::updateOrCreate(
-            ['name' => $fiche['name']],
-            collect($fiche)->except('name')->all()
-        );
+        // Repérée par son existence, pas par son nom : avec updateOrCreate sur
+        // le nom, changer COMPANY_NAME pour un nouveau client ajoutait une
+        // seconde fiche au lieu de remplacer la première — et Company::current()
+        // prend la plus récente, ce qui rendait l'affichage dépendant de l'ordre
+        // d'insertion.
+        $existante = Company::query()->orderBy('id')->first();
+
+        $existante ? $existante->update($fiche) : Company::create($fiche);
     }
 }

@@ -112,6 +112,10 @@ qui suit lit la fiche entreprise et la couleur de l'installation :
 | Site public | accueil, catalogue, à propos, contact, bandeau et pied de page |
 | Rappels | message WhatsApp de relance de dette |
 
+Les coordonnées aussi : adresse, téléphones et e-mail étaient écrits en dur dans
+le pied du site public, la page contact, la page à propos, deux reçus et un PDF.
+Les emplacements affichés sur la page « à propos » sont désormais lus en base.
+
 > Les PDF ne peuvent pas utiliser de variables CSS — dompdf ne les résout pas et
 > la couleur deviendrait invisible, sans message d'erreur. Ces vues écrivent donc
 > la valeur avec `marqueCouleur()`. Un test le vérifie à chaque exécution.
@@ -125,6 +129,24 @@ en haut des pages d'une nouvelle installation.
 
 Pour mettre le vrai logo : Paramètres > Profil de l'entreprise > Logo. Le
 fichier atterrit dans `public/companies/` et sert aussi d'icône d'onglet.
+
+### Reprendre une installation déjà en service
+
+`db:seed` ne sert que les bases neuves. Sur une base reprise — ou copiée d'un
+autre client — la fiche enregistrée reste celle d'avant, et c'est **elle** que
+portent l'en-tête, les factures, les PDF et les e-mails. Renseigner `.env` n'y
+change rien tant que personne ne l'applique :
+
+```bash
+php artisan identite:appliquer
+```
+
+La commande affiche un tableau avant/après et demande confirmation (`--force`
+pour s'en passer). Elle modifie la fiche existante au lieu d'en créer une
+seconde — deux fiches en base rendraient l'affichage dépendant de l'ordre
+d'insertion.
+
+Sinon, la même chose à la main : **Paramètres > Profil de l'entreprise**.
 
 ### Vérifier
 

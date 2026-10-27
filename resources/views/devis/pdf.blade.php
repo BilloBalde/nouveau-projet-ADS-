@@ -370,7 +370,9 @@
                             <div class="devis-header">
                                 <div class="document-logo">
                                     @if($logoDataUri)
-                                        <img src="{{ $logoDataUri }}" alt="{{ $company->name ?? 'Logo' }}">
+                                        <img src="{{ $logoDataUri }}" alt="{{ marqueNom() }}">
+                                    @else
+                                        @include('partials.logo-marque-pdf', ['taille' => 64])
                                     @endif
                                     <div class="document-title">
                                         <h1>DEVIS</h1>

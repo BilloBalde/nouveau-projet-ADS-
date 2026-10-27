@@ -174,7 +174,7 @@
                     <div class="col-lg-4 col-sm-4 col-12">
                         <div class="form-group">
                             <label>Téléphone de l'entreprise</label>
-                            <input type="text" name="phone" class="form-control" value="{{ old('phone', $compagnie->phone) }}" placeholder="625 45 35 45">
+                            <input type="text" name="phone" class="form-control" value="{{ old('phone', $compagnie->phone) }}" placeholder="620 00 00 00">
                         </div>
                         @error('phone')
                         <span class="text-danger">{{ $message }}</span>
@@ -183,7 +183,7 @@
                     <div class="col-lg-4 col-sm-4 col-12">
                         <div class="form-group">
                             <label>Second téléphone <span class="text-muted">(facultatif)</span></label>
-                            <input type="text" name="phone_secondary" class="form-control" value="{{ old('phone_secondary', $compagnie->phone_secondary) }}" placeholder="628 59 31 10">
+                            <input type="text" name="phone_secondary" class="form-control" value="{{ old('phone_secondary', $compagnie->phone_secondary) }}" placeholder="620 00 00 01">
                         </div>
                         @error('phone_secondary')
                         <span class="text-danger">{{ $message }}</span>

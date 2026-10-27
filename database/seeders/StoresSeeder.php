@@ -29,8 +29,8 @@ class StoresSeeder extends Seeder
                 'store_picture' => '',
                 'status' => 1,
                 'description' => 'Boutique principale : peinture, outillage, serrurerie, plomberie, électricité et divers.',
-                'address' => 'Madina, Ecole Gare Routière Dabola Camion, Conakry',
-                'phone' => '625 45 35 45',
+                'address' => config('brand.entreprise.address'),
+                'phone' => config('brand.entreprise.phone'),
             ],
             [
                 'store_name' => 'Dépôt Madina',
@@ -42,7 +42,7 @@ class StoresSeeder extends Seeder
                 'status' => 1,
                 'description' => 'Entrepôt secondaire pour le réapprovisionnement.',
                 'address' => 'Madina, Conakry',
-                'phone' => '628 59 31 10',
+                'phone' => config('brand.entreprise.phone_secondary'),
             ],
         ];
 

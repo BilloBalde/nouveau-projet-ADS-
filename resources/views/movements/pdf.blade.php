@@ -273,11 +273,7 @@
 
     {{-- Logo --}}
     <div style="display: table-cell; width: 90px; vertical-align: middle; text-align: left;">
-        @if($company->logo ?? false)
-            <img src="{{ public_path('companies/'.$company->logo) }}" alt="{{ $company->name ?? 'Logo' }}" style="max-width: 70px; height: auto; border-radius: 8px;">
-        @else
-            <div style="width: 70px; height: 60px; background: {{ marqueCouleur('50') }}; border-radius: 6px; text-align: center; color: {{ marqueCouleur('800') }}; font-size: 10px; padding-top: 22px;">Logo</div>
-        @endif
+        @include('partials.logo-marque-pdf', ['taille' => 70])
     </div>
 
     {{-- Informations société --}}

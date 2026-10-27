@@ -20,11 +20,13 @@
                     </span>
                     <span class="text-xl font-semibold text-white" style="font-family:'Cinzel',Georgia,serif;letter-spacing:.18em;">{{ marqueNom() }}</span>
                 </div>
-                <p class="text-sm text-gray-400 mb-4">Quincaillerie générale — peinture, outillage, serrurerie, plomberie et électricité — basée à Conakry, Guinée.</p>
+                @if (marque()?->about)<p class="text-sm text-gray-400 mb-4">{{ marque()->about }}</p>@endif
+                @if (marque()?->address)
                 <p class="text-sm text-gray-400">
                     <i class="fas fa-map-marker-alt text-brand-300 mr-1.5"></i>
-                    Madina, Ecole Gare Routière Dabola Camion
+                    {{ marque()->address }}
                 </p>
+                @endif
             </div>
 
             {{-- Ces colonnes ne listent que des pages qui existent réellement : les

@@ -151,7 +151,7 @@
 
                             <div class="company-info">
                                 <h4>{{ marqueNom() }}</h4>
-                                <p>{{ $company?->address ?? 'Madina, Ecole Gare Routière Dabola Camion, Conakry' }}</p>
+                                <p>{{ marque()?->address }}</p>
                                 <p>Tél: {{ $company?->phone ?? '' }} | Email: {{ $company?->email ?? '' }}</p>
                                 <p>Merci pour votre confiance et à bientôt !</p>
                                 <p>Reçu généré le {{ \Carbon\Carbon::now()->format('d/m/Y H:i') }}</p>

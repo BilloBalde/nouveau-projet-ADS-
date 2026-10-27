@@ -24,7 +24,17 @@ class IdentiteSansClientEnDurTest extends TestCase
      * Noms des commerçants déjà livrés. Ils n'ont rien à faire dans le code :
      * la fiche entreprise les porte, et marqueNom() la lit.
      */
-    private const NOMS_DE_CLIENTS = ['TELICO', 'COLEAH', 'BANDEYA'];
+    private const NOMS_DE_CLIENTS = [
+        // Noms
+        'TELICO', 'COLEAH', 'BANDEYA',
+        // Coordonnées. Le premier balayage ne cherchait que les noms : des
+        // adresses et des numéros d'un autre commerçant sont restés dans le
+        // pied du site public, la page contact, les reçus et un PDF — et
+        // s'imprimaient tels quels chez le suivant.
+        'Ecole Gare Routière', 'Dabola Camion',
+        'abdulghadirybalde', 'Mamadoulawydiallo',
+        '625 45 35 45', '628 59 31 10',
+    ];
 
     /**
      * Les deux seuls endroits où un nom de client garde une raison d'être.
@@ -53,7 +63,7 @@ class IdentiteSansClientEnDurTest extends TestCase
         'products/export', 'products/products-html', 'reports/daily-pdf',
     ];
 
-    public function test_aucun_nom_de_client_n_est_ecrit_dans_le_code(): void
+    public function test_aucune_donnee_de_client_n_est_ecrite_dans_le_code(): void
     {
         $trouves = [];
 
@@ -73,7 +83,7 @@ class IdentiteSansClientEnDurTest extends TestCase
             }
         }
 
-        $this->assertSame([], $trouves, "Nom de client écrit en dur :\n  ".implode("\n  ", $trouves));
+        $this->assertSame([], $trouves, "Donnée d'un client écrite en dur :\n  ".implode("\n  ", $trouves));
     }
 
     /**

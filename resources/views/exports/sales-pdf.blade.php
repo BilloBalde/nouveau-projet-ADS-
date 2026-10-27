@@ -244,7 +244,9 @@
     <div class="bon-header">
         <div class="document-logo">
             @if($logoDataUri)
-                <img src="{{ $logoDataUri }}" alt="{{ $company->name ?? 'Logo' }}">
+                <img src="{{ $logoDataUri }}" alt="{{ marqueNom() }}">
+            @else
+                @include('partials.logo-marque-pdf', ['taille' => 56])
             @endif
             <div class="document-title">
                 <h1>RAPPORT DES VENTES</h1>

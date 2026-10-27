@@ -522,9 +522,7 @@
         <div class="invoice-head-left">
             <div class="invoice-head-brand">
                 <div class="invoice-head-brand-cell logo-cell">
-                    @if($company?->logo)
-                        <img src="{{ public_path('companies/'.$company->logo) }}" alt="{{ $company?->name ?? 'Logo' }}" class="invoice-head-logo">
-                    @endif
+                    @include('partials.logo-marque-pdf', ['taille' => 64, 'classe' => 'invoice-head-logo'])
                 </div>
                 <div class="invoice-head-brand-cell">
                     <div class="invoice-head-brandtext">

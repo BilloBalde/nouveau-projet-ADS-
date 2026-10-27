@@ -226,13 +226,15 @@
         <tr>
             <td style="width:74px;">
                 @if($logoDataUri)
-                    <img src="{{ $logoDataUri }}" alt="{{ $company->name ?? 'Logo' }}" class="invoice-head-logo">
+                    <img src="{{ $logoDataUri }}" alt="{{ marqueNom() }}" class="invoice-head-logo">
+                @else
+                    @include('partials.logo-marque-pdf', ['taille' => 56, 'classe' => 'invoice-head-logo'])
                 @endif
             </td>
             <td>
                 <div class="company-name">{{ marqueNom() }}</div>
                 <div class="company-details">
-                    {{ $company->address ?? 'Madina, Ecole Gare Routière Dabola Camion, Conakry' }}<br>
+                    {{ marque()?->address }}<br>
                     Tél: {{ $company->phone ?? '' }} | Email: {{ $company->email ?? '' }}
                 </div>
             </td>

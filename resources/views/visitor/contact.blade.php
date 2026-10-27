@@ -99,7 +99,7 @@
                 <div class="info-icon"><i class="fas fa-map-marker-alt"></i></div>
                 <h3 class="text-lg font-bold text-gray-800 mb-2">Adresse</h3>
                 <p class="text-gray-500 text-sm leading-relaxed">
-                    Madina, Ecole Gare Routière Dabola Camion, Conakry
+                    {{ marque()?->address }}
                 </p>
             </div>
             <div class="info-card">

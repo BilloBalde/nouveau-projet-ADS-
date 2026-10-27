@@ -64,23 +64,22 @@
                 @endforeach
             </div>
 
-            <!-- Adresses -->
+            {{-- Emplacements : lus en base. Deux boutiques y étaient écrites en
+                 dur, avec leurs adresses — celles d'un autre commerçant. --}}
+            @php($emplacements = \App\Models\Store::where('status', 1)->orderByDesc('is_main')->orderBy('store_name')->get())
+            @if ($emplacements->isNotEmpty())
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16">
+                @foreach ($emplacements as $emplacement)
                 <div class="bg-white rounded-2xl p-6 shadow-sm">
                     <div class="w-12 h-12 bg-brand-100 rounded-full flex items-center justify-center mb-4">
                         <i class="fas fa-map-marker-alt text-brand-500"></i>
                     </div>
-                    <h3 class="font-bold text-gray-900 mb-1">Quincaillerie Madina</h3>
-                    <p class="text-gray-500 text-sm">Madina, Ecole Gare Routière Dabola Camion, Conakry</p>
+                    <h3 class="font-bold text-gray-900 mb-1">{{ $emplacement->store_name }}</h3>
+                    <p class="text-gray-500 text-sm">{{ $emplacement->address ?: marque()?->address }}</p>
                 </div>
-                <div class="bg-white rounded-2xl p-6 shadow-sm">
-                    <div class="w-12 h-12 bg-brand-100 rounded-full flex items-center justify-center mb-4">
-                        <i class="fas fa-map-marker-alt text-brand-500"></i>
-                    </div>
-                    <h3 class="font-bold text-gray-900 mb-1">Dépôt Madina</h3>
-                    <p class="text-gray-500 text-sm">Madina, Conakry (réapprovisionnement)</p>
-                </div>
+                @endforeach
             </div>
+            @endif
 
             <!-- CTA -->
             <div class="text-center">

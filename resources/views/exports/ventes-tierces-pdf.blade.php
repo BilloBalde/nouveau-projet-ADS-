@@ -43,7 +43,7 @@
 
     <table class="entete" style="width:100%;">
         <tr>
-            <td style="width:60px;">@if ($logo)<img src="{{ $logo }}" alt="">@endif</td>
+            <td style="width:60px;">@include('partials.logo-marque-pdf', ['taille' => 56])</td>
             <td>
                 <h1>RAPPORT DES VENTES TIERCES</h1>
                 <div class="sous-titre">{{ marqueNom() }} — produits pris chez un partenaire et revendus</div>

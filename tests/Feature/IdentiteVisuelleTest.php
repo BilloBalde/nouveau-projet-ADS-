@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Company;
 use App\Models\User;
 use App\Support\IdentiteVisuelle;
+use Database\Seeders\CompanySeeder;
 use Database\Seeders\PermissionSeeder;
 use Database\Seeders\RolesSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -271,6 +272,69 @@ class IdentiteVisuelleTest extends TestCase
 
         $page->assertDontSee('avatars/fichier-absent.png');
         $this->assertStringNotContainsString('src=""', $page->getContent());
+    }
+
+    // -----------------------------------------------------------------
+    // Reprendre une installation déjà en service
+    // -----------------------------------------------------------------
+
+    /**
+     * CompanySeeder ne sert que les bases neuves. Sur une base reprise — ou
+     * copiée d'un autre client — la fiche enregistrée reste celle d'avant, et
+     * c'est elle que portent l'en-tête, les factures et les PDF : renseigner
+     * .env n'y change rien tant que personne ne l'applique.
+     */
+    public function test_la_commande_remplace_la_fiche_existante_sans_en_creer_une_seconde(): void
+    {
+        $ancienne = $this->entreprise(['name' => 'TELICO', 'address' => 'Ailleurs', 'logo' => 'ancien.png']);
+
+        config(['brand.entreprise' => [
+            'name' => 'THB BANTIGUEL',
+            'address' => 'Boutique 22, Madina Marché, Conakry',
+            'email' => 'contact@example.com',
+            'phone' => '628 263 636',
+            'phone_secondary' => '666 321 811',
+            'about' => 'Commerce de détail.',
+            'logo' => null,
+        ]]);
+
+        $this->artisan('identite:appliquer', ['--force' => true])->assertSuccessful();
+
+        $this->assertSame(1, Company::count(), 'Une seconde fiche a été créée : Company::current() deviendrait imprévisible.');
+
+        $fiche = Company::current();
+        $this->assertSame('THB BANTIGUEL', $fiche->name);
+        $this->assertSame($ancienne->id, $fiche->id, 'La fiche existante devait être modifiée, pas remplacée.');
+        $this->assertNull($fiche->logo, 'Le logo de l\'ancien client devait être retiré.');
+    }
+
+    public function test_la_commande_refuse_d_agir_sans_nom(): void
+    {
+        $this->entreprise(['name' => 'TELICO']);
+        config(['brand.entreprise' => ['name' => '', 'address' => 'x']]);
+
+        $this->artisan('identite:appliquer', ['--force' => true])->assertFailed();
+
+        $this->assertSame('TELICO', Company::current()->name, 'La fiche ne devait pas être touchée.');
+    }
+
+    /**
+     * Le seeder repérait la fiche par son nom : changer COMPANY_NAME pour un
+     * nouveau client en ajoutait une seconde au lieu de remplacer la première.
+     */
+    public function test_le_seeder_ne_cree_pas_une_seconde_fiche_quand_le_nom_change(): void
+    {
+        $this->entreprise(['name' => 'TELICO']);
+
+        config(['brand.entreprise' => [
+            'name' => 'THB BANTIGUEL', 'address' => 'Madina', 'email' => null,
+            'phone' => null, 'phone_secondary' => null, 'about' => 'x', 'logo' => null,
+        ]]);
+
+        $this->seed(CompanySeeder::class);
+
+        $this->assertSame(1, Company::count());
+        $this->assertSame('THB BANTIGUEL', Company::current()->name);
     }
 
     public function test_les_initiales_tiennent_sur_un_nom_d_un_seul_mot(): void
