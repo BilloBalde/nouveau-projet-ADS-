@@ -1,7 +1,6 @@
 {
     "preset": "laravel",
     "exclude": [
-        "database/migrations_archive_pre_squash_2026_08_12",
         "bootstrap/cache",
         "storage",
         "public"

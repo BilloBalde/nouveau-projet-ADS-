@@ -50,7 +50,6 @@ class ResetClientData extends Command
         'paiement_journaliers',
         'journaliers',
         'logistics',
-        'temoignages',
         'contact_messages',
         'otp_codes',
         'notifications',
