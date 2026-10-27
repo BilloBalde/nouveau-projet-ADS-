@@ -10,6 +10,7 @@ use App\Models\Store;
 use App\Services\StockService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 
 class PurchaseController extends Controller
 {
@@ -109,23 +110,29 @@ class PurchaseController extends Controller
             unset($row);
         }
 
-        // dd($purchasesData);
-        // Insert multiple rows
-        foreach ($purchasesData as $data) {
-            $this->authorizeStore($data['store_id']);
-            $purchase = Purchase::create($data);
-            // Entrée en stock tracée dans le journal des mouvements.
-            app(StockService::class)->increment((int) $data['store_id'], (int) $data['product_id'], (int) $data['quantity'], [
-                'type' => StockMovement::PURCHASE,
-                'source_type' => 'purchase',
-                'source_id' => $purchase->id,
-                'document_ref' => $purchase->numeroPurchase,
-                'unit_price' => $data['price'] ?? null,
-            ]);
+        // Trois écritures par ligne — l'achat, le mouvement de stock, le prix de
+        // revient du produit — et plusieurs lignes par formulaire. Sans
+        // transaction, une panne au milieu laissait un achat sans entrée en
+        // stock, ou l'inverse. En mode inventaire c'est le chiffre d'affaires
+        // de la période qui s'en trouve faussé, puisque la quantité achetée
+        // entre dans le calcul.
+        DB::transaction(function () use ($purchasesData) {
+            foreach ($purchasesData as $data) {
+                $this->authorizeStore($data['store_id']);
+                $purchase = Purchase::create($data);
+                // Entrée en stock tracée dans le journal des mouvements.
+                app(StockService::class)->increment((int) $data['store_id'], (int) $data['product_id'], (int) $data['quantity'], [
+                    'type' => StockMovement::PURCHASE,
+                    'source_type' => 'purchase',
+                    'source_id' => $purchase->id,
+                    'document_ref' => $purchase->numeroPurchase,
+                    'unit_price' => $data['price'] ?? null,
+                ]);
 
-            // Garde le "Prix de Revient" du produit aligné sur le dernier achat réel
-            Product::where('id', $data['product_id'])->update(['price_sale' => $data['price']]);
-        }
+                // Garde le "Prix de Revient" du produit aligné sur le dernier achat réel
+                Product::where('id', $data['product_id'])->update(['price_sale' => $data['price']]);
+            }
+        });
 
         // Redirect back with a success message
         return redirect()->route('purchases.index')->with('success', 'Achat crée, et stock mis à jour avec succès');
@@ -161,33 +168,38 @@ class PurchaseController extends Controller
     {
         $purchase = Purchase::find($id);
         try {
-            $logistic = Logistic::where('numeroPurchase', $purchase->numeroPurchase)->first();
-            $reste = $purchase->quantity - $request->quantity;
-            $logistic->quantity = $logistic->quantity - $reste;
-            $logistic->save();
-            $this->authorizeStore($purchase->store_id);
-            // Écart de quantité appliqué par un mouvement de correction tracé.
-            $correction = [
-                'type' => StockMovement::CORRECTION,
-                'source_type' => 'purchase',
-                'source_id' => $purchase->id,
-                'document_ref' => $purchase->numeroPurchase,
-                'reason' => 'Modification de l\'achat : quantité '.$purchase->quantity.' → '.$request->quantity,
-            ];
-            if ($reste > 0) {
-                app(StockService::class)->forceDecrement((int) $purchase->store_id, (int) $purchase->product_id, (int) $reste, $correction);
-            } elseif ($reste < 0) {
-                app(StockService::class)->increment((int) $purchase->store_id, (int) $purchase->product_id, (int) -$reste, $correction);
-            }
-            $purchase->price = $request->price;
-            $purchase->quantity = $request->quantity;
-            $purchase->save();
+            // Même raison qu'à la création : la logistique, le stock, l'achat
+            // et le prix de revient bougent ensemble ou pas du tout.
+            DB::transaction(function () use ($request, $purchase) {
+                $logistic = Logistic::where('numeroPurchase', $purchase->numeroPurchase)->first();
+                $reste = $purchase->quantity - $request->quantity;
+                $logistic->quantity = $logistic->quantity - $reste;
+                $logistic->save();
+                $this->authorizeStore($purchase->store_id);
+                // Écart de quantité appliqué par un mouvement de correction tracé.
+                $correction = [
+                    'type' => StockMovement::CORRECTION,
+                    'source_type' => 'purchase',
+                    'source_id' => $purchase->id,
+                    'document_ref' => $purchase->numeroPurchase,
+                    'reason' => 'Modification de l\'achat : quantité '.$purchase->quantity.' → '.$request->quantity,
+                ];
+                if ($reste > 0) {
+                    app(StockService::class)->forceDecrement((int) $purchase->store_id, (int) $purchase->product_id, (int) $reste, $correction);
+                } elseif ($reste < 0) {
+                    app(StockService::class)->increment((int) $purchase->store_id, (int) $purchase->product_id, (int) -$reste, $correction);
+                }
+                $purchase->price = $request->price;
+                $purchase->quantity = $request->quantity;
+                $purchase->save();
 
-            // Garde le "Prix de Revient" du produit aligné sur le dernier achat réel
-            $latestPrice = Purchase::where('product_id', $purchase->product_id)->latest()->value('price');
-            if ($latestPrice !== null) {
-                Product::where('id', $purchase->product_id)->update(['price_sale' => $latestPrice]);
-            }
+                // Garde le "Prix de Revient" du produit aligné sur le dernier achat réel
+                $latestPrice = Purchase::where('product_id', $purchase->product_id)->latest()->value('price');
+                if ($latestPrice !== null) {
+                    Product::where('id', $purchase->product_id)->update(['price_sale' => $latestPrice]);
+                }
+
+            });
 
             return redirect()->route('purchases.index')->with('success', 'Achats modifié avec succès');
         } catch (\Throwable $th) {

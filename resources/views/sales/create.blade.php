@@ -35,19 +35,18 @@
                                             @foreach ($produits as $item)
                                             @if (! Auth::user()->isStoreScoped())
                                             @php
-                                            $storeProd = App\Models\StoreProduct::where('product_id', $item->id)->first();
-                                                $productQtityglo = $storeProd ? $storeProd->quantity : 0;
+                                                $productQtityglo = (int) ($stockParProduit[$item->id] ?? 0);
                                             @endphp
                                             <option value="{{ $item->id }}">
                                                 {{ $item->libelle }} | Stock : {{ $productQtityglo }}
                                             </option>
                                             @else
                                             @php
-                                                $prod = App\Models\StoreProduct::where('product_id', $item->id)->where('store_id', $store_id)->first();
+                                                $prod = $stockDuMagasin->has($item->id);
                                             @endphp
                                                 @if ($prod)
                                             @php
-                                                $productQtity = $prod->quantity;
+                                                $productQtity = (int) $stockDuMagasin[$item->id];
                                             @endphp
                                                 @if($productQtity > 0)
                                                 <option value="{{ $item->id }}">

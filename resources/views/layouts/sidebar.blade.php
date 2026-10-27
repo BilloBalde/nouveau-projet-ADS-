@@ -146,7 +146,9 @@
                 </li>
                 @endif
                 @endpermission
-                @if(Auth::check() && Auth::user()->role_id == 1 )
+                {{-- Le menu suivait « role_id == 1 » : un rôle créé plus tard et
+                     doté de settings.view ne le voyait pas. --}}
+                @permission('settings.view')
                 <li class="submenu">
                     <a lass="{{ isActiveRoute(['paymentSetting.index', 'currencySetting.index', 'roles.index', 'baseDonnee.index', 'clear-cache']) }}" href="javascript:void(0);"><img src="{{ asset('assets/img/icons/settings.svg') }}" alt="img"><span>Parametres</span> <span class="menu-arrow"></span></a>
                     <ul>
@@ -158,7 +160,7 @@
                         <li><a href="#">Administration</a></li>
                     </ul>
                 </li>
-                @endif
+                @endpermission
                 @permission('associates.manage')
                 <li class="{{ isActiveRoute(['associates.index', 'associates.show', 'associates.create', 'associates.edit']) }}">
                     <a href="{{ route('associates.index') }}"><img src="{{ asset('assets/img/icons/users1.svg') }}" alt="img"><span>Associés</span></a>

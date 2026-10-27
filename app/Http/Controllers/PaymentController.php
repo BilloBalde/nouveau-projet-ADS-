@@ -22,8 +22,10 @@ class PaymentController extends Controller
     public function updateCustomerTotals()
     {
         try {
-            // Sensitive maintenance action: restrict to admin
-            if (! auth()->check() || auth()->user()->role_id != 1) {
+            // Action de maintenance. Elle visait « role_id != 1 », ce qui
+            // court-circuite le système de droits : un rôle créé plus tard et
+            // doté de settings.edit ne l'obtenait pas.
+            if (! auth()->check() || ! auth()->user()->hasPermission('settings.edit')) {
                 abort(403);
             }
 

@@ -71,7 +71,7 @@
                                                 <a class="me-3" href="{{ route('editUser', $item->id) }}">
                                                     <img src="{{ asset('assets/img/icons/edit.svg') }}" alt="img">
                                                 </a>
-                                                @if($item->role_id != 1)
+                                                @if($item->role_id !== \App\Models\User::ROLE_ADMIN)
                                                     @php $isActive = strtolower((string) $item->status) === 'active'; @endphp
                                                     <button type="button" class="btn btn-link p-0 border-0 me-3 toggleStatusBtn"
                                                         data-bs-toggle="modal"

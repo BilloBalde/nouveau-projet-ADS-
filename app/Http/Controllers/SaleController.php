@@ -15,6 +15,7 @@ use App\Models\Product;
 use App\Models\Sale;
 use App\Models\StockMovement;
 use App\Models\Store;
+use App\Models\StoreProduct;
 use App\Models\User;
 use App\Services\FundService;
 use App\Services\StockService;
@@ -211,8 +212,17 @@ class SaleController extends Controller
     {
         $produits = Product::all();
 
-        // dd($numero_facture);
-        return view('sales.create', compact('numero_facture', 'produits', 'avance', 'store_id'));
+        // Stock de chaque produit, en une requête. La vue le demandait produit
+        // par produit à l'intérieur de sa liste déroulante : un catalogue de
+        // cinq cents articles faisait cinq cents requêtes pour ouvrir le
+        // formulaire de vente.
+        $stockParProduit = StoreProduct::selectRaw('product_id, SUM(quantity) as total')
+            ->groupBy('product_id')->pluck('total', 'product_id');
+        $stockDuMagasin = StoreProduct::where('store_id', $store_id)
+            ->pluck('quantity', 'product_id');
+
+        return view('sales.create', compact('numero_facture', 'produits', 'avance', 'store_id',
+            'stockParProduit', 'stockDuMagasin'));
     }
 
     public function voirSales($numero_facture)
@@ -220,7 +230,12 @@ class SaleController extends Controller
         // dd('Here i am');
         $ligneVentes = Sale::where('numeroFacture', $numero_facture)->visibleTo(auth()->user())->with('store')->get();
 
-        return view('sales.voirSales', compact('ligneVentes', 'numero_facture'));
+        // Statut de la facture, lu une fois. La vue le relisait à chaque ligne
+        // — et un numéro sans facture y provoquait une erreur, faute de garde
+        // sur le résultat de first().
+        $statutFacture = Facture::where('numero_facture', $numero_facture)->value('statut');
+
+        return view('sales.voirSales', compact('ligneVentes', 'numero_facture', 'statutFacture'));
     }
 
     /**

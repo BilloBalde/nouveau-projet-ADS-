@@ -29,10 +29,12 @@ class UserController extends Controller
      */
     public function index()
     {
-        if (Auth::user()->role_id == 1) {
+        // Les comptes administrateurs ne sont visibles que d'un administrateur :
+        // c'est une protection du compte lui-même, pas un droit d'écran.
+        if (Auth::user()->role_id === User::ROLE_ADMIN) {
             $dataTable = User::all();
         } else {
-            $dataTable = User::where('role_id', '!=', 1)->get();
+            $dataTable = User::where('role_id', '!=', User::ROLE_ADMIN)->get();
         }
 
         return view('users.index', compact('dataTable'));

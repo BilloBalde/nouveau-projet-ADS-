@@ -6,7 +6,7 @@
     {{-- Un bloc détaillé par magasin de vente ; les entrepôts et stocks internes
          (potentiellement des dizaines) sont regroupés dans la vue « Stock par
          emplacement » plutôt que d'allonger indéfiniment cette page. --}}
-    @foreach (App\Models\Store::where('type', App\Models\Store::TYPE_MAGASIN)->orderByDesc('is_main')->orderBy('store_name')->get() as $item)
+    @foreach ($magasins as $item)
     <div class="store-section mb-4">
         <div class="store-header d-flex align-items-center mb-3">
             <i class="fas fa-store me-2 text-primary"></i>
@@ -18,15 +18,21 @@
         // Proforma/LigneCommande) est vide dans ce projet. Les vrais achats sont dans
         // `purchases` (ancien flux simple) et `purchase_orders` (module Achat actuel,
         // coût de revient atterri) — on additionne les deux.
-        $total_purchases = (float) App\Models\Purchase::where('store_id', $item->id)->selectRaw('SUM(price * quantity) as total')->value('total')
-            + (float) App\Models\PurchaseOrder::where('store_id', $item->id)->where('status', '!=', 'cancelled')->sum('total_landed_cost_gnf');
-        $total_sales = App\Models\Facture::where('store_id', $item->id)->sum('montant_total');
-        $total_expenses = App\Models\Expense::where('store_id', $item->id)->sum('amount');
-        $gains = App\Models\Sale::where('store_id', $item->id)->sum('interet');
-        $total_credits_store = App\Models\Facture::where('store_id', $item->id)->sum('reste');
+        // Tous ces chiffres sont préparés par le contrôleur, en un agrégat par
+        // mesure groupé par magasin. Ils étaient calculés ici, ce qui faisait
+        // huit requêtes par boutique affichée.
+        $facturesMagasin = $parMagasin['ventes']->get($item->id);
+        $reglementsMagasin = $parMagasin['reglements']->get($item->id, collect());
+
+        $total_purchases = (float) ($parMagasin['achats'][$item->id] ?? 0)
+            + (float) ($parMagasin['commandes'][$item->id] ?? 0);
+        $total_sales = (float) ($facturesMagasin->total ?? 0);
+        $total_expenses = (float) ($parMagasin['depenses'][$item->id] ?? 0);
+        $gains = (float) ($parMagasin['marges'][$item->id] ?? 0);
+        $total_credits_store = (float) ($facturesMagasin->reste ?? 0);
         $total_quantities_store = App\Models\Product::resumeStock([$item->id]);
-        $solde_orange_money_store = App\Models\Payment::whereHas('facture', fn($q) => $q->where('store_id', $item->id))->where('paid_by', 'orange money')->sum('versement');
-        $solde_cash_store = App\Models\Payment::whereHas('facture', fn($q) => $q->where('store_id', $item->id))->where('paid_by', 'cash')->sum('versement');
+        $solde_orange_money_store = (float) ($reglementsMagasin['orange money'] ?? 0);
+        $solde_cash_store = (float) ($reglementsMagasin['cash'] ?? 0);
         // Balance = total ventes - total achats - total dépenses de la boutique.
         // Calculée à la volée à chaque affichage, donc toujours à jour dès qu'une
         // vente, un achat ou une dépense est enregistré.
@@ -406,10 +412,14 @@
                                         $customer = $factures->first()?->customer;
                                         // Quantités par unité, lues sur les lignes de vente : la
                                         // colonne factures.quantity additionne cartons et pièces.
+                                        // Préparées par le contrôleur en une requête pour tout le
+                                        // tableau ; les demander ici en relançait une par ligne.
                                         $totalQuantity = \App\Models\Product::resumeQuantites(
-                                            App\Models\Sale::whereIn('numeroFacture', $factures->pluck('numero_facture'))
-                                                ->selectRaw("COALESCE(unite, 'pcs') as unite, SUM(quantity) as qty")
-                                                ->groupBy(DB::raw("COALESCE(unite, 'pcs')"))->get()
+                                            $factures->pluck('numero_facture')
+                                                ->flatMap(fn ($numero) => $quantitesParFacture->get($numero, collect()))
+                                                ->groupBy('unite')
+                                                ->map(fn ($lignes, $unite) => (object) ['unite' => $unite, 'qty' => $lignes->sum('qty')])
+                                                ->values()
                                         );
                                         $totalMontant = $factures->sum('montant_total');
                                         $totalReste = $factures->sum('reste');

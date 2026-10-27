@@ -135,7 +135,9 @@
                 </div>
             </form>
         </div>
-        @if (auth()->user()->role_id != 3)
+        {{-- Même droit que la route qui reçoit ce formulaire : masquer et
+             interdire doivent dire la même chose. --}}
+        @permission('settings.edit')
         <div class="card-footer">
             <form action="{{ route('companyCreate') }}" method="post" enctype="multipart/form-data">
                 <div class="row">
@@ -214,7 +216,7 @@
                 </div>
             </form>
         </div>
-        @endif
+        @endpermission
     </div>
 </div>
 @endsection

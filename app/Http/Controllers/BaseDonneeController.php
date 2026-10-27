@@ -74,8 +74,8 @@ class BaseDonneeController extends Controller
 
     public function delete($id)
     {
-        if ((int) auth()->user()->role_id !== 1) {
-            abort(403, 'Seul un administrateur peut vider une table.');
+        if (! auth()->user()->hasPermission('settings.edit')) {
+            abort(403, 'Vider une table relève du paramétrage.');
         }
 
         if (! in_array($id, self::TRUNCATABLE_TABLES, true)) {

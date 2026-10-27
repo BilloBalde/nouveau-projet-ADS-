@@ -62,7 +62,7 @@
                                             <td>{{ $data->interet }}</td>
                                             <td>{{ $data->created_at }}</td>
                                             <td class="text-end">
-                                            @if (App\Models\Facture::where('numero_facture', $data->numeroFacture)->first()->statut == 'non payé')
+                                            @if ($statutFacture === 'non payé')
                                                 <a class="me-3" href="{{ route('sales.edit', $data->id) }}">
                                                     <img src="{{ asset('assets/img/icons/edit.svg') }}" alt="img">
                                                 </a>

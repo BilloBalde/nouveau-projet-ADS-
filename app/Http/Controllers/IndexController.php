@@ -118,19 +118,37 @@ class IndexController extends Controller
             'annee' => [Carbon::now()->startOfYear(), Carbon::now()->endOfYear()],
         ];
 
+        // Les quatre périodes en UNE requête. Chacune demandait trois agrégats,
+        // soit douze allers-retours pour des chiffres lus sur la même table.
+        // Les bornes sont des dates calculées, jamais une saisie : pas de
+        // valeur à lier dans le CASE.
+        $colonnes = [];
+        foreach ($periods as $key => [$debut, $fin]) {
+            $entre = "created_at BETWEEN '".$debut->toDateTimeString()."' AND '".$fin->toDateTimeString()."'";
+            $colonnes[] = "COALESCE(SUM(CASE WHEN $entre THEN prixTotal END),0) as {$key}_ca";
+            $colonnes[] = "COALESCE(SUM(CASE WHEN $entre THEN interet END),0) as {$key}_marge";
+            $colonnes[] = "COALESCE(SUM(CASE WHEN $entre AND fund_id IS NOT NULL THEN prixTotal END),0) as {$key}_assoc_ca";
+            $colonnes[] = "COALESCE(SUM(CASE WHEN $entre AND fund_id IS NOT NULL THEN interet END),0) as {$key}_assoc_marge";
+            $colonnes[] = $warehouseIds->isEmpty()
+                ? "0 as {$key}_direct"
+                : "COALESCE(SUM(CASE WHEN $entre AND store_id IN (".$warehouseIds->implode(',').") THEN prixTotal END),0) as {$key}_direct";
+        }
+
+        $agregats = $scope(Sale::query())
+            ->whereBetween('created_at', [$periods['annee'][0], $periods['annee'][1]])
+            ->selectRaw(implode(', ', $colonnes))
+            ->first();
+
         $sales = [];
-        foreach ($periods as $key => $range) {
-            $row = $scope(Sale::query())->whereBetween('created_at', $range)
-                ->selectRaw('COALESCE(SUM(prixTotal),0) as ca, COALESCE(SUM(interet),0) as marge')->first();
-            $direct = $scope(Sale::query())->whereBetween('created_at', $range)
-                ->whereIn('store_id', $warehouseIds)->sum('prixTotal');
-            // Part de ces ventes portant sur des marchandises financées par des
-            // associés (facturée ; leur résultat à partager est dans leurs relevés).
-            $associes = $scope(Sale::query())->whereBetween('created_at', $range)->whereNotNull('fund_id')
-                ->selectRaw('COALESCE(SUM(prixTotal),0) as ca, COALESCE(SUM(interet),0) as marge')->first();
+        foreach (array_keys($periods) as $key) {
             $sales[$key] = [
-                'ca' => (float) $row->ca, 'marge' => (float) $row->marge, 'direct' => (float) $direct,
-                'assoc_ca' => (float) $associes->ca, 'assoc_marge' => (float) $associes->marge,
+                'ca' => (float) $agregats->{$key.'_ca'},
+                'marge' => (float) $agregats->{$key.'_marge'},
+                'direct' => (float) $agregats->{$key.'_direct'},
+                // Part portant sur des marchandises financées par des associés
+                // (facturée ; leur résultat à partager est dans leurs relevés).
+                'assoc_ca' => (float) $agregats->{$key.'_assoc_ca'},
+                'assoc_marge' => (float) $agregats->{$key.'_assoc_marge'},
             ];
         }
 
@@ -370,6 +388,43 @@ class IndexController extends Controller
             return $facture->customer_id.'|'.$facture->created_at->format('Y-m-d');
         });
 
+        // Chiffres par magasin de vente. La vue les calculait dans sa boucle :
+        // huit agrégats par magasin, donc un coût qui croissait avec le nombre
+        // de boutiques. Ici, un agrégat par mesure, groupé par magasin.
+        $magasins = Store::where('type', Store::TYPE_MAGASIN)
+            ->orderByDesc('is_main')->orderBy('store_name')->get();
+        $idsMagasins = $magasins->pluck('id');
+
+        $parMagasin = [
+            'achats' => Purchase::whereIn('store_id', $idsMagasins)
+                ->selectRaw('store_id, SUM(price * quantity) as total')->groupBy('store_id')->pluck('total', 'store_id'),
+            'commandes' => PurchaseOrder::whereIn('store_id', $idsMagasins)->where('status', '!=', 'cancelled')
+                ->selectRaw('store_id, SUM(total_landed_cost_gnf) as total')->groupBy('store_id')->pluck('total', 'store_id'),
+            'ventes' => Facture::whereIn('store_id', $idsMagasins)
+                ->selectRaw('store_id, SUM(montant_total) as total, SUM(reste) as reste')->groupBy('store_id')->get()->keyBy('store_id'),
+            'depenses' => Expense::whereIn('store_id', $idsMagasins)
+                ->selectRaw('store_id, SUM(amount) as total')->groupBy('store_id')->pluck('total', 'store_id'),
+            'marges' => Sale::whereIn('store_id', $idsMagasins)
+                ->selectRaw('store_id, SUM(interet) as total')->groupBy('store_id')->pluck('total', 'store_id'),
+            'reglements' => Payment::join('factures', 'factures.id', '=', 'payments.facture_id')
+                ->whereIn('factures.store_id', $idsMagasins)
+                ->whereNull('factures.deleted_at')
+                ->selectRaw('factures.store_id, payments.paid_by, SUM(payments.versement) as total')
+                ->groupBy('factures.store_id', 'payments.paid_by')->get()
+                ->groupBy('store_id')->map(fn ($lignes) => $lignes->pluck('total', 'paid_by')),
+        ];
+
+        // Quantités par unité, pour toutes les factures affichées, en UNE
+        // requête. La vue les demandait à l'intérieur de sa boucle : une
+        // requête par ligne de tableau, soit la moitié des soixante-huit
+        // requêtes que le tableau de bord lançait.
+        $quantitesParFacture = Sale::query()
+            ->whereIn('numeroFacture', $factures->pluck('numero_facture')->filter()->all())
+            ->selectRaw("numeroFacture, COALESCE(unite, 'pcs') as unite, SUM(quantity) as qty")
+            ->groupBy('numeroFacture', DB::raw("COALESCE(unite, 'pcs')"))
+            ->get()
+            ->groupBy('numeroFacture');
+
         $salesRankingQuery = Sale::query();
         if ($user->isStoreScoped()) {
             $salesRankingQuery->whereIn('store_id', $user->accessibleStoreIds());
@@ -403,6 +458,6 @@ class IndexController extends Controller
         // depuis les entrepôts, transferts en cours), limitée au périmètre.
         $overview = $this->locationOverview($user);
 
-        return view('index', compact('overview', 'latestSales', 'total_purchases', 'total_sales', 'total_sales_paid', 'solde_orange_money', 'solde_cash', 'total_expenses', 'total_customers', 'total_quantities', 'total_purchase_invoices', 'total_sales_invoices', 'total_credits', 'gains', 'total_gains_all', 'sales', 'purchases', 'months', 'grouped', 'customers', 'topProducts', 'topProductsByRevenue', 'stockAlerts', 'total_third_party_interest', 'store_balance'));
+        return view('index', compact('overview', 'latestSales', 'total_purchases', 'total_sales', 'total_sales_paid', 'solde_orange_money', 'solde_cash', 'total_expenses', 'total_customers', 'total_quantities', 'total_purchase_invoices', 'total_sales_invoices', 'total_credits', 'gains', 'total_gains_all', 'sales', 'purchases', 'months', 'grouped', 'quantitesParFacture', 'magasins', 'parMagasin', 'customers', 'topProducts', 'topProductsByRevenue', 'stockAlerts', 'total_third_party_interest', 'store_balance'));
     }
 }
