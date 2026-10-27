@@ -130,6 +130,22 @@ en haut des pages d'une nouvelle installation.
 Pour mettre le vrai logo : Paramètres > Profil de l'entreprise > Logo. Le
 fichier atterrit dans `public/companies/` et sert aussi d'icône d'onglet.
 
+### Où vit quoi
+
+| | Stocké où | Modifiable comment |
+|---|---|---|
+| Nom, adresse, e-mail, téléphones, à propos, logo | **base de données** (`companies`) | Paramètres > Profil de l'entreprise |
+| `SALES_MODE`, `BRAND_COLOR`, `BRAND_ACCENT`, `BRAND_SECTOR`, `BRAND_SLOGAN`, `APP_NAME` | **`.env` uniquement** | en modifiant `.env`, puis `php artisan config:clear` |
+
+Les `COMPANY_*` ne sont que le point de départ : ils posent la fiche en base au
+premier `db:seed`, et n'ont plus d'effet ensuite. Sur une **base neuve**, le
+`.env` ci-dessus plus `migrate` et `db:seed` suffisent — rien d'autre à faire.
+
+Si le `.env` ne porte pas les `COMPANY_*`, le seeder crée une fiche **neutre**
+au nom de `APP_NAME`, jamais celle d'un autre client ; il reste à la remplir
+depuis l'interface. Et il ne touche jamais à une fiche déjà saisie : relancer
+les seeders pour reprendre les permissions d'une mise à jour n'efface rien.
+
 ### Reprendre une installation déjà en service
 
 `db:seed` ne sert que les bases neuves. Sur une base reprise — ou copiée d'un

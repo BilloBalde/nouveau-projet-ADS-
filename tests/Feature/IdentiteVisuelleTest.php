@@ -362,6 +362,77 @@ class IdentiteVisuelleTest extends TestCase
         $this->assertSame('THB BANTIGUEL', Company::current()->name);
     }
 
+    /**
+     * La livraison normale : base vide, .env du client, « php artisan db:seed ».
+     * Rien d'autre à faire — c'est ce que fera l'hébergeur.
+     */
+    public function test_une_base_neuve_sort_deja_a_l_identite_du_client(): void
+    {
+        config(['brand.entreprise_renseignee' => true, 'brand.entreprise' => [
+            'name' => 'THB BANTIGUEL',
+            'address' => 'Boutique 22, Madina Marché, Conakry',
+            'email' => 'contact@example.com',
+            'phone' => '628 263 636',
+            'phone_secondary' => '666 321 811',
+            'about' => 'Commerce de détail.',
+            'logo' => null,
+        ]]);
+
+        $this->seed(CompanySeeder::class);
+
+        $fiche = Company::current();
+        $this->assertSame('THB BANTIGUEL', $fiche->name);
+        $this->assertSame('628 263 636', $fiche->phone);
+    }
+
+    /**
+     * Base vide et .env incomplet : une fiche neutre, jamais celle d'un autre
+     * commerçant. Les valeurs de repli de config/brand.php sont celles de la
+     * première installation ; les poser sur la base d'un nouveau client lui
+     * donnait un nom, une adresse et un e-mail à imprimer sur ses factures.
+     */
+    public function test_une_base_neuve_sans_reglage_ne_recupere_pas_l_identite_d_un_autre(): void
+    {
+        config([
+            'app.name' => 'Gestion commerciale',
+            'brand.entreprise_renseignee' => false,
+            'brand.entreprise' => [
+                'name' => 'COLEAH BANDEYA & FILS',
+                'address' => 'Madina, Ecole Gare Routière Dabola Camion, Conakry',
+                'email' => 'abdulghadirybalde@gmail.com',
+                'phone' => '625 45 35 45', 'phone_secondary' => null, 'about' => 'x', 'logo' => 'ADK.png',
+            ],
+        ]);
+
+        $this->seed(CompanySeeder::class);
+
+        $fiche = Company::current();
+        $this->assertNotNull($fiche, 'Une installation neuve doit avoir une fiche, même vide.');
+        $this->assertSame('Gestion commerciale', $fiche->name);
+        $this->assertNull($fiche->email);
+        $this->assertNull($fiche->logo, 'Le logo d\'un autre client ne doit pas être repris.');
+    }
+
+    /**
+     * Les seeders sont annoncés rejouables, pour reprendre les permissions
+     * ajoutées par une mise à jour. Les relancer ne doit pas effacer l'identité
+     * saisie dans l'interface.
+     */
+    public function test_relancer_le_seeder_n_efface_pas_une_fiche_saisie_a_la_main(): void
+    {
+        $this->entreprise(['name' => 'THB BANTIGUEL', 'address' => 'Boutique 22, Madina Marché']);
+
+        config(['brand.entreprise_renseignee' => false, 'brand.entreprise' => [
+            'name' => 'COLEAH BANDEYA & FILS', 'address' => 'Ailleurs', 'email' => null,
+            'phone' => null, 'phone_secondary' => null, 'about' => 'x', 'logo' => null,
+        ]]);
+
+        $this->seed(CompanySeeder::class);
+
+        $this->assertSame('THB BANTIGUEL', Company::current()->name, 'Le seeder a écrasé la fiche du client.');
+        $this->assertSame(1, Company::count());
+    }
+
     public function test_les_initiales_tiennent_sur_un_nom_d_un_seul_mot(): void
     {
         $this->assertSame('TE', (new Company(['name' => 'TELICO']))->initiales());
