@@ -345,7 +345,7 @@ class ProductController extends Controller
     {
         $this->validation($request);
         if (request()->hasfile('image')) {
-            $productName = time().'.'.request()->image->getClientOriginalExtension();
+            $productName = time().'-'.bin2hex(random_bytes(4)).'.'.request()->image->getClientOriginalExtension();
             request()->image->move(public_path('products'), $productName);
         }
         try {
@@ -498,7 +498,7 @@ class ProductController extends Controller
             $product->save();
 
             if ($request->hasFile('image')) {
-                $productName = time().'.'.$request->image->getClientOriginalExtension();
+                $productName = time().'-'.bin2hex(random_bytes(4)).'.'.$request->image->getClientOriginalExtension();
                 $request->image->move(public_path('products'), $productName);
                 $product->update(['image' => $productName]);
             }

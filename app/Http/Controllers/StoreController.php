@@ -131,7 +131,7 @@ class StoreController extends Controller
         $location = $this->locationData($request);
 
         if (request()->hasfile('store_picture')) {
-            $storeName = time().'.'.request()->store_picture->getClientOriginalExtension();
+            $storeName = time().'-'.bin2hex(random_bytes(4)).'.'.request()->store_picture->getClientOriginalExtension();
             request()->store_picture->move(public_path('stores'), $storeName);
         }
         try {
@@ -234,11 +234,15 @@ class StoreController extends Controller
             'user_id' => ['required', 'integer'],
             'status' => ['required', 'string'],
             'description' => ['required', 'string'],
+            // La création validait le type, la modification non : on pouvait
+            // déposer n'importe quel fichier dans public/stores en passant par
+            // le formulaire de modification.
+            'store_picture' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:2048'],
         ] + $this->locationRules((int) $id));
         $store = Store::findOrFail($id);
         $location = $this->locationData($request, $store);
         if (request()->hasfile('store_picture')) {
-            $storeName = time().'.'.request()->store_picture->getClientOriginalExtension();
+            $storeName = time().'-'.bin2hex(random_bytes(4)).'.'.request()->store_picture->getClientOriginalExtension();
             request()->store_picture->move(public_path('stores'), $storeName);
             $store->store_picture = $storeName;
         }

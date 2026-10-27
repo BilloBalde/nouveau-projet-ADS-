@@ -18,6 +18,8 @@ class DailyReportController extends Controller
     public function __construct()
     {
         $this->middleware('auth.check');
+        $this->middleware('permission:reports.view')->only('index');
+        $this->middleware('permission:reports.export')->only('exportPDF');
     }
 
     public function index(Request $request)

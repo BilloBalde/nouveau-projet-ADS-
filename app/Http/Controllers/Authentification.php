@@ -221,6 +221,10 @@ class Authentification extends Controller
             'role_id' => 'required|integer|exists:roles,id',
             'permissions' => 'nullable|array',
             'permissions.*' => 'integer|exists:permissions,id',
+            // Liste blanche : l'extension venait du navigateur et le fichier
+            // atterrissait dans public/avatars, servi tel quel. Un .php
+            // téléversé là s'exécute.
+            'profilePic' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
         ] + $this->storeAssignmentRules(), [
             'email.required' => 'Vous devez remplir le champ email',
             'email.email' => 'Le champ email doit contenir un @ et .',
@@ -253,7 +257,9 @@ class Authentification extends Controller
         }
 
         if (request()->hasfile('profilePic')) {
-            $avatarName = time().'.'.request()->profilePic->getClientOriginalExtension();
+            // time() seul : deux téléversements dans la même seconde
+            // s'écrasaient l'un l'autre.
+            $avatarName = time().'-'.bin2hex(random_bytes(4)).'.'.request()->profilePic->getClientOriginalExtension();
             request()->profilePic->move(public_path('avatars'), $avatarName);
         }
         $token = Str::random(64);

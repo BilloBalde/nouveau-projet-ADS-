@@ -16,6 +16,12 @@ class DebtReminderController extends Controller
         // boutique en ligne, il n'existe aucune facture : cet écran ne peut
         // rien contenir.
         $this->middleware('mode:caisse');
+
+        // Le mode était vérifié, pas les droits : la liste nomme les clients
+        // endettés et leurs montants, et le bouton d'envoi écrit en leur nom.
+        $this->middleware('auth.check');
+        $this->middleware('permission:customers.view')->only('index');
+        $this->middleware('permission:payments.edit')->only(['resolve', 'sendSms']);
     }
 
     /**

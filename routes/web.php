@@ -147,9 +147,12 @@ Route::middleware('mode:caisse')->group(function () {
 });
 
 // Messages de contact (admin)
-Route::get('/admin/messages', [ContactController::class, 'index'])->name('contact.messages')->middleware('auth.check');
-Route::post('/admin/messages/{id}/read', [ContactController::class, 'markRead'])->name('contact.read')->middleware('auth.check');
-Route::delete('/admin/messages/{id}', [ContactController::class, 'destroy'])->name('contact.destroy')->middleware('auth.check');
+// Messages reçus par le formulaire de contact : réservés au paramétrage.
+Route::middleware(['auth.check', 'permission:settings.view'])->group(function () {
+    Route::get('/admin/messages', [ContactController::class, 'index'])->name('contact.messages');
+    Route::post('/admin/messages/{id}/read', [ContactController::class, 'markRead'])->name('contact.read');
+    Route::delete('/admin/messages/{id}', [ContactController::class, 'destroy'])->name('contact.destroy');
+});
 
 // Newsletter, catalogue et fiches produits publiques : même vitrine, même
 // fermeture en mode inventaire.

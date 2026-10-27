@@ -13,6 +13,15 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class NewExportController extends Controller
 {
+    public function __construct()
+    {
+        // Ce contrôleur n'exigeait rien, pas même d'être connecté : le
+        // catalogue complet et ses prix sortaient en Excel, CSV ou PDF sur
+        // simple appel de l'URL.
+        $this->middleware('auth.check');
+        $this->middleware('permission:products.view');
+    }
+
     /**
      * Export Excel optimisé
      */

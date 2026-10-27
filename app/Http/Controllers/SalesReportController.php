@@ -25,6 +25,12 @@ class SalesReportController extends Controller
     public function __construct()
     {
         $this->middleware('auth.check');
+        // Les exports des ventes tierces portent exactement ce que l'écran
+        // « tiers » montre déjà, et le contrôleur le restreint au périmètre du
+        // vendeur. Les soumettre à reports.export fermerait au vendeur l'export
+        // de son propre relevé : même droit que l'écran, donc.
+        $this->middleware('permission:reports.view')->only(['index', 'flash', 'tiers', 'tiersPdf', 'tiersExcel']);
+        $this->middleware('permission:partners.settle')->only('reglerPartenaire');
         // Ventes flash et ventes tierces se saisissent au point de vente, fermé
         // en mode inventaire : ces écrans ne peuvent rien contenir. Masquer
         // l'entrée de menu ne suffit pas, l'adresse resterait accessible.

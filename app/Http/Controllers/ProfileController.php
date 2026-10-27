@@ -13,6 +13,11 @@ class ProfileController extends Controller
     public function __construct()
     {
         $this->middleware('auth.check');
+        // Le nom, l'adresse et le logo de l'entreprise s'impriment sur chaque
+        // facture et chaque PDF : les modifier est un acte de paramétrage. Le
+        // formulaire était masqué dans la vue, ce qui n'empêche personne de
+        // poster dedans — un magasinier pouvait renommer l'entreprise.
+        $this->middleware('permission:settings.edit')->only('companyCreate');
     }
 
     public function index()
@@ -31,7 +36,7 @@ class ProfileController extends Controller
             'profilePic.image' => 'Il faut mettre une image avec extension .jpg, .jpeg, .png, .gif',
         ]);
         try {
-            $avatarName = time().'.'.request()->profilePic->getClientOriginalExtension();
+            $avatarName = time().'-'.bin2hex(random_bytes(4)).'.'.request()->profilePic->getClientOriginalExtension();
             request()->profilePic->move(public_path('avatars'), $avatarName);
             $user = User::find(Auth::id());
             $user->profilePic = $avatarName;

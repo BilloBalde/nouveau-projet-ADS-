@@ -12,6 +12,8 @@ class ReceiptController extends Controller
     public function __construct()
     {
         $this->middleware('auth.check');
+        $this->middleware('permission:payments.view')->only(['payment', 'transaction']);
+        $this->middleware('permission:transfers.view')->only('transfer');
     }
 
     public function payment(Payment $payment)

@@ -13,6 +13,10 @@ class PlaceController extends Controller
     public function __construct()
     {
         $this->middleware('auth.check');
+        $this->middleware('permission:stores.view')->only(['index', 'show']);
+        $this->middleware('permission:stores.create')->only(['create', 'validateform', 'store']);
+        $this->middleware('permission:stores.edit')->only(['edit', 'update']);
+        $this->middleware('permission:stores.delete')->only('destroy');
     }
 
     /**
