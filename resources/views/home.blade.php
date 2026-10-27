@@ -240,7 +240,7 @@
         <div class="container mx-auto px-4 sm:px-6 lg:px-8">
             <div class="ouverture-grille">
                 <div>
-                    <span class="label">Quincaillerie générale · Madina, Conakry</span>
+                    <span class="label">{{ ucfirst(config('brand.metier')) }}@if (marque()?->address) · {{ marque()->address }}@endif</span>
                     <h1 class="titre">Bâtir solide, <em>comme le baobab.</em></h1>
                     <p class="chapeau">
                         Peinture, outillage, serrurerie, plomberie, électricité : tout le matériel du chantier
@@ -463,7 +463,7 @@
                 <div>
                     <span class="label">Les racines</span>
                     <h3>Ancrés à Madina</h3>
-                    <p>Une quincaillerie de quartier, avec un vrai comptoir et des vendeurs qui connaissent le matériel. Vous pouvez passer voir, comparer, demander conseil.</p>
+                    <p>Un commerce de quartier, avec un vrai comptoir et des vendeurs qui connaissent le matériel. Vous pouvez passer voir, comparer, demander conseil.</p>
                 </div>
                 <div>
                     <span class="label">Le tronc</span>
@@ -479,7 +479,7 @@
             <div class="livraisons">
                 @foreach([
                     ['icon' => 'fa-truck', 'title' => 'À domicile ou sur chantier', 'text' => 'En 24 à 48 h à Conakry.'],
-                    ['icon' => 'fa-store', 'title' => 'Retrait en magasin', 'text' => 'Gratuit, à notre quincaillerie de Madina.'],
+                    ['icon' => 'fa-store', 'title' => 'Retrait en magasin', 'text' => 'Gratuit, à notre comptoir.'],
                     ['icon' => 'fa-bolt', 'title' => 'Express', 'text' => 'Le jour même à Conakry pour une commande passée avant midi.'],
                     ['icon' => 'fa-map', 'title' => 'En région', 'text' => 'Expédition dans toute la Guinée via nos transporteurs.'],
                 ] as $mode)

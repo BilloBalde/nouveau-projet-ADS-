@@ -125,6 +125,12 @@
             background: linear-gradient(90deg, var(--adm-brand-200,#CED5AE), #ffffff);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            /* Le dégradé est peint sur le rectangle entier de l'élément : sur un
+               métier qui tient en deux lignes — « matériaux de construction » —
+               la seconde tombait hors du dégradé et repassait en blanc. Cloné,
+               il est repeint ligne par ligne. */
+            -webkit-box-decoration-break: clone;
+            box-decoration-break: clone;
         }
         .left-desc {
             font-size: 0.88rem; color: rgba(255,255,255,0.65);
