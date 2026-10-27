@@ -67,7 +67,12 @@ class IdentiteSansClientEnDurTest extends TestCase
     {
         $trouves = [];
 
-        foreach ($this->fichiers([resource_path('views'), app_path(), config_path()]) as $fichier) {
+        $aExaminer = iterator_to_array($this->fichiers([resource_path('views'), app_path(), config_path()]), false);
+        // Le gabarit de déploiement : il portait le nom et la base du premier
+        // client, et c'est le premier fichier que lit celui qui met en ligne.
+        $aExaminer[] = base_path('.env.example');
+
+        foreach ($aExaminer as $fichier) {
             $contenu = file_get_contents($fichier);
 
             $relatif = str_replace(base_path().'/', '', $fichier);
