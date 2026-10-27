@@ -288,7 +288,7 @@ class IdentiteVisuelleTest extends TestCase
     {
         $ancienne = $this->entreprise(['name' => 'TELICO', 'address' => 'Ailleurs', 'logo' => 'ancien.png']);
 
-        config(['brand.entreprise' => [
+        config(['brand.entreprise_renseignee' => true, 'brand.entreprise' => [
             'name' => 'THB BANTIGUEL',
             'address' => 'Boutique 22, Madina Marché, Conakry',
             'email' => 'contact@example.com',
@@ -308,10 +308,35 @@ class IdentiteVisuelleTest extends TestCase
         $this->assertNull($fiche->logo, 'Le logo de l\'ancien client devait être retiré.');
     }
 
+    /**
+     * Le danger réel de cette commande : sans COMPANY_* dans .env,
+     * config/brand.php rend les valeurs de repli — celles de la première
+     * installation. La commande écraserait alors la fiche du client avec
+     * l'identité d'un autre commerçant, et le tableau avant/après ne le dirait
+     * qu'une fois la modification faite. Elle doit refuser, --force compris.
+     */
+    public function test_la_commande_refuse_d_appliquer_les_valeurs_de_repli(): void
+    {
+        $this->entreprise(['name' => 'TELICO']);
+
+        config([
+            'brand.entreprise_renseignee' => false,
+            'brand.entreprise' => [
+                'name' => 'COLEAH BANDEYA & FILS', 'address' => 'Madina', 'email' => null,
+                'phone' => null, 'phone_secondary' => null, 'about' => 'x', 'logo' => null,
+            ],
+        ]);
+
+        $this->artisan('identite:appliquer', ['--force' => true])->assertFailed();
+
+        $this->assertSame('TELICO', Company::current()->name,
+            'La fiche a été écrasée avec l\'identité d\'un autre client.');
+    }
+
     public function test_la_commande_refuse_d_agir_sans_nom(): void
     {
         $this->entreprise(['name' => 'TELICO']);
-        config(['brand.entreprise' => ['name' => '', 'address' => 'x']]);
+        config(['brand.entreprise_renseignee' => true, 'brand.entreprise' => ['name' => '', 'address' => 'x']]);
 
         $this->artisan('identite:appliquer', ['--force' => true])->assertFailed();
 
@@ -326,7 +351,7 @@ class IdentiteVisuelleTest extends TestCase
     {
         $this->entreprise(['name' => 'TELICO']);
 
-        config(['brand.entreprise' => [
+        config(['brand.entreprise_renseignee' => true, 'brand.entreprise' => [
             'name' => 'THB BANTIGUEL', 'address' => 'Madina', 'email' => null,
             'phone' => null, 'phone_secondary' => null, 'about' => 'x', 'logo' => null,
         ]]);

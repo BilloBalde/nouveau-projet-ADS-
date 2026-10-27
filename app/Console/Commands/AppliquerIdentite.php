@@ -35,6 +35,27 @@ class AppliquerIdentite extends Command
             return self::FAILURE;
         }
 
+        // Le garde-fou qui compte. Sans COMPANY_* dans .env, config/brand.php
+        // rend les valeurs de la première installation : la commande
+        // écraserait la fiche du client avec l'identité d'un autre, et le
+        // tableau avant/après ne le dirait qu'après coup. --force ne lève pas
+        // ce refus : il ne saute que la confirmation.
+        if (! config('brand.entreprise_renseignee')) {
+            $this->error('Le bloc COMPANY_* est absent de .env.');
+            $this->newLine();
+            $this->line('Sans lui, cette commande appliquerait les valeurs de repli, qui sont');
+            $this->line('celles de la première installation livrée :');
+            $this->newLine();
+            $this->line('    '.$voulu['name']);
+            $this->line('    '.($voulu['address'] ?? ''));
+            $this->newLine();
+            $this->line('Renseignez COMPANY_NAME, COMPANY_ADDRESS, COMPANY_EMAIL, COMPANY_PHONE,');
+            $this->line('COMPANY_PHONE_2 et COMPANY_ABOUT dans .env, lancez « php artisan config:clear »,');
+            $this->line('puis relancez. Voir LIVRAISON.md, section 2 bis.');
+
+            return self::FAILURE;
+        }
+
         $fiche = Company::current();
 
         if (! $fiche) {

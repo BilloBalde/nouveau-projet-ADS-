@@ -52,6 +52,14 @@ return [
      * Les valeurs par défaut sont celles de la première installation livrée :
      * les bases déjà en service ne bougent pas.
      */
+    /*
+     * Vrai si la fiche vient bien de .env. Les valeurs ci-dessous sont celles
+     * de la première installation, gardées pour que les bases déjà en service
+     * ne changent pas — les appliquer à un autre commerçant lui donnerait
+     * l'identité du premier. « identite:appliquer » s'y refuse.
+     */
+    'entreprise_renseignee' => env('COMPANY_NAME') !== null,
+
     'entreprise' => [
         'name' => env('COMPANY_NAME', 'COLEAH BANDEYA & FILS'),
         'address' => env('COMPANY_ADDRESS', 'Madina, Ecole Gare Routière Dabola Camion, Conakry'),

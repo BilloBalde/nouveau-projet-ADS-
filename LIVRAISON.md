@@ -146,6 +146,11 @@ pour s'en passer). Elle modifie la fiche existante au lieu d'en créer une
 seconde — deux fiches en base rendraient l'affichage dépendant de l'ordre
 d'insertion.
 
+> **Le bloc `COMPANY_*` doit être dans `.env` avant de la lancer.** Sans lui,
+> les valeurs de repli sont celles de la **première installation livrée** :
+> la commande donnerait au client l'identité d'un autre commerçant. Elle
+> refuse de s'exécuter dans ce cas, `--force` compris, et dit quoi renseigner.
+
 Sinon, la même chose à la main : **Paramètres > Profil de l'entreprise**.
 
 ### Vérifier
