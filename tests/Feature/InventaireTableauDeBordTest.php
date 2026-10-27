@@ -388,15 +388,18 @@ class InventaireTableauDeBordTest extends TestCase
         $this->post(route('cart.add', $this->ciment->id))->assertForbidden();
     }
 
-    /** Et les boutons d'achat disparaissent des pages publiques. */
-    public function test_les_boutons_d_achat_disparaissent_du_site(): void
+    /**
+     * Les fiches produits publiques ne se contentent plus de masquer leurs
+     * boutons d'achat : la vitrine entière est fermée. Ce commerçant n'a pas de
+     * boutique en ligne, et une page de catalogue ouverte exposait son stock et
+     * ses prix sans que rien ne les relève.
+     *
+     * La règle complète est tenue par VitrinePubliqueFermeeTest.
+     */
+    public function test_les_fiches_produits_publiques_sont_fermees(): void
     {
-        $reponse = $this->get(route('productDetail', $this->ciment->id))->assertOk();
-
-        // On vise les appels des boutons, sans ambiguïté : le mot « Ajouter »
-        // seul apparaît ailleurs dans la page.
-        $reponse->assertDontSee('onclick="addToCart(', false);
-        $reponse->assertDontSee('onclick="buyNow(', false);
+        $this->get(route('productDetail', $this->ciment->id))->assertForbidden();
+        $this->get(route('products.index'))->assertForbidden();
     }
 
     /** En mode caisse, tout cela reste ouvert : rien n'a changé là-bas. */

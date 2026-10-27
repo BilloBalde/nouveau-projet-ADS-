@@ -137,7 +137,7 @@
 
                     </div>
                     <hr class="m-0">
-                    <a class="dropdown-item" href="{{ route('accueil') }}"><i class="me-2" data-feather="home"></i>Voir Site</a>
+                    @unless (\App\Support\ModeDeVente::parInventaire())<a class="dropdown-item" href="{{ route('accueil') }}"><i class="me-2" data-feather="home"></i>Voir Site</a>@endunless
                     <a class="dropdown-item" href="{{ route('profile') }}"> <i class="me-2" data-feather="user"></i>Mon Profile</a>
                     <hr class="m-0">
                     <form action="{{ route('logout') }}" method="POST" class="p-0 m-0">
@@ -174,7 +174,7 @@
                 <img src="{{ asset('assets/img/icons/sales1.svg') }}" class="me-2" alt="" height="20">POS
             </a>
             @endunless
-            <a class="dropdown-item" href="{{ route('accueil') }}"><i class="me-2" data-feather="home"></i>Voir Site</a>
+            @unless (\App\Support\ModeDeVente::parInventaire())<a class="dropdown-item" href="{{ route('accueil') }}"><i class="me-2" data-feather="home"></i>Voir Site</a>@endunless
             <a class="dropdown-item" href="{{ route('profile') }}"> <i class="me-2" data-feather="user"></i>Mon Profile</a>
             <form action="{{ route('logout') }}" method="POST" class="p-0 m-0">
                 @csrf

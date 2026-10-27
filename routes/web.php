@@ -49,6 +49,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\VisitController;
 use App\Http\Middleware\VerifyCsrfToken;
 use App\Models\Purchase;
+use App\Support\ModeDeVente;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
@@ -66,8 +67,17 @@ use Maatwebsite\Excel\Facades\Excel;
 // 1. ROUTES PUBLIQUES - PAGE D'ACCUEIL
 // =============================================
 
-// Page d'accueil
-Route::get('/', [VisitController::class, 'index'])->name('accueil');
+// Page d'accueil. Sans boutique en ligne, la racine du site n'a pas de vitrine
+// à montrer : elle mène directement à l'espace de travail. La route reste
+// déclarée — elle est citée dans les vues — et redonne la vitrine dès que
+// l'installation repasse en mode caisse.
+Route::get('/', function (VisitController $vitrine) {
+    if (ModeDeVente::parInventaire()) {
+        return redirect()->route(auth()->check() ? 'home' : 'login');
+    }
+
+    return $vitrine->index();
+})->name('accueil');
 
 // Redirection vers login
 Route::get('/login-redirect', function () {
@@ -124,36 +134,40 @@ Route::get('/logout', function () {
 // 4. ROUTES FRONTEND - E-COMMERCE
 // =============================================
 
-// Pages statiques
-Route::get('/about', function () {
-    return view('visitor.about', ['pageName' => 'about-page']);
-})->name('about');
+// Vitrine publique : pages statiques, catalogue et formulaire de contact.
+// Fermée en mode inventaire, où le commerçant n'a pas de boutique en ligne.
+Route::middleware('mode:caisse')->group(function () {
+    Route::get('/about', function () {
+        return view('visitor.about', ['pageName' => 'about-page']);
+    })->name('about');
 
-Route::get('/contact', function () {
-    return view('visitor.contact');
-})->name('contact');
-Route::post('/contact', [ContactController::class, 'send'])->name('contact.send');
+    Route::get('/contact', function () {
+        return view('visitor.contact');
+    })->name('contact');
+    Route::post('/contact', [ContactController::class, 'send'])->name('contact.send');
+});
 
 // Messages de contact (admin)
 Route::get('/admin/messages', [ContactController::class, 'index'])->name('contact.messages')->middleware('auth.check');
 Route::post('/admin/messages/{id}/read', [ContactController::class, 'markRead'])->name('contact.read')->middleware('auth.check');
 Route::delete('/admin/messages/{id}', [ContactController::class, 'destroy'])->name('contact.destroy')->middleware('auth.check');
 
-// Newsletter
-Route::post('/newsletter', function (Request $request) {
-    $request->validate(['email' => 'required|email']);
+// Newsletter, catalogue et fiches produits publiques : même vitrine, même
+// fermeture en mode inventaire.
+Route::middleware('mode:caisse')->group(function () {
+    Route::post('/newsletter', function (Request $request) {
+        $request->validate(['email' => 'required|email']);
 
-    return redirect()->route('accueil')->with('newsletter_success', 'Merci ! Vous êtes bien inscrit à notre newsletter.');
-})->name('newsletter.subscribe');
+        return redirect()->route('accueil')->with('newsletter_success', 'Merci ! Vous êtes bien inscrit à notre newsletter.');
+    })->name('newsletter.subscribe');
 
-// Catalogue et produits publics
-Route::get('/catalogue', [VisitController::class, 'indexProducts'])->name('products.index');
-Route::get('/nos-categories', [VisitController::class, 'publicCategories'])->name('public.categories');
-Route::post('/produits/load-more', [VisitController::class, 'loadMoreProducts'])->name('products.loadMore');
-Route::get('/product/{id}', [VisitController::class, 'showProduct'])->name('productDetail');
+    Route::get('/catalogue', [VisitController::class, 'indexProducts'])->name('products.index');
+    Route::get('/nos-categories', [VisitController::class, 'publicCategories'])->name('public.categories');
+    Route::post('/produits/load-more', [VisitController::class, 'loadMoreProducts'])->name('products.loadMore');
+    Route::get('/product/{id}', [VisitController::class, 'showProduct'])->name('productDetail');
 
-// Route beauté
-Route::get('/beauty', [VisitController::class, 'index']);
+    Route::get('/beauty', [VisitController::class, 'index']);
+});
 
 // =============================================
 // 5. ROUTES SHOP - PANIER & COMMANDES
