@@ -284,10 +284,17 @@ et restent actives.
 
 ```
 PRICING_SALE_MARGIN=30
+PRICING_ROUNDING_STEP=100
 ```
 
 Pourcentage ajouté au prix de revient pour proposer le prix de vente, à la création d'un
 produit comme à chaque achat qui le réapprovisionne. 30 % par défaut.
+
+`PRICING_ROUNDING_STEP` arrondit ce prix conseillé au palier **supérieur** : 100 FG par
+défaut, le plus petit billet en circulation. Le franc guinéen n'a pas de centimes et les
+pièces ne circulent plus — un prix de 86 450,67 FG ne s'affiche pas sur une étiquette et
+ne se rend pas en caisse. L'arrondi se fait vers le haut pour ne pas rogner la marge
+demandée. Mettre `0` pour ne garder qu'un arrondi à l'unité.
 
 Un prix de vente **fixé à la main** sur une fiche produit n'est plus recalculé par les
 achats suivants : la décision du gérant tient. Pour remettre un produit en automatique,

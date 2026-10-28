@@ -37,4 +37,21 @@ return [
 
     'sale_margin_percent' => (float) env('PRICING_SALE_MARGIN', 30),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Arrondi du prix de vente conseillé
+    |--------------------------------------------------------------------------
+    |
+    | Le franc guinéen n'a pas de centimes et les pièces ne circulent plus : un
+    | prix conseillé de 86 450,67 FG ne peut pas être affiché en boutique, et
+    | personne ne peut le rendre. Le prix est donc arrondi au palier suivant —
+    | 100 FG par défaut, le plus petit billet en circulation — et toujours vers
+    | le haut : arrondir vers le bas rognerait la marge demandée.
+    |
+    | Mettre 0 pour ne garder qu'un arrondi à l'unité.
+    |
+    */
+
+    'rounding_step' => (float) env('PRICING_ROUNDING_STEP', 100),
+
 ];

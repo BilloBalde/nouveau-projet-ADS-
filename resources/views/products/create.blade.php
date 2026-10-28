@@ -198,7 +198,7 @@
                                                 <label for="price">Prix de Vente par <span data-unite-singulier>pièce</span> (FG) <small class="text-muted">— c'est lui qui valorise vos inventaires</small></label>
                                                 <input type="number" min="0" step="1" id="price" name="price" class="form-control" value="{{ old('price') }}" required>
                                                 @else
-                                                <label for="price">Prix de Vente par <span data-unite-singulier>pièce</span> (FG) <small class="text-muted">— calculé automatiquement (+{{ (int) \App\Models\Product::margeDeVente() }}%)</small></label>
+                                                <label for="price">Prix de Vente par <span data-unite-singulier>pièce</span> (FG) <small class="text-muted">— calculé automatiquement (+{{ (int) \App\Models\Product::margeDeVente() }}%{{ \App\Models\Product::palierDArrondi() > 0 ? ', arrondi aux '.(int) \App\Models\Product::palierDArrondi().' FG supérieurs' : '' }})</small></label>
                                                 <input type="text" id="price" name="price" class="form-control" value="{{ old('price') }}" readonly style="background:#f5f5f5">
                                                 @endif
                                                 @error('price')
@@ -297,6 +297,30 @@
                 // le calcul du coût de revient à l'achat). Le serveur recalcule de toute
                 // façon la valeur : ce champ n'est qu'un aperçu pour le gérant.
                 const MARGE_DE_VENTE = {{ 1 + \App\Models\Product::margeDeVente() / 100 }};
+                const PALIER_ARRONDI = {{ \App\Models\Product::palierDArrondi() }};
+
+                // Doit donner exactement le même chiffre que
+                // Product::prixDeVenteConseille() : le serveur compare le prix
+                // reçu au prix conseillé pour savoir si le gérant l'a fixé à la
+                // main. Un écart d'un franc entre les deux ferait passer chaque
+                // produit créé ici en prix manuel, et les achats suivants ne le
+                // remettraient plus à jour.
+                function prixConseille(prixDeRevient) {
+                    const prix = prixDeRevient * MARGE_DE_VENTE;
+
+                    if (PALIER_ARRONDI <= 0) {
+                        return Math.round(prix);
+                    }
+
+                    // L'arrondi ne pèse jamais plus qu'un dixième du prix.
+                    let palier = PALIER_ARRONDI;
+                    while (palier > 1 && palier > prix / 10) {
+                        palier /= 10;
+                    }
+
+                    // L'arrondi intérieur absorbe le bruit du calcul flottant.
+                    return Math.ceil(Number((prix / palier).toFixed(9))) * palier;
+                }
 
                 function recomputeSalePrice() {
                     // En mode inventaire le prix est saisi à la main : on ne
@@ -306,7 +330,7 @@
                         return;
                     }
                     const priceSale = parseFloat(priceSaleInput.value) || 0;
-                    priceInput.value = priceSale > 0 ? Math.round(priceSale * MARGE_DE_VENTE) : '';
+                    priceInput.value = priceSale > 0 ? prixConseille(priceSale) : '';
                     updatePromoUI();
                 }
                 priceSaleInput.addEventListener('input', recomputeSalePrice);

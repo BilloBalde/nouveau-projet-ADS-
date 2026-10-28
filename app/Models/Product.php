@@ -276,13 +276,42 @@ class Product extends Model
     }
 
     /**
+     * Palier d'arrondi du prix de vente, en francs (voir config/pricing.php).
+     */
+    public static function palierDArrondi(): float
+    {
+        return max(0.0, (float) config('pricing.rounding_step', 100));
+    }
+
+    /**
      * Prix de vente conseillé pour un prix de revient donné. Une seule
      * définition, partagée par la fiche produit et le calcul d'un achat :
      * la marge était écrite en dur des deux côtés, elles pouvaient diverger.
+     *
+     * Le résultat portait deux décimales. Le franc guinéen n'en a pas, et les
+     * pièces ne circulent plus : 86 450,67 FG ne s'affiche pas sur une
+     * étiquette et ne se rend pas en caisse. Le prix monte donc au palier
+     * suivant — arrondir vers le bas rognerait la marge demandée.
      */
     public static function prixDeVenteConseille(float $cout): float
     {
-        return round($cout * (1 + self::margeDeVente() / 100), 2);
+        $prix = $cout * (1 + self::margeDeVente() / 100);
+        $palier = self::palierDArrondi();
+
+        if ($palier <= 0) {
+            return round($prix);
+        }
+
+        // L'arrondi ne doit jamais peser plus qu'un dixième du prix : sur un
+        // article conseillé à 130 FG, monter de 100 FG le doublerait. Le palier
+        // descend alors d'un cran — 10 FG, puis 1 FG.
+        while ($palier > 1 && $palier > $prix / 10) {
+            $palier /= 10;
+        }
+
+        // Le round() intérieur absorbe le bruit du calcul flottant : sans lui,
+        // 10 000 × 1,30 donne 13 000,000000000002, soit un palier de trop.
+        return ceil(round($prix / $palier, 9)) * $palier;
     }
 
     /**

@@ -308,7 +308,7 @@
                         @include('purchase_orders.partials.new-product-unit')
                         <p class="text-muted" style="font-size:13px;">
                             Le prix de revient n'est pas demandé ici : il sera calculé automatiquement
-                            (avec le prix de vente, +{{ (int) \App\Models\Product::margeDeVente() }}%, sauf prix fixé à la main) une fois cet achat enregistré.
+                            (avec le prix de vente, +{{ (int) \App\Models\Product::margeDeVente() }}%{{ \App\Models\Product::palierDArrondi() > 0 ? ' arrondi aux '.(int) \App\Models\Product::palierDArrondi().' FG supérieurs' : '' }}, sauf prix fixé à la main) une fois cet achat enregistré.
                         </p>
                         <div class="form-group">
                             <label>Catégorie</label>
