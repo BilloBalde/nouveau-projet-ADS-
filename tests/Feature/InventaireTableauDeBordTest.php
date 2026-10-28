@@ -124,9 +124,34 @@ class InventaireTableauDeBordTest extends TestCase
         // Le chiffre est rattaché au mois où le comptage a clos la période.
         $parMois = $reponse->viewData('ca_par_mois');
         $this->assertEquals(3_500_000, $parMois[1], 'Janvier');
-        $this->assertEquals(0, $parMois[2], 'Février');
 
-        $reponse->assertSee('3,500,000.00 FG', false);
+        // Un montant s'écrit « 3 500 000 FG » partout sur la page : pas de
+        // centimes, le franc guinéen n'en a pas.
+        $reponse->assertSee('3 500 000 FG', false);
+    }
+
+    public function test_les_mois_a_venir_ne_valent_pas_zero(): void
+    {
+        // La classe fige l'horloge au 31 décembre : il n'y aurait alors aucun
+        // mois à venir à vérifier. On se place donc en milieu d'année.
+        $this->travelTo('2027-06-30 12:00:00');
+
+        $this->periode($this->madina, 100, 30, '2027-01-01', '2027-01-31');
+
+        $parMois = $this->get(route('home'))->assertOk()->viewData('ca_par_mois');
+
+        // Un mois déjà écoulé sans comptage a bien fait zéro…
+        foreach (range(1, 6) as $ecoule) {
+            $this->assertNotNull($parMois[$ecoule], 'mois écoulé '.$ecoule);
+        }
+
+        // …mais un mois qui n'est pas encore arrivé n'a pas de chiffre : tracé
+        // à zéro, il dessinait une chute verticale en fin d'année.
+        foreach (range(7, 12) as $aVenir) {
+            $this->assertNull($parMois[$aVenir], 'mois à venir '.$aVenir);
+        }
+
+        $this->travelBack();
     }
 
     public function test_le_tableau_de_bord_cumule_les_boutiques(): void

@@ -194,3 +194,218 @@
     .header .header-left .logo .logo-mot { display: none; }
     .header .header-left .logo img { height: 68px; }
 }
+
+/* ══ Tableau de bord ══════════════════════════════════════════════════════
+   Un tableau de bord mène avec UN nombre : celui que le gérant est venu
+   chercher. Le héros le porte, les quatre tuiles l'éclairent — d'où l'écart
+   de taille, assumé. Les chiffres portent des chiffres tabulaires : sans eux
+   les colonnes dansent d'une ligne à l'autre. */
+.tdb-entete {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: 16px;
+    margin-bottom: 22px;
+}
+
+/* ── Le chiffre de l'année ── */
+.tdb-heros {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 6px;
+    padding: 26px 28px;
+    border-radius: 14px;
+    color: #fff;
+    /* Le fond est un ton de marque calculé pour porter du texte blanc quelle
+       que soit la couleur de l'installation. Voir IdentiteVisuelle::fondSombre(). */
+    background:
+        radial-gradient(120% 140% at 100% 0%, rgba(255, 255, 255, .14) 0%, rgba(255, 255, 255, 0) 55%),
+        var(--adm-fond-sombre, #1C230D);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .06), 0 18px 38px -22px rgba(0, 0, 0, .45);
+}
+.tdb-heros-libelle {
+    font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+    font-size: .95rem;
+    font-weight: 600;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, .72);
+}
+.tdb-heros-valeur {
+    font-size: clamp(1.9rem, 1rem + 2.4vw, 3rem);
+    font-weight: 700;
+    line-height: 1.05;
+    letter-spacing: -.02em;
+    font-variant-numeric: tabular-nums;
+}
+/* L'unité ne concurrence pas le nombre : plus petite, en retrait. */
+.tdb-heros-unite {
+    margin-left: .35em;
+    font-size: .38em;
+    font-weight: 600;
+    letter-spacing: .1em;
+    color: rgba(255, 255, 255, .7);
+    vertical-align: .55em;
+}
+.tdb-heros-detail {
+    font-size: .88rem;
+    color: rgba(255, 255, 255, .78);
+}
+
+/* ── Les quatre tuiles qui l'expliquent ── */
+.tdb-chiffres {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+.tdb-chiffre {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 16px 18px;
+    border: 1px solid var(--adm-hairline, #E6E6D8);
+    border-left: 3px solid var(--adm-brand-300, #ADB97E);
+    border-radius: 12px;
+    background: #fff;
+    transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+}
+.tdb-chiffre:hover {
+    border-left-color: var(--adm-brand-600, #3E4C21);
+    box-shadow: 0 10px 22px -16px rgba(0, 0, 0, .35);
+    transform: translateY(-1px);
+}
+.tdb-chiffre-libelle {
+    font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+    font-size: .82rem;
+    font-weight: 600;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--adm-ink-muted, #66695A);
+}
+.tdb-chiffre-valeur {
+    font-size: 1.32rem;
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--adm-ink, #1F2414);
+    font-variant-numeric: tabular-nums;
+}
+.tdb-chiffre-detail {
+    font-size: .78rem;
+    color: var(--adm-ink-faint, #9A9C8A);
+}
+
+@media (max-width: 991px) {
+    .tdb-entete { grid-template-columns: minmax(0, 1fr); }
+}
+/* Sur téléphone les tuiles restent à deux par rang : empilées, elles
+   repoussaient le graphique sous un écran de défilement. Les chiffres
+   rétrécissent plutôt que de passer à la ligne. */
+@media (max-width: 575px) {
+    .tdb-chiffres { gap: 10px; }
+    .tdb-chiffre { padding: 12px 13px; }
+    .tdb-chiffre-valeur { font-size: 1.02rem; }
+    .tdb-chiffre-libelle { font-size: .74rem; letter-spacing: .07em; }
+    .tdb-chiffre-detail { font-size: .7rem; }
+    .tdb-heros { padding: 20px; }
+}
+@media (max-width: 379px) {
+    .tdb-chiffres { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ── Le graphique ──
+   Les cartes du gabarit n'ont pas de titre : celui du graphique est posé ici,
+   avec la légende du dessous, pour que la carte reste celle du thème. */
+.tdb-carte-titre {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+.tdb-carte-titre h5 { margin: 0; }
+.tdb-note {
+    display: block;
+    margin-top: 10px;
+    font-size: .78rem;
+    color: var(--adm-ink-faint, #9A9C8A);
+}
+/* État vide : un graphique sans données ne doit pas afficher un cadre nu. */
+.tdb-vide {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 300px;
+    border: 1px dashed var(--adm-hairline, #E6E6D8);
+    border-radius: 12px;
+    color: var(--adm-ink-faint, #9A9C8A);
+    text-align: center;
+}
+.tdb-vide i { font-size: 1.6rem; opacity: .55; }
+
+/* ── Tuiles de chiffres (tableau de bord de la caisse) ──
+   Une seule porte la couleur : celle qu'on vient lire. Les autres sont
+   claires, encre sur papier. Sept dégradés pris dans sept familles de teintes
+   donnaient à la page les couleurs d'un autre produit, et le texte blanc n'y
+   tenait pas toujours le contraste. Ne restent colorées que les bordures qui
+   disent un état — dette, balance négative — ou une marque extérieure. */
+.tdb-tuile {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    /* Dans une grille, la tuile remplit sa cellule : une marge basse y
+       creusait un vide sous chacune. */
+    min-height: 98px;
+    height: 100%;
+    padding: 18px 20px;
+    border: 1px solid var(--adm-hairline, #E6E6D8);
+    border-left: 3px solid var(--adm-brand-300, #ADB97E);
+    border-radius: 10px;
+    background: #fff;
+    transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+}
+.tdb-tuile:hover {
+    box-shadow: 0 10px 22px -16px rgba(0, 0, 0, .35);
+    transform: translateY(-1px);
+}
+.tdb-tuile-corps {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+.tdb-tuile-icone {
+    flex: 0 0 auto;
+    font-size: 1.45rem;
+    color: var(--adm-brand-300, #ADB97E);
+}
+
+/* La tuile phare : le chiffre que le gérant vient chercher. */
+.tdb-tuile--phare {
+    border: 0;
+    color: #fff;
+    background:
+        radial-gradient(120% 140% at 100% 0%, rgba(255, 255, 255, .14) 0%, rgba(255, 255, 255, 0) 55%),
+        var(--adm-fond-sombre, #1C230D);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .06), 0 18px 38px -22px rgba(0, 0, 0, .45);
+}
+.tdb-tuile--phare .tdb-chiffre-libelle { color: rgba(255, 255, 255, .72); }
+.tdb-tuile--phare .tdb-chiffre-valeur { color: #fff; font-size: 1.5rem; }
+.tdb-tuile--phare .tdb-tuile-icone { color: rgba(255, 255, 255, .42); }
+
+/* Les couleurs d'état : réservées, jamais reprises pour décorer. */
+.tdb-tuile--alerte { border-left-color: #B45309; }
+.tdb-tuile--alerte .tdb-tuile-icone { color: #B45309; }
+.tdb-tuile--orange { border-left-color: #FF7900; }
+.tdb-tuile--orange .tdb-tuile-icone { color: #FF7900; }
+.tdb-tuile--bien { border-left-color: #15803D; }
+.tdb-tuile--bien .tdb-tuile-icone { color: #15803D; }
+.tdb-tuile--mal { border-left-color: #B3261E; }
+.tdb-tuile--mal .tdb-tuile-icone,
+.tdb-tuile--mal .tdb-chiffre-valeur { color: #B3261E; }
+
+/* Raccourcis : le gabarit les peignait en cyan, vert et bleu. */
+.das1, .das3, .das4 { background: var(--adm-fond-sombre, #1C230D) !important; }

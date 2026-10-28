@@ -151,6 +151,54 @@ class IdentiteVisuelle
         return is_string($accent) && preg_match('/^#[0-9a-fA-F]{6}$/', $accent) ? $accent : '#C7A150';
     }
 
+    /**
+     * Le ton de marque le plus clair qui porte encore du texte blanc.
+     *
+     * Le chiffre de l'année s'affiche en blanc sur un fond de marque. Lequel
+     * des tons sombres convient dépend de la teinte : un jaune reste clair là
+     * où un violet est déjà noir. Le choix se calcule donc, il ne peut pas
+     * être écrit en dur dans la feuille de style.
+     */
+    public static function fondSombre(): string
+    {
+        $rampe = self::rampe();
+
+        foreach (['800', '900', '950'] as $cle) {
+            if (self::contraste($rampe[$cle], '#FFFFFF') >= 4.5) {
+                return $rampe[$cle];
+            }
+        }
+
+        // Aucune rampe ne descend aussi bas : filet de sécurité.
+        return self::encre()['ink'];
+    }
+
+    /** Rapport de contraste WCAG entre deux couleurs, de 1 (identiques) à 21. */
+    private static function contraste(string $a, string $b): float
+    {
+        $la = self::luminance($a);
+        $lb = self::luminance($b);
+
+        return (max($la, $lb) + 0.05) / (min($la, $lb) + 0.05);
+    }
+
+    /** Luminance relative WCAG d'un #RRGGBB. */
+    private static function luminance(string $hexa): float
+    {
+        $canal = static function (int $octet): float {
+            $v = $octet / 255;
+
+            return $v <= 0.03928 ? $v / 12.92 : (($v + 0.055) / 1.055) ** 2.4;
+        };
+
+        [$r, $v, $b] = array_map(
+            static fn (string $paire): int => (int) hexdec($paire),
+            str_split(ltrim($hexa, '#'), 2)
+        );
+
+        return 0.2126 * $canal($r) + 0.7152 * $canal($v) + 0.0722 * $canal($b);
+    }
+
     /** @return array{0: float, 1: float, 2: float} teinte, luminosité, saturation */
     private static function versTsl(string $hexa): array
     {

@@ -219,6 +219,60 @@ class IndexController extends Controller
      * saisir ses ventes : les chiffres viennent des séances d'inventaire
      * validées, pas des ventes.
      */
+    /**
+     * Les douze mois de l'année en cours : étiquettes, ventes, achats.
+     *
+     * Les achats étaient renvoyés en négatif, ce qui retournait leurs barres
+     * sous l'axe : deux mesures du même signe n'ont pas à se faire face. Et
+     * les étiquettes étaient en anglais au milieu d'une application française.
+     *
+     * @param  array<int, float>  $ventesParMois
+     * @param  array<int, float>  $achatsParMois
+     * @return array{0: array<int, string>, 1: array<int, float|null>, 2: array<int, float|null>}
+     */
+    private function courbesDeLAnnee(array $ventesParMois, array $achatsParMois): array
+    {
+        $annee = (int) Carbon::now()->year;
+        $ventes = [];
+        $achats = [];
+
+        foreach (range(1, 12) as $mois) {
+            $ventes[$mois] = (float) ($ventesParMois[$mois] ?? 0);
+            $achats[$mois] = (float) ($achatsParMois[$mois] ?? 0);
+        }
+
+        return [
+            ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'],
+            array_values($this->moisAVenirVides($ventes, $annee)),
+            array_values($this->moisAVenirVides($achats, $annee)),
+        ];
+    }
+
+    /**
+     * Les mois qui ne sont pas encore arrivés valent null, pas zéro.
+     *
+     * Un mois à venir n'a pas fait zéro de chiffre d'affaires : il n'a pas de
+     * chiffre. Tracé à zéro, il dessinait une chute verticale en fin d'année —
+     * une faillite imaginaire. En null, la courbe s'arrête simplement.
+     *
+     * @param  array<int, float>  $parMois
+     * @return array<int, float|null>
+     */
+    private function moisAVenirVides(array $parMois, int $annee): array
+    {
+        $mois = (int) Carbon::now()->month;
+
+        if ($annee !== (int) Carbon::now()->year || $mois >= 12) {
+            return $parMois;
+        }
+
+        foreach (range($mois + 1, 12) as $aVenir) {
+            $parMois[$aVenir] = null;
+        }
+
+        return $parMois;
+    }
+
     private function tableauDeBordInventaire($user)
     {
         $scopeIds = $user->isStoreScoped() ? $user->accessibleStoreIds() : null;
@@ -227,18 +281,35 @@ class IndexController extends Controller
         $chiffres = $rapport->tableauDeBord($scopeIds);
         $annee = $chiffres['annee'];
 
+        $achatsParMois = $this->monthlyPurchases($user->isStoreScoped() ? $user->assignedStoreId() : null, $annee);
+
+        // Les deux courbes s'arrêtent au mois en cours, elles ne retombent pas
+        // à zéro. Voir moisAVenirVides().
+        $chiffres['ca_par_mois'] = $this->moisAVenirVides($chiffres['ca_par_mois'], $annee);
+
         return view('index-inventaire', $chiffres + [
             'meilleuresVentes' => $rapport->meilleuresVentes(
                 $scopeIds,
                 Carbon::create($annee, 1, 1)->startOfDay(),
                 Carbon::create($annee, 12, 31)->endOfDay()
             ),
-            'achats_par_mois' => $this->monthlyPurchases($user->isStoreScoped() ? $user->assignedStoreId() : null, $annee),
+            'achats_par_mois' => $this->moisAVenirVides($achatsParMois, $annee),
             'total_achats' => $this->totalPurchases($user->isStoreScoped() ? $user->assignedStoreId() : null),
             'total_depenses' => Expense::when($scopeIds !== null, fn ($q) => $q->whereIn('store_id', $scopeIds))->sum('amount'),
             'total_stock' => Product::resumeStock($scopeIds),
             'stockAlerts' => $this->alertesDeStock(),
             'mois' => ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'],
+
+            // Le mois courant, mis en avant sous le chiffre de l'année : c'est
+            // celui que le gérant suit au jour le jour. Il n'est montré que si
+            // l'année affichée est l'année en cours — sur un historique, « en
+            // octobre » n'aurait pas de sens.
+            'ca_mois_en_cours' => $annee === (int) Carbon::now()->year
+                ? (float) ($chiffres['ca_par_mois'][Carbon::now()->month] ?? 0)
+                : 0.0,
+            'mois_en_cours_libelle' => $annee === (int) Carbon::now()->year
+                ? Carbon::now()->locale('fr')->translatedFormat('F')
+                : null,
         ]);
     }
 
@@ -319,14 +390,7 @@ class IndexController extends Controller
             $purchasesData = $this->monthlyPurchases($store_id);
             $gains = Sale::where('store_id', $store_id)->sum('interet');
             $total_gains_all = $gains;
-            $months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-            $sales = [];
-            $purchases = [];
-
-            foreach (range(1, 12) as $month) {
-                $sales[] = $salesData[$month] ?? 0;
-                $purchases[] = -($purchasesData[$month] ?? 0);
-            }
+            [$months, $sales, $purchases] = $this->courbesDeLAnnee($salesData, $purchasesData);
         } else {
             $total_credits = Customer::where('balance', '>', 0)->sum('balance');
             $total_purchases = $this->totalPurchases();
@@ -357,14 +421,7 @@ class IndexController extends Controller
             $purchasesData = $this->monthlyPurchases();
             $gains = Sale::sum('interet');
             $total_gains_all = $gains;
-            $months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-            $sales = [];
-            $purchases = [];
-
-            foreach (range(1, 12) as $month) {
-                $sales[] = $salesData[$month] ?? 0;
-                $purchases[] = -($purchasesData[$month] ?? 0);
-            }
+            [$months, $sales, $purchases] = $this->courbesDeLAnnee($salesData, $purchasesData);
         }
         $customers = Customer::all();
         $query = Facture::query();

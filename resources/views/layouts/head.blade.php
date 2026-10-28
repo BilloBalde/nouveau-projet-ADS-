@@ -41,6 +41,7 @@
             --adm-brand-{{ $ton }}: {{ $valeur }};
             @endforeach
             --adm-accent: {{ \App\Support\IdentiteVisuelle::accent() }};
+            --adm-fond-sombre: {{ \App\Support\IdentiteVisuelle::fondSombre() }};
             @foreach (\App\Support\IdentiteVisuelle::encre() as $cle => $valeur)
             --adm-{{ $cle }}: {{ $valeur }};
             @endforeach

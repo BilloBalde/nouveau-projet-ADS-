@@ -41,94 +41,66 @@
         
         <div class="store-metrics-grid">
             <!-- Total Achat -->
-            <div class="metric-card metric-card-1">
-                <div class="dash-count" style="background: linear-gradient(135deg, #92400e, #78350f);">
-                    <div class="dash-counts">
-                        <h4 class="mb-1">{{ numberDelimiter($total_purchases) }} FG</h4>
-                        <h5 class="opacity-75">Total Achat</h5>
-                    </div>
-                    <div class="dash-imgs">
-                        <i class="fas fa-shopping-cart"></i>
-                    </div>
+            <div class="tdb-tuile">
+                <div class="tdb-tuile-corps">
+                    <span class="tdb-chiffre-libelle">Total Achat</span>
+                    <span class="tdb-chiffre-valeur">{{ francs($total_purchases) }}</span>
                 </div>
+                <i class="fas fa-shopping-cart tdb-tuile-icone"></i>
             </div>
 
             <!-- Total Ventes -->
-            <div class="metric-card metric-card-2">
-                <div class="dash-count" style="background: linear-gradient(135deg, #d97706, #b45309);">
-                    <div class="dash-counts">
-                        <h4 class="mb-1">{{ numberDelimiter($total_sales) }} FG</h4>
-                        <h5 class="opacity-75">Total Ventes</h5>
-                    </div>
-                    <div class="dash-imgs">
-                        <i class="fas fa-chart-line"></i>
-                    </div>
+            <div class="tdb-tuile tdb-tuile--phare">
+                <div class="tdb-tuile-corps">
+                    <span class="tdb-chiffre-libelle">Total Ventes</span>
+                    <span class="tdb-chiffre-valeur">{{ francs($total_sales) }}</span>
                 </div>
+                <i class="fas fa-chart-line tdb-tuile-icone"></i>
             </div>
 
             <!-- Dettes -->
-            <div class="metric-card metric-card-3">
-                <div class="dash-count" style="background: linear-gradient(135deg, var(--adm-brand-600,#3E4C21), #9a3412);">
-                    <div class="dash-counts">
-                        <h4 class="mb-1">{{ numberDelimiter($total_credits_store) }} FG</h4>
-                        <h5 class="opacity-75">Dettes (non payé)</h5>
-                    </div>
-                    <div class="dash-imgs">
-                        <i class="fas fa-credit-card"></i>
-                    </div>
+            <div class="tdb-tuile tdb-tuile--alerte">
+                <div class="tdb-tuile-corps">
+                    <span class="tdb-chiffre-libelle">Dettes (non payé)</span>
+                    <span class="tdb-chiffre-valeur">{{ francs($total_credits_store) }}</span>
                 </div>
+                <i class="fas fa-credit-card tdb-tuile-icone"></i>
             </div>
 
             <!-- Stock -->
-            <div class="metric-card metric-card-4">
-                <div class="dash-count" style="background: linear-gradient(135deg, #78716c, #57534e);">
-                    <div class="dash-counts">
-                        <h4 class="mb-1">{{ $total_quantities_store }}</h4>
-                        <h5 class="opacity-75">Quantité en Stock</h5>
-                    </div>
-                    <div class="dash-imgs">
-                        <i class="fas fa-boxes"></i>
-                    </div>
+            <div class="tdb-tuile">
+                <div class="tdb-tuile-corps">
+                    <span class="tdb-chiffre-libelle">Quantité en Stock</span>
+                    <span class="tdb-chiffre-valeur">{{ $total_quantities_store }}</span>
                 </div>
+                <i class="fas fa-boxes tdb-tuile-icone"></i>
             </div>
 
             <!-- Solde Orange Money -->
-            <div class="metric-card metric-card-5">
-                <div class="dash-count" style="background: linear-gradient(135deg, #ff7900, #e56a00);">
-                    <div class="dash-counts">
-                        <h4 class="mb-1">{{ numberDelimiter($solde_orange_money_store) }} FG</h4>
-                        <h5 class="opacity-75">Solde Orange Money</h5>
-                    </div>
-                    <div class="dash-imgs">
-                        <i class="fas fa-mobile-alt"></i>
-                    </div>
+            <div class="tdb-tuile tdb-tuile--orange">
+                <div class="tdb-tuile-corps">
+                    <span class="tdb-chiffre-libelle">Solde Orange Money</span>
+                    <span class="tdb-chiffre-valeur">{{ francs($solde_orange_money_store) }}</span>
                 </div>
+                <i class="fas fa-mobile-alt tdb-tuile-icone"></i>
             </div>
 
             <!-- Solde Cash -->
-            <div class="metric-card metric-card-6">
-                <div class="dash-count" style="background: linear-gradient(135deg, #059669, #047857);">
-                    <div class="dash-counts">
-                        <h4 class="mb-1">{{ numberDelimiter($solde_cash_store) }} FG</h4>
-                        <h5 class="opacity-75">Solde Cash</h5>
-                    </div>
-                    <div class="dash-imgs">
-                        <i class="fas fa-money-bill-wave"></i>
-                    </div>
+            <div class="tdb-tuile">
+                <div class="tdb-tuile-corps">
+                    <span class="tdb-chiffre-libelle">Solde Cash</span>
+                    <span class="tdb-chiffre-valeur">{{ francs($solde_cash_store) }}</span>
                 </div>
+                <i class="fas fa-money-bill-wave tdb-tuile-icone"></i>
             </div>
 
             <!-- Balance (revenus - dépenses) -->
-            <div class="metric-card metric-card-7">
-                <div class="dash-count" style="background: linear-gradient(135deg, {{ $balance_store >= 0 ? '#0f766e, #115e59' : '#b91c1c, #7f1d1d' }});">
-                    <div class="dash-counts">
-                        <h4 class="mb-1">{{ numberDelimiter($balance_store) }} FG</h4>
-                        <h5 class="opacity-75">Balance (revenus - dépenses)</h5>
-                    </div>
-                    <div class="dash-imgs">
-                        <i class="fas fa-balance-scale"></i>
-                    </div>
+            <div class="tdb-tuile {{ $balance_store >= 0 ? 'tdb-tuile--bien' : 'tdb-tuile--mal' }}">
+                <div class="tdb-tuile-corps">
+                    <span class="tdb-chiffre-libelle">Balance (revenus - dépenses)</span>
+                    <span class="tdb-chiffre-valeur">{{ francs($balance_store) }}</span>
                 </div>
+                <i class="fas fa-balance-scale tdb-tuile-icone"></i>
             </div>
         </div>
     </div>
@@ -138,81 +110,57 @@
         
         <div class="store-metrics-grid">
             <!-- Total Achat -->
-            <div class="metric-card metric-card-1">
-                <div class="dash-count" style="background: linear-gradient(135deg, #92400e, #78350f);">
-                    <div class="dash-counts">
-                        <h4 class="mb-1">{{ numberDelimiter($total_purchases) }} FG</h4>
-                        <h5 class="opacity-75">Total Achat</h5>
-                    </div>
-                    <div class="dash-imgs">
-                        <i class="fas fa-shopping-cart"></i>
-                    </div>
+            <div class="tdb-tuile">
+                <div class="tdb-tuile-corps">
+                    <span class="tdb-chiffre-libelle">Total Achat</span>
+                    <span class="tdb-chiffre-valeur">{{ francs($total_purchases) }}</span>
                 </div>
+                <i class="fas fa-shopping-cart tdb-tuile-icone"></i>
             </div>
 
             <!-- Total Ventes -->
-            <div class="metric-card metric-card-2">
-                <div class="dash-count" style="background: linear-gradient(135deg, #d97706, #b45309);">
-                    <div class="dash-counts">
-                        <h4 class="mb-1">{{ numberDelimiter($total_sales) }} FG</h4>
-                        <h5 class="opacity-75">Total Ventes</h5>
-                    </div>
-                    <div class="dash-imgs">
-                        <i class="fas fa-chart-line"></i>
-                    </div>
+            <div class="tdb-tuile tdb-tuile--phare">
+                <div class="tdb-tuile-corps">
+                    <span class="tdb-chiffre-libelle">Total Ventes</span>
+                    <span class="tdb-chiffre-valeur">{{ francs($total_sales) }}</span>
                 </div>
+                <i class="fas fa-chart-line tdb-tuile-icone"></i>
             </div>
 
             <!-- Stock -->
-            <div class="metric-card metric-card-4">
-                <div class="dash-count" style="background: linear-gradient(135deg, #78716c, #57534e);">
-                    <div class="dash-counts">
-                        <h4 class="mb-1">{{ $total_quantities }}</h4>
-                        <h5 class="opacity-75">Quantité en Stock</h5>
-                    </div>
-                    <div class="dash-imgs">
-                        <i class="fas fa-boxes"></i>
-                    </div>
+            <div class="tdb-tuile">
+                <div class="tdb-tuile-corps">
+                    <span class="tdb-chiffre-libelle">Quantité en Stock</span>
+                    <span class="tdb-chiffre-valeur">{{ $total_quantities }}</span>
                 </div>
+                <i class="fas fa-boxes tdb-tuile-icone"></i>
             </div>
 
             <!-- Solde Orange Money -->
-            <div class="metric-card metric-card-5">
-                <div class="dash-count" style="background: linear-gradient(135deg, #ff7900, #e56a00);">
-                    <div class="dash-counts">
-                        <h4 class="mb-1">{{ numberDelimiter($solde_orange_money) }} FG</h4>
-                        <h5 class="opacity-75">Solde Orange Money</h5>
-                    </div>
-                    <div class="dash-imgs">
-                        <i class="fas fa-mobile-alt"></i>
-                    </div>
+            <div class="tdb-tuile tdb-tuile--orange">
+                <div class="tdb-tuile-corps">
+                    <span class="tdb-chiffre-libelle">Solde Orange Money</span>
+                    <span class="tdb-chiffre-valeur">{{ francs($solde_orange_money) }}</span>
                 </div>
+                <i class="fas fa-mobile-alt tdb-tuile-icone"></i>
             </div>
 
             <!-- Solde Cash -->
-            <div class="metric-card metric-card-6">
-                <div class="dash-count" style="background: linear-gradient(135deg, #059669, #047857);">
-                    <div class="dash-counts">
-                        <h4 class="mb-1">{{ numberDelimiter($solde_cash) }} FG</h4>
-                        <h5 class="opacity-75">Solde Cash</h5>
-                    </div>
-                    <div class="dash-imgs">
-                        <i class="fas fa-money-bill-wave"></i>
-                    </div>
+            <div class="tdb-tuile">
+                <div class="tdb-tuile-corps">
+                    <span class="tdb-chiffre-libelle">Solde Cash</span>
+                    <span class="tdb-chiffre-valeur">{{ francs($solde_cash) }}</span>
                 </div>
+                <i class="fas fa-money-bill-wave tdb-tuile-icone"></i>
             </div>
 
             <!-- Balance (revenus - dépenses) -->
-            <div class="metric-card metric-card-7">
-                <div class="dash-count" style="background: linear-gradient(135deg, {{ $store_balance >= 0 ? '#0f766e, #115e59' : '#b91c1c, #7f1d1d' }});">
-                    <div class="dash-counts">
-                        <h4 class="mb-1">{{ numberDelimiter($store_balance) }} FG</h4>
-                        <h5 class="opacity-75">Balance (revenus - dépenses)</h5>
-                    </div>
-                    <div class="dash-imgs">
-                        <i class="fas fa-balance-scale"></i>
-                    </div>
+            <div class="tdb-tuile {{ $store_balance >= 0 ? 'tdb-tuile--bien' : 'tdb-tuile--mal' }}">
+                <div class="tdb-tuile-corps">
+                    <span class="tdb-chiffre-libelle">Balance (revenus - dépenses)</span>
+                    <span class="tdb-chiffre-valeur">{{ francs($store_balance) }}</span>
                 </div>
+                <i class="fas fa-balance-scale tdb-tuile-icone"></i>
             </div>
         </div>
     </div>
@@ -223,7 +171,7 @@
         <div class="col-md-3">
             <a href="{{ route('customers.index') }}" class="dash-count das3 text-decoration-none metric-card quick-action">
                 <div class="dash-counts">
-                    <h4 class="mb-1">{{ numberDelimiter($total_gains_all) }} FG</h4>
+                    <h4 class="mb-1">{{ francs($total_gains_all) }}</h4>
                     <h5 class="opacity-75">Gain total</h5>
                 </div>
                 <div class="dash-imgs">
@@ -244,9 +192,9 @@
             </a>
         </div>
         <div class="col-md-3">
-        <a href="#" class="dash-count das1 text-decoration-none metric-card quick-action" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
+        <a href="#" class="dash-count das1 text-decoration-none metric-card quick-action" style="background: linear-gradient(135deg, var(--adm-brand-500,#6B7A35), var(--adm-brand-800,#263012));">
             <div class="dash-counts">
-                <h4 class="mb-1">{{ numberDelimiter($total_third_party_interest) }} FG</h4>
+                <h4 class="mb-1">{{ francs($total_third_party_interest) }}</h4>
                 <h5 class="opacity-75">Intérêts Ventes Tierces</h5>
             </div>
             <div class="dash-imgs">
@@ -306,13 +254,13 @@
                 <table class="table table-sm mb-3">
                     <thead><tr><th></th><th class="text-end">Aujourd'hui</th><th class="text-end">Semaine</th><th class="text-end">Mois</th><th class="text-end">Année</th></tr></thead>
                     <tbody>
-                        <tr><td>Chiffre d'affaires</td>@foreach ($overview['sales'] as $s)<td class="text-end">{{ numberDelimiter($s['ca']) }} FG</td>@endforeach</tr>
-                        <tr><td>dont ventes directes depuis les entrepôts</td>@foreach ($overview['sales'] as $s)<td class="text-end">{{ numberDelimiter($s['direct']) }} FG</td>@endforeach</tr>
-                        <tr><td>Marge (sur les ventes au coût connu)</td>@foreach ($overview['sales'] as $s)<td class="text-end">{{ numberDelimiter($s['marge']) }} FG</td>@endforeach</tr>
+                        <tr><td>Chiffre d'affaires</td>@foreach ($overview['sales'] as $s)<td class="text-end">{{ francs($s['ca']) }}</td>@endforeach</tr>
+                        <tr><td>dont ventes directes depuis les entrepôts</td>@foreach ($overview['sales'] as $s)<td class="text-end">{{ francs($s['direct']) }}</td>@endforeach</tr>
+                        <tr><td>Marge (sur les ventes au coût connu)</td>@foreach ($overview['sales'] as $s)<td class="text-end">{{ francs($s['marge']) }}</td>@endforeach</tr>
                         {{-- Activité financée par les associés : comprise dans les totaux
                              ci-dessus ; son résultat est partagé selon leur clé (relevés). --}}
-                        <tr class="table-light"><td><strong>Activité associés</strong> — chiffre d'affaires</td>@foreach ($overview['sales'] as $s)<td class="text-end">{{ numberDelimiter($s['assoc_ca']) }} FG</td>@endforeach</tr>
-                        <tr class="table-light"><td><strong>Activité associés</strong> — marge (avant partage)</td>@foreach ($overview['sales'] as $s)<td class="text-end">{{ numberDelimiter($s['assoc_marge']) }} FG</td>@endforeach</tr>
+                        <tr class="table-light"><td><strong>Activité associés</strong> — chiffre d'affaires</td>@foreach ($overview['sales'] as $s)<td class="text-end">{{ francs($s['assoc_ca']) }}</td>@endforeach</tr>
+                        <tr class="table-light"><td><strong>Activité associés</strong> — marge (avant partage)</td>@foreach ($overview['sales'] as $s)<td class="text-end">{{ francs($s['assoc_marge']) }}</td>@endforeach</tr>
                     </tbody>
                 </table>
             </div>
@@ -320,11 +268,11 @@
             @php $a = $overview['associates']; @endphp
             <div class="d-flex flex-wrap gap-3 align-items-center mb-3 p-2 rounded" style="font-size:14px; background:var(--adm-paper-warm,#F9F9F3); border:1px solid #E2E3CF;">
                 <strong><i class="fas fa-handshake me-1 text-primary"></i>Associés ({{ $a['count'] }}) :</strong>
-                <span>Capital restant dû : <strong>{{ numberDelimiter($a['capital_restant']) }} FG</strong></span>
-                <span>Stock des associés : <strong>{{ numberDelimiter($a['stock_valeur']) }} FG</strong></span>
-                <span>Bénéfice à leur verser : <strong>{{ numberDelimiter($a['benefice_a_verser']) }} FG</strong></span>
-                <span>Votre part restante : <strong>{{ numberDelimiter($a['part_patron_restante']) }} FG</strong></span>
-                <span>Comptes associés : <strong>{{ numberDelimiter($a['tresorerie']) }} FG</strong></span>
+                <span>Capital restant dû : <strong>{{ francs($a['capital_restant']) }}</strong></span>
+                <span>Stock des associés : <strong>{{ francs($a['stock_valeur']) }}</strong></span>
+                <span>Bénéfice à leur verser : <strong>{{ francs($a['benefice_a_verser']) }}</strong></span>
+                <span>Votre part restante : <strong>{{ francs($a['part_patron_restante']) }}</strong></span>
+                <span>Comptes associés : <strong>{{ francs($a['tresorerie']) }}</strong></span>
                 <a href="{{ route('associates.index') }}" class="ms-auto">Voir les relevés <i class="fas fa-arrow-right"></i></a>
             </div>
             @endif
@@ -496,8 +444,8 @@
                                 </div>
                             </td>
                             <td class="text-center">{{ $item->quantite_affichee }}</td>
-                            <td class="text-end">{{ numberDelimiter($item->prix_affiche) }} FG</td>
-                            <td class="text-end fw-medium text-primary">{{ numberDelimiter($item->prixTotal) }} FG</td>
+                            <td class="text-end">{{ francs($item->prix_affiche) }}</td>
+                            <td class="text-end fw-medium text-primary">{{ francs($item->prixTotal) }}</td>
                             <td>{{ \Carbon\Carbon::parse($item->updated_at)->format('d/m/Y H:i') }}</td>
                         </tr>
                         @endforeach
@@ -547,7 +495,7 @@
                                     </td>
                                     <td class="fw-medium">{{ $item->product->libelle ?? '—' }}</td>
                                     <td class="text-end">{{ $item->product ? $item->product->quantiteAvecUnite($item->total_quantity) : number_format($item->total_quantity) }}</td>
-                                    <td class="text-end text-primary fw-medium">{{ numberDelimiter($item->total_revenue) }} FG</td>
+                                    <td class="text-end text-primary fw-medium">{{ francs($item->total_revenue) }}</td>
                                 </tr>
                                 @empty
                                 <tr>
@@ -559,7 +507,7 @@
                             <tfoot>
                                 <tr>
                                     <th colspan="3" class="text-end">Total :</th>
-                                    <th class="text-end text-primary">{{ numberDelimiter($topProductsByRevenue->sum('total_revenue')) }} FG</th>
+                                    <th class="text-end text-primary">{{ francs($topProductsByRevenue->sum('total_revenue')) }}</th>
                                 </tr>
                             </tfoot>
                             @endif
@@ -830,200 +778,164 @@
             }
         });
 
-        // Initialize chart
+        {{-- Couleurs écrites en toutes lettres : ApexCharts ne résout pas les
+             variables CSS, il les passerait telles quelles au SVG. --}}
+        var marque = '{{ marqueCouleur('600') }}';
+        var sourd  = '{{ marqueEncre('ink-faint') }}';
+        var encre  = '{{ marqueEncre('ink-muted') }}';
+        var filet  = '{{ marqueEncre('hairline') }}';
+
+        // Un montant abrégé pour un axe étroit : 1,6 M · 450 k.
+        var abrege = function (v) {
+            var a = Math.abs(v);
+            var court = function (n, unite) {
+                return n.toFixed(1).replace(/\.0$/, '').replace('.', ',') + ' ' + unite;
+            };
+
+            if (a >= 1e9) return court(v / 1e9, 'Md');
+            if (a >= 1e6) return court(v / 1e6, 'M');
+            if (a >= 1e3) return Math.round(v / 1e3) + ' k';
+
+            return String(Math.round(v));
+        };
+
+        var francs = function (v) {
+            return new Intl.NumberFormat('fr-FR').format(Math.round(v)) + ' FG';
+        };
+
+        // Mois par mois, c'est une évolution : une courbe, pas des barres. Les
+        // ventes portent la couleur de la marque, les achats restent en gris
+        // sourd pour les éclairer sans les concurrencer. Les deux sont en
+        // francs : un seul axe, jamais deux échelles.
         if (document.getElementById('sales_charts')) {
-            var options = {
-                series: [
-                    {
-                        name: 'Ventes',
-                        data: @json($sales),
-                    },
-                    {
-                        name: 'Achats',
-                        data: @json($purchases),
-                    }
-                ],
-                colors: ['#28C76F', '#EA5455'],
+            new ApexCharts(document.querySelector('#sales_charts'), {
                 chart: {
-                    type: 'bar',
-                    height: 300,
-                    toolbar: {
-                        show: true,
-                        tools: {
-                            download: true,
-                            zoom: false,
-                            zoomin: false,
-                            zoomout: false,
-                            pan: false,
-                            reset: false
-                        }
-                    }
+                    height: 320,
+                    toolbar: { show: false },
+                    fontFamily: "'Source Sans 3', 'Segoe UI', Arial, sans-serif",
+                    animations: { speed: 500 },
                 },
-                plotOptions: {
-                    bar: {
-                        horizontal: false,
-                        columnWidth: '50%',
-                        borderRadius: 6,
-                        borderRadiusApplication: 'end',
-                    }
+                series: [
+                    { name: 'Ventes', type: 'area', data: @json($sales) },
+                    { name: 'Achats', type: 'line', data: @json($purchases) },
+                ],
+                colors: [marque, sourd],
+                stroke: { curve: 'straight', width: [2.5, 2], dashArray: [0, 5] },
+                fill: {
+                    type: ['gradient', 'solid'],
+                    gradient: { shadeIntensity: 0, opacityFrom: 0.26, opacityTo: 0.02, stops: [0, 95] },
                 },
-                dataLabels: {
-                    enabled: false
-                },
-                stroke: {
-                    show: true,
-                    width: 2,
-                    colors: ['transparent']
+                dataLabels: { enabled: false },
+                markers: { size: 0, strokeWidth: 2, strokeColors: '#fff', hover: { size: 5 } },
+                grid: {
+                    borderColor: filet,
+                    strokeDashArray: 4,
+                    xaxis: { lines: { show: false } },
+                    padding: { left: 2, right: 10, top: -6 },
                 },
                 xaxis: {
                     categories: @json($months),
-                    labels: {
-                        style: {
-                            colors: '#64748b',
-                            fontSize: '12px'
-                        }
-                    }
+                    axisBorder: { show: false },
+                    axisTicks: { show: false },
+                    tooltip: { enabled: false },
+                    crosshairs: { stroke: { color: filet, width: 1, dashArray: 0 } },
+                    labels: { style: { colors: sourd, fontSize: '12px' } },
                 },
-                yaxis: {
-                    labels: {
-                        formatter: function (val) {
-                            return val.toLocaleString() + ' FG';
-                        },
-                        style: {
-                            colors: '#64748b',
-                            fontSize: '12px'
-                        }
-                    }
+                yaxis: { labels: { formatter: abrege, style: { colors: sourd, fontSize: '12px' } } },
+                legend: {
+                    position: 'top',
+                    horizontalAlign: 'left',
+                    offsetX: -8,
+                    fontSize: '13px',
+                    labels: { colors: encre },
+                    markers: { width: 10, height: 10, radius: 3 },
+                    itemMargin: { horizontal: 10 },
                 },
-                fill: {
-                    opacity: 1
+                tooltip: { shared: true, intersect: false, y: { formatter: francs } },
+            }).render();
+        }
+
+        // Top 10 produits : UNE mesure, le chiffre d'affaires.
+        // La version précédente superposait les quantités en barres et le
+        // chiffre d'affaires en courbe, sur deux échelles opposées : deux
+        // axes font dire à un graphique ce qu'on veut. Les quantités sont
+        // dans la bulle de survol, et les noms de produits tiennent enfin,
+        // à l'horizontale.
+        if (document.getElementById('top_products_chart')) {
+            var quantites = @json($topProducts->pluck('total_quantity'));
+
+            new ApexCharts(document.querySelector('#top_products_chart'), {
+                chart: {
+                    type: 'bar',
+                    height: 380,
+                    toolbar: { show: false },
+                    fontFamily: "'Source Sans 3', 'Segoe UI', Arial, sans-serif",
                 },
+                series: [{ name: "Chiffre d'affaires", data: @json($topProducts->pluck('total_revenue')) }],
+                colors: [marque],
+                plotOptions: { bar: { horizontal: true, barHeight: '62%', borderRadius: 4, borderRadiusApplication: 'end' } },
+                dataLabels: { enabled: false },
+                grid: {
+                    borderColor: filet,
+                    strokeDashArray: 4,
+                    yaxis: { lines: { show: false } },
+                    padding: { right: 16 },
+                },
+                xaxis: {
+                    categories: @json($topProducts->map(fn ($item) => $item->product->libelle ?? '—')),
+                    axisBorder: { show: false },
+                    axisTicks: { show: false },
+                    labels: { formatter: abrege, style: { colors: sourd, fontSize: '12px' } },
+                },
+                yaxis: { labels: { style: { colors: encre, fontSize: '12px' } } },
                 tooltip: {
                     y: {
-                        formatter: function (val) {
-                            return val.toLocaleString() + ' FG';
-                        }
-                    }
-                },
-                grid: {
-                    borderColor: '#e2e8f0',
-                    strokeDashArray: 4,
-                },
-                legend: {
-                    position: 'top',
-                    horizontalAlign: 'right',
-                    fontSize: '14px'
-                }
-            };
+                        formatter: function (v, opts) {
+                            var q = quantites[opts.dataPointIndex];
 
-            var chart = new ApexCharts(document.querySelector("#sales_charts"), options);
-            chart.render();
+                            return francs(v) + (q ? ' · ' + new Intl.NumberFormat('fr-FR').format(q) + ' vendus' : '');
+                        },
+                    },
+                },
+            }).render();
         }
 
-        // Top 10 produits les plus vendus (quantité en barres, chiffre d'affaires en courbe)
-        if (document.getElementById('top_products_chart')) {
-            var topProductsOptions = {
-                series: [
-                    {
-                        name: 'Quantité vendue',
-                        type: 'column',
-                        data: @json($topProducts->pluck('total_quantity')),
-                    },
-                    {
-                        name: "Chiffre d'affaires (FG)",
-                        type: 'line',
-                        data: @json($topProducts->pluck('total_revenue')),
-                    }
-                ],
-                chart: {
-                    height: 350,
-                    type: 'line',
-                    toolbar: { show: true }
-                },
-                colors: ['#93c5fd', '#2dd4bf'],
-                stroke: {
-                    width: [0, 3]
-                },
-                plotOptions: {
-                    bar: {
-                        columnWidth: '55%',
-                        borderRadius: 4
-                    }
-                },
-                dataLabels: { enabled: false },
-                xaxis: {
-                    categories: @json($topProducts->map(fn($item) => $item->product->libelle ?? '—')),
-                    labels: {
-                        rotate: -45,
-                        style: { fontSize: '11px' }
-                    }
-                },
-                yaxis: [
-                    {
-                        title: { text: 'Quantité vendue' }
-                    },
-                    {
-                        opposite: true,
-                        title: { text: "Chiffre d'affaires (FG)" },
-                        labels: {
-                            formatter: function (val) {
-                                return val.toLocaleString();
-                            }
-                        }
-                    }
-                ],
-                grid: {
-                    borderColor: '#e2e8f0',
-                    strokeDashArray: 4,
-                },
-                legend: {
-                    position: 'top',
-                    horizontalAlign: 'right'
-                }
-            };
-            var topProductsChart = new ApexCharts(document.querySelector("#top_products_chart"), topProductsOptions);
-            topProductsChart.render();
-        }
-
-        // Niveau de stock des produits critiques (triés du plus faible au plus élevé)
+        // Niveau de stock critique : la couleur dit l'état, comme les étiquettes
+        // Rupture / Faible du tableau. Le cyan du gabarit ne disait rien.
         if (document.getElementById('stock_alerts_chart')) {
-            var stockAlertsOptions = {
-                series: [
-                    {
-                        name: 'Quantité en stock',
-                        data: @json($stockAlerts->pluck('stock_total')),
-                    }
-                ],
+            new ApexCharts(document.querySelector('#stock_alerts_chart'), {
                 chart: {
-                    height: 350,
                     type: 'bar',
-                    toolbar: { show: true }
+                    height: 360,
+                    toolbar: { show: false },
+                    fontFamily: "'Source Sans 3', 'Segoe UI', Arial, sans-serif",
                 },
-                colors: ['#22d3ee'],
-                plotOptions: {
-                    bar: {
-                        columnWidth: '70%',
-                        borderRadius: 3
-                    }
-                },
+                series: [{ name: "Quantité en stock", data: @json($stockAlerts->pluck('stock_total')) }],
+                colors: @json($stockAlerts->map(fn ($item) => (int) $item->stock_total <= 0 ? '#B3261E' : '#B45309')),
+                plotOptions: { bar: { horizontal: true, barHeight: '62%', borderRadius: 4, borderRadiusApplication: 'end', distributed: true } },
                 dataLabels: { enabled: false },
+                legend: { show: false },
+                grid: {
+                    borderColor: filet,
+                    strokeDashArray: 4,
+                    yaxis: { lines: { show: false } },
+                    padding: { right: 16 },
+                },
                 xaxis: {
                     categories: @json($stockAlerts->pluck('libelle')),
-                    labels: {
-                        rotate: -45,
-                        style: { fontSize: '10px' }
-                    }
+                    axisBorder: { show: false },
+                    axisTicks: { show: false },
+                    labels: { style: { colors: sourd, fontSize: '12px' } },
                 },
-                yaxis: {
-                    title: { text: "Nombre d'unités" }
+                yaxis: { labels: { style: { colors: encre, fontSize: '12px' } } },
+                tooltip: {
+                    y: {
+                        formatter: function (v) {
+                            return v <= 0 ? 'en rupture' : new Intl.NumberFormat('fr-FR').format(v) + ' restant(s)';
+                        },
+                    },
                 },
-                grid: {
-                    borderColor: '#e2e8f0',
-                    strokeDashArray: 4,
-                }
-            };
-            var stockAlertsChart = new ApexCharts(document.querySelector("#stock_alerts_chart"), stockAlertsOptions);
-            stockAlertsChart.render();
+            }).render();
         }
 
         // Add hover effect to metric cards

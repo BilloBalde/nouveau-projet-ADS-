@@ -155,15 +155,47 @@ class TableauDeBordTest extends TestCase
         $this->assertEquals(1_000_000, $sales[0], 'Janvier de l\'année passée a été additionné à celui de l\'année en cours.');
     }
 
-    public function test_les_achats_du_graphique_sont_portes_en_negatif_et_par_mois(): void
+    /**
+     * Les achats étaient renvoyés en négatif, ce qui retournait leurs barres
+     * sous l'axe : deux mesures du même signe n'ont pas à se faire face.
+     */
+    public function test_les_achats_du_graphique_sont_positifs_et_par_mois(): void
     {
         $this->achat(1_000, 10, Carbon::create(Carbon::now()->year, 2, 5));   // 10 000
         $this->achat(2_000, 10, Carbon::create(Carbon::now()->year - 1, 2, 5)); // ignoré
 
         $purchases = $this->actingAs($this->admin)->get(route('home'))->assertOk()->viewData('purchases');
 
-        $this->assertEquals(-10_000, $purchases[1], 'Février, en négatif, sans l\'année passée.');
+        $this->assertEquals(10_000, $purchases[1], 'Février, sans l\'année passée.');
         $this->assertEquals(0, $purchases[0]);
+    }
+
+    /**
+     * Un mois qui n'est pas encore arrivé n'a pas de chiffre : tracé à zéro,
+     * il dessinait une chute verticale en fin d'année.
+     */
+    public function test_les_mois_a_venir_ne_valent_pas_zero(): void
+    {
+        $this->travelTo(Carbon::create(Carbon::now()->year, 6, 30, 12));
+
+        $reponse = $this->actingAs($this->admin)->get(route('home'))->assertOk();
+
+        foreach ([$reponse->viewData('sales'), $reponse->viewData('purchases')] as $serie) {
+            $this->assertCount(12, $serie);
+            $this->assertNotNull($serie[5], 'juin, le mois en cours');
+            $this->assertNull($serie[6], 'juillet, pas encore arrivé');
+            $this->assertNull($serie[11], 'décembre');
+        }
+
+        $this->travelBack();
+    }
+
+    /** Les étiquettes du graphique sont en français, comme le reste du site. */
+    public function test_les_mois_du_graphique_sont_en_francais(): void
+    {
+        $mois = $this->actingAs($this->admin)->get(route('home'))->assertOk()->viewData('months');
+
+        $this->assertSame(['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'], $mois);
     }
 
     /** Une facture mise à la corbeille ne compte plus dans le chiffre d'affaires. */

@@ -243,3 +243,43 @@ if (! function_exists('marqueEncre')) {
         return IdentiteVisuelle::encre()[$cle] ?? '#1F2414';
     }
 }
+
+if (! function_exists('francs')) {
+    /**
+     * Un montant en francs guinéens : pas de centimes, une espace fine entre
+     * les milliers.
+     *
+     * numberDelimiter() affiche deux décimales — héritage du gabarit, pensé
+     * pour des monnaies qui en ont. Le franc guinéen n'en a pas : « 1 638
+     * 000,00 FG » fait lire deux chiffres qui ne veulent rien dire.
+     */
+    function francs(float|int|null $montant, bool $avecUnite = true): string
+    {
+        $texte = number_format((float) $montant, 0, ',', ' ');
+
+        return $avecUnite ? $texte.' FG' : $texte;
+    }
+}
+
+if (! function_exists('francsCourt')) {
+    /** Forme abrégée pour un axe ou une tuile étroite : 1,6 M · 450 k. */
+    function francsCourt(float|int|null $montant): string
+    {
+        $v = (float) $montant;
+        $signe = $v < 0 ? '-' : '';
+        $v = abs($v);
+
+        // Le zéro ne se retire qu'après la virgule : « 450 000 » donne « 450 k »,
+        // pas « 45 k ».
+        $sansZeroInutile = static function (string $nombre): string {
+            return str_contains($nombre, ',') ? rtrim(rtrim($nombre, '0'), ',') : $nombre;
+        };
+
+        return match (true) {
+            $v >= 1_000_000_000 => $signe.$sansZeroInutile(number_format($v / 1_000_000_000, 1, ',', ' ')).' Md',
+            $v >= 1_000_000 => $signe.$sansZeroInutile(number_format($v / 1_000_000, 1, ',', ' ')).' M',
+            $v >= 1_000 => $signe.number_format($v / 1_000, 0, ',', ' ').' k',
+            default => $signe.number_format($v, 0, ',', ' '),
+        };
+    }
+}

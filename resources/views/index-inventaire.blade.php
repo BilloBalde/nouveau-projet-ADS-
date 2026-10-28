@@ -46,48 +46,56 @@
     </div>
     @endif
 
-    {{-- Les chiffres de l'année --}}
-    <div class="row">
-        <div class="col-lg-3 col-sm-6 col-12">
-            <div class="card">
-                <div class="card-body">
-                    <h6 class="text-muted mb-1">Chiffre d'affaires {{ $annee }}</h6>
-                    <h3 class="mb-0">{{ numberDelimiter($ca_annee) }} FG</h3>
-                    <small class="text-muted">{{ number_format($quantite_annee, 0, ',', ' ') }} articles vendus</small>
-                </div>
-            </div>
+    {{-- ─────────────────────────────────────────────────────────────
+         Le chiffre de l'année, en grand, et ce qui l'explique à côté.
+         Un tableau de bord mène avec UN nombre : celui que le gérant est
+         venu chercher. Les quatre autres l'éclairent, ils ne le concurrencent
+         pas — d'où la différence de taille, assumée.
+         ───────────────────────────────────────────────────────────── --}}
+    <div class="tdb-entete">
+        <div class="tdb-heros">
+            <span class="tdb-heros-libelle">Chiffre d'affaires {{ $annee }}</span>
+            <span class="tdb-heros-valeur">{{ francs($ca_annee, false) }}<span class="tdb-heros-unite">FG</span></span>
+            <span class="tdb-heros-detail">
+                {{ number_format($quantite_annee, 0, ',', ' ') }} article{{ $quantite_annee > 1 ? 's' : '' }} vendu{{ $quantite_annee > 1 ? 's' : '' }}
+                @if ($mois_en_cours_libelle && $ca_mois_en_cours > 0)
+                    · {{ francs($ca_mois_en_cours) }} en {{ $mois_en_cours_libelle }}
+                @endif
+            </span>
         </div>
-        <div class="col-lg-3 col-sm-6 col-12">
-            <div class="card">
-                <div class="card-body">
-                    <h6 class="text-muted mb-1">Marge {{ $annee }}</h6>
-                    <h3 class="mb-0">{{ numberDelimiter($marge_annee) }} FG</h3>
-                    <small class="text-muted">
-                        @if ($ca_annee > 0)
-                            {{ number_format($marge_annee / $ca_annee * 100, 1, ',', ' ') }} % du chiffre d'affaires
-                        @else
-                            —
-                        @endif
-                    </small>
-                </div>
+
+        <div class="tdb-chiffres">
+            <div class="tdb-chiffre">
+                <span class="tdb-chiffre-libelle">Marge</span>
+                <span class="tdb-chiffre-valeur">{{ francs($marge_annee) }}</span>
+                <span class="tdb-chiffre-detail">
+                    @if ($ca_annee > 0)
+                        {{ number_format($marge_annee / $ca_annee * 100, 1, ',', ' ') }} % du chiffre d'affaires
+                    @else
+                        —
+                    @endif
+                </span>
             </div>
-        </div>
-        <div class="col-lg-3 col-sm-6 col-12">
-            <div class="card">
-                <div class="card-body">
-                    <h6 class="text-muted mb-1">Pertes déclarées</h6>
-                    <h3 class="mb-0">{{ numberDelimiter($pertes_annee) }} FG</h3>
-                    <small class="text-muted">au prix de revient, hors chiffre d'affaires</small>
-                </div>
+            <div class="tdb-chiffre">
+                <span class="tdb-chiffre-libelle">Achats</span>
+                <span class="tdb-chiffre-valeur">{{ francs($total_achats) }}</span>
+                <span class="tdb-chiffre-detail">dépenses : {{ francs($total_depenses) }}</span>
             </div>
-        </div>
-        <div class="col-lg-3 col-sm-6 col-12">
-            <div class="card">
-                <div class="card-body">
-                    <h6 class="text-muted mb-1">Achats {{ $annee }}</h6>
-                    <h3 class="mb-0">{{ numberDelimiter($total_achats) }} FG</h3>
-                    <small class="text-muted">dépenses : {{ numberDelimiter($total_depenses) }} FG</small>
-                </div>
+            <div class="tdb-chiffre">
+                <span class="tdb-chiffre-libelle">Pertes déclarées</span>
+                <span class="tdb-chiffre-valeur">{{ francs($pertes_annee) }}</span>
+                <span class="tdb-chiffre-detail">au prix de revient, hors chiffre d'affaires</span>
+            </div>
+            <div class="tdb-chiffre">
+                <span class="tdb-chiffre-libelle">Comptages validés</span>
+                <span class="tdb-chiffre-valeur">{{ $seances->count() }}</span>
+                <span class="tdb-chiffre-detail">
+                    @if ($derniere)
+                        dernier le {{ $derniere->counted_on->format('d/m/Y') }}
+                    @else
+                        aucun pour l'instant
+                    @endif
+                </span>
             </div>
         </div>
     </div>
@@ -110,7 +118,7 @@
                     </p>
                 </div>
                 <div class="col-lg-2 text-lg-end">
-                    <h4 class="mb-0">{{ numberDelimiter($derniere->total_revenue_gnf) }} FG</h4>
+                    <h4 class="mb-0">{{ francs($derniere->total_revenue_gnf) }}</h4>
                     <small class="text-muted">chiffre d'affaires</small>
                 </div>
                 <div class="col-lg-2 text-lg-end">
@@ -124,20 +132,32 @@
     <div class="row">
         {{-- Chiffre d'affaires mois par mois --}}
         <div class="col-lg-7 col-12">
-            <div class="card">
+            <div class="card h-100">
                 <div class="card-body">
-                    <h5 class="mb-3">Chiffre d'affaires et achats — {{ $annee }}</h5>
+                    <div class="tdb-carte-titre">
+                        <h5>Chiffre d'affaires et achats — {{ $annee }}</h5>
+                        <span class="tdb-chiffre-detail">en francs guinéens</span>
+                    </div>
+                    @if (array_sum($ca_par_mois) > 0 || array_sum($achats_par_mois) > 0)
                     <div id="graphiqueInventaire"></div>
-                    <small class="text-muted">
+                    <small class="tdb-note">
                         Le chiffre d'affaires d'une période est rattaché au mois où le comptage l'a close.
+                        Le détail par période figure dans « Derniers comptages ».
                     </small>
+                    @else
+                    <div class="tdb-vide">
+                        <i class="fas fa-chart-area"></i>
+                        <span>Rien à tracer pour {{ $annee }}.</span>
+                        <small>La courbe se dessine dès le deuxième comptage validé.</small>
+                    </div>
+                    @endif
                 </div>
             </div>
         </div>
 
         {{-- Ce qui se vend le mieux --}}
         <div class="col-lg-5 col-12">
-            <div class="card">
+            <div class="card h-100">
                 <div class="card-body">
                     <h5 class="mb-3">Ce qui se vend le mieux</h5>
                     <div class="table-responsive">
@@ -154,7 +174,7 @@
                                 <tr>
                                     <td>{{ $ligne->produit->libelle ?? 'Produit #'.$ligne->product_id }}</td>
                                     <td class="text-end">{{ number_format((int) $ligne->quantite, 0, ',', ' ') }}</td>
-                                    <td class="text-end">{{ numberDelimiter($ligne->chiffre) }} FG</td>
+                                    <td class="text-end">{{ francs($ligne->chiffre) }}</td>
                                 </tr>
                                 @empty
                                 <tr><td colspan="3" class="text-center text-muted py-3">Aucune vente constatée pour l'instant.</td></tr>
@@ -194,8 +214,8 @@
                                         <small class="text-muted d-block">{{ $seance->reference }}</small>
                                     </td>
                                     <td>{{ $seance->counted_on->format('d/m/Y') }}</td>
-                                    <td class="text-end">{{ numberDelimiter($seance->total_revenue_gnf) }} FG</td>
-                                    <td class="text-end text-muted">{{ numberDelimiter($seance->total_margin_gnf) }} FG</td>
+                                    <td class="text-end">{{ francs($seance->total_revenue_gnf) }}</td>
+                                    <td class="text-end text-muted">{{ francs($seance->total_margin_gnf) }}</td>
                                 </tr>
                                 @empty
                                 <tr><td colspan="4" class="text-center text-muted py-3">Aucun comptage validé.</td></tr>
@@ -250,36 +270,95 @@
 
 @section('script_perso')
 <script>
-    (function () {
+    {{-- Les scripts du gabarit sont inclus APRÈS cette section : à l'exécution
+         immédiate, ApexCharts n'existe pas encore et le graphique ne se
+         dessinait jamais. D'où l'attente du DOM complet. --}}
+    document.addEventListener('DOMContentLoaded', function () {
         var cible = document.querySelector('#graphiqueInventaire');
         if (!cible || typeof ApexCharts === 'undefined') return;
 
+        {{-- Les couleurs sont écrites en toutes lettres : ApexCharts ne résout
+             pas les variables CSS, il les passerait telles quelles au SVG, qui
+             rendrait les tracés transparents. --}}
+        var marque = '{{ marqueCouleur('600') }}';
+        var sourd  = '{{ marqueEncre('ink-faint') }}';
+        var encre  = '{{ marqueEncre('ink-muted') }}';
+        var filet  = '{{ marqueEncre('hairline') }}';
+
+        {{-- Mois par mois, c'est une évolution : une courbe, pas des barres.
+             Le chiffre d'affaires est la mesure qu'on vient lire — il porte la
+             couleur de la marque et une aire dégradée ; les achats restent en
+             gris sourd, en pointillé, pour l'éclairer sans le concurrencer.
+             Les deux sont en francs : un seul axe, jamais deux échelles. --}}
+        var abrege = function (v) {
+            var a = Math.abs(v);
+            var court = function (n, unite) {
+                return n.toFixed(1).replace(/\.0$/, '').replace('.', ',') + ' ' + unite;
+            };
+
+            if (a >= 1e9) return court(v / 1e9, 'Md');
+            if (a >= 1e6) return court(v / 1e6, 'M');
+            if (a >= 1e3) return Math.round(v / 1e3) + ' k';
+
+            return String(Math.round(v));
+        };
+
         new ApexCharts(cible, {
-            chart: { type: 'bar', height: 320, toolbar: { show: false } },
+            chart: {
+                height: 320,
+                toolbar: { show: false },
+                fontFamily: "'Source Sans 3', 'Segoe UI', Arial, sans-serif",
+                animations: { speed: 500 },
+            },
             series: [
-                { name: "Chiffre d'affaires", data: @json(array_values($ca_par_mois)) },
-                { name: 'Achats', data: @json(array_map(fn ($v) => -$v, array_values($achats_par_mois))) },
+                { name: "Chiffre d'affaires", type: 'area', data: @json(array_values($ca_par_mois)) },
+                { name: 'Achats', type: 'line', data: @json(array_values($achats_par_mois)) },
             ],
-            colors: ['var(--adm-brand-600,#3E4C21)', 'var(--adm-accent,#C7A150)'],
-            plotOptions: { bar: { horizontal: false, columnWidth: '55%' } },
+            colors: [marque, sourd],
+            stroke: { curve: 'straight', width: [2.5, 2], dashArray: [0, 5] },
+            fill: {
+                type: ['gradient', 'solid'],
+                gradient: { shadeIntensity: 0, opacityFrom: 0.26, opacityTo: 0.02, stops: [0, 95] },
+            },
             dataLabels: { enabled: false },
-            xaxis: { categories: @json($mois) },
+            markers: { size: 0, strokeWidth: 2, strokeColors: '#fff', hover: { size: 5 } },
+            grid: {
+                borderColor: filet,
+                strokeDashArray: 4,
+                xaxis: { lines: { show: false } },
+                padding: { left: 2, right: 10, top: -6 },
+            },
+            xaxis: {
+                categories: @json($mois),
+                axisBorder: { show: false },
+                axisTicks: { show: false },
+                tooltip: { enabled: false },
+                crosshairs: { stroke: { color: filet, width: 1, dashArray: 0 } },
+                labels: { style: { colors: sourd, fontSize: '12px' } },
+            },
             yaxis: {
-                labels: {
-                    formatter: function (v) {
-                        return new Intl.NumberFormat('fr-FR', { notation: 'compact' }).format(v);
-                    },
-                },
+                tickAmount: 5,
+                labels: { formatter: abrege, style: { colors: sourd, fontSize: '12px' } },
+            },
+            legend: {
+                position: 'top',
+                horizontalAlign: 'left',
+                offsetX: -8,
+                fontSize: '13px',
+                labels: { colors: encre },
+                markers: { width: 10, height: 10, radius: 3 },
+                itemMargin: { horizontal: 10 },
             },
             tooltip: {
+                shared: true,
+                intersect: false,
                 y: {
                     formatter: function (v) {
-                        return new Intl.NumberFormat('fr-FR').format(Math.abs(Math.round(v))) + ' FG';
+                        return new Intl.NumberFormat('fr-FR').format(Math.round(v)) + ' FG';
                     },
                 },
             },
-            legend: { position: 'top' },
         }).render();
-    })();
+    });
 </script>
 @endsection
