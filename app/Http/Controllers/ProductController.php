@@ -612,9 +612,14 @@ class ProductController extends Controller
     public function destroy($id)
     {
         try {
-            Product::find($id)->delete();
+            Product::findOrFail($id)->delete();
 
             return redirect()->back()->with('success', 'Produit supprimé avec succès.');
+        } catch (\RuntimeException $th) {
+            // Le modèle refuse un produit encore en stock ou cité par des
+            // mouvements, et dit lequel des deux : son message vaut mieux
+            // qu'un texte générique.
+            return back()->with('error', $th->getMessage());
         } catch (QueryException $th) {
             if ($th->getCode() == '23000') {
                 return back()->with(

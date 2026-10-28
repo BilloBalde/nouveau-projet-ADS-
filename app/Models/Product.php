@@ -7,12 +7,48 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use RuntimeException;
 
 class Product extends Model
 {
     use HasFactory;
 
     protected $guarded = ['id'];
+
+    /**
+     * Un produit qui a une histoire ne se supprime pas.
+     *
+     * La base refusait déjà d'effacer un produit vendu : « sales.product_id »
+     * porte une contrainte. Mais une installation qui déduit son chiffre
+     * d'affaires des comptages n'enregistre aucune vente — seulement des
+     * mouvements de stock, et « stock_movements.product_id » n'en a pas. Un
+     * produit avec quarante sacs en rayon partait donc sans un mot : le stock
+     * disparaissait avec lui et son mouvement restait orphelin dans le journal.
+     *
+     * Le garde-fou est posé sur le modèle et non dans le contrôleur : il vaut
+     * pour tous les chemins, y compris une suppression en lot ou une commande.
+     */
+    protected static function booted(): void
+    {
+        static::deleting(function (self $produit) {
+            $enStock = (int) StoreProduct::where('product_id', $produit->id)->sum('quantity');
+
+            if ($enStock > 0) {
+                throw new RuntimeException(sprintf(
+                    'Impossible de supprimer « %s » : il en reste %s en stock. Sortez-les d\'abord, par un ajustement ou un comptage.',
+                    $produit->libelle,
+                    $produit->quantiteAvecUnite($enStock)
+                ));
+            }
+
+            if (StockMovement::where('product_id', $produit->id)->exists()) {
+                throw new RuntimeException(sprintf(
+                    'Impossible de supprimer « %s » : des mouvements de stock le citent. Son histoire doit rester lisible — désactivez-le plutôt.',
+                    $produit->libelle
+                ));
+            }
+        });
+    }
 
     protected $casts = [
         'promo_start_date' => 'date',
@@ -284,7 +320,7 @@ class Product extends Model
     /**
      * Refuse un prix unitaire sous le plancher de vente (message pour le vendeur).
      *
-     * @throws \RuntimeException
+     * @throws RuntimeException
      */
     public function verifierPrixDeVente(float $prix, ?float $cout = null): void
     {
@@ -294,7 +330,7 @@ class Product extends Model
         }
 
         $fg = fn ($n) => number_format((float) $n, 0, ',', ' ');
-        throw new \RuntimeException($origine === 'minimum'
+        throw new RuntimeException($origine === 'minimum'
             ? sprintf('Prix refusé pour « %s » : %s GNF par %s est sous le prix de vente minimum (%s GNF) fixé sur la fiche produit.',
                 $this->libelle, $fg($prix), self::motUnite($this->unite), $fg($plancher))
             : sprintf('Vente à perte refusée pour « %s » : le prix de vente (%s GNF) est inférieur au prix de revient (%s GNF).',

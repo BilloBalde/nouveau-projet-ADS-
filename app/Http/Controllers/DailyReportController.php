@@ -40,7 +40,10 @@ class DailyReportController extends Controller
                 break;
             case 'monthly':
                 $month = $request->input('month', $now->format('Y-m'));
-                $start = Carbon::createFromFormat('Y-m', $month)->startOfMonth();
+                // Le jour manque au format « Y-m » : Carbon le prend sur la date du
+                // jour. Un 31, « 2027-02 » devenait le 3 mars — et le rapport de
+                // février affichait mars, sans rien signaler. On pose le 1er.
+                $start = Carbon::createFromFormat('Y-m-d', $month.'-01')->startOfMonth();
                 $end = $start->copy()->endOfMonth();
                 $label = $start->translatedFormat('F Y');
                 break;

@@ -91,10 +91,11 @@ class InventorySessionController extends Controller
     {
         $data = $request->validate([
             'store_id' => 'required|exists:stores,id',
-            'counted_on' => 'required|date',
+            'counted_on' => 'required|date|before_or_equal:today',
             'notes' => 'nullable|string|max:1000',
         ], [
             'counted_on.required' => 'Indiquez la date du comptage.',
+            'counted_on.before_or_equal' => 'La date du comptage ne peut pas être dans le futur : on ne compte pas un stock à venir.',
         ]);
 
         $this->autoriserEmplacement((int) $data['store_id']);

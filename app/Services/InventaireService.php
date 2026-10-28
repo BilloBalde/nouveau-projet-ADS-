@@ -7,6 +7,7 @@ use App\Models\InventorySessionLine;
 use App\Models\Product;
 use App\Models\StockMovement;
 use App\Models\Store;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
@@ -60,6 +61,19 @@ class InventaireService
     public function preparer(int $storeId, string $date, ?int $userId = null): InventorySession
     {
         $store = Store::findOrFail($storeId);
+
+        // Une date future est un piège sans retour : le comptage suivant serait
+        // refusé comme antérieur, et un comptage validé ne se supprime pas. Une
+        // faute de frappe sur l'année bloquerait la boutique jusqu'à cette date.
+        // Le garde-fou est ici et non seulement dans le formulaire : c'est le
+        // service qui porte la règle, pas l'écran.
+        if (Carbon::parse($date)->startOfDay()->gt(Carbon::today())) {
+            throw new RuntimeException(sprintf(
+                'Un comptage ne peut pas être daté du %s : on ne compte pas un stock à venir.',
+                Carbon::parse($date)->format('d/m/Y')
+            ));
+        }
+
         $precedente = InventorySession::derniereValidee($storeId);
 
         if ($precedente && $precedente->counted_on->gt($date)) {

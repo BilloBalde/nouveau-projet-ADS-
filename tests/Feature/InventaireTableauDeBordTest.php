@@ -45,6 +45,12 @@ class InventaireTableauDeBordTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        // Les scénarios de comptage portent des dates fixes. Sans horloge
+        // figée, elles basculent dans le futur avec le temps qui passe — et un
+        // comptage daté du futur est désormais refusé, à juste titre.
+        $this->travelTo('2027-12-31 12:00:00');
+
         $this->seed(RolesSeeder::class);
         $this->seed(PermissionSeeder::class);
         config(['sales.mode' => ModeDeVente::INVENTAIRE]);
