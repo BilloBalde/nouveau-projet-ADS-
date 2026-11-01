@@ -123,7 +123,7 @@ class MovementController extends Controller
         // ------------------------------------------------------------
         // 3. DÉPENSES
         // ------------------------------------------------------------
-        $expensesQuery = Expense::with(['category', 'store'])
+        $expensesQuery = Expense::with(['associate', 'store'])
             ->when(! $isAdmin, fn ($q) => $q->where('store_id', $user->store_id)); // Idem pour les dépenses
 
         // 🔍 FILTRES
@@ -197,7 +197,7 @@ class MovementController extends Controller
                 'montant' => $expense->amount ?? 0,
                 'produit_nom' => '—',
                 'produit_qte' => null,
-                'details' => $expense->category->categoryName ?? 'N/A',
+                'details' => trim(($expense->associate->name ?? 'Associé inconnu').' — '.$expense->description, ' —'),
                 'store_id' => $expense->store_id,
                 'store_name' => $expense->store->store_name ?? $expense->store->name ?? 'N/A',
                 'can_edit' => $isAdmin || ($user->store_id == $expense->store_id),
@@ -272,7 +272,7 @@ class MovementController extends Controller
         $includeAchats = ! $request->filled('type') || $request->type === 'purchase';
 
         // 3. DÉPENSES
-        $expensesQuery = Expense::with(['category', 'store'])
+        $expensesQuery = Expense::with(['associate', 'store'])
             ->when(! $isAdmin, fn ($q) => $q->where('store_id', $user->store_id)); // Filtrer les dépenses pour les vendeurs
 
         // 🔍 FILTRES
@@ -340,7 +340,7 @@ class MovementController extends Controller
             'montant' => $expense->amount ?? 0,
             'produit_nom' => '—',
             'produit_qte' => null,
-            'details' => $expense->category->categoryName ?? 'N/A',
+            'details' => trim(($expense->associate->name ?? 'Associé inconnu').' — '.$expense->description, ' —'),
             'store_id' => $expense->store_id,
             'store_name' => $expense->store->store_name ?? 'N/A',
         ]);

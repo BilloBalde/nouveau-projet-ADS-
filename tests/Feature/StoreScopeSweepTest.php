@@ -2,11 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Models\Associate;
 use App\Models\Customer;
 use App\Models\DebtReminder;
 use App\Models\Devi;
 use App\Models\Expense;
-use App\Models\ExpenseCategory;
 use App\Models\Facture;
 use App\Models\Place;
 use App\Models\Product;
@@ -136,9 +136,9 @@ class StoreScopeSweepTest extends TestCase
 
     public function test_depenses_rappels_et_clients_limites_au_magasin(): void
     {
-        $categorie = ExpenseCategory::forceCreate(['slug' => 'transport', 'categoryName' => 'Transport']);
-        $depense = fn (Store $m, int $montant) => Expense::forceCreate(['reference' => 'D-'.uniqid(), 'expense_categories_id' => $categorie->id,
-            'store_id' => $m->id, 'user_id' => $this->admin->id, 'amount' => $montant, 'exp_mode' => 'others', 'description' => 'x']);
+        $associe = Associate::create(['name' => 'Diallo']);
+        $depense = fn (Store $m, int $montant) => Expense::forceCreate(['reference' => 'D-'.uniqid(), 'associate_id' => $associe->id,
+            'store_id' => $m->id, 'user_id' => $this->admin->id, 'amount' => $montant, 'description' => 'x']);
         $dMadina = $depense($this->madina, 1000);
         $dKaloum = $depense($this->kaloum, 5000);
 
@@ -175,9 +175,9 @@ class StoreScopeSweepTest extends TestCase
     {
         // Le patron possède les deux magasins : l'ancien calcul (via stores.user_id)
         // comptait sa dépense une fois par magasin.
-        $categorie = ExpenseCategory::forceCreate(['slug' => 'divers', 'categoryName' => 'Divers']);
-        Expense::forceCreate(['reference' => 'D-1', 'expense_categories_id' => $categorie->id, 'store_id' => $this->kaloum->id,
-            'user_id' => $this->admin->id, 'amount' => 1000, 'exp_mode' => 'others', 'description' => 'x']);
+        $associe = Associate::create(['name' => 'Diallo']);
+        Expense::forceCreate(['reference' => 'D-1', 'associate_id' => $associe->id, 'store_id' => $this->kaloum->id,
+            'user_id' => $this->admin->id, 'amount' => 1000, 'description' => 'x']);
 
         $global = $this->actingAs($this->admin)->get(route('reports.daily', ['period' => 'daily']))->assertOk();
         $this->assertEquals(1000, $global->viewData('totalDepenses'));

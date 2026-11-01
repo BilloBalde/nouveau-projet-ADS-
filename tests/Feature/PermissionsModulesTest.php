@@ -2,10 +2,10 @@
 
 namespace Tests\Feature;
 
+use App\Models\Associate;
 use App\Models\Customer;
 use App\Models\Devi;
 use App\Models\Expense;
-use App\Models\ExpenseCategory;
 use App\Models\Facture;
 use App\Models\Place;
 use App\Models\Product;
@@ -87,11 +87,11 @@ class PermissionsModulesTest extends TestCase
 
     private function depense(): Expense
     {
-        $categorie = ExpenseCategory::firstWhere('slug', 'transport')
-            ?? ExpenseCategory::forceCreate(['slug' => 'transport', 'categoryName' => 'Transport']);
+        $associe = Associate::firstWhere('name', 'Diallo')
+            ?? Associate::create(['name' => 'Diallo']);
 
-        return Expense::forceCreate(['reference' => 'D-'.uniqid(), 'expense_categories_id' => $categorie->id,
-            'store_id' => $this->madina->id, 'user_id' => $this->admin->id, 'amount' => 1000, 'exp_mode' => 'others', 'description' => 'x']);
+        return Expense::forceCreate(['reference' => 'D-'.uniqid(), 'associate_id' => $associe->id,
+            'store_id' => $this->madina->id, 'user_id' => $this->admin->id, 'amount' => 1000, 'description' => 'x']);
     }
 
     private function devis(): Devi
@@ -124,7 +124,7 @@ class PermissionsModulesTest extends TestCase
 
     public function test_un_magasinier_n_atteint_ni_les_clients_ni_les_ventes_ni_les_devis_ni_les_depenses(): void
     {
-        foreach (['customers.index', 'customers.create', 'factures.index', 'devis.index', 'devis.create', 'expenses.index', 'expensesCategory.index'] as $route) {
+        foreach (['customers.index', 'customers.create', 'factures.index', 'devis.index', 'devis.create', 'expenses.index'] as $route) {
             $this->actingAs($this->magasinier)->get(route($route))->assertForbidden();
         }
     }
@@ -198,8 +198,8 @@ class PermissionsModulesTest extends TestCase
      */
     public function test_le_menu_depenses_n_apparait_pas_sans_la_permission(): void
     {
-        $this->actingAs($this->vendeur)->get(route('expenses.index'))->assertOk()->assertSee('Liste des dépenses');
+        $this->actingAs($this->vendeur)->get(route('expenses.index'))->assertOk()->assertSee('Sorties aux associés');
 
-        $this->actingAs($this->magasinier)->get(route('stock.index'))->assertOk()->assertDontSee('Liste des dépenses');
+        $this->actingAs($this->magasinier)->get(route('stock.index'))->assertOk()->assertDontSee('Sorties aux associés');
     }
 }

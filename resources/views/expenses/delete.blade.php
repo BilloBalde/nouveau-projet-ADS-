@@ -5,15 +5,15 @@
                 @csrf
                 @method('DELETE')
                 <div class="modal-header">
-                    <h5 class="modal-title" id="deleteModalLabel">Delete Confirmation</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <h5 class="modal-title" id="deleteModalLabel">Supprimer la sortie</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
                 </div>
                 <div class="modal-body">
-                    Are you sure you want to delete this expense <span id="expense-reference"></span>?
+                    Supprimer la sortie <strong id="expense-reference"></strong> ? Elle ne sera plus déduite de la part de l'associé.
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-danger">Delete</button>
+                    <button type="button" class="btn btn-cancel" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-danger">Supprimer</button>
                 </div>
             </form>
         </div>

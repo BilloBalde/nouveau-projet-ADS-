@@ -2,12 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Associate;
 use App\Models\Expense;
-use App\Models\ExpenseCategory;
 use App\Models\Store;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
+/**
+ * Dépenses : les sorties d'argent données aux associés, avec leur motif. Le
+ * total de l'année de chacun est déduit de sa part du bénéfice à la clôture.
+ */
 class ExpenseController extends Controller
 {
     public function __construct()
@@ -43,8 +47,8 @@ class ExpenseController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Expense::with('store', 'category'); // charge les relations pour l'affichage
-        $categories_expenses = ExpenseCategory::all();
+        $query = Expense::with('store', 'associate', 'user');
+        $associes = Associate::orderBy('name')->get(['id', 'name']);
 
         // 🔒 Restriction par magasin : si pas admin, on filtre par le store de l'utilisateur
         if (! $this->isAdmin()) {
@@ -55,22 +59,19 @@ class ExpenseController extends Controller
         if ($request->filled('reference')) {
             $query->where('reference', 'like', '%'.$request->reference.'%');
         }
-        if ($request->filled('expense_categories_id')) {
-            $query->where('expense_categories_id', $request->expense_categories_id);
+        if ($request->filled('associate_id')) {
+            $query->where('associate_id', $request->associate_id);
         }
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
+        if ($request->filled('du')) {
+            $query->whereDate('created_at', '>=', $request->du);
         }
-        if ($request->filled('amount')) {
-            $query->where('amount', 'like', '%'.$request->amount.'%');
-        }
-        if ($request->filled('created_at')) {
-            $query->whereDate('created_at', $request->created_at);
+        if ($request->filled('au')) {
+            $query->whereDate('created_at', '<=', $request->au);
         }
 
-        $expenses = $query->get();
+        $expenses = $query->orderByDesc('created_at')->orderByDesc('id')->get();
 
-        return view('expenses.index', compact('expenses', 'categories_expenses'));
+        return view('expenses.index', compact('expenses', 'associes'));
     }
 
     /**
@@ -78,11 +79,13 @@ class ExpenseController extends Controller
      */
     public function create()
     {
-        $categories = ExpenseCategory::all();
         $stores = $this->isAdmin() ? Store::all() : Store::whereIn('id', auth()->user()->accessibleStoreIds())->get();
-        $ref = 'DEP'.Carbon::now()->format('Ym').sprintf('%04d', Expense::count() + 1);
+        $associes = Associate::active()->orderBy('name')->get(['id', 'name']);
+        // Sur le plus grand numéro, pas sur le nombre de lignes : après une
+        // suppression, le compte redonnait une référence déjà prise.
+        $ref = 'DEP'.Carbon::now()->format('Ym').sprintf('%04d', (Expense::max('id') ?? 0) + 1);
 
-        return view('expenses.create', compact('categories', 'ref', 'stores'));
+        return view('expenses.create', compact('ref', 'stores', 'associes'));
     }
 
     /**
@@ -102,22 +105,19 @@ class ExpenseController extends Controller
         // de le modifier pour attribuer la dépense à un collègue.
         $donnees = $request->validate([
             'reference' => 'required|string|max:255|unique:expenses,reference',
-            'expense_categories_id' => 'required|exists:expense_categories,id',
-            'amount' => 'required|numeric|min:0',
-            'status' => 'required|string',
-            'description' => 'nullable|string',
-            'store_id' => 'required|exists:stores,id',
-        ]);
+            ...$this->regles(),
+        ], $this->messages());
 
         // L'auteur vient de la session, jamais de la requête.
         $donnees['user_id'] = auth()->id();
+        $donnees['status'] = 'Completed';
 
         try {
             Expense::create($donnees);
 
-            return redirect()->route('expenses.index')->with('success', 'Dépense créée avec succès.');
-        } catch (\Throwable $th) {
-            return redirect()->route('expenses.index')->with('error', 'Erreur lors de la création : '.$th->getMessage());
+            return redirect()->route('expenses.index')->with('success', 'Sortie enregistrée.');
+        } catch (\RuntimeException $e) {
+            return back()->withInput()->with('error', $e->getMessage());
         }
     }
 
@@ -131,10 +131,11 @@ class ExpenseController extends Controller
             abort(403, 'Vous n\'êtes pas autorisé à modifier cette dépense.');
         }
 
-        $categories = ExpenseCategory::all();
         $stores = $this->isAdmin() ? Store::all() : Store::whereIn('id', auth()->user()->accessibleStoreIds())->get();
+        // Un associé désactivé depuis reste proposé sur ses propres sorties.
+        $associes = Associate::where('active', true)->orWhere('id', $expense->associate_id)->orderBy('name')->get(['id', 'name']);
 
-        return view('expenses.create', compact('expense', 'categories', 'stores'));
+        return view('expenses.create', compact('expense', 'stores', 'associes'));
     }
 
     /**
@@ -151,19 +152,15 @@ class ExpenseController extends Controller
         // L'auteur d'origine n'est pas modifié.
         $donnees = $request->validate([
             'reference' => 'required|string|max:255|unique:expenses,reference,'.$expense->id,
-            'expense_categories_id' => 'required|exists:expense_categories,id',
-            'amount' => 'required|numeric|min:0',
-            'status' => 'required|string',
-            'description' => 'nullable|string',
-            'store_id' => 'required|exists:stores,id',
-        ]);
+            ...$this->regles(),
+        ], $this->messages());
 
         try {
             $expense->update($donnees);
 
-            return redirect()->route('expenses.index')->with('success', 'Dépense mise à jour avec succès.');
-        } catch (\Throwable $th) {
-            return redirect()->route('expenses.index')->with('error', 'Erreur lors de la mise à jour : '.$th->getMessage());
+            return redirect()->route('expenses.index')->with('success', 'Sortie mise à jour.');
+        } catch (\RuntimeException $e) {
+            return back()->withInput()->with('error', $e->getMessage());
         }
     }
 
@@ -180,9 +177,31 @@ class ExpenseController extends Controller
         try {
             $expense->delete();
 
-            return redirect()->route('expenses.index')->with('success', 'Dépense supprimée avec succès.');
-        } catch (\Throwable $th) {
-            return redirect()->route('expenses.index')->with('error', 'Erreur lors de la suppression : '.$th->getMessage());
+            return redirect()->route('expenses.index')->with('success', 'Sortie supprimée.');
+        } catch (\RuntimeException $e) {
+            return redirect()->route('expenses.index')->with('error', $e->getMessage());
         }
+    }
+
+    /** Une sortie : à qui, combien, pourquoi, depuis quel magasin. */
+    private function regles(): array
+    {
+        return [
+            'associate_id' => 'required|exists:associates,id',
+            'amount' => 'required|numeric|min:1',
+            'description' => 'required|string|max:1000',
+            'store_id' => 'required|exists:stores,id',
+        ];
+    }
+
+    private function messages(): array
+    {
+        return [
+            'associate_id.required' => "Choisissez l'associé qui reçoit l'argent.",
+            'amount.required' => 'Indiquez le montant donné.',
+            'amount.min' => 'Le montant doit être positif.',
+            'description.required' => 'Indiquez le motif de la sortie.',
+            'store_id.required' => "Choisissez le magasin d'où sort l'argent.",
+        ];
     }
 }

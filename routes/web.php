@@ -3,6 +3,7 @@
 use App\Exports\PurchasesExport;
 use App\Http\Controllers\Admin\DebtReminderController;
 use App\Http\Controllers\Admin\OrderManagementController;
+use App\Http\Controllers\AssociateController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Authentification;
 use App\Http\Controllers\BaseDonneeController;
@@ -18,7 +19,6 @@ use App\Http\Controllers\Ecommerce\CartController;
 use App\Http\Controllers\Ecommerce\OrangeMoneyController;
 use App\Http\Controllers\Ecommerce\OrderController;
 use App\Http\Controllers\EmailController;
-use App\Http\Controllers\ExpenseCategoryController;
 use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\FactureController;
 use App\Http\Controllers\IndexController;
@@ -352,7 +352,6 @@ Route::get('/fetch-product-details-suggestion', [ProductController::class, 'fetc
 // 13. ROUTES DÉPENSES
 // =============================================
 
-Route::resource('expensesCategory', ExpenseCategoryController::class);
 Route::resource('expenses', ExpenseController::class)->except(['show']);
 
 // =============================================
@@ -457,6 +456,16 @@ Route::get('/logistics/export-pdf', [LogisticController::class, 'exportPDF'])->m
 // =============================================
 
 Route::resource('transfers', StoreProductController::class);
+// Associés : fiche, compte de l'année, partage du bénéfice et clôture annuelle.
+Route::get('/associes', [AssociateController::class, 'index'])->name('associates.index');
+Route::get('/associes/nouveau', [AssociateController::class, 'create'])->name('associates.create');
+Route::post('/associes', [AssociateController::class, 'store'])->name('associates.store');
+Route::get('/associes/annee/{annee}', [AssociateController::class, 'exercice'])->whereNumber('annee')->name('associates.annee');
+Route::post('/associes/annee/{annee}/parts', [AssociateController::class, 'enregistrerParts'])->whereNumber('annee')->name('associates.parts');
+Route::post('/associes/annee/{annee}/cloture', [AssociateController::class, 'cloturer'])->whereNumber('annee')->name('associates.cloturer');
+Route::get('/associes/{associate}', [AssociateController::class, 'show'])->whereNumber('associate')->name('associates.show');
+Route::get('/associes/{associate}/modifier', [AssociateController::class, 'edit'])->whereNumber('associate')->name('associates.edit');
+Route::put('/associes/{associate}', [AssociateController::class, 'update'])->whereNumber('associate')->name('associates.update');
 // Stock par emplacement : vue globale, fiche emplacement, journal, traçabilité, inventaire.
 Route::get('/stock', [StockController::class, 'index'])->name('stock.index');
 Route::get('/stock/mouvements', [StockController::class, 'movements'])->name('stock.movements');

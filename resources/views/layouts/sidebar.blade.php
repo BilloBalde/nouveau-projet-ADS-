@@ -107,12 +107,24 @@
                 </li>
                 @endif
                 @endpermission
+                {{-- Une dépense est une sortie d'argent donnée à un associé. --}}
                 @permission('expenses.view')
                 <li class="submenu">
-                    <a class="{{ isActiveRoute(['expenses.index', 'expensesCategory.index']) }}" href="javascript:void(0);"><img src="{{ asset('assets/img/icons/expense1.svg') }}" alt="img"><span>Depenses</span> <span class="menu-arrow"></span></a>
+                    <a class="{{ isActiveRoute(['expenses.index', 'expenses.create', 'expenses.edit']) }}" href="javascript:void(0);"><img src="{{ asset('assets/img/icons/expense1.svg') }}" alt="img"><span>Dépenses</span> <span class="menu-arrow"></span></a>
                     <ul>
-                        <li><a href="{{ route('expenses.index') }}">Liste des dépenses</a></li>
-                        <li><a href="{{ route('expensesCategory.index') }}">Depense Category</a></li>
+                        <li><a href="{{ route('expenses.index') }}">Sorties aux associés</a></li>
+                        @permission('expenses.create')
+                        <li><a href="{{ route('expenses.create') }}">Nouvelle sortie</a></li>
+                        @endpermission
+                    </ul>
+                </li>
+                @endpermission
+                @permission('associates.manage')
+                <li class="submenu">
+                    <a class="{{ isActiveRoute(['associates.index', 'associates.create', 'associates.show', 'associates.edit', 'associates.annee']) }}" href="javascript:void(0);"><img src="{{ asset('assets/img/icons/users1.svg') }}" alt="img"><span>Associés</span> <span class="menu-arrow"></span></a>
+                    <ul>
+                        <li><a href="{{ route('associates.index') }}">Comptes des associés</a></li>
+                        <li><a href="{{ route('associates.annee', now()->year) }}">Fin d'année : partage</a></li>
                     </ul>
                 </li>
                 @endpermission

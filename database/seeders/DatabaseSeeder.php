@@ -25,7 +25,6 @@ class DatabaseSeeder extends Seeder
             PlacesSeeder::class,
             StoresSeeder::class,
             CategoriesSeeder::class,
-            ExpenseCategoriesSeeder::class,
             ProductsSeeder::class,
             CategoryProductsSeeder::class,
             StoreProductsSeeder::class,
