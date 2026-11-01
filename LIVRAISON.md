@@ -190,12 +190,13 @@ php artisan migrate
 php artisan db:seed        # rôles, permissions, fiche entreprise, comptes
 ```
 
-Après ces deux commandes, une base neuve contient **54 tables**, **9 rôles**,
-**58 permissions** et leurs **208 associations**, la fiche entreprise et **3 comptes**,
+Après ces deux commandes, une base neuve contient **54 tables**, **8 rôles**,
+**57 permissions** et leurs **205 associations**, la fiche entreprise et **3 comptes**,
 plus un jeu de démonstration (19 produits, 2 boutiques, 6 clients, ventes, achats).
 
-Les 9 rôles : administrateur, manager, vendeur, client, comptable, responsable achats,
-magasinier, responsable magasin, associé.
+Les 8 rôles : administrateur, manager, vendeur, client, comptable, responsable achats,
+magasinier, responsable magasin. Un associé n'a pas de compte de connexion : il est
+enregistré dans le module Associés (section 8 bis).
 
 Les seeders sont idempotents : les relancer ne crée pas de doublon. C'est d'ailleurs la
 façon de reprendre les permissions ajoutées par une mise à jour, sur une base déjà en
@@ -207,7 +208,8 @@ php artisan db:seed --class=PermissionSeeder
 
 > Pour partir d'une base vierge une fois la prise en main terminée :
 > `php artisan client:reset-data`. Elle vide les données commerciales (produits,
-> clients, boutiques, stocks, ventes, achats, devis, factures, paiements, dépenses)
+> clients, boutiques, stocks, ventes, achats, devis, factures, paiements, dépenses,
+> associés et clôtures annuelles)
 > et conserve les comptes, les rôles, les permissions, la fiche entreprise et les
 > paramètres. Elle demande confirmation avant d'agir.
 
@@ -277,8 +279,8 @@ désactivés : `PRICING_TIERS_ENABLED=false`. Les passer à `true`, puis vider l
 de configuration, réaffiche le tableau « Tarifs de gros » sur les fiches produit **et**
 applique la remise au panier et aux commandes.
 
-Les promotions par produit (prix promo, badge −X %) sont indépendantes de ce réglage
-et restent actives.
+Il n'y a pas de promotion par produit : la vente se fait en boutique. Tout produit se
+compte **à la pièce** — stock, achats, ventes et factures ; il n'y a plus d'unité à choisir.
 
 ### Marge appliquée au prix de revient
 
@@ -354,12 +356,50 @@ comptage suivant, qui mesure ce qui est parti entre les deux.
 
 Prévenez le client, sinon il appellera en disant que l'application ne calcule rien.
 
+### Un inventaire tous les six mois
+
+L'échéance de chaque boutique est son dernier comptage validé **plus six mois**. Deux
+semaines avant, un bandeau orange l'annonce sur le tableau de bord, sur la liste des
+inventaires et dans l'en-tête de toutes les pages ; l'échéance passée, il passe au
+rouge. Une boutique qui a du stock mais n'a jamais été comptée est signalée aussi.
+
+Le calcul se fait à l'affichage : aucune tâche planifiée n'est nécessaire. Pour un autre
+rythme :
+
+```
+INVENTAIRE_TOUS_LES_MOIS=6
+INVENTAIRE_ALERTE_JOURS=14
+```
+
 ### Documentation pour le gérant
 
 Une marche à suivre d'une page, à imprimer et à laisser près de la caisse, est accessible
 depuis l'écran « Inventaires et chiffre d'affaires », bouton **Mode opératoire**. Elle
-explique les quatre étapes du mois et les trois règles qui décident si le chiffre sera
+explique les quatre étapes de chaque inventaire et les trois règles qui décident si le chiffre sera
 juste (saisir les achats, passer par les transferts, déclarer les pertes).
+
+## 8 bis. Associés, dépenses et fin d'année
+
+Les fonds de la boutique sont **communs** : un achat se fait toujours sur les fonds de la
+boutique, le fournisseur y est facultatif. Les associés se partagent le bénéfice une fois
+par an.
+
+- **Associés** (menu Associés, permission « Gérer les associés ») : nom, téléphone,
+  actif ou non.
+- **Dépenses** : une dépense est une **sortie d'argent donnée à un associé**, avec son
+  motif. Il n'y a plus de catégorie de dépense.
+- **Fin d'année : partage** : la page affiche le bénéfice de l'année en repère (marge des
+  comptages validés en mode inventaire, des ventes en mode caisse). On y saisit à la main
+  la part de chaque associé ; ce qui n'est attribué à personne reste à la boutique.
+
+Pour chaque associé : **report de l'année précédente + part du bénéfice − sorties de
+l'année = solde**. À la clôture, un solde positif est à lui verser ; un solde négatif — il
+a pris plus que sa part — est **reporté sur l'année suivante** et viendra en déduction de
+sa prochaine part.
+
+La clôture est **définitive** : les parts et les sorties de l'année ne peuvent plus
+changer. Les années se clôturent dans l'ordre, chacune partant du report de la
+précédente.
 
 ## 9. Vérification après mise en ligne
 

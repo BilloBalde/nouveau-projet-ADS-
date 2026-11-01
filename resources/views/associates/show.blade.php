@@ -6,11 +6,11 @@
             <h4>{{ $associe->name }} — compte {{ $annee }}</h4>
             <h6>{{ $associe->phone ?: 'Sans téléphone' }}@unless ($associe->active) · associé désactivé @endunless</h6>
         </div>
-        <div class="page-btn d-print-none">
-            <button type="button" class="btn btn-cancel me-2" onclick="window.print()"><i class="fas fa-print me-1"></i> Imprimer</button>
+        <div class="page-btn d-print-none d-flex flex-wrap gap-2">
+            <button type="button" class="btn btn-cancel" onclick="window.print()"><i class="fas fa-print me-1"></i> Imprimer</button>
             @permission('expenses.create')
             @if ($associe->active && ! $compte['cloture'] && $annee === now()->year)
-            <a href="{{ route('expenses.create', ['associate_id' => $associe->id]) }}" class="btn btn-cancel me-2"><i class="fas fa-hand-holding-usd me-1"></i> Nouvelle sortie</a>
+            <a href="{{ route('expenses.create', ['associate_id' => $associe->id]) }}" class="btn btn-cancel"><i class="fas fa-hand-holding-usd me-1"></i> Nouvelle sortie</a>
             @endif
             @endpermission
             <a href="{{ route('associates.edit', $associe) }}" class="btn btn-added"><i class="fas fa-pen me-1"></i> Modifier</a>

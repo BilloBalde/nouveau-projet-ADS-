@@ -6,8 +6,8 @@
             <h4>Comptes des associés — {{ $annee }}</h4>
             <h6>Part du bénéfice − sorties de l'année = ce qui revient à chacun à la clôture</h6>
         </div>
-        <div class="page-btn">
-            <a href="{{ route('associates.annee', $annee) }}" class="btn btn-cancel me-2">
+        <div class="page-btn d-flex flex-wrap gap-2">
+            <a href="{{ route('associates.annee', $annee) }}" class="btn btn-cancel">
                 <i class="fas fa-calculator me-1"></i> Fin d'année : partage
             </a>
             <a href="{{ route('associates.create') }}" class="btn btn-added">

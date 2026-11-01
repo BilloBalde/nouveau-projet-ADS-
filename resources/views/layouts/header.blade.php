@@ -64,11 +64,12 @@
              jamais comptée, ou à moins de deux semaines de son échéance. --}}
         @if (($alertesInventaire ?? collect())->isNotEmpty())
         @php($retard = $alertesInventaire->contains(fn ($a) => $a->etat === 'en_retard'))
-        <li class="nav-item" style="display:flex;align-items:center;margin-right:10px;">
-            <a href="{{ route('inventaires.index') }}" class="nav-link"
-               title="{{ $alertesInventaire->count() }} inventaire(s) à faire"
-               style="font-weight:600;white-space:nowrap;padding:4px 10px;border-radius:999px;font-size:13px;color:#fff;background:{{ $retard ? '#C0392B' : '#D68910' }};">
-                <i class="fas fa-clipboard-list me-1"></i>{{ $retard ? 'Inventaire en retard' : 'Inventaire à faire' }}
+        <li class="nav-item" style="display:flex;align-items:center;margin-right:12px;">
+            {{-- Pas de classe nav-link : celle du thème impose la hauteur de
+                 l'en-tête, et le badge devenait une grosse pastille. --}}
+            <a href="{{ route('inventaires.index') }}" title="{{ $alertesInventaire->count() }} inventaire(s) à faire"
+               style="display:inline-flex;align-items:center;gap:6px;height:30px;line-height:1;padding:0 12px;border-radius:999px;font-size:12.5px;font-weight:600;white-space:nowrap;text-decoration:none;color:#fff;background:{{ $retard ? '#C0392B' : '#B9770E' }};">
+                <i class="fas fa-clipboard-list"></i>{{ $retard ? 'Inventaire en retard' : 'Inventaire à faire' }}
             </a>
         </li>
         @endif

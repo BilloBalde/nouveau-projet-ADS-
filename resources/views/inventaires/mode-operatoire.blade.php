@@ -47,7 +47,7 @@
 <div class="entete">
     <div class="societe">{{ $company->name ?? config('app.name') }}</div>
     <h1>Comment faire l'inventaire de votre boutique</h1>
-    <div class="sous">À faire une fois par mois. C'est ce comptage qui calcule votre chiffre d'affaires.</div>
+    <div class="sous">À faire tous les {{ config('sales.inventaire_tous_les_mois', 6) }} mois — l'application vous prévient deux semaines avant. C'est ce comptage qui calcule votre chiffre d'affaires.</div>
 </div>
 
 <p style="margin:0 0 6px">
@@ -57,7 +57,7 @@
     d'affaires.
 </p>
 
-<h2>Les 4 étapes, à chaque fin de mois</h2>
+<h2>Les 4 étapes, à chaque inventaire</h2>
 
 <table class="etapes">
     <tr>
@@ -149,8 +149,8 @@
 </div>
 
 <div class="exemple">
-    <strong>Exemple</strong> — Au 1<sup>er</sup> du mois vous aviez 100 sacs de ciment. Vous avez été
-    livré de 50 sacs le 15. À la fin du mois, vous en comptez 30.
+    <strong>Exemple</strong> — Au dernier inventaire vous aviez 100 sacs de ciment. Vous avez été
+    livré de 50 sacs depuis. Au nouvel inventaire, vous en comptez 30.
     <div class="calcul">100 (début) + 50 (reçus) - 30 (restants) = <strong>120 sacs vendus</strong></div>
     <div class="calcul">120 × 50 000 F = <strong>6 000 000 F de chiffre d'affaires</strong></div>
     Si vous aviez oublié d'enregistrer la livraison des 50 sacs, l'application aurait affiché
