@@ -7,6 +7,8 @@ use App\Models\Expense;
 use App\Models\PurchaseOrder;
 use App\Models\Sale;
 use App\Observers\StockObserver;
+use App\Services\InventaireRapportService;
+use App\Support\ModeDeVente;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Schema;
@@ -51,6 +53,20 @@ class AppServiceProvider extends ServiceProvider
             'reports.daily-pdf',
         ], function ($view) {
             $view->with('company', Company::current());
+        });
+
+        // Rappel d'inventaire dans l'en-tête, pour qui peut compter le stock :
+        // une boutique en retard, jamais comptée, ou dont l'échéance approche.
+        View::composer('layouts.header', function ($view) {
+            $user = auth()->user();
+            $alertes = collect();
+
+            if ($user && ModeDeVente::parInventaire() && $user->hasPermission('stock.adjust')) {
+                $alertes = app(InventaireRapportService::class)
+                    ->alertes($user->isStoreScoped() ? $user->accessibleStoreIds() : null);
+            }
+
+            $view->with('alertesInventaire', $alertes);
         });
 
         Sale::observe(StockObserver::class);

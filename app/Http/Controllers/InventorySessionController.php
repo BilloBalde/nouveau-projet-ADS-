@@ -6,6 +6,7 @@ use App\Models\Company;
 use App\Models\InventorySession;
 use App\Models\Product;
 use App\Models\Store;
+use App\Services\InventaireRapportService;
 use App\Services\InventaireService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
@@ -67,8 +68,10 @@ class InventorySessionController extends Controller
             ->withQueryString();
 
         $stores = Store::optionsFor(Auth::user());
+        $user = Auth::user();
+        $alertes = app(InventaireRapportService::class)->alertes($user->isStoreScoped() ? $user->accessibleStoreIds() : null);
 
-        return view('inventaires.index', compact('seances', 'stores'));
+        return view('inventaires.index', compact('seances', 'stores', 'alertes'));
     }
 
     public function create()

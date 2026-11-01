@@ -27,6 +27,8 @@
 
     @include('layouts.flash')
 
+    @include('partials.alerte-inventaire', ['alertes' => $alertesInventaire])
+
     @if ($comptages_en_cours > 0)
     <div class="alert alert-warning">
         {{ $comptages_en_cours }} comptage(s) en cours de saisie.

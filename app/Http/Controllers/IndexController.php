@@ -264,6 +264,7 @@ class IndexController extends Controller
         $chiffres['ca_par_mois'] = $this->moisAVenirVides($chiffres['ca_par_mois'], $annee);
 
         return view('index-inventaire', $chiffres + [
+            'alertesInventaire' => $rapport->alertes($scopeIds),
             'meilleuresVentes' => $rapport->meilleuresVentes(
                 $scopeIds,
                 Carbon::create($annee, 1, 1)->startOfDay(),

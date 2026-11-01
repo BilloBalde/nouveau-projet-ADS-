@@ -23,7 +23,7 @@
                             @foreach ($stores as $store)
                             <option value="{{ $store->id }}"
                                     data-dernier="{{ $derniers->get($store->id)?->counted_on?->format('d/m/Y') }}"
-                                    {{ (string) old('store_id') === (string) $store->id ? 'selected' : '' }}>
+                                    {{ (string) old('store_id', request('store_id')) === (string) $store->id ? 'selected' : '' }}>
                                 {{ $store->full_name }} ({{ $store->type_label }})
                             </option>
                             @endforeach

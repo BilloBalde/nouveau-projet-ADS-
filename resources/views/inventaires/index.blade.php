@@ -21,6 +21,8 @@
 
     @include('layouts.flash')
 
+    @include('partials.alerte-inventaire', ['alertes' => $alertes])
+
     <div class="card">
         <div class="card-body">
             <form method="GET" action="{{ route('inventaires.index') }}" class="row g-2 mb-3">

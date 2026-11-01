@@ -5,9 +5,11 @@ namespace App\Services;
 use App\Models\InventorySession;
 use App\Models\InventorySessionLine;
 use App\Models\Product;
+use App\Models\Store;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Lecture des comptages : ce que le tableau de bord et les rapports affichent
@@ -133,5 +135,63 @@ class InventaireRapportService
             })
             ->sortByDesc('chiffre')
             ->values();
+    }
+
+    /**
+     * Prochain inventaire de chaque boutique : dernier comptage validé + le
+     * rythme configuré (six mois par défaut, voir config/sales.php).
+     *
+     * Seules les boutiques qui ont du stock ou un comptage figurent : un
+     * emplacement vide n'a rien à compter. Les plus urgentes d'abord.
+     *
+     * @param  array<int>|null  $storeIds  null = tous les emplacements
+     * @return Collection<int, object{store: Store, derniere: ?Carbon, echeance: ?Carbon, jours: ?int, etat: string}>
+     *                                                                                                                etat : a_faire (jamais compté), en_retard, bientot, a_jour
+     */
+    public function echeances(?array $storeIds = null): Collection
+    {
+        $mois = max(1, (int) config('sales.inventaire_tous_les_mois', 6));
+        $alerte = max(0, (int) config('sales.inventaire_alerte_jours', 14));
+        $aujourdhui = Carbon::today();
+
+        $derniers = InventorySession::where('status', InventorySession::VALIDEE)
+            ->when($storeIds !== null, fn ($q) => $q->whereIn('store_id', $storeIds))
+            ->selectRaw('store_id, MAX(counted_on) as derniere')
+            ->groupBy('store_id')
+            ->pluck('derniere', 'store_id');
+
+        $avecStock = DB::table('store_products')
+            ->where('quantity', '>', 0)
+            ->when($storeIds !== null, fn ($q) => $q->whereIn('store_id', $storeIds))
+            ->distinct()
+            ->pluck('store_id');
+
+        $ids = $avecStock->merge($derniers->keys())->unique()->values();
+
+        $ordre = ['en_retard' => 0, 'a_faire' => 1, 'bientot' => 2, 'a_jour' => 3];
+
+        return Store::whereIn('id', $ids)->orderBy('store_name')->get()
+            ->map(function (Store $store) use ($derniers, $mois, $alerte, $aujourdhui) {
+                $derniere = isset($derniers[$store->id]) ? Carbon::parse($derniers[$store->id])->startOfDay() : null;
+                $echeance = $derniere?->copy()->addMonthsNoOverflow($mois);
+                $jours = $echeance ? (int) $aujourdhui->diffInDays($echeance, false) : null;
+
+                $etat = match (true) {
+                    $echeance === null => 'a_faire',
+                    $jours < 0 => 'en_retard',
+                    $jours <= $alerte => 'bientot',
+                    default => 'a_jour',
+                };
+
+                return (object) compact('store', 'derniere', 'echeance', 'jours', 'etat');
+            })
+            ->sortBy(fn ($e) => [$ordre[$e->etat], $e->jours ?? -PHP_INT_MAX])
+            ->values();
+    }
+
+    /** Échéances qui demandent une action : en retard, jamais compté, ou bientôt. */
+    public function alertes(?array $storeIds = null): Collection
+    {
+        return $this->echeances($storeIds)->reject(fn ($e) => $e->etat === 'a_jour')->values();
     }
 }

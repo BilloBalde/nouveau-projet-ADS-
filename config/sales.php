@@ -34,4 +34,20 @@ return [
 
     'mode' => env('SALES_MODE', 'caisse'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Rythme des inventaires (mode « inventaire »)
+    |--------------------------------------------------------------------------
+    |
+    | La boutique compte son stock tous les `inventaire_tous_les_mois` mois —
+    | deux fois par an par défaut. Une alerte apparaît sur le tableau de bord
+    | et dans l'en-tête `inventaire_alerte_jours` jours avant l'échéance, puis
+    | passe au rouge une fois l'échéance dépassée.
+    |
+    */
+
+    'inventaire_tous_les_mois' => (int) env('INVENTAIRE_TOUS_LES_MOIS', 6),
+
+    'inventaire_alerte_jours' => (int) env('INVENTAIRE_ALERTE_JOURS', 14),
+
 ];
