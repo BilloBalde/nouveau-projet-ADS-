@@ -252,11 +252,12 @@ class PiecesSeulementTest extends TestCase
         $this->creerProduit([]);
         $p = Product::firstOrFail();
 
-        // Le formulaire d'achat présente l'unité de chaque produit.
+        // Le formulaire d'achat ne propose plus d'unité : chaque ligne porte
+        // le prix de revient actuel du produit, à comparer au nouveau.
         $this->actingAs($this->admin)->get(route('purchase-orders.create'))->assertOk()
-            ->assertSee('data-unite="pcs"', false)->assertSee('Pièce');
+            ->assertSee('data-cout="100"', false)->assertDontSee('data-unite=', false);
 
-        // 40 pièces à 2 000 le carton : 40 pièces entrent en stock.
+        // 40 pièces à 2 000 la pièce : 40 pièces entrent en stock.
         $this->actingAs($this->admin)->post(route('purchase-orders.store'), [
             'reference' => 'PO-U1', 'store_id' => $this->magasin->id, 'origin' => 'guinee',
             'date_emis' => now()->toDateString(), 'date_recu' => now()->toDateString(),
