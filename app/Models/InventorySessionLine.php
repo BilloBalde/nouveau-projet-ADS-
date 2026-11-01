@@ -33,11 +33,6 @@ class InventorySessionLine extends Model
         return $this->belongsTo(Product::class);
     }
 
-    public function fund()
-    {
-        return $this->belongsTo(Fund::class);
-    }
-
     /**
      * Le trait FigeUniteProduit lit `quantity` pour l'affichage ; ici la
      * quantité de référence est celle comptée.

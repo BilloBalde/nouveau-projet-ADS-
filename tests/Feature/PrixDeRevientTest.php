@@ -3,8 +3,6 @@
 namespace Tests\Feature;
 
 use App\Models\Category;
-use App\Models\Fund;
-use App\Models\FundTransaction;
 use App\Models\Partner;
 use App\Models\Place;
 use App\Models\Product;
@@ -12,7 +10,6 @@ use App\Models\PurchaseOrder;
 use App\Models\StockMovement;
 use App\Models\Store;
 use App\Models\User;
-use App\Services\FundService;
 use App\Services\PurchaseOrderCostingService;
 use Database\Seeders\PermissionSeeder;
 use Database\Seeders\RolesSeeder;
@@ -27,8 +24,7 @@ use Tests\TestCase;
  * C'est le calcul dont tout le reste dépend : transport, douane et frais
  * divers sont répartis entre les lignes au prorata du volume (CBM), ce qui
  * donne le coût réel par article. Ce coût fixe ensuite le prix plancher de
- * chaque vente (Product::plancherDeVente), les marges, les intérêts et les
- * relevés d'associés.
+ * chaque vente (Product::plancherDeVente), les marges et les intérêts.
  *
  * Les montants attendus sont écrits en clair, calculés à la main, pour qu'une
  * dérive du calcul se voie sur le chiffre et pas seulement sur un total.
@@ -100,12 +96,11 @@ class PrixDeRevientTest extends TestCase
         return app(PurchaseOrderCostingService::class);
     }
 
-    private function stock(Store $emplacement, Product $produit, ?int $fundId = null): int
+    private function stock(Store $emplacement, Product $produit): int
     {
         return (int) DB::table('store_products')
             ->where('store_id', $emplacement->id)
             ->where('product_id', $produit->id)
-            ->when($fundId, fn ($q) => $q->where('fund_id', $fundId), fn ($q) => $q->whereNull('fund_id'))
             ->sum('quantity');
     }
 
@@ -292,57 +287,6 @@ class PrixDeRevientTest extends TestCase
 
         $this->assertCount(1, $achat->load('items')->items);
         $this->assertSame(12, $this->stock($this->entrepot, $this->ciment));
-    }
-
-    // -----------------------------------------------------------------
-    // Achat financé par un associé
-    // -----------------------------------------------------------------
-
-    /**
-     * La marchandise d'un associé est suivie à part : son coût ne doit pas
-     * écraser le prix de revient des fonds propres, et son stock est rattaché
-     * au fonds.
-     */
-    public function test_un_achat_d_associe_ne_touche_pas_au_prix_des_fonds_propres(): void
-    {
-        $this->ciment->update(['price_sale' => 5_000, 'price' => 6_500]);
-
-        $fonds = Fund::create(['name' => 'Fonds Diallo', 'associate_name' => 'Diallo']);
-        $achat = $this->achat(['fund_id' => $fonds->id, 'transport_cost_gnf' => 0]);
-
-        $this->service()->costOrder($achat, [
-            ['product_id' => $this->ciment->id, 'quantity' => 20, 'cartons' => 2, 'pieces_per_carton' => 10,
-                'unit_price_foreign' => 10, 'cbm_per_carton' => 0.1],
-        ]);
-
-        $this->ciment->refresh();
-        $this->assertEquals(5_000, $this->ciment->price_sale, 'Le prix de revient des fonds propres a été écrasé.');
-        $this->assertEquals(6_500, $this->ciment->price, 'Le prix de vente a été écrasé par un achat d\'associé.');
-
-        // Le stock et le coût sont rattachés au fonds.
-        $this->assertSame(20, $this->stock($this->entrepot, $this->ciment, $fonds->id));
-        $this->assertSame(0, $this->stock($this->entrepot, $this->ciment), 'Rien ne doit entrer dans les fonds propres.');
-        $this->assertEquals(13_000, app(FundService::class)->unitCost($fonds->id, $this->ciment->id));
-    }
-
-    /** Un achat annulé ne compte plus dans l'investissement du fonds. */
-    public function test_un_achat_annule_ne_compte_plus_dans_le_fonds(): void
-    {
-        $fonds = Fund::create(['name' => 'Fonds Bah', 'associate_name' => 'Bah']);
-        FundTransaction::create(['fund_id' => $fonds->id, 'type' => FundTransaction::APPORT,
-            'amount' => 10_000_000, 'date' => now()->toDateString(), 'user_id' => $this->admin->id]);
-
-        $achat = $this->achat(['fund_id' => $fonds->id]);
-        $this->service()->costOrder($achat, [
-            ['product_id' => $this->ciment->id, 'quantity' => 10, 'unit_price_foreign' => 100],
-        ]);
-
-        $service = app(FundService::class);
-        $this->assertEquals(1_300_000, $service->purchasesTotal($fonds->id));
-
-        $achat->fresh()->update(['status' => 'cancelled']);
-        $service->forgetCosts();
-        $this->assertEquals(0, $service->purchasesTotal($fonds->id));
     }
 
     // -----------------------------------------------------------------

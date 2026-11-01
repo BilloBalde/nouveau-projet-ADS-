@@ -78,13 +78,9 @@
                                 <td>{{ $i + 1 }}</td>
                                 <td>
                                     <input type="hidden" name="{{ $cle }}[product_id]" value="{{ $produit->id }}">
-                                    <input type="hidden" name="{{ $cle }}[fund_id]" value="{{ $ligne->fund_id }}">
                                     <strong>{{ $produit->libelle }}</strong>
                                     <small class="text-muted d-block">
                                         {{ $produit->sku }} · {{ \App\Models\Product::motUnite($produit->unite, 2) }}
-                                        @if ($ligne->fund_id)
-                                            · fonds {{ $funds->firstWhere('id', $ligne->fund_id)?->name ?? '#'.$ligne->fund_id }}
-                                        @endif
                                     </small>
                                 </td>
                                 <td class="text-end">{{ number_format($ligne->opening, 0, ',', ' ') }}</td>

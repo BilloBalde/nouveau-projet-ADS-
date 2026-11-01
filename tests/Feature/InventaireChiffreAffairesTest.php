@@ -97,7 +97,6 @@ class InventaireChiffreAffairesTest extends TestCase
     {
         return (int) StoreProduct::where('store_id', $magasin->id)
             ->where('product_id', $produit->id)
-            ->whereNull('fund_id')
             ->sum('quantity');
     }
 

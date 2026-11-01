@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Fund;
 use App\Models\Product;
 use App\Models\StockTransfer;
 use App\Models\Store;
@@ -73,9 +72,7 @@ class StoreProductController extends Controller
             ->paginate(50)
             ->appends($request->query());
 
-        $funds = Fund::active()->orderBy('name')->get();
-
-        return view('transfers.index', compact('dataTable', 'produits', 'boutiques', 'mesEmplacements', 'funds'));
+        return view('transfers.index', compact('dataTable', 'produits', 'boutiques', 'mesEmplacements'));
     }
 
     public function create()
@@ -96,7 +93,6 @@ class StoreProductController extends Controller
             'to_store_id' => 'required|exists:stores,id|different:from_store_id',
             'quantity' => 'required|integer|min:1',
             'notes' => 'nullable|string|max:1000',
-            'fund_id' => 'nullable|exists:funds,id',
         ]);
 
         $user = auth()->user();

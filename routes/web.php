@@ -21,7 +21,6 @@ use App\Http\Controllers\EmailController;
 use App\Http\Controllers\ExpenseCategoryController;
 use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\FactureController;
-use App\Http\Controllers\FundController;
 use App\Http\Controllers\IndexController;
 use App\Http\Controllers\InventorySessionController;
 use App\Http\Controllers\JournalierController;
@@ -458,15 +457,6 @@ Route::get('/logistics/export-pdf', [LogisticController::class, 'exportPDF'])->m
 // =============================================
 
 Route::resource('transfers', StoreProductController::class);
-// Associés : fonds, compte à part, relevé (lecture seule pour l'associé lui-même).
-Route::get('/associes/mon-releve', [FundController::class, 'me'])->name('associates.me');
-Route::get('/associes', [FundController::class, 'index'])->name('associates.index');
-Route::get('/associes/nouveau', [FundController::class, 'create'])->name('associates.create');
-Route::post('/associes', [FundController::class, 'store'])->name('associates.store');
-Route::get('/associes/{fund}', [FundController::class, 'show'])->whereNumber('fund')->name('associates.show');
-Route::get('/associes/{fund}/modifier', [FundController::class, 'edit'])->whereNumber('fund')->name('associates.edit');
-Route::put('/associes/{fund}', [FundController::class, 'update'])->whereNumber('fund')->name('associates.update');
-Route::post('/associes/{fund}/mouvements', [FundController::class, 'storeTransaction'])->whereNumber('fund')->name('associates.transactions.store');
 // Stock par emplacement : vue globale, fiche emplacement, journal, traçabilité, inventaire.
 Route::get('/stock', [StockController::class, 'index'])->name('stock.index');
 Route::get('/stock/mouvements', [StockController::class, 'movements'])->name('stock.movements');

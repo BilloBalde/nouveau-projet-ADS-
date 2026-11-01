@@ -8,7 +8,6 @@ use App\Models\Category;
 use App\Models\Company;
 use App\Models\Customer;
 use App\Models\Facture;
-use App\Models\Fund;
 use App\Models\Partner;
 use App\Models\Payment;
 use App\Models\Product;
@@ -17,7 +16,6 @@ use App\Models\StockMovement;
 use App\Models\Store;
 use App\Models\StoreProduct;
 use App\Models\User;
-use App\Services\FundService;
 use App\Services\StockService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
@@ -421,9 +419,6 @@ class SaleController extends Controller
             // Emplacement source de la ligne (magasin, stock interne, entrepôt).
             // Absent : la ligne sort du magasin de la vente, comme avant.
             'sales.*.store_id' => 'nullable|exists:stores,id',
-            // Propriétaire de la marchandise vendue : vide = fonds propres,
-            // sinon le fonds d'un associé (choisi par le vendeur, ligne par ligne).
-            'sales.*.fund_id' => 'nullable|exists:funds,id',
             'sales.*.quantity' => 'required|integer|min:1',
             'sales.*.prix' => 'required|numeric|min:0',
             'sales.*.partner_id' => 'nullable|exists:partners,id',
@@ -493,9 +488,7 @@ class SaleController extends Controller
                 'store_id' => $row['store_id'],
                 'product_id' => $row['product_id'],
                 'quantity' => $row['quantity'],
-                'fund_id' => $row['fund_id'] ?? null,
             ], array_values(array_filter($salesData, fn ($row) => empty($row['is_third_party']) || $row['is_third_party'] != '1'))));
-            $funds = app(FundService::class);
 
             $customerId = (int) $request->customer_id;
 
@@ -526,20 +519,14 @@ class SaleController extends Controller
                     // ====================== VENTE NORMALE ======================
                     // Le contrôle de marge passe avant le décrément de stock : inutile
                     // de consommer du stock pour une ligne qui va être refusée.
-                    // Coût de revient du propriétaire de la marchandise : celui des
-                    // fonds propres, ou celui des achats financés par l'associé.
-                    $fundId = ! empty($data['fund_id']) ? (int) $data['fund_id'] : null;
-                    $prix_achat = $fundId
-                        ? $funds->unitCost($fundId, (int) $data['product_id'])
-                        : ($product ? $this->resolveUnitCost($product) : 0.0);
+                    $prix_achat = $product ? $this->resolveUnitCost($product) : 0.0;
                     // Plancher : le plus haut du prix de vente minimum (fiche produit)
-                    // et du coût de revient du propriétaire de la marchandise.
+                    // et du coût de revient.
                     if ($product) {
                         $product->verifierPrixDeVente((float) $data['prix'], $prix_achat);
                     } else {
                         $this->assertPriceCoversCost($libelle, (float) $data['prix'], $prix_achat);
                     }
-                    $data['fund_id'] = $fundId;
                     $data['unit_cost'] = $prix_achat > 0 ? $prix_achat : null;
 
                     $this->stock->decrementOrFail((int) $data['store_id'], (int) $data['product_id'], (int) $data['quantity'], [
@@ -548,7 +535,6 @@ class SaleController extends Controller
                         'document_ref' => $request->numeroFacture,
                         'customer_id' => $customerId,
                         'unit_price' => $data['prix'],
-                        'fund_id' => $fundId,
                     ]);
 
                     // Coût inconnu : intérêt 0 plutôt qu'une marge fictive de 100 %.
@@ -571,7 +557,6 @@ class SaleController extends Controller
                     'is_third_party' => $data['is_third_party'],
                     'partner_id' => $data['partner_id'] ?? null,
                     'purchase_price_from_partner' => $data['purchase_price_from_partner'] ?? null,
-                    'fund_id' => $isThirdParty ? null : ($data['fund_id'] ?? null),
                     'unit_cost' => $isThirdParty ? null : ($data['unit_cost'] ?? null),
                 ]);
             }
@@ -678,12 +663,8 @@ class SaleController extends Controller
         $stockByProduct = $produits->mapWithKeys(fn ($p) => [
             $p->id => $p->stores
                 ->filter(fn ($s) => in_array($s->id, $locationIds, true) && (int) $s->pivot->quantity > 0)
-                // Une entrée par emplacement ET par propriétaire (fonds propres
-                // ou fonds d'un associé) : le vendeur choisit le fonds à chaque ligne.
                 ->map(fn ($s) => [
                     'id' => $s->id,
-                    'fund' => $s->pivot->fund_id ? (int) $s->pivot->fund_id : null,
-                    'owner' => Fund::labelFor($s->pivot->fund_id ? (int) $s->pivot->fund_id : null),
                     'qty' => (int) $s->pivot->quantity,
                 ])
                 ->values(),
@@ -787,7 +768,6 @@ class SaleController extends Controller
                 'customer_id' => $invoice->customer_id,
                 'unit_price' => $request->prix,
                 'reason' => 'Modification de la vente : quantité '.$sale->quantity.' → '.$request->quantity,
-                'fund_id' => $sale->fund_id,
             ];
             if ($deltaQuantity > 0) {
                 if (! $this->stock->decrementIfAvailable((int) $sale->store_id, (int) $sale->product_id, (int) $deltaQuantity, $correction)) {
@@ -805,10 +785,7 @@ class SaleController extends Controller
             $sale->prixTotal = $request->quantity * $request->prix;
 
             $product = Product::find($sale->product_id);
-            // Ligne d'un associé : son coût de revient, retenu à la vente.
-            $prixAchat = $sale->fund_id
-                ? (float) ($sale->unit_cost ?? app(FundService::class)->unitCost((int) $sale->fund_id, (int) $sale->product_id))
-                : ($product ? $this->resolveUnitCost($product) : 0);
+            $prixAchat = $product ? $this->resolveUnitCost($product) : 0;
             // Même règle qu'à la création : modifier une vente ne doit pas permettre
             // de repasser sous le prix de revient.
             $this->assertPriceCoversCost($product?->libelle ?? 'Produit inconnu', (float) $request->prix, (float) $prixAchat);

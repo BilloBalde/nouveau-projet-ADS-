@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Customer;
 use App\Models\Expense;
 use App\Models\Facture;
-use App\Models\Fund;
 use App\Models\Payment;
 use App\Models\Product;
 use App\Models\Purchase;
@@ -14,7 +13,6 @@ use App\Models\Sale;
 use App\Models\StockTransfer;
 use App\Models\Store;
 use App\Models\StoreProduct;
-use App\Services\FundService;
 use App\Services\InventaireRapportService;
 use App\Support\ModeDeVente;
 use Illuminate\Http\Request;
@@ -127,8 +125,6 @@ class IndexController extends Controller
             $entre = "created_at BETWEEN '".$debut->toDateTimeString()."' AND '".$fin->toDateTimeString()."'";
             $colonnes[] = "COALESCE(SUM(CASE WHEN $entre THEN prixTotal END),0) as {$key}_ca";
             $colonnes[] = "COALESCE(SUM(CASE WHEN $entre THEN interet END),0) as {$key}_marge";
-            $colonnes[] = "COALESCE(SUM(CASE WHEN $entre AND fund_id IS NOT NULL THEN prixTotal END),0) as {$key}_assoc_ca";
-            $colonnes[] = "COALESCE(SUM(CASE WHEN $entre AND fund_id IS NOT NULL THEN interet END),0) as {$key}_assoc_marge";
             $colonnes[] = $warehouseIds->isEmpty()
                 ? "0 as {$key}_direct"
                 : "COALESCE(SUM(CASE WHEN $entre AND store_id IN (".$warehouseIds->implode(',').") THEN prixTotal END),0) as {$key}_direct";
@@ -145,25 +141,6 @@ class IndexController extends Controller
                 'ca' => (float) $agregats->{$key.'_ca'},
                 'marge' => (float) $agregats->{$key.'_marge'},
                 'direct' => (float) $agregats->{$key.'_direct'},
-                // Part portant sur des marchandises financées par des associés
-                // (facturée ; leur résultat à partager est dans leurs relevés).
-                'assoc_ca' => (float) $agregats->{$key.'_assoc_ca'},
-                'assoc_marge' => (float) $agregats->{$key.'_assoc_marge'},
-            ];
-        }
-
-        // Synthèse des associés, pour le patron uniquement.
-        $associates = null;
-        if ($user->hasPermission('associates.manage') && Fund::exists()) {
-            $service = app(FundService::class);
-            $releves = Fund::where('active', true)->get()->map(fn ($f) => $service->statement($f));
-            $associates = [
-                'count' => $releves->count(),
-                'capital_restant' => (float) $releves->sum('capital_restant'),
-                'stock_valeur' => (float) $releves->sum('stock_valeur'),
-                'benefice_a_verser' => (float) $releves->sum('benefice_a_verser'),
-                'part_patron_restante' => (float) $releves->sum('part_patron_restante'),
-                'tresorerie' => (float) $releves->sum('tresorerie'),
             ];
         }
 
@@ -186,7 +163,6 @@ class IndexController extends Controller
             'stock_by_type' => $stockByType,
             'pending_transfers' => $pendingTransfers,
             'locations' => Store::visibleTo($user)->count(),
-            'associates' => $associates,
         ];
     }
 

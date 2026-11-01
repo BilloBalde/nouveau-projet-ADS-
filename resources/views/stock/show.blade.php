@@ -48,7 +48,6 @@
                                     </td>
                                     <td>
                                         {{ $row->product?->sku }}
-                                        @if ($row->fund_id)<small class="d-block text-muted">{{ \App\Models\Fund::labelFor($row->fund_id) }}</small>@endif
                                     </td>
                                     <td class="text-end {{ $row->quantity < 0 ? 'text-danger' : '' }}">{{ \App\Models\Product::quantiteEnUnite($row->quantity, $row->product?->unite) }}</td>
                                     <td class="text-end">{{ numberDelimiter($row->product?->price_sale ?? 0) }}</td>

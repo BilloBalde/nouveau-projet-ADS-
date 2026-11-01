@@ -44,8 +44,6 @@ class TransferService
                 'from_store_id' => $from,
                 'to_store_id' => $to,
                 'quantity' => (int) $data['quantity'],
-                // Le propriétaire de la marchandise ne change pas en changeant de lieu.
-                'fund_id' => ! empty($data['fund_id']) ? (int) $data['fund_id'] : null,
                 'status' => StockTransfer::PENDING,
                 'requested_by' => $user->id,
                 'notes' => $data['notes'] ?? null,
@@ -192,7 +190,6 @@ class TransferService
             'source_id' => $transfer->id,
             'document_ref' => $transfer->reference,
             'counterpart_store_id' => $counterpart,
-            'fund_id' => $transfer->fund_id,
         ];
     }
 

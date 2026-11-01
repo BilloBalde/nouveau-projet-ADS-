@@ -27,7 +27,6 @@ class User extends Authenticatable
         'token',
         'description',
         'store_id',
-        'fund_id',
     ];
 
     protected $hidden = [
@@ -119,21 +118,6 @@ class User extends Authenticatable
     public function permissions()
     {
         return $this->belongsToMany(Permission::class, 'user_permissions');
-    }
-
-    /** Fonds dont ce compte est l'associé (lecture seule de son relevé). */
-    public function fund()
-    {
-        return $this->belongsTo(Fund::class);
-    }
-
-    /**
-     * Compte d'associé : il ne voit que son relevé. Reconnu au rôle « associe »
-     * (créé par LocationPermissions), pas à un numéro de rôle.
-     */
-    public function isAssociate(): bool
-    {
-        return $this->roleRelation?->slug === 'associe';
     }
 
     public function storeAssignments()

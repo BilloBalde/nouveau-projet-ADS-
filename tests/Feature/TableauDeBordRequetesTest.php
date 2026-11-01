@@ -79,14 +79,11 @@ class TableauDeBordRequetesTest extends TestCase
         foreach ($periodes as $cle => $bornes) {
             $attenduCa = (float) DB::table('sales')->whereBetween('created_at', $bornes)->sum('prixTotal');
             $attenduMarge = (float) DB::table('sales')->whereBetween('created_at', $bornes)->sum('interet');
-            $attenduAssoc = (float) DB::table('sales')->whereBetween('created_at', $bornes)
-                ->whereNotNull('fund_id')->sum('prixTotal');
             $attenduDirect = $entrepots->isEmpty() ? 0.0 : (float) DB::table('sales')
                 ->whereBetween('created_at', $bornes)->whereIn('store_id', $entrepots)->sum('prixTotal');
 
             $this->assertEqualsWithDelta($attenduCa, $overview['sales'][$cle]['ca'], 0.01, "CA $cle");
             $this->assertEqualsWithDelta($attenduMarge, $overview['sales'][$cle]['marge'], 0.01, "Marge $cle");
-            $this->assertEqualsWithDelta($attenduAssoc, $overview['sales'][$cle]['assoc_ca'], 0.01, "CA associés $cle");
             $this->assertEqualsWithDelta($attenduDirect, $overview['sales'][$cle]['direct'], 0.01, "Ventes directes $cle");
         }
     }

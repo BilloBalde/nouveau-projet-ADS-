@@ -92,7 +92,6 @@
                                 <strong>{{ $ligne->product->libelle ?? 'Produit #'.$ligne->product_id }}</strong>
                                 <small class="text-muted d-block">
                                     {{ \App\Models\Product::motUnite($ligne->unite, 2) }}
-                                    @if ($ligne->fund_id) · fonds {{ $ligne->fund->name ?? '#'.$ligne->fund_id }} @endif
                                 </small>
                                 @if ($ligne->loss_quantity > 0 && $ligne->loss_reason)
                                 <small class="text-warning d-block">Perte : {{ $ligne->loss_reason }}</small>

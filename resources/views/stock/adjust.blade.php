@@ -52,19 +52,6 @@
                         </select>
                     </div>
                 </div>
-                @if ($funds->isNotEmpty())
-                <div class="col-lg-4 col-sm-6 col-12">
-                    <div class="form-group">
-                        <label>Propriétaire du stock compté</label>
-                        <select name="fund_id" id="ajustFonds" class="form-control">
-                            <option value="">{{ \App\Models\Fund::OWNER_LABEL }}</option>
-                            @foreach ($funds as $f)
-                            <option value="{{ $f->id }}" {{ (string) old('fund_id') === (string) $f->id ? 'selected' : '' }}>{{ $f->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                </div>
-                @endif
                 {{-- Stock enregistré et écart, calculés pendant la saisie, dans l'unité du produit. --}}
                 <div class="col-12" id="ajustApercu" style="display:none;">
                     <div class="alert alert-light border mb-3" style="font-size:14px;">
@@ -91,7 +78,6 @@
         const stock = @json($stockEnregistre);
         const emplacement = document.getElementById('ajustEmplacement');
         const produit = document.getElementById('ajustProduit');
-        const fonds = document.getElementById('ajustFonds');
         const compte = document.getElementById('ajustCompte');
         const fmt = n => Number(n).toLocaleString('fr-FR');
         function enUnite(n, opt) {
@@ -102,7 +88,7 @@
             document.getElementById('ajustUnite').textContent = opt && opt.value ? '(en ' + opt.dataset.pluriel + ')' : '';
             const apercu = document.getElementById('ajustApercu');
             if (!opt || !opt.value || !emplacement.value) { apercu.style.display = 'none'; return; }
-            const avant = stock[emplacement.value + '|' + opt.value + '|' + (fonds ? fonds.value : '')] || 0;
+            const avant = stock[emplacement.value + '|' + opt.value] || 0;
             document.getElementById('ajustAvant').textContent = enUnite(avant, opt);
             const saisi = compte.value === '' ? null : parseInt(compte.value, 10);
             document.getElementById('ajustEcartBloc').style.display = saisi === null ? 'none' : '';
@@ -114,8 +100,8 @@
             }
             apercu.style.display = '';
         }
-        [emplacement, produit, fonds, compte].forEach(el => el && el.addEventListener('input', rafraichir));
-        [emplacement, produit, fonds].forEach(el => el && el.addEventListener('change', rafraichir));
+        [emplacement, produit, compte].forEach(el => el && el.addEventListener('input', rafraichir));
+        [emplacement, produit].forEach(el => el && el.addEventListener('change', rafraichir));
         rafraichir();
     })();
 </script>

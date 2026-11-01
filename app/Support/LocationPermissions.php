@@ -25,8 +25,7 @@ class LocationPermissions
             'orders.assign' => 'Attribuer une commande en ligne à une boutique',
         ],
         'Associés' => [
-            'associates.manage' => 'Gérer les associés : fonds, apports, versements, relevés',
-            'associates.self' => 'Consulter son propre relevé d\'associé (lecture seule)',
+            'associates.manage' => 'Gérer les associés : parts de bénéfice, sorties, clôture de l\'année',
         ],
         'Partenaires' => [
             // Ventes tierces : produits pris chez un partenaire et revendus.
@@ -45,8 +44,6 @@ class LocationPermissions
     public const ROLES = [
         'magasinier' => 'Magasinier',
         'responsable' => 'Responsable magasin',
-        // Associé : accès en lecture à son seul relevé, rien d'autre.
-        'associe' => 'Associé',
     ];
 
     /**
@@ -54,9 +51,6 @@ class LocationPermissions
      * Les rôles admin et superuser reçoivent toutes les nouvelles permissions.
      */
     public const PRESETS = [
-        'associe' => [
-            'associates.self',
-        ],
         'user' => [ // Vendeur
             'stock.view', 'transfers.view',
         ],

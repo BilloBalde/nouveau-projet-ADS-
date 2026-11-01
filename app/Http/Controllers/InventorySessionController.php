@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Company;
-use App\Models\Fund;
 use App\Models\InventorySession;
 use App\Models\Product;
 use App\Models\Store;
@@ -152,7 +151,6 @@ class InventorySessionController extends Controller
         return view('inventaires.saisie', [
             'seance' => $inventaire->load('store', 'previousSession'),
             'lignes' => $this->lignesDeSaisie($inventaire, $termes),
-            'funds' => Fund::active()->orderBy('name')->get(),
         ]);
     }
 
@@ -163,7 +161,6 @@ class InventorySessionController extends Controller
         $data = $request->validate([
             'lignes' => 'required|array|min:1',
             'lignes.*.product_id' => 'required|exists:products,id',
-            'lignes.*.fund_id' => 'nullable|exists:funds,id',
             'lignes.*.counted' => 'nullable|integer|min:0',
             'lignes.*.loss' => 'nullable|integer|min:0',
             'lignes.*.loss_reason' => 'nullable|string|max:255',
@@ -215,7 +212,7 @@ class InventorySessionController extends Controller
         }
 
         return view('inventaires.show', [
-            'seance' => $inventaire->load(['store', 'previousSession', 'validator', 'lines.product', 'lines.fund']),
+            'seance' => $inventaire->load(['store', 'previousSession', 'validator', 'lines.product']),
         ]);
     }
 
@@ -279,7 +276,7 @@ class InventorySessionController extends Controller
         return collect($termes)
             ->map(fn ($t) => (object) ($t + ['produit' => $produits[$t['product_id']] ?? null]))
             ->filter(fn ($l) => $l->produit !== null)
-            ->sortBy([fn ($a, $b) => strcmp($a->produit->libelle, $b->produit->libelle), fn ($a, $b) => ($a->fund_id ?? 0) <=> ($b->fund_id ?? 0)])
+            ->sortBy(fn ($l) => $l->produit->libelle)
             ->values();
     }
 }

@@ -4,7 +4,6 @@
 
 namespace App\Models;
 
-use App\Services\FundService;
 use App\Services\StockService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -98,19 +97,17 @@ class Devi extends Model
      */
     /**
      * Refuse toute ligne vendue sous le plancher de vente du produit (prix
-     * minimum de la fiche, ou coût de revient du propriétaire de la marchandise).
+     * minimum de la fiche, ou coût de revient).
      *
      * @throws \RuntimeException
      */
     public function verifierPrix(): void
     {
-        $funds = app(FundService::class);
         foreach ($this->lines()->with('product')->get() as $line) {
             if (! $line->product) {
                 continue;
             }
-            $cout = $line->fund_id ? $funds->unitCost((int) $line->fund_id, (int) $line->product_id) : null;
-            $line->product->verifierPrixDeVente((float) $line->unit_price, $cout);
+            $line->product->verifierPrixDeVente((float) $line->unit_price);
         }
     }
 
@@ -146,26 +143,20 @@ class Devi extends Model
         // et la facture créée n'avait ni numéro ni avance (colonnes obligatoires),
         // ce qui faisait échouer toute validation.
         return DB::transaction(function () use ($stock, $lineStore) {
-            // Chaque ligne puise dans le stock de son propriétaire (fonds propres
-            // si fund_id est vide, sinon le fonds de l'associé).
             $stock->assertAvailable($this->lines->map(fn ($line) => [
                 'store_id' => $lineStore($line),
                 'product_id' => $line->product_id,
                 'quantity' => $line->quantity,
-                'fund_id' => $line->fund_id,
             ])->all());
 
             $numero = Facture::prochainNumero();
             $total = (float) $this->lines->sum('total_price');
-            $funds = app(FundService::class);
 
             // Prix de chaque ligne contrôlés avant toute écriture : un devis
             // négocié sous le prix minimum ou à perte n'est pas transformé en vente.
             $this->verifierPrix();
 
             foreach ($this->lines as $line) {
-                $fundId = $line->fund_id ? (int) $line->fund_id : null;
-
                 $stock->decrementOrFail($lineStore($line), (int) $line->product_id, (int) $line->quantity, [
                     'type' => StockMovement::SALE,
                     'source_type' => 'devis',
@@ -173,15 +164,11 @@ class Devi extends Model
                     'document_ref' => $numero,
                     'customer_id' => $this->customer_id,
                     'unit_price' => $line->unit_price,
-                    'fund_id' => $fundId,
                 ]);
 
-                // Marge au coût du propriétaire ; 0 si le coût est inconnu,
-                // plutôt qu'une marge fictive égale au prix de vente.
-                $coutFonds = $fundId ? $funds->unitCost($fundId, (int) $line->product_id) : null;
-                $interet = $fundId
-                    ? ($coutFonds > 0 ? ((float) $line->unit_price - $coutFonds) * (int) $line->quantity : 0)
-                    : ($line->product ? $line->product->interetPour((float) $line->unit_price, (int) $line->quantity) : 0);
+                // 0 si le coût est inconnu, plutôt qu'une marge fictive égale au
+                // prix de vente.
+                $interet = $line->product ? $line->product->interetPour((float) $line->unit_price, (int) $line->quantity) : 0;
 
                 Sale::create([
                     'numeroFacture' => $numero,
@@ -192,8 +179,6 @@ class Devi extends Model
                     'interet' => $interet,
                     'store_id' => $lineStore($line),
                     'user_id' => auth()->id(),
-                    'fund_id' => $fundId,
-                    'unit_cost' => $fundId ? $coutFonds : null,
                 ]);
             }
 

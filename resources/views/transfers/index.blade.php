@@ -203,7 +203,6 @@
                                             <td>{{ $data->toStore?->full_name }} <small class="text-muted">({{ $data->toStore?->type_label }})</small></td>
                                             <td>
                                                 {{ $data->quantite_affichee }}
-                                                @if ($data->fund_id)<small class="d-block text-muted">{{ \App\Models\Fund::labelFor($data->fund_id) }}</small>@endif
                                             </td>
                                             <td>
                                                 @php

@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\CurrencySetting;
-use App\Models\Fund;
 use App\Models\Partner;
 use App\Models\Place;
 use App\Models\Product;
@@ -12,12 +11,10 @@ use App\Models\PurchaseOrder;
 use App\Models\StockMovement;
 use App\Models\Store;
 use App\Models\User;
-use App\Services\FundService;
 use App\Services\PurchaseOrderCostingService;
 use App\Services\StockService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
-use Illuminate\Validation\ValidationException;
 
 class PurchaseOrderController extends Controller
 {
@@ -101,44 +98,10 @@ class PurchaseOrderController extends Controller
         return Carbon::parse($dateRecu)->lte(Carbon::today()) ? 'received' : 'pending';
     }
 
-    /**
-     * Coût total estimé d'un achat avant enregistrement (prix × quantité,
-     * converti si achat en devise, + transport, douane et frais) : sert à
-     * vérifier que le capital non investi de l'associé le couvre.
-     */
-    private function estimatedTotal(array $validated): float
-    {
-        $rate = $validated['origin'] === 'chine' ? (float) ($validated['exchange_rate_used'] ?? 1) : 1.0;
-        $lines = collect($validated['lines'])->sum(fn ($l) => (float) ($l['unit_price_foreign'] ?? 0) * $rate * (int) $l['quantity']);
-
-        return $lines + (float) ($validated['transport_cost_gnf'] ?? 0) + (float) ($validated['customs_cost_gnf'] ?? 0) + (float) ($validated['other_fees_gnf'] ?? 0);
-    }
-
-    /** Refuse un achat d'associé qui dépasserait ses apports non investis. */
-    private function assertFundCovers(?int $fundId, float $total, ?int $exceptOrderId = null): void
-    {
-        if (! $fundId) {
-            return;
-        }
-
-        $disponible = app(FundService::class)->capitalAvailable($fundId, $exceptOrderId);
-        if ($total > $disponible + 0.01) {
-            throw ValidationException::withMessages([
-                'fund_id' => sprintf(
-                    'Capital insuffisant pour %s : %s FG disponibles (apports non investis), achat estimé à %s FG.',
-                    Fund::labelFor($fundId),
-                    number_format($disponible, 0, ',', ' '),
-                    number_format($total, 0, ',', ' ')
-                ),
-            ]);
-        }
-    }
-
     public function create()
     {
         $stores = Store::optionsFor(auth()->user());
         $suppliers = Partner::orderBy('name')->get();
-        $funds = Fund::active()->orderBy('name')->get();
         $products = Product::orderBy('libelle')->get(['id', 'libelle', 'sku', 'unite', 'pcs_par_carton', 'pcs_par_paquet', 'dimension_rouleau']);
         $currencies = CurrencySetting::whereNotNull('rate_to_gnf')->where('currencyCode', '!=', 'GNF')->get();
         $reference = $this->nextReference();
@@ -147,7 +110,7 @@ class PurchaseOrderController extends Controller
         $storeManagers = User::where('id', '>', 2)->get();
         $categories = Category::orderBy('category_type')->get();
 
-        return view('purchase_orders.create', compact('stores', 'products', 'currencies', 'reference', 'places', 'storeManagers', 'categories', 'suppliers', 'funds'));
+        return view('purchase_orders.create', compact('stores', 'products', 'currencies', 'reference', 'places', 'storeManagers', 'categories', 'suppliers'));
     }
 
     public function store(Request $request, PurchaseOrderCostingService $costingService)
@@ -156,8 +119,6 @@ class PurchaseOrderController extends Controller
             'reference' => 'required|string|unique:purchase_orders,reference',
             'store_id' => 'required|exists:stores,id',
             'partner_id' => 'nullable|exists:partners,id',
-            // Financé par : vide = fonds propres, sinon le fonds d'un associé.
-            'fund_id' => 'nullable|exists:funds,id',
             'origin' => 'required|in:chine,guinee',
             // La table s'appelle `currency_settings` (pas `currencies` : ce nom n'existe
             // pas en base et faisait planter la validation dès qu'une devise était
@@ -187,13 +148,11 @@ class PurchaseOrderController extends Controller
 
         // La destination doit appartenir au périmètre de l'utilisateur.
         $this->authorizeStore($validated['store_id']);
-        $this->assertFundCovers($validated['fund_id'] ?? null, $this->estimatedTotal($validated));
 
         $order = PurchaseOrder::create([
             'reference' => $validated['reference'],
             'store_id' => $validated['store_id'],
             'partner_id' => $validated['partner_id'] ?? null,
-            'fund_id' => $validated['fund_id'] ?? null,
             'created_by' => auth()->id(),
             'origin' => $validated['origin'],
             'currency_code' => $validated['origin'] === 'chine' ? $validated['currency_code'] : null,
@@ -228,7 +187,6 @@ class PurchaseOrderController extends Controller
         $this->authorizeStore($order->store_id);
         $stores = Store::optionsFor(auth()->user());
         $suppliers = Partner::orderBy('name')->get();
-        $funds = Fund::orderBy('name')->get();
         $products = Product::orderBy('libelle')->get(['id', 'libelle', 'sku', 'unite', 'pcs_par_carton', 'pcs_par_paquet', 'dimension_rouleau']);
         $currencies = CurrencySetting::whereNotNull('rate_to_gnf')->where('currencyCode', '!=', 'GNF')->get();
         // Pour les modales "Nouvelle boutique" / "Nouveau produit" du formulaire.
@@ -236,7 +194,7 @@ class PurchaseOrderController extends Controller
         $storeManagers = User::where('id', '>', 2)->get();
         $categories = Category::orderBy('category_type')->get();
 
-        return view('purchase_orders.edit', compact('order', 'stores', 'products', 'currencies', 'places', 'storeManagers', 'categories', 'suppliers', 'funds'));
+        return view('purchase_orders.edit', compact('order', 'stores', 'products', 'currencies', 'places', 'storeManagers', 'categories', 'suppliers'));
     }
 
     public function update(Request $request, $id, PurchaseOrderCostingService $costingService)
@@ -252,7 +210,6 @@ class PurchaseOrderController extends Controller
         $validated = $request->validate([
             'store_id' => 'required|exists:stores,id',
             'partner_id' => 'nullable|exists:partners,id',
-            'fund_id' => 'nullable|exists:funds,id',
             'origin' => 'required|in:chine,guinee',
             'currency_code' => 'nullable|string|exists:currency_settings,currencyCode',
             // Obligatoire dès qu'une devise est choisie : le taux n'est plus pré-rempli
@@ -277,14 +234,11 @@ class PurchaseOrderController extends Controller
         ]);
 
         $this->authorizeStore($validated['store_id']);
-        $this->assertFundCovers($validated['fund_id'] ?? null, $this->estimatedTotal($validated), $order->id);
         $previousStoreId = (int) $order->store_id;
-        $previousFundId = $order->fund_id;
 
         $order->update([
             'store_id' => $validated['store_id'],
             'partner_id' => $validated['partner_id'] ?? null,
-            'fund_id' => $validated['fund_id'] ?? null,
             'origin' => $validated['origin'],
             'currency_code' => $validated['origin'] === 'chine' ? $validated['currency_code'] : null,
             // /'exchange_rate_used' => $validated['origin'] === 'chine' ? $validated['exchange_rate_used'] : null,
@@ -298,7 +252,7 @@ class PurchaseOrderController extends Controller
             'notes' => $validated['notes'] ?? null,
         ]);
 
-        $costingService->costOrder($order, $validated['lines'], $previousStoreId, $previousFundId);
+        $costingService->costOrder($order, $validated['lines'], $previousStoreId);
 
         return redirect()->route('purchase-orders.show', $order->id)
             ->with('success', 'Achat mis à jour avec succès.');
@@ -324,7 +278,6 @@ class PurchaseOrderController extends Controller
                     'source_id' => $order->id,
                     'document_ref' => $order->reference,
                     'supplier_id' => $order->partner_id,
-                    'fund_id' => $order->fund_id,
                     'reason' => 'Annulation de l\'achat '.$order->reference,
                 ]);
             }

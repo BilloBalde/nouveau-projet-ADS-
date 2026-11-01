@@ -53,7 +53,6 @@
                                     </div>
                                 </div>
                                 @include('purchase_orders.partials.supplier', ['selectedSupplierId' => $order->partner_id])
-                                @include('purchase_orders.partials.fund', ['selectedFundId' => $order->fund_id])
                                 <div class="col-lg-3 col-sm-6 col-12">
                                     <div class="form-group">
                                         <label>Date d'émission</label>

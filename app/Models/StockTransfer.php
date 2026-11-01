@@ -32,7 +32,7 @@ class StockTransfer extends Model
     ];
 
     protected $fillable = [
-        'reference', 'product_id', 'from_store_id', 'to_store_id', 'quantity', 'unite', 'status', 'fund_id',
+        'reference', 'product_id', 'from_store_id', 'to_store_id', 'quantity', 'unite', 'status',
         'requested_by', 'approved_by', 'shipped_by', 'received_by',
         'approved_at', 'shipped_at', 'received_at', 'notes',
     ];

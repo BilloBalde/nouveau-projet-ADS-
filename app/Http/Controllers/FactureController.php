@@ -5,14 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\Company;
 use App\Models\Customer;
 use App\Models\Facture;
-use App\Models\Fund;
 use App\Models\Payment;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\StockMovement;
 use App\Models\Store;
 use App\Models\User;
-use App\Services\FundService;
 use App\Services\StockService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
@@ -223,9 +221,8 @@ class FactureController extends Controller
         $customers = Customer::all();
         $countFactures = (Facture::max('id') ?? 0) + 1;
         $numeroFacture = date('Ym').''.sprintf('%04d', $countFactures);
-        $funds = Fund::active()->orderBy('name')->get(['id', 'name']);
 
-        return view('factures.create', compact('boutiques', 'customers', 'userStoreId', 'numeroFacture', 'funds'));
+        return view('factures.create', compact('boutiques', 'customers', 'userStoreId', 'numeroFacture'));
     }
 
     public function facturationStore(Request $request)
@@ -248,7 +245,6 @@ class FactureController extends Controller
             'products.*.price' => 'required|numeric|min:0',
             'products.*.subtotal' => 'required|numeric|min:0',
             'products.*.image' => 'nullable|file|mimes:jpg,png,jpeg',
-            'products.*.fund_id' => 'nullable|exists:funds,id',
         ]);
 
         $this->authorizeStore($request->store_id);
@@ -295,29 +291,18 @@ class FactureController extends Controller
                 $total_amount += $product['prixTotal'];
                 // dd($product['cartons'], $product['qty_per_ctn'], $product['subtotal']);
                 // Atomic decrement to avoid overselling under concurrency
-                // Propriétaire de la marchandise de la ligne : fonds propres
-                // (vide) ou fonds d'un associé. Le stock est pris chez lui.
-                $fundId = ! empty($product['fund_id']) ? (int) $product['fund_id'] : null;
-
                 $this->stock->decrementOrFail((int) $request->store_id, (int) $produit->id, (int) $product['quantity'], [
                     'type' => StockMovement::SALE,
                     'source_type' => 'facture',
                     'document_ref' => $request->numeroFacture,
                     'customer_id' => $request->customer_id,
                     'unit_price' => $product['price'],
-                    'fund_id' => $fundId,
                 ]);
 
-                // Marge au coût du propriétaire, même règle que le point de vente.
-                // (L'ancien calcul prenait le dernier « achat simple », ce qui
-                // donnait des intérêts négatifs ou égaux au prix de vente.)
-                $coutFonds = $fundId ? app(FundService::class)->unitCost($fundId, (int) $produit->id) : null;
                 // Même règle qu'à la caisse : pas de vente sous le prix minimum du
                 // produit ni sous son prix de revient (l'erreur annule toute la facture).
-                $produit->verifierPrixDeVente((float) $product['price'], $coutFonds);
-                $product['interet'] = $fundId
-                    ? ($coutFonds > 0 ? ((float) $product['price'] - $coutFonds) * (int) $product['quantity'] : 0)
-                    : $produit->interetPour((float) $product['price'], (int) $product['quantity']);
+                $produit->verifierPrixDeVente((float) $product['price']);
+                $product['interet'] = $produit->interetPour((float) $product['price'], (int) $product['quantity']);
                 Sale::create(
                     [
                         'numeroFacture' => $request->numeroFacture,
@@ -328,8 +313,6 @@ class FactureController extends Controller
                         'interet' => $product['interet'],
                         'store_id' => $request->store_id,
                         'user_id' => auth()->id(),
-                        'fund_id' => $fundId,
-                        'unit_cost' => $fundId ? $coutFonds : null,
                     ]
                 );
             }
@@ -527,7 +510,6 @@ class FactureController extends Controller
                         'document_ref' => $facture->numero_facture,
                         'customer_id' => $facture->customer_id,
                         'unit_price' => $sale->prix,
-                        'fund_id' => $sale->fund_id,
                         'reason' => 'Suppression de la facture '.$facture->numero_facture,
                     ]);
                 }

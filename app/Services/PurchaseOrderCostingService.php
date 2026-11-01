@@ -24,13 +24,10 @@ class PurchaseOrderCostingService
      *                                     Auparavant on le retirait de la NOUVELLE destination, ce qui faussait
      *                                     deux emplacements quand on changeait la destination d'un achat.
      */
-    public function costOrder(PurchaseOrder $order, array $lines, ?int $previousStoreId = null, int|false|null $previousFundId = false): void
+    public function costOrder(PurchaseOrder $order, array $lines, ?int $previousStoreId = null): void
     {
-        DB::transaction(function () use ($order, $lines, $previousStoreId, $previousFundId) {
+        DB::transaction(function () use ($order, $lines, $previousStoreId) {
             $oldStoreId = $previousStoreId ?? (int) $order->store_id;
-            // Fonds d'origine des lignes précédentes (modification d'un achat qui
-            // change de financeur) : false = inchangé.
-            $oldFundId = $previousFundId === false ? $order->fund_id : $previousFundId;
 
             foreach ($order->items as $existingItem) {
                 // Retrait tracé de la version précédente de l'achat (modification).
@@ -40,7 +37,6 @@ class PurchaseOrderCostingService
                     'source_id' => $order->id,
                     'document_ref' => $order->reference,
                     'supplier_id' => $order->partner_id,
-                    'fund_id' => $oldFundId,
                     'reason' => 'Modification de l\'achat '.$order->reference.' : annulation des lignes précédentes',
                 ]);
             }
@@ -153,21 +149,16 @@ class PurchaseOrderCostingService
                 // pas une décision. Le prix de vente, lui, n'est recalculé que s'il
                 // n'a pas été fixé à la main : sinon l'ajustement du gérant était
                 // écrasé au prochain réapprovisionnement, sans avertissement.
-                //
-                // Un achat financé par un associé ne touche pas au prix de revient
-                // des fonds propres : son coût est suivi à part (FundService).
-                if (! $order->fund_id) {
-                    $produit = Product::find($item['product_id']);
+                $produit = Product::find($item['product_id']);
 
-                    if ($produit) {
-                        $produit->price_sale = $item['landed_unit_cost_gnf'];
+                if ($produit) {
+                    $produit->price_sale = $item['landed_unit_cost_gnf'];
 
-                        if (! $produit->prixFixeALaMain()) {
-                            $produit->price = Product::prixDeVenteConseille((float) $item['landed_unit_cost_gnf']);
-                        }
-
-                        $produit->save();
+                    if (! $produit->prixFixeALaMain()) {
+                        $produit->price = Product::prixDeVenteConseille((float) $item['landed_unit_cost_gnf']);
                     }
+
+                    $produit->save();
                 }
 
                 // Entrée en stock à l'emplacement exact choisi comme destination.
@@ -177,7 +168,6 @@ class PurchaseOrderCostingService
                     'source_id' => $order->id,
                     'document_ref' => $order->reference,
                     'supplier_id' => $order->partner_id,
-                    'fund_id' => $order->fund_id,
                     'unit_price' => $item['landed_unit_cost_gnf'],
                 ]);
             }

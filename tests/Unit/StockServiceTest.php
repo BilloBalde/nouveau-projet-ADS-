@@ -33,7 +33,6 @@ class StockServiceTest extends TestCase
             $table->unsignedBigInteger('store_id');
             $table->unsignedBigInteger('product_id');
             $table->integer('quantity')->default(0);
-            $table->unsignedBigInteger('fund_id')->nullable();
             $table->timestamps();
         });
 
@@ -56,7 +55,6 @@ class StockServiceTest extends TestCase
             $table->decimal('unit_price', 15, 2)->nullable();
             $table->unsignedBigInteger('user_id')->nullable();
             $table->text('reason')->nullable();
-            $table->unsignedBigInteger('fund_id')->nullable();
             $table->timestamps();
         });
     }

@@ -2,12 +2,6 @@
     <div class="sidebar-inner slimscroll">
         <div id="sidebar-menu" class="sidebar-menu">
             <ul>
-                {{-- Compte d'associé : son relevé, rien d'autre. --}}
-                @if (Auth::check() && Auth::user()->isAssociate())
-                <li class="{{ isActiveRoute(['associates.show', 'associates.me']) }}">
-                    <a href="{{ route('associates.me') }}"><img src="{{ asset('assets/img/icons/dashboard.svg') }}" alt="img"><span>Mon relevé d'associé</span></a>
-                </li>
-                @else
                 @permission('dashboard.view')
                 <li class="{{ isActiveRoute(['home']) }}">
                     <a href="{{ route('home') }}"><img src="{{ asset('assets/img/icons/dashboard.svg') }}" alt="img"><span>Tableau de Bord</span> </a>
@@ -161,12 +155,6 @@
                     </ul>
                 </li>
                 @endpermission
-                @permission('associates.manage')
-                <li class="{{ isActiveRoute(['associates.index', 'associates.show', 'associates.create', 'associates.edit']) }}">
-                    <a href="{{ route('associates.index') }}"><img src="{{ asset('assets/img/icons/users1.svg') }}" alt="img"><span>Associés</span></a>
-                </li>
-                @endpermission
-                @endif
             </ul>
         </div>
     </div>

@@ -1530,17 +1530,15 @@
                     const rows = stockByProduct[productId] || [];
                     const preferred = document.getElementById('store_id')?.value;
                     if (!rows.length) {
-                        return '<option value="" data-available="0" data-fund="">Aucun stock disponible</option>';
+                        return '<option value="" data-available="0">Aucun stock disponible</option>';
                     }
-                    // Présélection : le magasin de vente, aux fonds propres de préférence.
-                    let choisi = rows.findIndex(r => String(r.id) === String(preferred) && !r.fund);
-                    if (choisi < 0) choisi = rows.findIndex(r => String(r.id) === String(preferred));
-                    if (choisi < 0) choisi = rows.findIndex(r => !r.fund);
+                    // Présélection : le magasin de vente.
+                    let choisi = rows.findIndex(r => String(r.id) === String(preferred));
                     if (choisi < 0) choisi = 0;
                     return rows.map(function (r, idx) {
-                        // Emplacement — propriétaire (fonds propres ou fonds d'un associé) — stock
-                        const label = (locationLabels[r.id] || ('Emplacement #' + r.id)) + ' — ' + r.owner + ' — ' + r.qty.toLocaleString('fr-FR') + ' ' + (motUnite(productId, r.qty) || 'pièces') + ' disponible' + (r.qty > 1 ? 's' : '');
-                        return '<option value="' + r.id + '" data-fund="' + (r.fund || '') + '" data-available="' + r.qty + '"' + (idx === choisi ? ' selected' : '') + '>' + label + '</option>';
+                        // Emplacement — stock
+                        const label = (locationLabels[r.id] || ('Emplacement #' + r.id)) + ' — ' + r.qty.toLocaleString('fr-FR') + ' ' + (motUnite(productId, r.qty) || 'pièces') + ' disponible' + (r.qty > 1 ? 's' : '');
+                        return '<option value="' + r.id + '" data-available="' + r.qty + '"' + (idx === choisi ? ' selected' : '') + '>' + label + '</option>';
                     }).join('');
                 }
                 const quickPartnerModal = new bootstrap.Modal(document.getElementById('quickPartnerModal'));
@@ -1658,8 +1656,7 @@
                             '</div>' +
                         '</li>' +
                         '<li class="origin-group" style="width:100%; margin-top:8px;">' +
-                            '<h6 style="font-size:12px; margin-bottom:4px;">Origine du stock (emplacement — propriétaire)</h6>' +
-                            '<input type="hidden" name="sales[' + i + '][fund_id]" class="fund-input" value="">' +
+                            '<h6 style="font-size:12px; margin-bottom:4px;">Origine du stock</h6>' +
                             '<select name="sales[' + i + '][store_id]" class="form-control origin-select">' +
                                 originOptions(product_id) +
                             '</select>' +
@@ -1758,9 +1755,6 @@
                         originGroup.style.display = tierce ? 'none' : '';
                         originSelect.disabled = !!tierce;
                         const opt = originSelect.options[originSelect.selectedIndex];
-                        // Propriétaire de la marchandise choisie : envoyé avec la ligne.
-                        const fundInput = row.querySelector('.fund-input');
-                        if (fundInput) fundInput.value = tierce ? '' : (opt?.dataset.fund || '');
                         const dispo = parseInt(opt?.dataset.available || '0', 10);
                         const qty = parseInt(quantityField.value, 10) || 0;
                         if (!tierce && qty > dispo) {

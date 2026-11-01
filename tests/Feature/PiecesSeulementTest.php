@@ -396,7 +396,7 @@ class PiecesSeulementTest extends TestCase
         // Formulaire : unité du produit et stock enregistré pour l'aperçu de l'écart.
         $form = $this->actingAs($this->admin)->get(route('stock.adjust.form'))->assertOk()
             ->assertSee('Pièce')->assertSee('data-pluriel="pièces"', false);
-        $this->assertSame(500, $form->viewData('stockEnregistre')[$this->magasin->id.'|'.$carton->id.'|']);
+        $this->assertSame(500, $form->viewData('stockEnregistre')[$this->magasin->id.'|'.$carton->id]);
 
         // Inventaire : 500 pièces enregistrés, 497 comptés.
         $this->actingAs($this->admin)->post(route('stock.adjust'), [

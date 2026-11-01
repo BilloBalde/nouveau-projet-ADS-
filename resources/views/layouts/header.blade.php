@@ -52,7 +52,7 @@
         {{-- Magasin de l'employé rattaché. Il n'a pas de choix à faire : c'est
              son affectation, et c'est la seule indication de l'endroit où il
              travaille. Les profils à vue globale n'ont rien à afficher ici. --}}
-        @if (Auth::check() && ! Auth::user()->isAssociate() && Auth::user()->isRestrictedToStore())
+        @if (Auth::check() && Auth::user()->isRestrictedToStore())
         @php($magasin = \App\Models\Store::find(Auth::user()->assignedStoreId()))
         <li class="nav-item" style="display:flex;align-items:center;margin-right:10px;">
             <span class="nav-link" style="font-weight:600;color:var(--adm-brand-600,#3E4C21);white-space:nowrap;">
@@ -63,7 +63,7 @@
         <li class="nav-item" style="display:flex;align-items:center;">
             @include('partials.notification-bell')
         </li>
-        @unless ((Auth::check() && Auth::user()->isAssociate()) || \App\Support\ModeDeVente::parInventaire())
+        @unless (\App\Support\ModeDeVente::parInventaire())
         <li class="nav-item has-arrow flag-nav">
             <a class="nav-link" href="{{ route('pos') }}" style="background-color: var(--adm-brand-600,#3E4C21); color: #fff;">
                 <img src="{{ asset('assets/img/icons/sales1.svg') }}" alt="" height="20">POS

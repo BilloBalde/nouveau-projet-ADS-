@@ -257,25 +257,9 @@
                         <tr><td>Chiffre d'affaires</td>@foreach ($overview['sales'] as $s)<td class="text-end">{{ francs($s['ca']) }}</td>@endforeach</tr>
                         <tr><td>dont ventes directes depuis les entrepôts</td>@foreach ($overview['sales'] as $s)<td class="text-end">{{ francs($s['direct']) }}</td>@endforeach</tr>
                         <tr><td>Marge (sur les ventes au coût connu)</td>@foreach ($overview['sales'] as $s)<td class="text-end">{{ francs($s['marge']) }}</td>@endforeach</tr>
-                        {{-- Activité financée par les associés : comprise dans les totaux
-                             ci-dessus ; son résultat est partagé selon leur clé (relevés). --}}
-                        <tr class="table-light"><td><strong>Activité associés</strong> — chiffre d'affaires</td>@foreach ($overview['sales'] as $s)<td class="text-end">{{ francs($s['assoc_ca']) }}</td>@endforeach</tr>
-                        <tr class="table-light"><td><strong>Activité associés</strong> — marge (avant partage)</td>@foreach ($overview['sales'] as $s)<td class="text-end">{{ francs($s['assoc_marge']) }}</td>@endforeach</tr>
                     </tbody>
                 </table>
             </div>
-            @if (! empty($overview['associates']))
-            @php $a = $overview['associates']; @endphp
-            <div class="d-flex flex-wrap gap-3 align-items-center mb-3 p-2 rounded" style="font-size:14px; background:var(--adm-paper-warm,#F9F9F3); border:1px solid #E2E3CF;">
-                <strong><i class="fas fa-handshake me-1 text-primary"></i>Associés ({{ $a['count'] }}) :</strong>
-                <span>Capital restant dû : <strong>{{ francs($a['capital_restant']) }}</strong></span>
-                <span>Stock des associés : <strong>{{ francs($a['stock_valeur']) }}</strong></span>
-                <span>Bénéfice à leur verser : <strong>{{ francs($a['benefice_a_verser']) }}</strong></span>
-                <span>Votre part restante : <strong>{{ francs($a['part_patron_restante']) }}</strong></span>
-                <span>Comptes associés : <strong>{{ francs($a['tresorerie']) }}</strong></span>
-                <a href="{{ route('associates.index') }}" class="ms-auto">Voir les relevés <i class="fas fa-arrow-right"></i></a>
-            </div>
-            @endif
             <div class="d-flex flex-wrap gap-3" style="font-size:14px;">
                 @foreach (\App\Models\Store::TYPES as $type => $label)
                     <span><strong>{{ $label }}s :</strong> {{ $overview['stock_by_type'][$type] ?? '0' }}</span>

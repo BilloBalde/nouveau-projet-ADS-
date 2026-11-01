@@ -2,14 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Fund;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\StockMovement;
 use App\Models\Store;
 use App\Models\StoreProduct;
 use App\Models\User;
-use App\Services\FundService;
 use App\Services\StockService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -207,14 +205,13 @@ class StockController extends Controller
     {
         $stores = Store::optionsFor(auth()->user());
         $products = Product::orderBy('libelle')->get(['id', 'libelle', 'sku', 'unite', 'pcs_par_carton', 'pcs_par_paquet', 'dimension_rouleau']);
-        $funds = Fund::active()->orderBy('name')->get();
-        // Stock enregistré par emplacement, produit et propriétaire : affiché
-        // pendant le comptage pour voir l'écart avant d'enregistrer.
+        // Stock enregistré par emplacement et produit : affiché pendant le
+        // comptage pour voir l'écart avant d'enregistrer.
         $stockEnregistre = StoreProduct::whereIn('store_id', $stores->pluck('id'))
-            ->get(['store_id', 'product_id', 'fund_id', 'quantity'])
-            ->mapWithKeys(fn ($r) => [$r->store_id.'|'.$r->product_id.'|'.($r->fund_id ?? '') => (int) $r->quantity]);
+            ->get(['store_id', 'product_id', 'quantity'])
+            ->mapWithKeys(fn ($r) => [$r->store_id.'|'.$r->product_id => (int) $r->quantity]);
 
-        return view('stock.adjust', compact('stores', 'products', 'funds', 'stockEnregistre'));
+        return view('stock.adjust', compact('stores', 'products', 'stockEnregistre'));
     }
 
     /**
@@ -229,27 +226,21 @@ class StockController extends Controller
             'counted' => 'required|integer|min:0',
             'type' => 'required|in:'.StockMovement::INVENTORY.','.StockMovement::ADJUSTMENT,
             'reason' => 'required|string|min:3|max:500',
-            'fund_id' => 'nullable|exists:funds,id',
         ], [
             'reason.required' => 'Le motif est obligatoire : il est conservé dans le journal.',
         ]);
 
         $this->authorizeStore($data['store_id']);
 
-        // Stock compté pour un seul propriétaire (fonds propres ou associé).
-        $fundId = ! empty($data['fund_id']) ? (int) $data['fund_id'] : null;
-        $before = $this->stock->availableForFund((int) $data['store_id'], (int) $data['product_id'], $fundId);
+        $before = $this->stock->availableInStore((int) $data['store_id'], (int) $data['product_id']);
 
         $movement = DB::transaction(fn () => $this->stock->adjustTo((int) $data['store_id'], (int) $data['product_id'], (int) $data['counted'], [
             'type' => $data['type'],
             'source_type' => 'inventory',
             'reason' => $data['reason'],
-            'fund_id' => $fundId,
-            // Écart valorisé au coût de l'associé : perte ou gain partagé selon sa clé.
-            'unit_price' => $fundId ? app(FundService::class)->unitCost($fundId, (int) $data['product_id']) : null,
         ]));
 
-        // Quantités dans l'unité du produit : « 40 → 38 cartons (écart −2 cartons) ».
+        // « 40 → 38 pièces (écart −2 pièces) ».
         $produit = Product::find($data['product_id']);
         $ecart = $data['counted'] - $before;
         $message = $movement

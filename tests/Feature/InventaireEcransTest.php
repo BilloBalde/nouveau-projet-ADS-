@@ -428,7 +428,7 @@ class InventaireEcransTest extends TestCase
         $seance = app(InventaireService::class)->preparer($this->madina->id, '2026-10-01');
 
         $termes = app(InventaireService::class)->termesAttendus($seance);
-        $ligne = $termes[$this->ciment->id.'|'];
+        $ligne = $termes[$this->ciment->id];
 
         $this->assertSame(100, $ligne['opening'], 'Le stock enregistré doit servir de point de départ affiché.');
         $this->assertSame(100, $ligne['theorique']);

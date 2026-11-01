@@ -61,7 +61,6 @@
                                         </div>
                                     </div>
                                     @include('purchase_orders.partials.supplier')
-                                    @include('purchase_orders.partials.fund')
                                     <div class="col-lg-3 col-md-4 col-sm-6 col-12">
                                         <div class="form-group">
                                             <label>Date d'émission</label>

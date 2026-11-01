@@ -22,9 +22,8 @@ use Illuminate\Support\Facades\DB;
  * Les appelants travaillent dans une transaction : si une ligne échoue, tout
  * est annulé, mouvements du journal compris.
  *
- * Fonds : le stock d'un emplacement est séparé par propriétaire. $context
- * ['fund_id'] désigne le fonds de l'associé concerné ; absent ou null =
- * fonds propres. Une sortie ne puise que dans le fonds indiqué.
+ * Tout le stock appartient à la boutique : une seule ligne par emplacement
+ * et par produit.
  */
 class StockService
 {
@@ -38,7 +37,7 @@ class StockService
             return true;
         }
 
-        $rowId = $this->fundRows($storeId, $productId, $context['fund_id'] ?? null)
+        $rowId = $this->rows($storeId, $productId)
             ->where('quantity', '>=', $quantity)
             ->orderBy('id')
             ->lockForUpdate()
@@ -69,9 +68,8 @@ class StockService
     public function decrementOrFail(int $storeId, int $productId, int $quantity, array $context = []): void
     {
         if (! $this->decrementIfAvailable($storeId, $productId, $quantity, $context)) {
-            $fundId = $context['fund_id'] ?? null;
             throw new InsufficientStockException([
-                $this->shortageMessage($storeId, $productId, $this->availableForFund($storeId, $productId, $fundId), $quantity, $fundId),
+                $this->shortageMessage($storeId, $productId, $this->availableInStore($storeId, $productId), $quantity),
             ]);
         }
     }
@@ -82,13 +80,13 @@ class StockService
      * emplacement sont cumulées. Lève une exception listant toutes les lignes
      * en défaut (pas seulement la première).
      *
-     * @param  array<int, array{store_id:int, product_id:int, quantity:int, fund_id?:int|null}>  $lines
+     * @param  array<int, array{store_id:int, product_id:int, quantity:int}>  $lines
      */
     public function assertAvailable(array $lines): void
     {
         $needed = [];
         foreach ($lines as $line) {
-            $key = (int) $line['store_id'].':'.(int) $line['product_id'].':'.(int) ($line['fund_id'] ?? 0);
+            $key = (int) $line['store_id'].':'.(int) $line['product_id'];
             $needed[$key] = ($needed[$key] ?? 0) + (int) $line['quantity'];
         }
 
@@ -102,17 +100,17 @@ class StockService
         $available = DB::table('store_products')
             ->whereIn('store_id', $storeIds)
             ->whereIn('product_id', $productIds)
-            ->selectRaw('store_id, product_id, COALESCE(fund_id, 0) as fund, SUM(quantity) as qty')
-            ->groupBy('store_id', 'product_id', DB::raw('COALESCE(fund_id, 0)'))
+            ->selectRaw('store_id, product_id, SUM(quantity) as qty')
+            ->groupBy('store_id', 'product_id')
             ->get()
-            ->mapWithKeys(fn ($r) => [$r->store_id.':'.$r->product_id.':'.(int) $r->fund => (int) $r->qty]);
+            ->mapWithKeys(fn ($r) => [$r->store_id.':'.$r->product_id => (int) $r->qty]);
 
         $failures = [];
         foreach ($needed as $key => $qty) {
             $have = $available[$key] ?? 0;
             if ($have < $qty) {
-                [$storeId, $productId, $fundId] = array_map('intval', explode(':', $key));
-                $failures[] = $this->shortageMessage($storeId, $productId, $have, $qty, $fundId ?: null);
+                [$storeId, $productId] = array_map('intval', explode(':', $key));
+                $failures[] = $this->shortageMessage($storeId, $productId, $have, $qty);
             }
         }
 
@@ -134,33 +132,18 @@ class StockService
         return (int) DB::table('store_products')->where('product_id', $productId)->sum('quantity');
     }
 
-    /**
-     * Stock d'un produit dans un emplacement, pour un seul propriétaire
-     * (null = fonds propres).
-     */
-    public function availableForFund(int $storeId, int $productId, ?int $fundId): int
-    {
-        return (int) $this->fundRows($storeId, $productId, $fundId)->sum('quantity');
-    }
-
-    /** Lignes de stock d'un emplacement / produit / fonds. */
-    private function fundRows(int $storeId, int $productId, ?int $fundId)
+    /** Lignes de stock d'un emplacement pour un produit. */
+    private function rows(int $storeId, int $productId)
     {
         return DB::table('store_products')
             ->where('store_id', $storeId)
-            ->where('product_id', $productId)
-            ->when($fundId, fn ($q) => $q->where('fund_id', $fundId), fn ($q) => $q->whereNull('fund_id'));
+            ->where('product_id', $productId);
     }
 
-    /**
-     * Stock d'un produit dans un emplacement précis, tous fonds confondus.
-     */
+    /** Stock d'un produit dans un emplacement précis. */
     public function availableInStore(int $storeId, int $productId): int
     {
-        return (int) DB::table('store_products')
-            ->where('store_id', $storeId)
-            ->where('product_id', $productId)
-            ->sum('quantity');
+        return (int) $this->rows($storeId, $productId)->sum('quantity');
     }
 
     public function increment(int $storeId, int $productId, int $quantity, array $context = []): void
@@ -170,7 +153,7 @@ class StockService
         }
 
         $row = StoreProduct::firstOrCreate(
-            ['store_id' => $storeId, 'product_id' => $productId, 'fund_id' => $context['fund_id'] ?? null],
+            ['store_id' => $storeId, 'product_id' => $productId],
             ['quantity' => 0]
         );
 
@@ -191,7 +174,7 @@ class StockService
         }
 
         $row = StoreProduct::firstOrCreate(
-            ['store_id' => $storeId, 'product_id' => $productId, 'fund_id' => $context['fund_id'] ?? null],
+            ['store_id' => $storeId, 'product_id' => $productId],
             ['quantity' => 0]
         );
 
@@ -206,7 +189,7 @@ class StockService
     public function adjustTo(int $storeId, int $productId, int $counted, array $context = []): ?StockMovement
     {
         $counted = max(0, $counted);
-        $current = $this->availableForFund($storeId, $productId, $context['fund_id'] ?? null);
+        $current = $this->availableInStore($storeId, $productId);
         $delta = $counted - $current;
 
         if ($delta === 0) {
@@ -226,14 +209,11 @@ class StockService
 
     private function record(int $storeId, int $productId, int $signedQuantity, array $context): void
     {
-        $fundId = $context['fund_id'] ?? null;
-        // Stock avant / après du propriétaire concerné, pas de tout l'emplacement.
-        $after = $this->availableForFund($storeId, $productId, $fundId);
+        $after = $this->availableInStore($storeId, $productId);
 
         StockMovement::create([
             'product_id' => $productId,
             'store_id' => $storeId,
-            'fund_id' => $fundId,
             'type' => $context['type'],
             'quantity' => $signedQuantity,
             'stock_before' => $after - $signedQuantity,
@@ -250,16 +230,12 @@ class StockService
         ]);
     }
 
-    private function shortageMessage(int $storeId, int $productId, int $available, int $requested, ?int $fundId = null): string
+    private function shortageMessage(int $storeId, int $productId, int $available, int $requested): string
     {
         $fiche = DB::table('products')->where('id', $productId)->first(['libelle', 'unite']);
         $product = $fiche->libelle ?? ('Produit #'.$productId);
-        // Quantités dans l'unité du produit : « Disponible : 10 cartons ».
         $unite = $fiche->unite ?? 'pcs';
         $store = DB::table('stores')->where('id', $storeId)->value('store_name') ?? ('Emplacement #'.$storeId);
-        if ($fundId) {
-            $store .= ' ('.(DB::table('funds')->where('id', $fundId)->value('name') ?? 'fonds #'.$fundId).')';
-        }
 
         return sprintf(
             'Stock insuffisant pour %s à %s. Disponible : %s. Demandé : %s.',
@@ -302,7 +278,7 @@ class StockService
             ->decrement('quantity', $quantity);
 
         if ($affected > 0 && $row) {
-            $this->record((int) $row->store_id, (int) $row->product_id, -$quantity, ['type' => StockMovement::ADJUSTMENT, 'fund_id' => $row->fund_id]);
+            $this->record((int) $row->store_id, (int) $row->product_id, -$quantity, ['type' => StockMovement::ADJUSTMENT]);
         }
 
         return $affected > 0;

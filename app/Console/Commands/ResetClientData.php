@@ -21,8 +21,6 @@ class ResetClientData extends Command
         'inventory_session_lines',
         'inventory_sessions',
         'partner_settlements',
-        'fund_transactions',
-        'funds',
         'devi_lines',
         'devis',
         'purchase_order_items',
@@ -65,7 +63,7 @@ class ResetClientData extends Command
      * Cette liste n'est pas décorative : avec TABLES, elle doit couvrir toute
      * la base. Une table qui n'est dans aucune des deux est une table oubliée,
      * et ResetClientDataTest le signale. Le défaut est arrivé — le module de
-     * comptage, les fonds d'associés et le journal des mouvements de stock ont
+     * comptage et le journal des mouvements de stock ont
      * été ajoutés après cette commande et n'y figuraient pas : la base du
      * nouveau client aurait gardé l'historique de l'ancien.
      */

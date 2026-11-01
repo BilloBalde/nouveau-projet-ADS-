@@ -184,7 +184,7 @@ class Product extends Model
 
     public function stores()
     {
-        return $this->belongsToMany(Store::class, 'store_products')->withPivot('quantity', 'fund_id');
+        return $this->belongsToMany(Store::class, 'store_products')->withPivot('quantity');
     }
 
     public function ligneCommande()

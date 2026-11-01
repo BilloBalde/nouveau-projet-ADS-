@@ -46,20 +46,6 @@
                                 </select>
                             </div>
                         </div>
-                        @if (isset($funds) && $funds->isNotEmpty())
-                        <div class="col-12">
-                            <div class="form-group">
-                                <label for="fund_id">Propriétaire de la marchandise</label>
-                                <select id="fund_id" name="fund_id" class="form-control">
-                                    <option value="">{{ \App\Models\Fund::OWNER_LABEL }}</option>
-                                    @foreach ($funds as $fund)
-                                    <option value="{{ $fund->id }}" {{ (string) old('fund_id') === (string) $fund->id ? 'selected' : '' }}>{{ $fund->name }}</option>
-                                    @endforeach
-                                </select>
-                                <small class="text-muted">La marchandise garde son propriétaire en changeant d'emplacement.</small>
-                            </div>
-                        </div>
-                        @endif
                         <div class="col-12">
                             <div class="form-group">
                                 <label for="quantity">Quantité <span class="text-muted" id="transfertUnite"></span></label>

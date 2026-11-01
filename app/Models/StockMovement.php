@@ -60,7 +60,7 @@ class StockMovement extends Model
     protected $fillable = [
         'product_id', 'store_id', 'type', 'quantity', 'unite', 'stock_before', 'stock_after',
         'counterpart_store_id', 'source_type', 'source_id', 'document_ref',
-        'customer_id', 'supplier_id', 'unit_price', 'user_id', 'reason', 'fund_id',
+        'customer_id', 'supplier_id', 'unit_price', 'user_id', 'reason',
     ];
 
     protected static function booted(): void

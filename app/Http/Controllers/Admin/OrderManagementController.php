@@ -7,7 +7,6 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use App\Models\Facture;
-use App\Models\Fund;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Payment;
@@ -19,7 +18,6 @@ use App\Models\User;
 use App\Notifications\OrderAssignedToStoreNotification;
 use App\Notifications\OrderReturnedToHeadOfficeNotification;
 use App\Notifications\OrderStatusNotification;
-use App\Services\FundService;
 use App\Services\StockService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -159,12 +157,11 @@ class OrderManagementController extends Controller
         $stores = Store::visibleTo(auth()->user())->orderBy('store_name')->get(['id', 'store_name', 'type']);
         $productIds = $order->items->pluck('product_id');
 
-        // Une seule requête pour tous les produits/boutiques plutôt que N×M requêtes,
-        // par propriétaire : fonds propres, ou fonds d'un associé.
+        // Une seule requête pour tous les produits/boutiques plutôt que N×M requêtes.
         $stockRows = DB::table('store_products')
             ->whereIn('product_id', $productIds)
-            ->selectRaw('store_id, product_id, fund_id, SUM(quantity) as quantity')
-            ->groupBy('store_id', 'product_id', 'fund_id')
+            ->selectRaw('store_id, product_id, SUM(quantity) as quantity')
+            ->groupBy('store_id', 'product_id')
             ->get()
             ->groupBy('product_id');
 
@@ -178,11 +175,10 @@ class OrderManagementController extends Controller
             // peut dire "OK" pour une boutique qui n'a en réalité rien en stock.
             // Emplacement de la ligne : celui choisi pour cet article, sinon
             // l'emplacement par défaut de la commande.
-            // Clé d'emplacement : « magasin » (fonds propres) ou « magasin|fonds ».
             $lineKey = $locations[$item->id] ?? ($storeId ? (string) $storeId : null);
-            [$lineStoreId, $lineFundId] = $this->parseLocation($lineKey);
+            $lineStoreId = $this->parseLocation($lineKey);
             $available = $lineStoreId
-                ? $this->stock->availableForFund($lineStoreId, $item->product_id, $lineFundId)
+                ? $this->stock->availableInStore($lineStoreId, $item->product_id)
                 : $this->stock->totalAvailable($item->product_id);
             $ok = $available >= $item->quantity;
 
@@ -190,20 +186,11 @@ class OrderManagementController extends Controller
             $perStore = collect();
             foreach ($stores as $store) {
                 $suffixe = $store->type === Store::TYPE_ENTREPOT ? ' (entrepôt)' : '';
-                // Fonds propres : toujours proposé, même à 0.
                 $perStore->push([
                     'store_id' => (string) $store->id,
                     'store_name' => $store->store_name.$suffixe,
-                    'available' => (int) ($rowsForProduct->first(fn ($r) => (int) $r->store_id === $store->id && ! $r->fund_id)->quantity ?? 0),
+                    'available' => (int) ($rowsForProduct->first(fn ($r) => (int) $r->store_id === $store->id)->quantity ?? 0),
                 ]);
-                // Fonds d'associés : seulement s'il y a du stock.
-                foreach ($rowsForProduct->filter(fn ($r) => (int) $r->store_id === $store->id && $r->fund_id && $r->quantity > 0) as $r) {
-                    $perStore->push([
-                        'store_id' => $store->id.'|'.$r->fund_id,
-                        'store_name' => $store->store_name.$suffixe.' — '.Fund::labelFor((int) $r->fund_id),
-                        'available' => (int) $r->quantity,
-                    ]);
-                }
             }
             $items[] = [
                 'item_id' => $item->id,
@@ -225,17 +212,12 @@ class OrderManagementController extends Controller
     }
 
     /**
-     * « 12 » = magasin 12, fonds propres ; « 12|3 » = magasin 12, fonds de
-     * l'associé n° 3. @return array{0:int|null, 1:int|null}
+     * Emplacement choisi pour une ligne. Une clé « 12|3 » d'un écran resté
+     * ouvert avant la suppression des fonds désigne toujours le magasin 12.
      */
-    private function parseLocation(?string $key): array
+    private function parseLocation(?string $key): ?int
     {
-        if (! $key) {
-            return [null, null];
-        }
-        [$store, $fund] = array_pad(explode('|', $key, 2), 2, null);
-
-        return [(int) $store ?: null, (int) $fund ?: null];
+        return (int) explode('|', (string) $key, 2)[0] ?: null;
     }
 
     // Affiche toutes les ventes confirmées par le manager
@@ -305,10 +287,8 @@ class OrderManagementController extends Controller
         // de l'utilisateur — contrôlé ici, pas seulement à l'écran.
         $locations = (array) $request->input('locations', []);
         $lineStores = [];
-        $lineFunds = [];
         foreach ($orderItems as $item) {
-            [$lineStore, $lineFund] = $this->parseLocation(($locations[$item->id] ?? null) ?: ($storeId ? (string) $storeId : null));
-            $lineFunds[$item->id] = $lineFund;
+            $lineStore = $this->parseLocation(($locations[$item->id] ?? null) ?: ($storeId ? (string) $storeId : null));
             if (! $lineStore) {
                 $nom = $item->product?->libelle ?? 'Produit #'.$item->product_id;
 
@@ -341,9 +321,7 @@ class OrderManagementController extends Controller
                 'store_id' => $lineStores[$item->id],
                 'product_id' => $item->product_id,
                 'quantity' => $item->quantity,
-                'fund_id' => $lineFunds[$item->id],
             ])->all());
-            $funds = app(FundService::class);
 
             // Décrémentation du stock (boutique + global) et création des lignes de vente
             $totalQuantity = 0;
@@ -363,20 +341,15 @@ class OrderManagementController extends Controller
                     'source_id' => $order->id,
                     'document_ref' => $invoiceNumber,
                     'unit_price' => $item->price,
-                    'fund_id' => $lineFunds[$item->id],
                 ]);
-                $item->update(['store_id' => $lineStoreId, 'fund_id' => $lineFunds[$item->id]]);
+                $item->update(['store_id' => $lineStoreId]);
 
                 // Intérêt basé sur le dernier prix d'achat
                 // Même prix de revient que le point de vente. Auparavant, le
                 // dernier « achat simple » (table purchases) faisait foi : un vieux
                 // prix au carton donnait des intérêts négatifs, et sans achat
                 // simple tout le prix de vente était compté comme intérêt.
-                $fundId = $lineFunds[$item->id];
-                $coutFonds = $fundId ? $funds->unitCost($fundId, (int) $item->product_id) : null;
-                $interet = $fundId
-                    ? ($coutFonds > 0 ? ((float) $item->price - $coutFonds) * $qty : 0)
-                    : ($product ? $product->interetPour((float) $item->price, (int) $qty) : 0);
+                $interet = $product ? $product->interetPour((float) $item->price, (int) $qty) : 0;
                 $totalInteret += $interet;
 
                 Sale::create([
@@ -388,8 +361,6 @@ class OrderManagementController extends Controller
                     'prixTotal' => $qty * $item->price,
                     'interet' => $interet,
                     'user_id' => auth()->id(),
-                    'fund_id' => $fundId,
-                    'unit_cost' => $fundId ? $coutFonds : null,
                 ]);
                 $totalQuantity += $qty;
             }

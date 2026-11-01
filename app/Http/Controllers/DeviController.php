@@ -8,10 +8,8 @@ use App\Models\Company;
 use App\Models\Customer;
 use App\Models\Devi;
 use App\Models\DeviLine;
-use App\Models\Fund;
 use App\Models\Product;
 use App\Models\Store;
-use App\Services\FundService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -90,9 +88,7 @@ class DeviController extends Controller
             $userStoreId = auth()->user()->assignedStoreId();
         }
 
-        $funds = Fund::active()->orderBy('name')->get(['id', 'name']);
-
-        return view('devis.create', compact('stores', 'products', 'customers', 'userStoreId', 'funds'));
+        return view('devis.create', compact('stores', 'products', 'customers', 'userStoreId'));
     }
 
     public function store(Request $request)
@@ -108,8 +104,6 @@ class DeviController extends Controller
             'products.*.unit_price' => 'required|numeric|min:0',
             // Emplacement source par ligne (facultatif : sinon celui du devis).
             'products.*.store_id' => 'nullable|exists:stores,id',
-            // Propriétaire de la marchandise : vide = fonds propres.
-            'products.*.fund_id' => 'nullable|exists:funds,id',
         ]);
 
         $this->authorizeStore($request->store_id);
@@ -167,7 +161,6 @@ class DeviController extends Controller
                     'total_price' => $totalPrice,
                     'notes' => $productData['notes'] ?? null,
                     'store_id' => $productData['store_id'] ?? null,
-                    'fund_id' => ! empty($productData['fund_id']) ? (int) $productData['fund_id'] : null,
                 ]);
             }
 
@@ -217,9 +210,7 @@ class DeviController extends Controller
             });
         $customers = Customer::all();
 
-        $funds = Fund::orderBy('name')->get(['id', 'name']);
-
-        return view('devis.edit', compact('devis', 'stores', 'products', 'customers', 'funds'));
+        return view('devis.edit', compact('devis', 'stores', 'products', 'customers'));
     }
 
     public function update(Request $request, $id)
@@ -242,8 +233,6 @@ class DeviController extends Controller
             'products.*.unit_price' => 'required|numeric|min:0',
             // Emplacement source par ligne (facultatif : sinon celui du devis).
             'products.*.store_id' => 'nullable|exists:stores,id',
-            // Propriétaire de la marchandise : vide = fonds propres.
-            'products.*.fund_id' => 'nullable|exists:funds,id',
         ]);
 
         $this->authorizeStore($request->store_id);
@@ -291,7 +280,6 @@ class DeviController extends Controller
                     'total_price' => $totalPrice,
                     'notes' => $productData['notes'] ?? null,
                     'store_id' => $productData['store_id'] ?? null,
-                    'fund_id' => ! empty($productData['fund_id']) ? (int) $productData['fund_id'] : null,
                 ]);
             }
 
@@ -310,15 +298,13 @@ class DeviController extends Controller
     /** Première ligne vendue sous le plancher de vente du produit, ou null. */
     private function erreurDePrix(array $lignes): ?string
     {
-        $funds = app(FundService::class);
         foreach ($lignes as $ligne) {
             $produit = Product::find($ligne['product_id'] ?? null);
             if (! $produit) {
                 continue;
             }
-            $cout = ! empty($ligne['fund_id']) ? $funds->unitCost((int) $ligne['fund_id'], (int) $produit->id) : null;
             try {
-                $produit->verifierPrixDeVente((float) ($ligne['unit_price'] ?? 0), $cout);
+                $produit->verifierPrixDeVente((float) ($ligne['unit_price'] ?? 0));
             } catch (\RuntimeException $e) {
                 return $e->getMessage();
             }

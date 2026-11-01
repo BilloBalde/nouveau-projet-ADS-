@@ -109,7 +109,7 @@ class InventaireService
      * théorique en face de la case à remplir — puis à figer les termes à la
      * validation.
      *
-     * @return array<string, array{product_id:int, fund_id:int|null, opening:int, purchased:int, transfer_in:int, transfer_out:int, other:int, theorique:int}>
+     * @return array<int, array{product_id:int, opening:int, purchased:int, transfer_in:int, transfer_out:int, other:int, theorique:int}>
      */
     public function termesAttendus(InventorySession $session): array
     {
@@ -117,20 +117,18 @@ class InventaireService
         $fin = $session->finPeriode();
 
         $termes = [];
-        $cle = fn (int $productId, ?int $fundId) => $productId.'|'.($fundId ?: '');
 
         // Point de départ : ce qui avait été compté à la séance précédente.
         if ($session->previous_session_id) {
             foreach (InventorySessionLine::where('inventory_session_id', $session->previous_session_id)->get() as $ligne) {
-                $termes[$cle((int) $ligne->product_id, $ligne->fund_id)] = $this->termesVides(
+                $termes[(int) $ligne->product_id] = $this->termesVides(
                     (int) $ligne->product_id,
-                    $ligne->fund_id,
                     (int) $ligne->counted_quantity
                 );
             }
         }
 
-        // Mouvements de la période, par produit, propriétaire et type.
+        // Mouvements de la période, par produit et type.
         $mouvements = DB::table('stock_movements')
             ->where('store_id', $session->store_id)
             ->when($debut, fn ($q) => $q->where('created_at', '>=', $debut))
@@ -138,14 +136,13 @@ class InventaireService
             // Les mouvements écrits par une séance sont des résultats de
             // comptage : ils ne nourrissent pas le comptage suivant.
             ->where(fn ($q) => $q->whereNull('source_type')->orWhere('source_type', '!=', self::ORIGINE))
-            ->selectRaw('product_id, '.$this->fondsSql().' as fonds, type, SUM(quantity) as qty')
-            ->groupBy('product_id', DB::raw($this->fondsSql()), 'type')
+            ->selectRaw('product_id, type, SUM(quantity) as qty')
+            ->groupBy('product_id', 'type')
             ->get();
 
         foreach ($mouvements as $ligne) {
-            $fundId = ((int) $ligne->fonds) ?: null;
-            $k = $cle((int) $ligne->product_id, $fundId);
-            $termes[$k] ??= $this->termesVides((int) $ligne->product_id, $fundId, 0);
+            $k = (int) $ligne->product_id;
+            $termes[$k] ??= $this->termesVides($k, 0);
             $qty = (int) $ligne->qty;
 
             match ($ligne->type) {
@@ -171,9 +168,8 @@ class InventaireService
         $premiere = $session->estPremiereSeance();
 
         foreach (DB::table('store_products')->where('store_id', $session->store_id)->get() as $stock) {
-            $fundId = $stock->fund_id ? (int) $stock->fund_id : null;
-            $k = $cle((int) $stock->product_id, $fundId);
-            $termes[$k] ??= $this->termesVides((int) $stock->product_id, $fundId, $premiere ? (int) $stock->quantity : 0);
+            $k = (int) $stock->product_id;
+            $termes[$k] ??= $this->termesVides($k, $premiere ? (int) $stock->quantity : 0);
         }
 
         // Premier comptage d'une boutique : tout le catalogue, et pas seulement
@@ -187,7 +183,7 @@ class InventaireService
         // jamais eu.
         if ($premiere) {
             foreach (DB::table('products')->orderBy('libelle')->pluck('id') as $productId) {
-                $termes[$cle((int) $productId, null)] ??= $this->termesVides((int) $productId, null, 0);
+                $termes[(int) $productId] ??= $this->termesVides((int) $productId, 0);
             }
         }
 
@@ -202,7 +198,7 @@ class InventaireService
      * Valide la séance : calcule les quantités vendues, fige tous les termes,
      * aligne le stock enregistré sur le stock compté et trace le tout.
      *
-     * @param  array<int, array{product_id:int, fund_id?:int|null, counted:int, loss?:int, loss_reason?:string|null, unit_price?:float|null}>  $comptages
+     * @param  array<int, array{product_id:int, counted:int, loss?:int, loss_reason?:string|null, unit_price?:float|null}>  $comptages
      */
     public function valider(InventorySession $session, array $comptages, ?int $userId = null): InventorySession
     {
@@ -224,16 +220,14 @@ class InventaireService
             $totalPertes = 0.0;
             $totalMarge = 0.0;
             $totalVendu = 0;
-            $fonds = app(FundService::class);
 
             foreach ($comptages as $comptage) {
                 $productId = (int) $comptage['product_id'];
-                $fundId = ! empty($comptage['fund_id']) ? (int) $comptage['fund_id'] : null;
                 $compte = max(0, (int) $comptage['counted']);
                 $perte = max(0, (int) ($comptage['loss'] ?? 0));
 
                 $produit = Product::findOrFail($productId);
-                $t = $termes[$productId.'|'.($fundId ?: '')] ?? $this->termesVides($productId, $fundId, 0);
+                $t = $termes[$productId] ?? $this->termesVides($productId, 0);
 
                 // Prix de vente figé : celui proposé à la saisie, sinon celui de
                 // la fiche au moment du comptage. Il ne rebougera plus.
@@ -241,15 +235,10 @@ class InventaireService
                     ? (float) $comptage['unit_price']
                     : (float) ($produit->price ?? 0);
 
-                // Une première séance ne déduit rien : elle constate le stock de
-                // départ. Sans séance précédente, il n'existe aucune borne et
-                // tout le stock compté passerait pour une vente.
                 // Prix de revient figé lui aussi : un achat postérieur change le
                 // coût du produit, et la marge d'une période close ne doit pas
-                // bouger derrière. Marchandise d'un associé : son coût à lui.
-                $cout = $fundId
-                    ? (float) $fonds->unitCost($fundId, $productId)
-                    : (float) $produit->coutUnitaire();
+                // bouger derrière.
+                $cout = (float) $produit->coutUnitaire();
 
                 // Une première séance ne déduit rien : elle constate le stock de
                 // départ. Sans séance précédente, il n'existe aucune borne et
@@ -273,7 +262,6 @@ class InventaireService
                 InventorySessionLine::create([
                     'inventory_session_id' => $session->id,
                     'product_id' => $productId,
-                    'fund_id' => $fundId,
                     'unite' => $produit->unite,
                     'counted_quantity' => $compte,
                     'loss_quantity' => $perte,
@@ -297,7 +285,7 @@ class InventaireService
                 // aurait rapporté : la marchandise perdue n'a jamais été vendue.
                 $totalPertes += $perte * ($cout > 0 ? $cout : $prix);
 
-                $this->tracerEtAligner($session, $produit, $fundId, $compte, $vendu, $perte, $prix, $comptage['loss_reason'] ?? null);
+                $this->tracerEtAligner($session, $produit, $compte, $vendu, $perte, $prix, $comptage['loss_reason'] ?? null);
             }
 
             $session->update([
@@ -328,7 +316,6 @@ class InventaireService
     private function tracerEtAligner(
         InventorySession $session,
         Product $produit,
-        ?int $fundId,
         int $compte,
         int $vendu,
         int $perte,
@@ -339,7 +326,6 @@ class InventaireService
             'source_type' => self::ORIGINE,
             'source_id' => $session->id,
             'document_ref' => $session->reference,
-            'fund_id' => $fundId,
         ];
 
         if ($vendu > 0) {
@@ -365,12 +351,11 @@ class InventaireService
         ]);
     }
 
-    /** @return array{product_id:int, fund_id:int|null, opening:int, purchased:int, transfer_in:int, transfer_out:int, other:int, theorique:int} */
-    private function termesVides(int $productId, ?int $fundId, int $opening): array
+    /** @return array{product_id:int, opening:int, purchased:int, transfer_in:int, transfer_out:int, other:int, theorique:int} */
+    private function termesVides(int $productId, int $opening): array
     {
         return [
             'product_id' => $productId,
-            'fund_id' => $fundId,
             'opening' => $opening,
             'purchased' => 0,
             'transfer_in' => 0,
@@ -378,11 +363,5 @@ class InventaireService
             'other' => 0,
             'theorique' => $opening,
         ];
-    }
-
-    /** COALESCE portable : le propriétaire absent vaut 0 pour le regroupement. */
-    private function fondsSql(): string
-    {
-        return 'COALESCE(fund_id, 0)';
     }
 }

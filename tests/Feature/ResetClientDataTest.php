@@ -19,7 +19,7 @@ use Tests\TestCase;
  * démonstration et garde les comptes, les droits et les réglages.
  *
  * Sa liste de tables a été écrite une fois, puis le projet a continué. Le
- * module de comptage, les fonds d'associés, le journal des mouvements de stock
+ * module de comptage, le journal des mouvements de stock
  * et les affectations de vendeurs sont arrivés après, sans y être ajoutés : la
  * base du nouveau client aurait gardé l'historique de l'ancien — et le premier
  * comptage aurait déduit un stock de départ de mouvements qui ne le concernent
@@ -62,7 +62,7 @@ class ResetClientDataTest extends TestCase
         Artisan::call('client:reset-data', ['--force' => true]);
 
         foreach (['products', 'stores', 'customers', 'store_products', 'stock_movements',
-            'inventory_sessions', 'inventory_session_lines', 'funds', 'store_assignments'] as $table) {
+            'inventory_sessions', 'inventory_session_lines', 'store_assignments'] as $table) {
             $this->assertSame(0, DB::table($table)->count(), "La table $table n'a pas été vidée.");
         }
     }

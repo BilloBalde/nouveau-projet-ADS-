@@ -8,7 +8,7 @@ class OrderItem extends Model
 {
     use Concerns\FigeUniteProduit;
 
-    protected $fillable = ['order_id', 'product_id', 'store_id', 'fund_id', 'quantity', 'unite', 'price', 'quantity_delivered'];
+    protected $fillable = ['order_id', 'product_id', 'store_id', 'quantity', 'unite', 'price', 'quantity_delivered'];
 
     /** Emplacement qui a fourni la ligne, choisi à l'approbation. */
     public function store()

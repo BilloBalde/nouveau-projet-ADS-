@@ -93,9 +93,6 @@
                                     <div class="nom">{{ $transfer->product?->libelle ?? 'Produit #' . $transfer->product_id }}</div>
                                     <div class="detail">
                                         SKU : {{ $transfer->product?->sku ?? '—' }} · Conditionnement : {{ $transfer->unite_detail }}
-                                        @if ($transfer->fund_id)
-                                            · Propriétaire : {{ \App\Models\Fund::labelFor($transfer->fund_id) }}
-                                        @endif
                                     </div>
                                 </div>
                                 <div class="bt-quantite">{{ $transfer->quantite_affichee }}</div>

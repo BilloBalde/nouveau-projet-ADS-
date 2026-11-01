@@ -55,7 +55,7 @@ class Authentification extends Controller
         $stores = Store::optionsFor(Auth::user()->isRestrictedToStore() ? Auth::user() : null)->loadCount('users');
         $places = Place::orderBy('placeName')->get();
         $globalRoleIds = Role::whereHas('permissions', fn ($q) => $q->where('slug', 'stores.all'))->pluck('id');
-        $scopedRoleIds = Role::whereNotIn('slug', ['admin', 'customer', 'associe'])
+        $scopedRoleIds = Role::whereNotIn('slug', ['admin', 'customer'])
             ->whereNotIn('id', $globalRoleIds)
             ->pluck('id')
             ->all();
