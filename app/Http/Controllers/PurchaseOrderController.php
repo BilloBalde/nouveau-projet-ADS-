@@ -98,11 +98,34 @@ class PurchaseOrderController extends Controller
         return Carbon::parse($dateRecu)->lte(Carbon::today()) ? 'received' : 'pending';
     }
 
+    /**
+     * Prix de revient à retenir quand le nouveau diffère de l'ancien : le
+     * nouveau (par défaut), l'ancien, ou un prix saisi. Le formulaire pose la
+     * question ligne par ligne avant d'enregistrer.
+     */
+    private function reglesChoixDuCout(): array
+    {
+        return [
+            'lines.*.cost_choice' => 'nullable|in:'.implode(',', PurchaseOrderCostingService::CHOIX),
+            'lines.*.cost_custom' => 'nullable|required_if:lines.*.cost_choice,saisi|numeric|gt:0',
+        ];
+    }
+
+    private function messagesChoixDuCout(): array
+    {
+        return [
+            'lines.*.cost_custom.required_if' => 'Saisissez le prix de revient à retenir.',
+            'lines.*.cost_custom.gt' => 'Le prix de revient saisi doit être positif.',
+        ];
+    }
+
     public function create()
     {
         $stores = Store::optionsFor(auth()->user());
         $suppliers = Partner::orderBy('name')->get();
-        $products = Product::orderBy('libelle')->get(['id', 'libelle', 'sku', 'unite', 'pcs_par_carton', 'pcs_par_paquet', 'dimension_rouleau']);
+        // price_sale : le prix de revient actuel, affiché sur chaque ligne et
+        // comparé au nouveau avant l'enregistrement.
+        $products = Product::orderBy('libelle')->get(['id', 'libelle', 'sku', 'unite', 'price_sale']);
         $currencies = CurrencySetting::whereNotNull('rate_to_gnf')->where('currencyCode', '!=', 'GNF')->get();
         $reference = $this->nextReference();
         // Pour les modales "Nouvelle boutique" / "Nouveau produit" du formulaire.
@@ -141,8 +164,10 @@ class PurchaseOrderController extends Controller
             'lines.*.cartons' => 'nullable|integer|min:0',
             'lines.*.pieces_per_carton' => 'nullable|integer|min:0',
             'lines.*.quantity' => 'required|integer|min:1',
+            ...$this->reglesChoixDuCout(),
         ], [
             'reference.unique' => 'Cette référence existe déjà.',
+            ...$this->messagesChoixDuCout(),
             'exchange_rate_used.required_with' => 'Le taux du jour est obligatoire quand une devise est sélectionnée.',
         ]);
 
@@ -187,7 +212,9 @@ class PurchaseOrderController extends Controller
         $this->authorizeStore($order->store_id);
         $stores = Store::optionsFor(auth()->user());
         $suppliers = Partner::orderBy('name')->get();
-        $products = Product::orderBy('libelle')->get(['id', 'libelle', 'sku', 'unite', 'pcs_par_carton', 'pcs_par_paquet', 'dimension_rouleau']);
+        // price_sale : le prix de revient actuel, affiché sur chaque ligne et
+        // comparé au nouveau avant l'enregistrement.
+        $products = Product::orderBy('libelle')->get(['id', 'libelle', 'sku', 'unite', 'price_sale']);
         $currencies = CurrencySetting::whereNotNull('rate_to_gnf')->where('currencyCode', '!=', 'GNF')->get();
         // Pour les modales "Nouvelle boutique" / "Nouveau produit" du formulaire.
         $places = Place::all();
@@ -229,8 +256,10 @@ class PurchaseOrderController extends Controller
             'lines.*.description' => 'nullable|string',
             'lines.*.cartons' => 'nullable|integer|min:0',
             'lines.*.pieces_per_carton' => 'nullable|integer|min:0',
+            ...$this->reglesChoixDuCout(),
         ], [
             'exchange_rate_used.required_with' => 'Le taux du jour est obligatoire quand une devise est sélectionnée.',
+            ...$this->messagesChoixDuCout(),
         ]);
 
         $this->authorizeStore($validated['store_id']);

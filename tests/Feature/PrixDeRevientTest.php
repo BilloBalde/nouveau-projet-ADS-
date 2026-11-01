@@ -290,6 +290,86 @@ class PrixDeRevientTest extends TestCase
     }
 
     // -----------------------------------------------------------------
+    // Le prix de revient change : le gérant choisit
+    // -----------------------------------------------------------------
+
+    /** Achat local du ciment à 1 000 la pièce, avec le choix donné. */
+    private function racheterLeCiment(array $choix = []): PurchaseOrder
+    {
+        $achat = $this->achat(['origin' => 'guinee', 'currency_code' => null, 'exchange_rate_used' => 1]);
+        $this->service()->costOrder($achat, [
+            ['product_id' => $this->ciment->id, 'quantity' => 10, 'unit_price_foreign' => 1_000] + $choix,
+        ]);
+
+        return $achat->fresh('items');
+    }
+
+    public function test_sans_reponse_le_nouveau_prix_de_revient_est_retenu(): void
+    {
+        $this->ciment->update(['price_sale' => 800, 'price' => 1_040]);
+
+        $this->racheterLeCiment();
+
+        $this->assertEquals(1_000, $this->ciment->fresh()->price_sale);
+    }
+
+    public function test_garder_l_ancien_prix_de_revient(): void
+    {
+        $this->ciment->update(['price_sale' => 800, 'price' => 1_040, 'price_manuel' => false]);
+
+        $achat = $this->racheterLeCiment(['cost_choice' => PurchaseOrderCostingService::ANCIEN]);
+
+        $this->ciment->refresh();
+        $this->assertEquals(800, $this->ciment->price_sale);
+        $this->assertEquals(1_040, $this->ciment->price, 'Le prix de vente suit le prix de revient retenu.');
+        // Le coût réel de l'achat, lui, reste écrit sur sa ligne.
+        $this->assertEquals(1_000, $achat->items->first()->landed_unit_cost_gnf);
+        $this->assertSame(10, $this->stock($this->entrepot, $this->ciment));
+    }
+
+    public function test_saisir_un_autre_prix_de_revient(): void
+    {
+        $this->ciment->update(['price_sale' => 800, 'price' => 1_040, 'price_manuel' => false]);
+
+        $this->racheterLeCiment(['cost_choice' => PurchaseOrderCostingService::SAISI, 'cost_custom' => '900']);
+
+        $this->ciment->refresh();
+        $this->assertEquals(900, $this->ciment->price_sale);
+        $this->assertEquals(Product::prixDeVenteConseille(900), $this->ciment->price);
+    }
+
+    public function test_un_produit_sans_prix_de_revient_prend_celui_de_l_achat(): void
+    {
+        $this->ciment->update(['price_sale' => 0]);
+
+        $this->racheterLeCiment(['cost_choice' => PurchaseOrderCostingService::ANCIEN]);
+
+        $this->assertEquals(1_000, $this->ciment->fresh()->price_sale, 'Il n\'y avait pas d\'ancien prix à garder.');
+    }
+
+    public function test_l_ecran_affiche_le_prix_de_revient_et_exige_le_prix_saisi(): void
+    {
+        $this->ciment->update(['price_sale' => 800]);
+
+        $this->get(route('purchase-orders.create'))->assertOk()
+            ->assertSee('data-cout="800"', false)
+            ->assertSee('choixCoutModal', false);
+
+        $this->post(route('purchase-orders.store'), [
+            'reference' => 'ACH-CHOIX', 'store_id' => $this->entrepot->id, 'origin' => 'guinee',
+            'date_emis' => now()->toDateString(),
+            'lines' => [['product_id' => $this->ciment->id, 'quantity' => 10, 'unit_price_foreign' => 1_000, 'cost_choice' => 'saisi']],
+        ])->assertSessionHasErrors('lines.0.cost_custom');
+
+        $this->post(route('purchase-orders.store'), [
+            'reference' => 'ACH-CHOIX', 'store_id' => $this->entrepot->id, 'origin' => 'guinee',
+            'date_emis' => now()->toDateString(),
+            'lines' => [['product_id' => $this->ciment->id, 'quantity' => 10, 'unit_price_foreign' => 1_000, 'cost_choice' => 'ancien']],
+        ])->assertSessionHasNoErrors();
+        $this->assertEquals(800, $this->ciment->fresh()->price_sale);
+    }
+
+    // -----------------------------------------------------------------
     // Bout en bout, par l'écran
     // -----------------------------------------------------------------
 

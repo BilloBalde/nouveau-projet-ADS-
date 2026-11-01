@@ -204,7 +204,7 @@
                             <select name="lines[__INDEX__][product_id]" class="form-control" data-field="product_id" required>
                                 <option value="">Sélectionner le produit</option>
                                 @foreach($products as $product)
-                                    <option value="{{ $product->id }}" data-unite="{{ $product->unite }}" data-unite-pluriel="{{ \App\Models\Product::motUnite($product->unite, 2) }}">{{ $product->libelle }} ({{ $product->sku }}) — {{ $product->unite_libelle }}</option>
+                                    <option value="{{ $product->id }}" data-cout="{{ (float) $product->price_sale }}">{{ $product->libelle }} ({{ $product->sku }})</option>
                                 @endforeach
                             </select>
                         </div>
@@ -214,6 +214,7 @@
                             </button>
                         </div>
                     </div>
+                    <small class="text-muted d-block mt-1" data-cout-actuel></small>
                 </td>
                 <td><input type="number" min="0" name="lines[__INDEX__][cartons]" class="form-control" data-field="cartons" value="0"></td>
                 <td><input type="number" min="0" name="lines[__INDEX__][pieces_per_carton]" class="form-control" data-field="pieces_per_carton" value="0"></td>
@@ -451,12 +452,12 @@
                     }
 
                     const product = result.data.product;
-                    const label = product.libelle + ' (' + product.sku + ') — ' + product.unite_libelle;
-                        // Option avec l'unité du produit, comme les options existantes.
+                    const label = product.libelle + ' (' + product.sku + ')';
+                        // Option faite comme les options existantes.
                         const nouvelleOption = function () {
                             const opt = new Option(label, product.id);
-                            opt.dataset.unite = product.unite;
-                            opt.dataset.unitePluriel = product.unite_pluriel;
+                            // Produit neuf : pas encore de prix de revient, rien à comparer.
+                            opt.dataset.cout = '0';
                             return opt;
                         };
 
@@ -720,6 +721,7 @@
 
                     const preview = item.lineEl.querySelector('[data-preview-cost]');
                     if (preview) {
+                        preview.dataset.valeur = landedUnit;
                         preview.textContent = new Intl.NumberFormat('fr-FR').format(Math.round(landedUnit));
                     }
                 });
@@ -741,5 +743,6 @@
             recompute();
         });
         </script>
+        @include('purchase_orders.partials.choix-prix-de-revient')
     </body>
 </html>

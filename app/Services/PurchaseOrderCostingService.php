@@ -11,14 +11,24 @@ use Illuminate\Support\Facades\DB;
 class PurchaseOrderCostingService
 {
     /**
-     * @param  array<int, array{product_id:int, quantity:int, cartons?:int|null, pieces_per_carton?:int|null, unit_price_foreign?:float|null, cbm_per_carton?:float|null, description?:string|null}>  $lines
+     * Prix de revient à retenir sur la fiche produit quand l'achat en donne un
+     * différent : le nouveau (celui de cet achat), l'ancien, ou un prix saisi.
      */
+    public const NOUVEAU = 'nouveau';
+
+    public const ANCIEN = 'ancien';
+
+    public const SAISI = 'saisi';
+
+    public const CHOIX = [self::NOUVEAU, self::ANCIEN, self::SAISI];
+
     public function __construct(private ?StockService $stock = null)
     {
         $this->stock ??= app(StockService::class);
     }
 
     /**
+     * @param  array<int, array{product_id:int, quantity:int, cartons?:int|null, pieces_per_carton?:int|null, unit_price_foreign?:float|null, cbm_per_carton?:float|null, description?:string|null, cost_choice?:string|null, cost_custom?:float|string|null}>  $lines
      * @param  int|null  $previousStoreId  destination avant modification : c'est
      *                                     de là que le stock de l'ancienne version de l'achat doit être retiré.
      *                                     Auparavant on le retirait de la NOUVELLE destination, ce qui faussait
@@ -77,6 +87,8 @@ class PurchaseOrderCostingService
                     'cbm_per_unit' => $isChine ? $cbmPerUnit : null,
                     'line_total_cbm' => $isChine ? $lineTotalCbm : null,
                     'description' => $line['description'] ?? null,
+                    'cost_choice' => in_array($line['cost_choice'] ?? null, self::CHOIX, true) ? $line['cost_choice'] : self::NOUVEAU,
+                    'cost_custom' => isset($line['cost_custom']) && $line['cost_custom'] !== '' ? (float) $line['cost_custom'] : null,
                 ];
             }
 
@@ -145,17 +157,23 @@ class PurchaseOrderCostingService
                 // SaleController::resolveUnitCost) et `price` est le prix de vente
                 // affiché au client — nommage historique trompeur, pas une erreur ici.
                 //
-                // Le prix de revient suit toujours le dernier achat : c'est un fait,
-                // pas une décision. Le prix de vente, lui, n'est recalculé que s'il
-                // n'a pas été fixé à la main : sinon l'ajustement du gérant était
-                // écrasé au prochain réapprovisionnement, sans avertissement.
+                // Le coût réel de cet achat reste toujours sur sa ligne
+                // (landed_unit_cost_gnf) : c'est un fait. Le prix de revient de la
+                // fiche, lui, est un choix quand il change : le gérant garde
+                // l'ancien, prend le nouveau ou en saisit un autre. Sans réponse,
+                // le nouveau est retenu.
+                //
+                // Le prix de vente n'est recalculé, sur le prix de revient retenu,
+                // que s'il n'a pas été fixé à la main : sinon l'ajustement du
+                // gérant serait écrasé au prochain réapprovisionnement.
                 $produit = Product::find($item['product_id']);
+                $retenu = $produit ? $this->prixDeRevientRetenu($produit, $item) : null;
 
-                if ($produit) {
-                    $produit->price_sale = $item['landed_unit_cost_gnf'];
+                if ($produit && $retenu !== null) {
+                    $produit->price_sale = $retenu;
 
                     if (! $produit->prixFixeALaMain()) {
-                        $produit->price = Product::prixDeVenteConseille((float) $item['landed_unit_cost_gnf']);
+                        $produit->price = Product::prixDeVenteConseille($retenu);
                     }
 
                     $produit->save();
@@ -172,5 +190,21 @@ class PurchaseOrderCostingService
                 ]);
             }
         });
+    }
+
+    /** Prix de revient à écrire sur la fiche, ou null pour la laisser telle quelle. */
+    private function prixDeRevientRetenu(Product $produit, array $item): ?float
+    {
+        // Un produit sans prix de revient prend celui de son premier achat :
+        // il n'y a rien à garder.
+        if ((float) $produit->price_sale <= 0) {
+            return (float) $item['landed_unit_cost_gnf'];
+        }
+
+        return match ($item['cost_choice']) {
+            self::ANCIEN => null,
+            self::SAISI => $item['cost_custom'] > 0 ? round($item['cost_custom'], 2) : (float) $item['landed_unit_cost_gnf'],
+            default => (float) $item['landed_unit_cost_gnf'],
+        };
     }
 }
