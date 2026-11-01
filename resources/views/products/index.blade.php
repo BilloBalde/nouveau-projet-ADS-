@@ -124,8 +124,8 @@
                                                 }
                                             @endphp
                                             <tr>
-                                                <td>{{ $dataItem->updated_at }}</td>
-                                                <td>{{ $dataItem->libelle }}</td>
+                                                <td class="text-nowrap">{{ ($dataItem->created_at ?? $dataItem->updated_at)?->format('d/m/Y') ?? '—' }}</td>
+                                                <td class="fw-semibold">{{ $dataItem->libelle }}</td>
                                                 <td>{{ $dataItem->sku }}</td>
                                                 <td>
                                                     @foreach ($dataItem->categories as $category)
@@ -133,11 +133,11 @@
                                                     @endforeach
                                                 </td>
                                                 <td>{{ $dataItem->quantiteAvecUnite($quantity) }}</td>
-                                                <td>{{ $dataItem->price }} FG</td>
-                                                <td>{{ $dataItem->price_sale ?? '-' }} FG</td>
-                                                <td>{{ $dataItem->price_sale_minimum !== null ? number_format((float) $dataItem->price_sale_minimum, 0, ',', ' ') . ' FG' : '—' }}</td>
+                                                <td class="text-nowrap">{{ francs($dataItem->price) }}</td>
+                                                <td class="text-nowrap">{{ $dataItem->price_sale !== null ? francs($dataItem->price_sale) : '—' }}</td>
+                                                <td class="text-nowrap">{{ $dataItem->price_sale_minimum !== null ? francs($dataItem->price_sale_minimum) : '—' }}</td>
                                                 <td>
-                                                    <img src="{{ $dataItem->image_url }}" alt="product" style="width: 150px; height: 100px;">
+                                                    <img src="{{ $dataItem->image_url }}" alt="{{ $dataItem->libelle }}" loading="lazy" style="width:44px;height:44px;object-fit:cover;border-radius:8px;border:1px solid var(--adm-hairline);">
                                                 </td>
                                                 <td>
                                                     <a class="me-3" href="{{ route('produits.edit', $dataItem->id) }}">
