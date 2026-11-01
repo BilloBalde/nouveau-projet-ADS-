@@ -77,7 +77,7 @@ class InventaireChiffreAffairesTest extends TestCase
         $this->ciment = Product::create(['libelle' => 'Ciment', 'sku' => 'CIM', 'description' => 'x',
             'unite' => 'pcs', 'price' => 50_000, 'price_sale' => 38_000, 'price_manuel' => true]);
         $this->sucre = Product::create(['libelle' => 'Sucre', 'sku' => 'SUC', 'description' => 'x',
-            'unite' => 'carton', 'price' => 12_000, 'price_sale' => 9_000, 'price_manuel' => true]);
+            'price' => 12_000, 'price_sale' => 9_000, 'price_manuel' => true]);
 
         $this->actingAs($this->admin);
     }
@@ -186,8 +186,8 @@ class InventaireChiffreAffairesTest extends TestCase
         $this->assertEquals(1_680_000, $seance->total_revenue_gnf);
 
         // L'unité du produit est figée sur la ligne.
-        $this->assertSame('carton', $lignes[$this->sucre->id]->unite);
-        $this->assertSame('15 cartons', $lignes[$this->sucre->id]->quantite_vendue_affichee);
+        $this->assertSame('pcs', $lignes[$this->sucre->id]->unite);
+        $this->assertSame('15 pièces', $lignes[$this->sucre->id]->quantite_vendue_affichee);
     }
 
     /**
@@ -414,7 +414,7 @@ class InventaireChiffreAffairesTest extends TestCase
     {
         // Produit dont le prix suit le coût : vulnérable.
         $suit = Product::create(['libelle' => 'Riz', 'sku' => 'RIZ', 'description' => 'x',
-            'unite' => 'carton', 'price' => 80_000, 'price_sale' => 60_000, 'price_manuel' => false]);
+            'price' => 80_000, 'price_sale' => 60_000, 'price_manuel' => false]);
 
         $this->comptageInitial($this->madina, ['RIZ' => 10, 'CIM' => 10], '2027-02-01');
         $this->achat($this->madina, $suit, 5, '2027-02-10');          // coût 1 000 → prix 1 300

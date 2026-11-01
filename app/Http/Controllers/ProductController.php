@@ -14,7 +14,6 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\Rule;
 use Maatwebsite\Excel\Facades\Excel;
 
 class ProductController extends Controller
@@ -152,46 +151,12 @@ class ProductController extends Controller
     }
 
     /**
-     * Unité unique du produit, commune à la création et à la modification :
-     * le nombre de pièces est obligatoire pour un carton ou un paquet, la
-     * dimension pour un rouleau.
+     * Tout produit se compte à la pièce : le stock, les prix, les achats, les
+     * ventes et les factures. Il n'y a plus d'unité à choisir.
      */
-    private function reglesUnites(): array
+    private function valeursUnites(): array
     {
-        $si = fn (string $code) => Rule::requiredIf(fn () => request()->input('unite') === $code);
-
-        return [
-            'unite' => 'required|in:'.implode(',', array_keys(Product::UNITES)),
-            'pcs_par_carton' => ['nullable', $si('carton'), 'integer', 'min:2'],
-            'pcs_par_paquet' => ['nullable', $si('paquet'), 'integer', 'min:2'],
-            'dimension_rouleau' => ['nullable', $si('rouleau'), 'string', 'max:60'],
-        ];
-    }
-
-    private function messagesUnites(): array
-    {
-        return [
-            'unite.required' => "Choisissez l'unité du produit.",
-            'unite.in' => 'Unité inconnue.',
-            'pcs_par_carton.required' => 'Indiquez le nombre de pièces par carton.',
-            'pcs_par_carton.min' => 'Un carton contient au moins 2 pièces.',
-            'pcs_par_paquet.required' => 'Indiquez le nombre de pièces par paquet.',
-            'pcs_par_paquet.min' => 'Un paquet contient au moins 2 pièces.',
-            'dimension_rouleau.required' => 'Indiquez la dimension du rouleau.',
-        ];
-    }
-
-    /** Valeurs à enregistrer : seul le détail de l'unité choisie est gardé. */
-    private function valeursUnites(Request $request): array
-    {
-        $unite = $request->input('unite', 'pcs');
-
-        return [
-            'unite' => $unite,
-            'pcs_par_carton' => $unite === 'carton' ? (int) $request->pcs_par_carton : null,
-            'pcs_par_paquet' => $unite === 'paquet' ? (int) $request->pcs_par_paquet : null,
-            'dimension_rouleau' => $unite === 'rouleau' ? trim((string) $request->dimension_rouleau) : null,
-        ];
+        return ['unite' => 'pcs', 'pcs_par_carton' => null, 'pcs_par_paquet' => null, 'dimension_rouleau' => null];
     }
 
     /**
@@ -240,7 +205,6 @@ class ProductController extends Controller
     public function validation(Request $request)
     {
         return $request->validate([
-            ...$this->reglesUnites(),
             'categories' => 'required|array',
             'categories.*' => 'exists:categories,id',
             'libelle' => 'required|string|max:225',
@@ -254,10 +218,6 @@ class ProductController extends Controller
             'stock_initial' => 'required|integer|min:0',
             'store_id' => 'required|exists:stores,id',
             'image' => 'image',
-            'is_promo' => 'nullable|boolean',
-            'promo_percent' => 'nullable|numeric|min:0|max:100',
-            'promo_start_date' => 'nullable|date',
-            'promo_end_date' => 'nullable|date|after_or_equal:promo_start_date',
         ], [
             'categories.required' => 'veuillez selectionner la categorie',
             'categories.array' => 'Selectionner plusieurs categories',
@@ -274,22 +234,7 @@ class ProductController extends Controller
             'store_id.required' => 'champ Magasin doit être rempli',
             'store_id.exists' => 'Magasin sélectionné invalide',
             'image.image' => 'champ image ne prend que des images',
-            'promo_percent.max' => 'Le pourcentage de promotion ne peut pas dépasser 100.',
-            'promo_end_date.after_or_equal' => 'La date de fin de promo doit être après la date de début.',
-            ...$this->messagesUnites(),
         ]);
-    }
-
-    /**
-     * Calcule le prix promo à partir du prix de vente et du pourcentage saisi.
-     */
-    private function computePromoPrice(Request $request, float $price): ?float
-    {
-        if (! $request->boolean('is_promo') || ! $request->filled('promo_percent')) {
-            return null;
-        }
-
-        return round($price * (1 - ((float) $request->promo_percent / 100)), 2);
     }
 
     /**
@@ -308,14 +253,10 @@ class ProductController extends Controller
             'libelle' => 'required|string|max:225',
             'sku' => 'required|string|max:225',
             'category_id' => 'required|exists:categories,id',
-            // Unité unique, mêmes règles que la fiche produit (pièces par
-            // carton ou par paquet, dimension du rouleau).
-            ...$this->reglesUnites(),
         ], [
             'libelle.required' => 'Le nom du produit est requis.',
             'sku.required' => 'Le SKU est requis.',
             'category_id.required' => 'La catégorie est requise.',
-            ...$this->messagesUnites(),
         ]);
 
         try {
@@ -323,7 +264,7 @@ class ProductController extends Controller
                 'libelle' => $request->libelle,
                 'sku' => $request->sku,
                 'description' => $request->libelle,
-                ...$this->valeursUnites($request),
+                ...$this->valeursUnites(),
             ]);
 
             $product->categories()->attach($request->category_id);
@@ -364,12 +305,7 @@ class ProductController extends Controller
                 // sur leur visuel de repli. Pointer vers un "ib profile.jpg" qui
                 // n'existe pas produisait une image cassée sur chaque fiche.
                 'image' => $productName ?? '',
-                'is_promo' => $request->boolean('is_promo'),
-                'promo_percent' => $request->promo_percent ?? null,
-                'promo_price' => $this->computePromoPrice($request, $price),
-                'promo_start_date' => $request->promo_start_date ?? null,
-                'promo_end_date' => $request->promo_end_date ?? null,
-                ...$this->valeursUnites($request),
+                ...$this->valeursUnites(),
             ]);
 
             $product->categories()->attach($request->categories);
@@ -459,15 +395,6 @@ class ProductController extends Controller
             'price_sale_minimum' => $this->regleMinimum($request, (float) $request->input('price')),
             'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
             'store_id' => 'required|exists:stores,id',
-            'is_promo' => 'nullable|boolean',
-            'promo_percent' => 'nullable|numeric|min:0|max:100',
-            'promo_start_date' => 'nullable|date',
-            'promo_end_date' => 'nullable|date|after_or_equal:promo_start_date',
-            ...$this->reglesUnites(),
-        ], [
-            'promo_percent.max' => 'Le pourcentage de promotion ne peut pas dépasser 100.',
-            'promo_end_date.after_or_equal' => 'La date de fin de promo doit être après la date de début.',
-            ...$this->messagesUnites(),
         ]);
 
         try {
@@ -488,12 +415,7 @@ class ProductController extends Controller
             $product->price_manuel = (float) $product->price
                 !== Product::prixDeVenteConseille((float) $product->price_sale);
 
-            $product->is_promo = $request->boolean('is_promo');
-            $product->promo_percent = $request->promo_percent ?? null;
-            $product->promo_price = $this->computePromoPrice($request, (float) $request->price);
-            $product->promo_start_date = $request->promo_start_date ?? null;
-            $product->promo_end_date = $request->promo_end_date ?? null;
-            $product->fill($this->valeursUnites($request));
+            $product->fill($this->valeursUnites());
 
             $product->save();
 

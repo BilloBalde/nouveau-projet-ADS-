@@ -5,7 +5,6 @@ namespace App\Models;
 use App\Support\ModeDeVente;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
@@ -56,43 +55,26 @@ class Product extends Model
     ];
 
     /**
-     * Unité unique du produit, choisie à la création : le stock, les achats,
-     * les ventes et les factures sont tous comptés dans cette unité.
+     * Tout se compte à la pièce : le stock, les achats, les ventes et les
+     * factures. Les cartons, douzaines, paquets et rouleaux ont été convertis
+     * en pièces (migration 2026_11_01_000001).
      */
     public const UNITES = [
-        'pcs' => ['libelle' => 'Pièce',    'pluriel' => 'pièces',    'court' => 'pcs'],
-        'douzaine' => ['libelle' => 'Douzaine', 'pluriel' => 'douzaines', 'court' => 'douz.'],
-        'carton' => ['libelle' => 'Carton',   'pluriel' => 'cartons',   'court' => 'ctn'],
-        'paquet' => ['libelle' => 'Paquet',   'pluriel' => 'paquets',   'court' => 'paq.'],
-        'rouleau' => ['libelle' => 'Rouleau',  'pluriel' => 'rouleaux',  'court' => 'rlx'],
+        'pcs' => ['libelle' => 'Pièce', 'pluriel' => 'pièces', 'court' => 'pcs'],
     ];
 
     public function getUniteAttribute($valeur): string
     {
-        return isset(self::UNITES[$valeur]) ? $valeur : 'pcs';
+        return 'pcs';
     }
 
-    /** Contenu d'une unité : « 12 pcs », « 24 pcs », « 100 m », ou null. */
-    public function contenanceUnite(): ?string
-    {
-        return match ($this->unite) {
-            'douzaine' => '12 pcs',
-            'carton' => $this->pcs_par_carton ? $this->pcs_par_carton.' pcs' : null,
-            'paquet' => $this->pcs_par_paquet ? $this->pcs_par_paquet.' pcs' : null,
-            'rouleau' => $this->dimension_rouleau ?: null,
-            default => null,
-        };
-    }
-
-    /** « Carton (24 pcs) », « Rouleau (100 m) », « Pièce ». */
+    /** « Pièce ». */
     public function getUniteLibelleAttribute(): string
     {
-        $contenance = $this->contenanceUnite();
-
-        return self::UNITES[$this->unite]['libelle'].($contenance ? ' ('.$contenance.')' : '');
+        return self::UNITES['pcs']['libelle'];
     }
 
-    /** Nom de l'unité en minuscules, accordé : « carton » / « cartons ». */
+    /** Nom de l'unité en minuscules, accordé : « pièce » / « pièces ». */
     public static function motUnite(?string $code, float|int $quantite = 1): string
     {
         $unite = self::UNITES[$code] ?? self::UNITES['pcs'];
@@ -157,27 +139,13 @@ class Product extends Model
     }
 
     /**
-     * Une promo peut être configurée à l'avance ou laissée expirer sans être
-     * désactivée manuellement — on vérifie donc la fenêtre de dates à chaque
-     * lecture plutôt que de se fier uniquement au booléen is_promo.
+     * Pas de promotion : la vente se fait en boutique, pas en ligne. Les
+     * colonnes promo_* restent en base mais ne sont plus saisies, et aucune
+     * promo ancienne ne peut réapparaître dans un prix.
      */
     public function isPromoActive(): bool
     {
-        if (! $this->is_promo || ! $this->promo_price) {
-            return false;
-        }
-
-        $today = Carbon::today();
-
-        if ($this->promo_start_date && $today->lt($this->promo_start_date)) {
-            return false;
-        }
-
-        if ($this->promo_end_date && $today->gt($this->promo_end_date)) {
-            return false;
-        }
-
-        return true;
+        return false;
     }
 
     public function getEffectivePromoPriceAttribute(): ?float

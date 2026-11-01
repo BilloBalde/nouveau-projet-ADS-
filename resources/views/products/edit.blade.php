@@ -25,64 +25,6 @@
                 font-size: 14px;
             }
 
-            .promo-toggle-row {
-                display: flex;
-                align-items: center;
-                gap: 10px;
-                margin-bottom: 16px;
-            }
-
-            .promo-toggle-row label {
-                margin: 0;
-                font-weight: 600;
-                cursor: pointer;
-            }
-
-            .promo-fields {
-                display: none;
-            }
-
-            .promo-fields.active {
-                display: flex;
-                flex-wrap: wrap;
-                margin: 0 -12px;
-            }
-
-            .promo-preview {
-                display: none;
-                align-items: center;
-                gap: 14px;
-                background: #fbf3ea;
-                border: 1px solid var(--adm-brand-200,#CED5AE);
-                border-radius: 8px;
-                padding: 12px 16px;
-                margin-top: 8px;
-            }
-
-            .promo-preview.active {
-                display: flex;
-            }
-
-            .promo-preview .old-price {
-                text-decoration: line-through;
-                color: #a99b8c;
-                font-size: 14px;
-            }
-
-            .promo-preview .new-price {
-                color: var(--adm-brand-600,#3E4C21);
-                font-weight: 700;
-                font-size: 18px;
-            }
-
-            .promo-preview .badge-percent {
-                background: var(--adm-brand-600,#3E4C21);
-                color: #fff;
-                font-size: 12px;
-                font-weight: 700;
-                padding: 2px 9px;
-                border-radius: 999px;
-            }
         </style>
         <div id="global-loader">
             <div class="whirly-loader"> </div>
@@ -156,11 +98,11 @@
                                                 </div>
                                                 <div class="mb-2">
                                                     <strong>Stock dans ce magasin :</strong>
-                                                    <span id="stockForStore">{{ $quantityForUser }}</span> <span data-unite-pluriel>{{ \App\Models\Product::motUnite($product->unite, 2) }}</span>
+                                                    <span id="stockForStore">{{ $quantityForUser }}</span> pièces
                                                 </div>
                                                 <div class="text-muted">
                                                     <strong>Stock total (tous magasins) :</strong>
-                                                    <span>{{ $totalQty }}</span> <span data-unite-pluriel>{{ \App\Models\Product::motUnite($product->unite, 2) }}</span>
+                                                    <span>{{ $totalQty }}</span> pièces
                                                 </div>
                                                 <input type="hidden" id="store_id" value="{{ $userStoreId }}">
                                             @else
@@ -181,11 +123,11 @@
                                                     <div class="col-md-6">
                                                         <div>
                                                             <strong>Stock dans ce magasin :</strong>
-                                                            <span id="stockForStore">0</span> <span data-unite-pluriel>{{ \App\Models\Product::motUnite($product->unite, 2) }}</span>
+                                                            <span id="stockForStore">0</span> pièces
                                                         </div>
                                                         <div class="text-muted">
                                                             <strong>Stock total (tous magasins) :</strong>
-                                                            <span>{{ $totalQty }}</span> <span data-unite-pluriel>{{ \App\Models\Product::motUnite($product->unite, 2) }}</span>
+                                                            <span>{{ $totalQty }}</span> pièces
                                                         </div>
                                                     </div>
                                                 </div>
@@ -193,7 +135,7 @@
                                         </div>
                                         <div class="col-lg-6 col-sm-6 col-6">
                                             <div class="form-group">
-                                                <label for="stock_restant">Stock global (en <span data-unite-pluriel>pièces</span>)</label>
+                                                <label for="stock_restant">Stock global (en pièces)</label>
                                                 <input type="number" id="stock_restant" name="stock_restant" class="form-control" value="{{ old('stock_restant', $totalQty) }}">
                                                 @error('stock_restant')
                                                 <span class="text-danger">{{ $message }}</span>
@@ -212,14 +154,12 @@
                                     </div>
                                 </div>
 
-                                @include('products.partials.unites')
-
                                 <div class="form-section">
                                     <div class="form-section-title"><i class="fa fa-tag"></i> Tarification</div>
                                     <div class="row">
                                         <div class="col-lg-4 col-sm-6 col-12">
                                             <div class="form-group">
-                                                <label for="price">Prix de Vente par <span data-unite-singulier>pièce</span> (FG)</label>
+                                                <label for="price">Prix de Vente par pièce (FG)</label>
                                                 <input type="text" id="price" name="price" class="form-control" value="{{ old('price', $product->price) }}">
                                                 @error('price')
                                                 <span class="text-danger">{{ $message }}</span>
@@ -228,7 +168,7 @@
                                         </div>
                                         <div class="col-lg-4 col-sm-6 col-12">
                                             <div class="form-group">
-                                                <label for="price_sale">Prix de Revient par <span data-unite-singulier>pièce</span> (FG)</label>
+                                                <label for="price_sale">Prix de Revient par pièce (FG)</label>
                                                 <input type="text" id="price_sale" name="price_sale" class="form-control" value="{{ old('price_sale', $product->price_sale ?? 0) }}">
                                                 @error('price_sale')
                                                 <span class="text-danger">{{ $message }}</span>
@@ -236,51 +176,6 @@
                                             </div>
                                         </div>
                                         @include('products.partials.prix-minimum')
-                                    </div>
-                                </div>
-
-                                <div class="form-section">
-                                    <div class="form-section-title"><i class="fa fa-percent"></i> Promotion</div>
-                                    <div class="promo-toggle-row">
-                                        <input type="checkbox" id="is_promo" name="is_promo" value="1" style="width:18px;height:18px;" {{ old('is_promo', $product->is_promo) ? 'checked' : '' }}>
-                                        <label for="is_promo">Activer une promotion sur ce produit</label>
-                                    </div>
-                                    <div class="promo-fields {{ old('is_promo', $product->is_promo) ? 'active' : '' }}" id="promoFields">
-                                        <div class="col-lg-4 col-sm-6 col-12">
-                                            <div class="form-group">
-                                                <label for="promo_percent">Pourcentage de réduction (%)</label>
-                                                <input type="number" step="0.01" min="0" max="100" id="promo_percent" name="promo_percent" class="form-control" value="{{ old('promo_percent', $product->promo_percent) }}">
-                                                @error('promo_percent')
-                                                <span class="text-danger">{{ $message }}</span>
-                                                @enderror
-                                            </div>
-                                        </div>
-                                        <div class="col-lg-4 col-sm-6 col-12">
-                                            <div class="form-group">
-                                                <label for="promo_start_date">Début de la promo</label>
-                                                <input type="date" id="promo_start_date" name="promo_start_date" class="form-control" value="{{ old('promo_start_date', $product->promo_start_date?->format('Y-m-d')) }}">
-                                                @error('promo_start_date')
-                                                <span class="text-danger">{{ $message }}</span>
-                                                @enderror
-                                            </div>
-                                        </div>
-                                        <div class="col-lg-4 col-sm-6 col-12">
-                                            <div class="form-group">
-                                                <label for="promo_end_date">Fin de la promo</label>
-                                                <input type="date" id="promo_end_date" name="promo_end_date" class="form-control" value="{{ old('promo_end_date', $product->promo_end_date?->format('Y-m-d')) }}">
-                                                @error('promo_end_date')
-                                                <span class="text-danger">{{ $message }}</span>
-                                                @enderror
-                                            </div>
-                                        </div>
-                                        <div class="col-lg-12">
-                                            <div class="promo-preview" id="promoPreview">
-                                                <span class="old-price" id="promoOldPrice">0 FG</span>
-                                                <i class="fa fa-arrow-right" style="color:var(--adm-brand-600,#3E4C21);"></i>
-                                                <span class="new-price" id="promoNewPrice">0 FG</span>
-                                                <span class="badge-percent" id="promoBadge">-0%</span>
-                                            </div>
-                                        </div>
                                     </div>
                                 </div>
 
@@ -333,38 +228,6 @@
                     storeSelect.addEventListener('change', updateQty);
                 }
 
-                const isPromoCheckbox = document.getElementById('is_promo');
-                const promoFields = document.getElementById('promoFields');
-                const promoPreview = document.getElementById('promoPreview');
-                const priceInput = document.getElementById('price');
-                const percentInput = document.getElementById('promo_percent');
-
-                function formatGNF(value) {
-                    return new Intl.NumberFormat('fr-FR').format(Math.round(value)) + ' FG';
-                }
-
-                function updatePromoUI() {
-                    const enabled = isPromoCheckbox.checked;
-                    promoFields.classList.toggle('active', enabled);
-
-                    const price = parseFloat(priceInput.value) || 0;
-                    const percent = parseFloat(percentInput.value) || 0;
-
-                    if (enabled && price > 0 && percent > 0) {
-                        const newPrice = price * (1 - percent / 100);
-                        document.getElementById('promoOldPrice').textContent = formatGNF(price);
-                        document.getElementById('promoNewPrice').textContent = formatGNF(newPrice);
-                        document.getElementById('promoBadge').textContent = '-' + percent + '%';
-                        promoPreview.classList.add('active');
-                    } else {
-                        promoPreview.classList.remove('active');
-                    }
-                }
-
-                isPromoCheckbox.addEventListener('change', updatePromoUI);
-                priceInput.addEventListener('input', updatePromoUI);
-                percentInput.addEventListener('input', updatePromoUI);
-                updatePromoUI();
             });
         </script>
     </body>

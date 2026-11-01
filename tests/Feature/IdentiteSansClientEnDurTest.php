@@ -75,7 +75,9 @@ class IdentiteSansClientEnDurTest extends TestCase
         foreach ($aExaminer as $fichier) {
             $contenu = file_get_contents($fichier);
 
-            $relatif = str_replace(base_path().'/', '', $fichier);
+            // Séparateurs normalisés : sous Windows, base_path() et les chemins
+            // trouvés portent des « \ », et aucune exception ne correspondait.
+            $relatif = str_replace(str_replace('\\', '/', base_path()).'/', '', str_replace('\\', '/', $fichier));
 
             if (in_array($relatif, self::EXCEPTIONS, true)) {
                 continue;

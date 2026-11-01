@@ -193,7 +193,7 @@ class InventaireEcransTest extends TestCase
     {
         $this->actingAs($this->admin);
         $autre = Product::create(['libelle' => 'Sucre', 'sku' => 'SUC', 'description' => 'x',
-            'unite' => 'carton', 'price' => 12_000, 'price_sale' => 9_000, 'price_manuel' => true]);
+            'price' => 12_000, 'price_sale' => 9_000, 'price_manuel' => true]);
         StoreProduct::create(['store_id' => $this->madina->id, 'product_id' => $autre->id, 'quantity' => 40]);
 
         $service = app(InventaireService::class);

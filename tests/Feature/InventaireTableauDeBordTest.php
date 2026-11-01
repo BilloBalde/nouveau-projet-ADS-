@@ -269,7 +269,7 @@ class InventaireTableauDeBordTest extends TestCase
         // Produit qui n'a PAS le drapeau « prix fixé à la main » : en mode
         // caisse, un achat le recalculerait.
         $riz = Product::create(['libelle' => 'Riz', 'sku' => 'RIZ', 'description' => 'x',
-            'unite' => 'carton', 'price' => 80_000, 'price_sale' => 60_000, 'price_manuel' => false]);
+            'price' => 80_000, 'price_sale' => 60_000, 'price_manuel' => false]);
 
         $achat = PurchaseOrder::create([
             'reference' => 'ACH-'.uniqid(), 'store_id' => $this->madina->id,
@@ -293,7 +293,7 @@ class InventaireTableauDeBordTest extends TestCase
         config(['sales.mode' => ModeDeVente::CAISSE, 'pricing.sale_margin_percent' => 30]);
 
         $riz = Product::create(['libelle' => 'Riz', 'sku' => 'RIZ', 'description' => 'x',
-            'unite' => 'carton', 'price' => 80_000, 'price_sale' => 60_000, 'price_manuel' => false]);
+            'price' => 80_000, 'price_sale' => 60_000, 'price_manuel' => false]);
 
         $achat = PurchaseOrder::create([
             'reference' => 'ACH-'.uniqid(), 'store_id' => $this->madina->id,

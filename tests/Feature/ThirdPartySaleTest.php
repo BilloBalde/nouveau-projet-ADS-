@@ -59,7 +59,7 @@ class ThirdPartySaleTest extends TestCase
         // Ciment : en stock. Robinet : au catalogue, mais aucun stock.
         $this->ciment = Product::create(['libelle' => 'Ciment', 'sku' => 'CIM', 'description' => 'x', 'price_sale' => 45000, 'price' => 60000, 'unite' => 'pcs']);
         StoreProduct::create(['store_id' => $this->magasin->id, 'product_id' => $this->ciment->id, 'quantity' => 100]);
-        $this->robinet = Product::create(['libelle' => 'Robinet', 'sku' => 'ROB', 'description' => 'x', 'price_sale' => 0, 'price' => 30000, 'unite' => 'carton', 'pcs_par_carton' => 6]);
+        $this->robinet = Product::create(['libelle' => 'Robinet', 'sku' => 'ROB', 'description' => 'x', 'price_sale' => 0, 'price' => 30000, 'pcs_par_carton' => 6]);
     }
 
     private function user(string $name, int $role, ?int $storeId = null): User
@@ -98,7 +98,7 @@ class ThirdPartySaleTest extends TestCase
 
     public function test_vente_mixte_sur_une_seule_facture(): void
     {
-        // 3 cartons de robinets (catalogue, sans stock) + un produit hors catalogue.
+        // 3 pièces de robinets (catalogue, sans stock) + un produit hors catalogue.
         $this->venteMixte([
             ['product_id' => $this->robinet->id, 'quantity' => 3, 'prix' => 30000, 'purchase_price_from_partner' => 25000],
             ['nouveau_libelle' => 'Mitigeur douche', 'nouvelle_unite' => 'pcs', 'quantity' => 1, 'prix' => 90000, 'purchase_price_from_partner' => 70000],
@@ -115,7 +115,7 @@ class ThirdPartySaleTest extends TestCase
 
         $robinets = Sale::where('product_id', $this->robinet->id)->firstOrFail();
         $this->assertTrue((bool) $robinets->is_third_party);
-        $this->assertSame('carton', $robinets->unite);
+        $this->assertSame('pcs', $robinets->unite);
         $this->assertEquals(3 * 5000, $robinets->interet);
         $this->assertEquals(75000, $robinets->du_partenaire);
 
@@ -180,7 +180,7 @@ class ThirdPartySaleTest extends TestCase
         $this->venteMixte([['product_id' => $this->robinet->id, 'quantity' => 3, 'prix' => 30000, 'purchase_price_from_partner' => 25000]]);
 
         $rapport = $this->actingAs($this->admin)->get(route('reports.tiers', ['period' => 'monthly']))->assertOk();
-        $rapport->assertSee('Moussa Quincaillerie')->assertSee('3 cartons')->assertDontSee('Ciment');
+        $rapport->assertSee('Moussa Quincaillerie')->assertSee('3 pièces')->assertDontSee('Ciment');
         $ligne = $rapport->viewData('partenaires')->first();
         $this->assertEquals(75000, $ligne->du);
         $this->assertEquals(75000, $ligne->solde);
@@ -234,7 +234,7 @@ class ThirdPartySaleTest extends TestCase
         $html = view('exports.ventes-tierces-pdf', $page->original->getData() + ['company' => null])->render();
         $this->assertStringContainsString('RAPPORT DES VENTES TIERCES', $html);
         $this->assertStringContainsString('Moussa Quincaillerie', $html);
-        $this->assertStringContainsString('3 cartons', $html);
+        $this->assertStringContainsString('3 pièces', $html);
         $this->assertStringContainsString('25 000', $html); // reste à payer
         $this->assertStringContainsString('Document interne', $html);
 
@@ -247,10 +247,10 @@ class ThirdPartySaleTest extends TestCase
                 $this->assertSame(['Par partenaire', 'Détail', 'Règlements'], array_map(fn ($f) => $f->title(), $feuilles));
                 $partenaire = $feuilles[0]->array()[0];
                 $this->assertSame('Moussa Quincaillerie', $partenaire[0]);
-                $this->assertSame('3 cartons', $partenaire[3]);
+                $this->assertSame('3 pièces', $partenaire[3]);
                 $this->assertEquals([75000, 50000, 25000], array_slice($partenaire, 7, 3));
                 $ligne = $feuilles[1]->array()[0];
-                $this->assertSame([3.0, 'cartons', 25000.0, 30000.0], array_slice($ligne, 6, 4));
+                $this->assertSame([3.0, 'pièces', 25000.0, 30000.0], array_slice($ligne, 6, 4));
                 $this->assertEquals(50000, $feuilles[2]->array()[0][2]);
 
                 return true;

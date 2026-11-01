@@ -57,8 +57,8 @@ class PrixMinimumTest extends TestCase
         $this->client = Customer::create(['customerName' => 'Client X', 'mark' => 'CLX', 'tel' => '620', 'address' => 'Madina']);
         $this->categorie = Category::create(['slug' => 'plomberie', 'category_type' => 'Plomberie', 'description' => 'x']);
 
-        // Revient 10 000, prix de vente 13 000, minimum 12 000 (par carton).
-        $this->robinet = Product::create(['libelle' => 'Robinet', 'sku' => 'ROB', 'description' => 'x', 'unite' => 'carton', 'pcs_par_carton' => 6,
+        // Revient 10 000, prix de vente 13 000, minimum 12 000 (par pièce).
+        $this->robinet = Product::create(['libelle' => 'Robinet', 'sku' => 'ROB', 'description' => 'x', 'pcs_par_carton' => 6,
             'price_sale' => 10000, 'price' => 13000, 'price_sale_minimum' => 12000]);
         StoreProduct::create(['store_id' => $this->magasin->id, 'product_id' => $this->robinet->id, 'quantity' => 100]);
     }
@@ -94,7 +94,7 @@ class PrixMinimumTest extends TestCase
         $this->actingAs($this->admin)->put(route('produits.update', $this->robinet->id), [
             'libelle' => 'Robinet', 'sku' => 'ROB', 'categories' => [$this->categorie->id], 'description' => 'x',
             'price' => 13000, 'price_sale' => 10000, 'price_sale_minimum' => 13500, 'stock_restant' => 100,
-            'store_id' => $this->magasin->id, 'unite' => 'carton', 'pcs_par_carton' => 6,
+            'store_id' => $this->magasin->id, 'pcs_par_carton' => 6,
         ])->assertSessionHasErrors('price_sale_minimum');
 
         // Formulaires : champ présent, libellé dans l'unité du produit.
@@ -105,7 +105,7 @@ class PrixMinimumTest extends TestCase
     public function test_caisse_refuse_sous_le_minimum_et_sous_le_revient(): void
     {
         // Sous le minimum (12 000) mais au-dessus du revient : refusé par le serveur.
-        $this->vendre(11000)->assertSessionHas('error', fn ($m) => str_contains($m, 'sous le prix de vente minimum (12 000 GNF)') && str_contains($m, 'par carton'));
+        $this->vendre(11000)->assertSessionHas('error', fn ($m) => str_contains($m, 'sous le prix de vente minimum (12 000 GNF)') && str_contains($m, 'par pièce'));
         $this->assertSame(0, Sale::count());
         $this->assertSame(100, (int) StoreProduct::where('product_id', $this->robinet->id)->value('quantity'));
 

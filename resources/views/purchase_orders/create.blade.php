@@ -326,7 +326,6 @@
                             <label>SKU</label>
                             <input type="text" id="newProductSku" class="form-control">
                         </div>
-                        @include('purchase_orders.partials.new-product-unit')
                         <p class="text-muted" style="font-size:13px;">
                             Le prix de revient n'est pas demandé ici : il sera calculé automatiquement
                             (avec le prix de vente, +{{ (int) \App\Models\Product::margeDeVente() }}%, sauf prix fixé à la main) une fois cet achat enregistré.
@@ -450,10 +449,6 @@
                         libelle: document.getElementById('newProductLibelle').value,
                         sku: document.getElementById('newProductSku').value,
                         category_id: document.getElementById('newProductCategory').value,
-                        unite: document.getElementById('newProductUnite').value,
-                        pcs_par_carton: document.getElementById('newProductPcsCarton').value,
-                        pcs_par_paquet: document.getElementById('newProductPcsPaquet').value,
-                        dimension_rouleau: document.getElementById('newProductDimension').value,
                     }).then(function (result) {
                         if (!result.ok || !result.data.success) {
                             const errors = result.data.errors
@@ -492,9 +487,6 @@
                         document.getElementById('newProductLibelle').value = '';
                         document.getElementById('newProductSku').value = '';
                         document.getElementById('newProductCategory').value = '';
-                        document.getElementById('newProductUnite').value = 'pcs';
-                        document.getElementById('newProductUnite').dispatchEvent(new Event('change'));
-                        ['newProductPcsCarton', 'newProductPcsPaquet', 'newProductDimension'].forEach(id => document.getElementById(id).value = '');
                         newProductModal.hide();
                     }).catch(function () {
                         showModalError('newProductError', 'Erreur réseau, réessayez.');
@@ -659,25 +651,13 @@
                 }
 
 
-                // Unité unique du produit : la quantité achetée (et entrée en stock)
-                // est dans cette unité. Un produit vendu au carton s'achète au
-                // carton : 1 « unité par carton », quantité = nombre de cartons.
+                // Tout se compte à la pièce : la quantité achetée (et entrée en
+                // stock) et le coût de revient de la ligne sont par pièce.
                 function appliquerUnite(lineEl) {
                     const opt = lineEl.querySelector('[data-field="product_id"]')?.selectedOptions[0];
-                    const unite = opt?.dataset.unite || 'pcs';
-                    const piecesField = lineEl.querySelector('[data-field="pieces_per_carton"]');
                     const hint = lineEl.querySelector('[data-unite-hint]');
-                    if (hint) hint.textContent = opt?.value ? 'en ' + (opt.dataset.unitePluriel || 'pièces') : '';
-                    // Prix et coût de revient de la ligne : par unité du produit (« / carton »).
-                    const singulier = { pcs: 'pièce', douzaine: 'douzaine', carton: 'carton', paquet: 'paquet', rouleau: 'rouleau' }[unite];
-                    lineEl.querySelectorAll('[data-unite-prix]').forEach(el => el.textContent = opt?.value ? '/ ' + singulier : '');
-                    if (unite === 'carton') {
-                        piecesField.value = 1;
-                        piecesField.readOnly = true;
-                        piecesField.dispatchEvent(new Event('input'));
-                    } else {
-                        piecesField.readOnly = false;
-                    }
+                    if (hint) hint.textContent = opt?.value ? 'en pièces' : '';
+                    lineEl.querySelectorAll('[data-unite-prix]').forEach(el => el.textContent = opt?.value ? '/ pièce' : '');
                 }
                 function recompute() {
                     const isChine = document.getElementById('originChine').checked;

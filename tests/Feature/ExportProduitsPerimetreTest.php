@@ -49,7 +49,7 @@ class ExportProduitsPerimetreTest extends TestCase
         $this->kaloum = $this->magasin('Kaloum');
 
         $this->ciment = Product::create(['libelle' => 'Ciment', 'sku' => 'CIM', 'description' => 'x',
-            'unite' => 'carton', 'price' => 60000, 'price_sale' => 45000]);
+            'price' => 60000, 'price_sale' => 45000]);
 
         // 7 à Madina, 93 à Kaloum : le total (100) ne doit jamais apparaître
         // dans l'export d'un employé rattaché à Madina.
@@ -159,6 +159,6 @@ class ExportProduitsPerimetreTest extends TestCase
      */
     public function test_le_csv_exporte_un_prix_renseigne(): void
     {
-        $this->assertMatchesRegularExpression('/Ciment,CIM,[^,]*,100,cartons,60000/', $this->csv($this->admin));
+        $this->assertMatchesRegularExpression('/Ciment,CIM,[^,]*,100,pièces,60000/', $this->csv($this->admin));
     }
 }

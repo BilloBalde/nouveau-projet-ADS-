@@ -65,7 +65,7 @@ class PrixDeRevientTest extends TestCase
         $this->entrepot = $this->emplacement('Entrepôt 5', Store::TYPE_ENTREPOT);
 
         $this->ciment = Product::create(['libelle' => 'Ciment', 'sku' => 'CIM', 'description' => 'x', 'unite' => 'pcs']);
-        $this->carton = Product::create(['libelle' => 'Carton', 'sku' => 'CTN', 'description' => 'x', 'unite' => 'carton']);
+        $this->carton = Product::create(['libelle' => 'Carton', 'sku' => 'CTN', 'description' => 'x']);
         $this->fournisseur = Partner::create(['name' => 'Fournisseur Chine']);
 
         $this->actingAs($this->admin);
@@ -118,9 +118,9 @@ class PrixDeRevientTest extends TestCase
      *
      * Taux 1 300 GNF/CNY. Transport 2 000 000, douane 1 000 000.
      *
-     *   Ciment : 100 pcs à 2 CNY  = 2 600 GNF/u, 10 cartons de 10 à 0,5 CBM
+     *   Ciment : 100 pcs à 2 CNY  = 2 600 GNF/u, 10 pièces de 10 à 0,5 CBM
      *            → 0,05 CBM/u × 100 = 5,000 CBM  → 5/6 des frais
-     *   Carton :  50 u  à 10 CNY  = 13 000 GNF/u, 5 cartons de 10 à 0,2 CBM
+     *   Carton :  50 u  à 10 CNY  = 13 000 GNF/u, 5 pièces de 10 à 0,2 CBM
      *            → 0,02 CBM/u × 50  = 1,000 CBM  → 1/6 des frais
      *
      *   Ciment : (260 000 + 1 666 666,67 + 833 333,33) / 100 = 27 600
@@ -146,7 +146,7 @@ class PrixDeRevientTest extends TestCase
         $this->assertEquals(2_600, $ciment->unit_price_gnf);
         $this->assertEquals(13_000, $carton->unit_price_gnf);
 
-        // Le CBM se saisit par carton ; le CBM par unité s'en déduit.
+        // Le CBM se saisit par pièce ; le CBM par unité s'en déduit.
         $this->assertEquals(0.05, $ciment->cbm_per_unit);
         $this->assertEquals(5.0, $ciment->line_total_cbm);
         $this->assertEquals(1.0, $carton->line_total_cbm);
