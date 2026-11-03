@@ -72,7 +72,14 @@
                                 // en souligné (lignes_0) et le formulaire n'envoie rien
                                 // sous « lignes » : la validation refuse tout.
                                 $cle = 'lignes['.$i.']';
-                                $ancien = old('lignes.'.$i, []);
+                                // Comptage rouvert : ses quantités préremplissent la ligne.
+                                $deja = ($dejaComptees ?? collect())->get($produit->id);
+                                $ancien = old('lignes.'.$i, $deja ? [
+                                    'counted' => $deja->counted_quantity,
+                                    'loss' => $deja->loss_quantity ?: null,
+                                    'loss_reason' => $deja->loss_reason,
+                                    'unit_price' => (int) $deja->unit_price_gnf,
+                                ] : []);
                             @endphp
                             <tr data-ligne data-premiere="{{ $seance->estPremiereSeance() ? '1' : '0' }}">
                                 <td>{{ $i + 1 }}</td>

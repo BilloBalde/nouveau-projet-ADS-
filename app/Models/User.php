@@ -144,6 +144,17 @@ class User extends Authenticatable
     }
 
     /**
+     * Seuls l'administrateur et le superuser corrigent ou suppriment un
+     * comptage d'inventaire validé : c'est revenir sur un chiffre d'affaires
+     * établi et sur le stock aligné dessus. Réservé au rôle, pas à une
+     * permission qu'on pourrait accorder à un employé.
+     */
+    public function peutCorrigerUnInventaire(): bool
+    {
+        return in_array($this->roleRelation?->slug, ['admin', 'superuser'], true);
+    }
+
+    /**
      * Vrai si les données affichées doivent être limitées à un magasin : c'est
      * le cas de tout employé rattaché, et de lui seul. Les profils à vue
      * globale voient l'ensemble.

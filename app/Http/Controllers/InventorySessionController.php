@@ -31,7 +31,7 @@ class InventorySessionController extends Controller
         // Réservé au mode de vente qui déduit le chiffre d'affaires du stock.
         $this->middleware('mode:inventaire');
         $this->middleware('permission:stock.view')->only(['index', 'show', 'rapportPdf', 'modeOperatoire']);
-        $this->middleware('permission:stock.adjust')->only(['create', 'store', 'feuille', 'edit', 'valider', 'destroy']);
+        $this->middleware('permission:stock.adjust')->only(['create', 'store', 'feuille', 'edit', 'valider', 'rouvrir', 'destroy']);
     }
 
     /** Emplacement hors du périmètre de l'utilisateur : rien à y faire. */
@@ -154,6 +154,8 @@ class InventorySessionController extends Controller
         return view('inventaires.saisie', [
             'seance' => $inventaire->load('store', 'previousSession'),
             'lignes' => $this->lignesDeSaisie($inventaire, $termes),
+            // Un comptage rouvert garde ses quantités : elles préremplissent la saisie.
+            'dejaComptees' => $inventaire->lines()->get()->keyBy('product_id'),
         ]);
     }
 
@@ -216,6 +218,7 @@ class InventorySessionController extends Controller
 
         return view('inventaires.show', [
             'seance' => $inventaire->load(['store', 'previousSession', 'validator', 'lines.product']),
+            'aUneSuite' => $this->inventaire->aUneSuite($inventaire),
         ]);
     }
 
@@ -235,18 +238,55 @@ class InventorySessionController extends Controller
     }
 
     /** Un brouillon se supprime ; une séance validée, jamais. */
+    /**
+     * Modifier un comptage validé : il est rouvert — le stock revient à ce
+     * qu'il était avant lui — puis corrigé à la saisie et revalidé.
+     * Réservé à l'administrateur et au superuser.
+     */
+    public function rouvrir(InventorySession $inventaire)
+    {
+        $this->autoriserEmplacement((int) $inventaire->store_id);
+        $this->exigerCorrecteur();
+
+        try {
+            $this->inventaire->rouvrir($inventaire);
+        } catch (\RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        return redirect()->route('inventaires.edit', $inventaire->id)->with('warning', sprintf(
+            'Comptage %s rouvert : le stock est revenu à ce qu\'il était avant lui. Corrigez les quantités puis validez à nouveau.',
+            $inventaire->reference
+        ));
+    }
+
     public function destroy(InventorySession $inventaire)
     {
         $this->autoriserEmplacement((int) $inventaire->store_id);
 
+        // Un comptage en saisie se jette comme avant ; un comptage validé,
+        // dont le chiffre d'affaires est établi, est réservé aux correcteurs.
         if ($inventaire->estValidee()) {
-            return back()->with('error', 'Un comptage validé ne se supprime pas : son chiffre d\'affaires est établi et le stock a été aligné dessus.');
+            $this->exigerCorrecteur();
         }
 
         $reference = $inventaire->reference;
-        $inventaire->delete();
+        $etaitValide = $inventaire->estValidee();
 
-        return redirect()->route('inventaires.index')->with('success', 'Comptage '.$reference.' supprimé.');
+        try {
+            $this->inventaire->supprimer($inventaire);
+        } catch (\RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        return redirect()->route('inventaires.index')->with('success', $etaitValide
+            ? 'Comptage '.$reference.' supprimé : le stock est revenu à ce qu\'il était avant lui, et son chiffre d\'affaires est retiré des rapports.'
+            : 'Comptage '.$reference.' supprimé.');
+    }
+
+    private function exigerCorrecteur(): void
+    {
+        abort_unless(Auth::user()->peutCorrigerUnInventaire(), 403, 'Seuls l\'administrateur et le superuser peuvent modifier ou supprimer un comptage validé.');
     }
 
     // -----------------------------------------------------------------

@@ -219,7 +219,12 @@ class InventaireEcransTest extends TestCase
             ->where('product_id', $autre->id)->value('quantity'));
     }
 
-    public function test_un_comptage_valide_ne_se_supprime_pas(): void
+    /**
+     * Un comptage validé ne se supprime que par l'administrateur ou le
+     * superuser (voir InventaireCorrectionTest) : un responsable de boutique,
+     * qui saisit les comptages, ne le peut pas.
+     */
+    public function test_un_comptage_valide_ne_se_supprime_pas_par_un_responsable(): void
     {
         $this->actingAs($this->admin);
         $service = app(InventaireService::class);
@@ -227,9 +232,8 @@ class InventaireEcransTest extends TestCase
             ['product_id' => $this->ciment->id, 'counted' => 100],
         ]);
 
-        $this->delete(route('inventaires.destroy', $seance->id))
-            ->assertRedirect()
-            ->assertSessionHas('error', fn ($m) => str_contains($m, 'ne se supprime pas'));
+        $responsable = $this->user('Awa', 'responsable', $this->madina->id);
+        $this->actingAs($responsable)->delete(route('inventaires.destroy', $seance->id))->assertForbidden();
 
         $this->assertNotNull($seance->fresh());
     }

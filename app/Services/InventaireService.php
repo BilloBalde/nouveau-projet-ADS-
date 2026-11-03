@@ -303,6 +303,119 @@ class InventaireService
     }
 
     /**
+     * Rouvre un comptage validé pour le corriger : le stock revient exactement
+     * à ce qu'il était avant la validation, la séance repasse en saisie, et
+     * ses quantités comptées restent là pour être corrigées puis revalidées.
+     *
+     * Seul le dernier comptage d'une boutique peut être rouvert : le suivant
+     * part de ses quantités comptées, il deviendrait faux sans le dire.
+     */
+    public function rouvrir(InventorySession $session): InventorySession
+    {
+        if (! $session->estValidee()) {
+            throw new RuntimeException('Ce comptage n\'est pas validé : il se corrige directement à la saisie.');
+        }
+
+        $this->exigerDernierComptage($session);
+
+        return DB::transaction(function () use ($session) {
+            $this->annulerLeStock($session);
+
+            $session->update([
+                'status' => InventorySession::BROUILLON,
+                'validated_by' => null,
+                'validated_at' => null,
+                'total_revenue_gnf' => null,
+                'total_margin_gnf' => null,
+                'total_loss_gnf' => null,
+                'total_sold_quantity' => null,
+            ]);
+
+            return $session->fresh('lines');
+        });
+    }
+
+    /**
+     * Supprime un comptage. Validé, son effet sur le stock est d'abord annulé :
+     * le stock revient à ce qu'il était avant lui, et son chiffre d'affaires
+     * sort des rapports.
+     */
+    public function supprimer(InventorySession $session): void
+    {
+        if ($session->estValidee()) {
+            $this->exigerDernierComptage($session);
+        }
+
+        DB::transaction(function () use ($session) {
+            if ($session->estValidee()) {
+                $this->annulerLeStock($session);
+            }
+
+            $session->lines()->delete();
+            $session->delete();
+        });
+    }
+
+    /** Vrai si la boutique a un comptage plus récent que celui-ci, validé ou non. */
+    public function aUneSuite(InventorySession $session): bool
+    {
+        $jour = $session->counted_on->toDateString();
+
+        return InventorySession::where('store_id', $session->store_id)
+            ->where('id', '!=', $session->id)
+            ->where(fn ($q) => $q->whereDate('counted_on', '>', $jour)
+                ->orWhere(fn ($q) => $q->whereDate('counted_on', $jour)->where('id', '>', $session->id))
+                ->orWhere('previous_session_id', $session->id))
+            ->exists();
+    }
+
+    private function exigerDernierComptage(InventorySession $session): void
+    {
+        if ($this->aUneSuite($session)) {
+            throw new RuntimeException(sprintf(
+                'Seul le dernier comptage de la boutique peut être modifié ou supprimé : un comptage plus récent part des quantités de %s. Supprimez d\'abord le plus récent.',
+                $session->reference
+            ));
+        }
+    }
+
+    /**
+     * Défait, produit par produit, tous les mouvements que le comptage a
+     * écrits (ventes déduites, pertes, alignement). Les écritures d'annulation
+     * portent la même origine : le prochain comptage les ignore comme les
+     * premières, et un comptage rouvert puis revalidé puis supprimé se défait
+     * encore juste, puisque c'est le solde de toutes ses écritures qui est
+     * annulé.
+     */
+    private function annulerLeStock(InventorySession $session): void
+    {
+        $soldes = StockMovement::where('source_type', self::ORIGINE)
+            ->where('source_id', $session->id)
+            ->selectRaw('product_id, SUM(quantity) as solde')
+            ->groupBy('product_id')
+            ->pluck('solde', 'product_id');
+
+        foreach ($soldes as $productId => $solde) {
+            $solde = (int) $solde;
+            if ($solde === 0) {
+                continue;
+            }
+
+            $contexte = [
+                'type' => StockMovement::CORRECTION,
+                'source_type' => self::ORIGINE,
+                'source_id' => $session->id,
+                'document_ref' => $session->reference,
+                'reason' => 'Annulation du comptage '.$session->reference,
+            ];
+
+            $solde > 0
+                ? $this->stock->forceDecrement((int) $session->store_id, (int) $productId, $solde, $contexte)
+                : $this->stock->increment((int) $session->store_id, (int) $productId, -$solde, $contexte);
+        }
+    }
+
+    /**
      * Écrit au journal ce que le comptage a révélé, puis aligne le stock
      * enregistré sur le stock compté.
      *

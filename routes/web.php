@@ -498,6 +498,7 @@ Route::post('/inventaires', [InventorySessionController::class, 'store'])->name(
 Route::get('/inventaires/{inventaire}/feuille', [InventorySessionController::class, 'feuille'])->whereNumber('inventaire')->name('inventaires.feuille');
 Route::get('/inventaires/{inventaire}/saisie', [InventorySessionController::class, 'edit'])->whereNumber('inventaire')->name('inventaires.edit');
 Route::post('/inventaires/{inventaire}/valider', [InventorySessionController::class, 'valider'])->whereNumber('inventaire')->name('inventaires.valider');
+Route::post('/inventaires/{inventaire}/rouvrir', [InventorySessionController::class, 'rouvrir'])->whereNumber('inventaire')->name('inventaires.rouvrir');
 Route::get('/inventaires/{inventaire}', [InventorySessionController::class, 'show'])->whereNumber('inventaire')->name('inventaires.show');
 Route::get('/inventaires/{inventaire}/rapport-pdf', [InventorySessionController::class, 'rapportPdf'])->whereNumber('inventaire')->name('inventaires.rapport-pdf');
 Route::delete('/inventaires/{inventaire}', [InventorySessionController::class, 'destroy'])->whereNumber('inventaire')->name('inventaires.destroy');

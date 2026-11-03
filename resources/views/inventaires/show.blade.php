@@ -22,10 +22,30 @@
             </h6>
         </div>
         <div class="page-btn">
+            {{-- Corriger ou supprimer un comptage validé : administrateur et
+                 superuser seulement, et sur le dernier comptage de la boutique. --}}
+            @if (auth()->user()->peutCorrigerUnInventaire() && $seance->estValidee() && ! $aUneSuite)
+            <form method="POST" action="{{ route('inventaires.rouvrir', $seance->id) }}"
+                  onsubmit="return confirm('Modifier le comptage {{ $seance->reference }} ? Le stock revient à ce qu\'il était avant lui, puis vous corrigez les quantités et validez à nouveau.');">
+                @csrf
+                <button type="submit" class="btn btn-cancel"><i class="fas fa-pen me-1"></i> Modifier</button>
+            </form>
+            <form method="POST" action="{{ route('inventaires.destroy', $seance->id) }}"
+                  onsubmit="return confirm('Supprimer définitivement le comptage {{ $seance->reference }} ? Le stock revient à ce qu\'il était avant lui et son chiffre d\'affaires sort des rapports.');">
+                @csrf
+                @method('DELETE')
+                <button type="submit" class="btn btn-cancel text-danger"><i class="fas fa-trash me-1"></i> Supprimer</button>
+            </form>
+            @endif
             <a href="{{ route('inventaires.rapport-pdf', $seance->id) }}" class="btn btn-added" target="_blank">
                 <i class="fas fa-print me-1"></i> Imprimer le rapport
             </a>
         </div>
+        @if (auth()->user()->peutCorrigerUnInventaire() && $seance->estValidee() && $aUneSuite)
+        <p class="text-muted small w-100 mb-0">
+            Un comptage plus récent part de celui-ci : seul le dernier comptage de la boutique peut être modifié ou supprimé.
+        </p>
+        @endif
     </div>
 
     @include('layouts.flash')
