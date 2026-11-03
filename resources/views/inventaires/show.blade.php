@@ -26,12 +26,19 @@
                  superuser seulement, et sur le dernier comptage de la boutique. --}}
             @if (auth()->user()->peutCorrigerUnInventaire() && $seance->estValidee() && ! $aUneSuite)
             <form method="POST" action="{{ route('inventaires.rouvrir', $seance->id) }}"
-                  onsubmit="return confirm('Modifier le comptage {{ $seance->reference }} ? Le stock revient à ce qu\'il était avant lui, puis vous corrigez les quantités et validez à nouveau.');">
+                  data-confirmer="Modifier le comptage {{ $seance->reference }} ?"
+                  data-confirmer-texte="Le stock revient à ce qu'il était avant ce comptage. Vous corrigez ensuite les quantités, puis vous validez à nouveau."
+                  data-confirmer-bouton="Modifier le comptage"
+                  data-confirmer-ton="attention"
+                  data-confirmer-icone="fa-pen">
                 @csrf
                 <button type="submit" class="btn btn-cancel"><i class="fas fa-pen me-1"></i> Modifier</button>
             </form>
             <form method="POST" action="{{ route('inventaires.destroy', $seance->id) }}"
-                  onsubmit="return confirm('Supprimer définitivement le comptage {{ $seance->reference }} ? Le stock revient à ce qu\'il était avant lui et son chiffre d\'affaires sort des rapports.');">
+                  data-confirmer="Supprimer le comptage {{ $seance->reference }} ?"
+                  data-confirmer-texte="Le stock revient à ce qu'il était avant ce comptage et son chiffre d'affaires de {{ francs($seance->total_revenue_gnf) }} sort des rapports. Cette action est définitive."
+                  data-confirmer-bouton="Supprimer définitivement"
+                  data-confirmer-ton="danger">
                 @csrf
                 @method('DELETE')
                 <button type="submit" class="btn btn-cancel text-danger"><i class="fas fa-trash me-1"></i> Supprimer</button>

@@ -118,7 +118,11 @@
             @unless ($cloturee)
             <hr>
             <form method="POST" action="{{ route('associates.cloturer', $annee) }}" class="d-flex flex-wrap align-items-center gap-3"
-                  onsubmit="return confirm('Clôturer l\'année {{ $annee }} ? Les parts et les sorties de l\'année seront figées et le solde de chaque associé arrêté. Cette action est définitive.');">
+                  data-confirmer="Clôturer l'année {{ $annee }} ?"
+                  data-confirmer-texte="Les parts et les sorties de l'année seront figées et le solde de chaque associé arrêté. Cette action est définitive."
+                  data-confirmer-bouton="Clôturer l'année"
+                  data-confirmer-ton="danger"
+                  data-confirmer-icone="fa-lock">
                 @csrf
                 <button type="submit" class="btn btn-danger" @disabled($anneeEnAttente !== null)>
                     <i class="fas fa-lock me-1"></i> Clôturer l'année {{ $annee }}

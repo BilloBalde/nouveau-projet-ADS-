@@ -28,3 +28,6 @@
         });
     }
 </script>
+
+{{-- Fenêtre de confirmation des formulaires marqués data-confirmer. --}}
+@include('partials.confirmation')
