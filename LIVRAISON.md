@@ -356,19 +356,20 @@ comptage suivant, qui mesure ce qui est parti entre les deux.
 
 Prévenez le client, sinon il appellera en disant que l'application ne calcule rien.
 
-### Un inventaire tous les six mois
+### Un inventaire par an, en fin d'année
 
-L'échéance de chaque boutique est son dernier comptage validé **plus six mois**. Deux
-semaines avant, un bandeau orange l'annonce sur le tableau de bord, sur la liste des
-inventaires et dans l'en-tête de toutes les pages ; l'échéance passée, il passe au
-rouge. Une boutique qui a du stock mais n'a jamais été comptée est signalée aussi.
+Du **10 décembre au 10 janvier**, un bandeau rappelle l'inventaire de fin d'année à
+chaque boutique qui n'a pas encore validé de comptage dans cette période : sur le
+tableau de bord, sur la liste des inventaires et dans l'en-tête de toutes les pages.
+Il est orange jusqu'au 31 décembre, rouge à partir du 1er janvier, et **disparaît dès
+que le comptage de la boutique est validé**. En dehors de cette période, aucun rappel.
 
-Le calcul se fait à l'affichage : aucune tâche planifiée n'est nécessaire. Pour un autre
-rythme :
+Le calcul se fait à l'affichage : aucune tâche planifiée n'est nécessaire. Pour d'autres
+dates (format mois-jour) :
 
 ```
-INVENTAIRE_TOUS_LES_MOIS=6
-INVENTAIRE_ALERTE_JOURS=14
+INVENTAIRE_RAPPEL_DEBUT=12-10
+INVENTAIRE_RAPPEL_FIN=01-10
 ```
 
 ### Documentation pour le gérant

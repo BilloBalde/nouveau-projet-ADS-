@@ -47,7 +47,7 @@
 <div class="entete">
     <div class="societe">{{ $company->name ?? config('app.name') }}</div>
     <h1>Comment faire l'inventaire de votre boutique</h1>
-    <div class="sous">À faire tous les {{ config('sales.inventaire_tous_les_mois', 6) }} mois — l'application vous prévient deux semaines avant. C'est ce comptage qui calcule votre chiffre d'affaires.</div>
+    <div class="sous">À faire une fois par an, en fin d'année — l'application vous le rappelle à partir du 10 décembre. C'est ce comptage qui calcule votre chiffre d'affaires.</div>
 </div>
 
 <p style="margin:0 0 6px">

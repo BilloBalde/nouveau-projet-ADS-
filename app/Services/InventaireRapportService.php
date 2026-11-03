@@ -138,21 +138,58 @@ class InventaireRapportService
     }
 
     /**
-     * Prochain inventaire de chaque boutique : dernier comptage validé + le
-     * rythme configuré (six mois par défaut, voir config/sales.php).
+     * Période de rappel de l'inventaire de fin d'année qui contient la date
+     * donnée, ou null hors période. Du 10 décembre au 10 janvier par défaut
+     * (config/sales.php) : l'échéance est le 31 décembre de l'année comptée.
+     *
+     * @return array{debut: Carbon, fin: Carbon, echeance: Carbon}|null
+     */
+    public function periodeDeRappel(?Carbon $jour = null): ?array
+    {
+        $jour = ($jour ?? Carbon::today())->copy()->startOfDay();
+        [$moisDebut, $jourDebut] = array_map('intval', explode('-', (string) config('sales.inventaire_rappel_debut', '12-10')));
+        [$moisFin, $jourFin] = array_map('intval', explode('-', (string) config('sales.inventaire_rappel_fin', '01-10')));
+
+        // L'année comptée : celle qui se termine. En janvier, c'est la précédente.
+        foreach ([$jour->year, $jour->year - 1] as $annee) {
+            $debut = Carbon::create($annee, $moisDebut, $jourDebut)->startOfDay();
+            $fin = Carbon::create($moisFin < $moisDebut ? $annee + 1 : $annee, $moisFin, $jourFin)->endOfDay();
+
+            if ($jour->betweenIncluded($debut, $fin)) {
+                return ['debut' => $debut, 'fin' => $fin, 'echeance' => Carbon::create($annee, 12, 31)->startOfDay()];
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Inventaire de fin d'année de chaque boutique, pendant la période de
+     * rappel : fait si un comptage y a été validé, à faire sinon — orange
+     * avant le 31 décembre, rouge après. Hors période, rien n'est à faire.
      *
      * Seules les boutiques qui ont du stock ou un comptage figurent : un
      * emplacement vide n'a rien à compter. Les plus urgentes d'abord.
      *
      * @param  array<int>|null  $storeIds  null = tous les emplacements
-     * @return Collection<int, object{store: Store, derniere: ?Carbon, echeance: ?Carbon, jours: ?int, etat: string}>
-     *                                                                                                                etat : a_faire (jamais compté), en_retard, bientot, a_jour
+     * @return Collection<int, object{store: Store, derniere: ?Carbon, echeance: Carbon, fin: Carbon, jours: int, etat: string}>
+     *                                                                                                                           etat : en_retard, bientot, a_jour
      */
     public function echeances(?array $storeIds = null): Collection
     {
-        $mois = max(1, (int) config('sales.inventaire_tous_les_mois', 6));
-        $alerte = max(0, (int) config('sales.inventaire_alerte_jours', 14));
         $aujourdhui = Carbon::today();
+        $periode = $this->periodeDeRappel($aujourdhui);
+
+        if ($periode === null) {
+            return collect();
+        }
+
+        $faites = InventorySession::where('status', InventorySession::VALIDEE)
+            ->when($storeIds !== null, fn ($q) => $q->whereIn('store_id', $storeIds))
+            ->whereBetween('counted_on', [$periode['debut']->toDateString(), $periode['fin']->toDateString()])
+            ->distinct()
+            ->pluck('store_id')
+            ->all();
 
         $derniers = InventorySession::where('status', InventorySession::VALIDEE)
             ->when($storeIds !== null, fn ($q) => $q->whereIn('store_id', $storeIds))
@@ -168,28 +205,28 @@ class InventaireRapportService
 
         $ids = $avecStock->merge($derniers->keys())->unique()->values();
 
-        $ordre = ['en_retard' => 0, 'a_faire' => 1, 'bientot' => 2, 'a_jour' => 3];
+        $ordre = ['en_retard' => 0, 'bientot' => 1, 'a_jour' => 2];
+        $echeance = $periode['echeance'];
+        $fin = $periode['fin']->copy()->startOfDay();
+        $jours = (int) $aujourdhui->diffInDays($echeance, false);
 
         return Store::whereIn('id', $ids)->orderBy('store_name')->get()
-            ->map(function (Store $store) use ($derniers, $mois, $alerte, $aujourdhui) {
+            ->map(function (Store $store) use ($derniers, $faites, $echeance, $fin, $jours) {
                 $derniere = isset($derniers[$store->id]) ? Carbon::parse($derniers[$store->id])->startOfDay() : null;
-                $echeance = $derniere?->copy()->addMonthsNoOverflow($mois);
-                $jours = $echeance ? (int) $aujourdhui->diffInDays($echeance, false) : null;
 
                 $etat = match (true) {
-                    $echeance === null => 'a_faire',
+                    in_array($store->id, $faites) => 'a_jour',
                     $jours < 0 => 'en_retard',
-                    $jours <= $alerte => 'bientot',
-                    default => 'a_jour',
+                    default => 'bientot',
                 };
 
-                return (object) compact('store', 'derniere', 'echeance', 'jours', 'etat');
+                return (object) compact('store', 'derniere', 'echeance', 'fin', 'jours', 'etat');
             })
-            ->sortBy(fn ($e) => [$ordre[$e->etat], $e->jours ?? -PHP_INT_MAX])
+            ->sortBy(fn ($e) => [$ordre[$e->etat], $e->store->store_name])
             ->values();
     }
 
-    /** Échéances qui demandent une action : en retard, jamais compté, ou bientôt. */
+    /** Boutiques dont l'inventaire de fin d'année reste à faire, pendant la période de rappel. */
     public function alertes(?array $storeIds = null): Collection
     {
         return $this->echeances($storeIds)->reject(fn ($e) => $e->etat === 'a_jour')->values();

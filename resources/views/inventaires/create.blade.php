@@ -46,7 +46,7 @@
                     <div class="form-group">
                         <label>Notes <small class="text-muted">(facultatif)</small></label>
                         <input type="text" name="notes" class="form-control" value="{{ old('notes') }}"
-                               placeholder="Inventaire semestriel…">
+                               placeholder="Inventaire de fin d'année…">
                     </div>
                 </div>
 

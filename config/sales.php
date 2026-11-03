@@ -36,18 +36,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Rythme des inventaires (mode « inventaire »)
+    | Inventaire de fin d'année (mode « inventaire »)
     |--------------------------------------------------------------------------
     |
-    | La boutique compte son stock tous les `inventaire_tous_les_mois` mois —
-    | deux fois par an par défaut. Une alerte apparaît sur le tableau de bord
-    | et dans l'en-tête `inventaire_alerte_jours` jours avant l'échéance, puis
-    | passe au rouge une fois l'échéance dépassée.
+    | La boutique compte son stock une fois par an, en fin d'année. Le rappel
+    | apparaît sur le tableau de bord et dans l'en-tête du
+    | `inventaire_rappel_debut` (10 décembre) au `inventaire_rappel_fin`
+    | (10 janvier), tant que la boutique n'a pas validé de comptage dans cette
+    | période ; il disparaît dès que c'est fait. Orange en décembre, rouge à
+    | partir du 1er janvier. Format « mois-jour ».
     |
     */
 
-    'inventaire_tous_les_mois' => (int) env('INVENTAIRE_TOUS_LES_MOIS', 6),
+    'inventaire_rappel_debut' => env('INVENTAIRE_RAPPEL_DEBUT', '12-10'),
 
-    'inventaire_alerte_jours' => (int) env('INVENTAIRE_ALERTE_JOURS', 14),
+    'inventaire_rappel_fin' => env('INVENTAIRE_RAPPEL_FIN', '01-10'),
 
 ];

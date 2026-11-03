@@ -60,8 +60,8 @@
             </span>
         </li>
         @endif
-        {{-- Inventaire semestriel : rappel tant qu'une boutique est en retard,
-             jamais comptée, ou à moins de deux semaines de son échéance. --}}
+        {{-- Inventaire de fin d'année : rappel du 10 décembre au 10 janvier,
+             tant qu'une boutique n'a pas validé son comptage. --}}
         @if (($alertesInventaire ?? collect())->isNotEmpty())
         @php($retard = $alertesInventaire->contains(fn ($a) => $a->etat === 'en_retard'))
         <li class="nav-item" style="display:flex;align-items:center;margin-right:12px;">
